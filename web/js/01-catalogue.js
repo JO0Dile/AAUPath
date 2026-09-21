@@ -59,18 +59,20 @@ window.APP_THOUGHTS_URL = 'https://thoughts-worker.pmhtrfalab999.workers.dev';
 // ---------------------------------------------------------------------------
 // Contributions (js/73-contribute.js) — students helping build a "coming
 // soon" major's course list get a live inbox instead of only an emailed
-// file: deploy workers/contributions-worker.js, put its URL here, and set
-// APP_CONTRIB_SECRET to the SAME value as that Worker's ADMIN_SECRET so the
-// admin panel can list and reply to submissions. The secret rides in a
-// header on admin-only calls; a student's own submit/check calls never
-// need it, the same way APP_COLLECT_SECRET works for js/31-collect.js.
+// file: deploy workers/contributions-worker.js and put its URL here.
 // Left empty, "coming soon" majors fall back to their old read-only note.
 window.APP_CONTRIB_URL = 'https://contributions-worker.pmhtrfalab999.workers.dev';
-// Set this Worker's ADMIN_SECRET (Cloudflare dashboard -> the Worker ->
-// Settings -> Variables -> add secret, name it ADMIN_SECRET) to this exact
-// value, or the admin panel's Contributions tab will load nothing and
-// every reply will fail with 403.
-window.APP_CONTRIB_SECRET = 'ZgYOkOOxrJCPUiqId7vGtyHnLuHIybNT';
+// There is deliberately no APP_CONTRIB_SECRET here any more.
+//
+// It used to hold that Worker's ADMIN_SECRET so the admin panel could send
+// it. But this file is served to every visitor of the published site, so the
+// single credential that lists every student's submission, replies in the
+// maintainer's name and deletes anything was readable by anyone who opened
+// it — no attack required, only View Source.
+//
+// The admin panel now asks for that secret once per session and keeps it in
+// sessionStorage (js/48-admin.js), so it is never shipped. A student's own
+// submit and check calls have never needed it.
 // ---------------------------------------------------------------------------
 // Ratings (js/27-community.js) — pools the difficulty/workload stars a
 // student already sets on a course (previously local-only) across every

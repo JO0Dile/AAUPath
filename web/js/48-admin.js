@@ -1028,21 +1028,62 @@
   // same as any other edit.
 
   function contribUrl(){ return (window.APP_CONTRIB_URL || '').replace(/\/+$/, ''); }
+
+  // THE SECRET IS NOT SHIPPED WITH THE APP, and this is the reason why.
+  //
+  // It used to be APP_CONTRIB_SECRET in js/01-catalogue.js — a file any
+  // visitor can fetch from the published site. The one credential that lists
+  // every student's submission, replies in the maintainer's name and deletes
+  // anything was therefore public for as long as it sat there; reading it
+  // took no attack, only View Source.
+  //
+  // So it is typed in here instead, and kept beside the admin token on the
+  // same terms: sessionStorage, this tab only, gone when the tab closes.
+  // That trades a permanent public credential for one prompt per session.
+  var CONTRIB_SECRET_KEY = 'aaup_contribSecret';
+  function contribSecret(){
+    try{ return sessionStorage.getItem(CONTRIB_SECRET_KEY) || ''; }catch(e){ return ''; }
+  }
+  function setContribSecret(v){
+    try{
+      if(v) sessionStorage.setItem(CONTRIB_SECRET_KEY, v);
+      else sessionStorage.removeItem(CONTRIB_SECRET_KEY);
+    }catch(e){}
+  }
   function contribHeaders(){
     var h = { 'Content-Type': 'application/json' };
-    if(window.APP_CONTRIB_SECRET) h['X-Admin-Secret'] = window.APP_CONTRIB_SECRET;
+    var s = contribSecret();
+    if(s) h['X-Admin-Secret'] = s;
     return h;
   }
 
+  // A refused secret is the one failure worth handling apart from the rest:
+  // it means what is stored is wrong, so it is dropped and the panel asks
+  // again rather than retrying a call that cannot ever succeed.
+  function contribRes(r){
+    if(r.status === 401 || r.status === 403){
+      setContribSecret('');
+      state.contribItems = null;
+      throw new Error('That secret was not accepted — enter it again.');
+    }
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
   function loadContributions(){
-    if(!contribUrl()) return;
+    if(!contribUrl() || !contribSecret()) return;
     state.contribLoading = true;
     fetch(contribUrl() + '/contributions', { headers: contribHeaders() })
-      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(contribRes)
       .then(function(data){
         state.contribItems = (data && Array.isArray(data.contributions)) ? data.contributions : [];
       })
-      .catch(function(){ state.contribItems = []; toast('Could not load contributions.'); })
+      .catch(function(e){
+        // Left null when the secret was refused, so the panel returns to the
+        // prompt instead of an empty list that reads as "nothing sent in".
+        if(contribSecret()) state.contribItems = [];
+        toast(e && e.message ? e.message : 'Could not load contributions.');
+      })
       .then(function(){ state.contribLoading = false; render(); });
   }
 
@@ -1053,16 +1094,27 @@
         '<code>workers/contributions-worker.js</code> and put its URL there to see what students send in ' +
         'while helping build "coming soon" majors.</div>';
     }
+    if(!contribSecret()){
+      return '<h2>📮 Contributions</h2>' +
+        '<div class="admin-note">Listing every submission — and replying to or deleting one — needs the ' +
+        'Contributions Worker\'s <code>ADMIN_SECRET</code>. It is deliberately not shipped with the app, so it ' +
+        'is typed once per session and kept in this tab only.</div>' +
+        '<div class="form-field"><label for="contribSecretInput">ADMIN_SECRET</label>' +
+        '<input type="password" id="contribSecretInput" autocomplete="off" spellcheck="false"></div>' +
+        '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="contribUnlock">Unlock</button></div>';
+    }
     if(state.contribLoading || !state.contribItems){
       return '<h2>📮 Contributions</h2><p class="ex-note">Loading…</p>';
     }
     if(!state.contribItems.length){
       return '<h2>📮 Contributions</h2>' +
-        '<div class="form-actions"><button type="button" class="home-btn" id="contribReload">🔄 Refresh</button></div>' +
+        '<div class="form-actions"><button type="button" class="home-btn" id="contribReload">🔄 Refresh</button> ' +
+        '<button type="button" class="home-btn admin-mini" id="contribForget">Forget secret</button></div>' +
         '<p class="ex-note">Nothing sent in yet.</p>';
     }
     return '<h2>📮 Contributions</h2>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="contribReload">🔄 Refresh</button></div>' +
+      '<div class="form-actions"><button type="button" class="home-btn" id="contribReload">🔄 Refresh</button> ' +
+      '<button type="button" class="home-btn admin-mini" id="contribForget">Forget secret</button></div>' +
       state.contribItems.map(function(c){
         // Two kinds arrive on this endpoint. A plan contribution is a course
         // list to merge; a prerequisite report (js/86-prereq-report.js) is a
@@ -1104,6 +1156,26 @@
   }
 
   function bindContributions(main){
+    var unlock = document.getElementById('contribUnlock');
+    if(unlock){
+      var input = document.getElementById('contribSecretInput');
+      var accept = function(){
+        var v = input ? input.value.trim() : '';
+        if(!v) return;
+        setContribSecret(v);
+        state.contribItems = null;   // forces the load the render below starts
+        render();
+      };
+      unlock.addEventListener('click', accept);
+      // Enter is what anyone pasting a secret into a single field expects.
+      if(input) input.addEventListener('keydown', function(e){ if(e.key === 'Enter') accept(); });
+    }
+    var forget = document.getElementById('contribForget');
+    if(forget) forget.addEventListener('click', function(){
+      setContribSecret('');
+      state.contribItems = null;
+      render();
+    });
     var reload = document.getElementById('contribReload');
     if(reload) reload.addEventListener('click', loadContributions);
     main.querySelectorAll('[data-contrib-send]').forEach(function(btn){
@@ -1116,9 +1188,12 @@
         fetch(contribUrl() + '/contributions/' + encodeURIComponent(id) + '/reply', {
           method: 'POST', headers: contribHeaders(),
           body: JSON.stringify({ message: message, status: 'replied' })
-        }).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        }).then(contribRes)
           .then(function(){ toast('Reply sent.'); return loadContributions(); })
-          .catch(function(e){ toast('Could not send the reply: ' + e.message); });
+          .catch(function(e){
+            toast('Could not send the reply: ' + e.message);
+            if(!contribSecret()) render();
+          });
       });
     });
     main.querySelectorAll('[data-contrib-dismiss]').forEach(function(btn){
@@ -1126,9 +1201,12 @@
         var id = btn.getAttribute('data-contrib-dismiss');
         if(!confirm('Delete this contribution permanently? Use this for junk or duplicates only — it also removes any reply from what the student can see, so send a reply first for anything real.')) return;
         fetch(contribUrl() + '/contributions/' + encodeURIComponent(id), { method: 'DELETE', headers: contribHeaders() })
-          .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(contribRes)
           .then(function(){ toast('Dismissed.'); return loadContributions(); })
-          .catch(function(e){ toast('Could not dismiss it: ' + e.message); });
+          .catch(function(e){
+            toast('Could not dismiss it: ' + e.message);
+            if(!contribSecret()) render();
+          });
       });
     });
   }

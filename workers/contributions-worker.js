@@ -22,10 +22,12 @@
 //   1. Create a KV namespace and bind it as CONTRIB.
 //   2. Paste this file into a new Worker and deploy it.
 //   3. Put the Worker's URL in APP_CONTRIB_URL (web/js/01-catalogue.js).
-//   4. Set ADMIN_SECRET (a Worker secret, not a var) to whatever
-//      APP_CONTRIB_SECRET is set to in web/js/01-catalogue.js — this is
-//      what lets the admin panel list every submission and reply to one,
-//      versus a student who can only ever see their own device's.
+//   4. Set ADMIN_SECRET (a Worker secret, not a var) to any long random
+//      string — this is what lets the admin panel list every submission
+//      and reply to one, versus a student who can only ever see their own
+//      device's. The app does NOT ship it: the admin panel's Contributions
+//      tab asks for it once per session, so it lives only in the Worker and
+//      in whatever you keep your passwords in.
 //   5. Optional: set ALLOWED_ORIGIN to your site so no other page can post.
 // ---------------------------------------------------------------------------
 

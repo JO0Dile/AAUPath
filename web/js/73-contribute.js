@@ -18,8 +18,9 @@
 // Same non-account shape as Student Thoughts: one device id (shared via
 // window.__deviceId, js/14-storage.js), no login, no password on the
 // student's side. Reading and replying to EVERY contribution — not just
-// your own — needs APP_CONTRIB_SECRET, which only ships baked into the
-// app itself, the same way APP_COLLECT_SECRET works for js/31-collect.js.
+// your own — needs the Worker's ADMIN_SECRET, which is deliberately never
+// shipped with the app: the admin panel asks for it once per session and
+// holds it in sessionStorage (js/48-admin.js).
 // ==========================
 (function(){
   'use strict';
