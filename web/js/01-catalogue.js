@@ -147,7 +147,7 @@ window.APP_CLOUD_URL = 'https://studyplan-cloud.pmhtrfalab999.workers.dev';
 // against when APP_SUBMIT_URL is empty — no account/server needed, just a
 // place for submitted plan JSON to land for review. Leave '' to skip that
 // option and fall back to "download + send it to the maintainer yourself".
-window.APP_GITHUB_REPO = 'jo0dile/mymenupack';
+window.APP_GITHUB_REPO = 'JO0Dile/AAUPath';
 // Shown next to "Developer" on Home and in Settings — the one unambiguous
 // way to tell whether an update actually reached a given device, since the
 // hosted version can otherwise look identical before and after a real

@@ -4,10 +4,12 @@
   every screen inside it is a state, not an address. A sitemap listing invented
   fragment URLs would not help.
 
-  Not auto-discovered. A crawler looks for the sitemap named in robots.txt at
-  the ROOT of the domain (jo0dile.github.io/robots.txt), and this is a project
-  page under /MyMenuPack/, so nothing here can point at it. It has to be
-  submitted by hand in Google Search Console.
+  Not auto-discovered from here. A crawler looks for the sitemap named in
+  robots.txt at the ROOT of the domain (jo0dile.github.io/robots.txt), and
+  this is a project page under /AAUPath/, so nothing in this repo can point
+  at it. The root site (jo0dile.github.io, its own repo) now carries a
+  sitemap that lists this page, which is the route that actually works;
+  this file can also be submitted by hand in Google Search Console.
 
   Deliberately minimal. The first version declared hreflang alternates for en,
   ar and x-default that all pointed at this same URL — which describes nothing,
@@ -21,7 +23,7 @@
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://jo0dile.github.io/MyMenuPack/</loc>
+    <loc>https://jo0dile.github.io/AAUPath/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

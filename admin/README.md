@@ -63,7 +63,7 @@ prompt even on a customised plan.
 **No computer needed — a phone works.** Open:
 
 ```
-https://jo0dile.github.io/MyMenuPack/keygen.html
+https://jo0dile.github.io/AAUPath/keygen.html
 ```
 
 Type a password twice (or tap **Suggest a strong one**) and press **Generate**.
@@ -113,7 +113,7 @@ Create a Cloudflare Worker named `studyplan-admin`, paste in
 | `SESSION_SECRET` | **Secret** | from step 1 |
 | `GITHUB_TOKEN` | **Secret** | from step 2 |
 | `REPO_OWNER` | Variable | `JO0Dile` |
-| `REPO_NAME` | Variable | `MyMenuPack` |
+| `REPO_NAME` | Variable | `AAUPath` — the repo's *current* name. It was `MyMenuPack` before the rename; if the Worker still has the old value, fix it in the Cloudflare dashboard, because publishing writes to this repo through the GitHub API. |
 | `REPO_BRANCH` | Variable | `main` |
 | `ALLOWED_ORIGIN` | Variable | `https://jo0dile.github.io` — an **origin**: scheme and host only, no path, no trailing slash. A full app URL is accepted and trimmed down, but the bare origin is the honest value. Comma-separate to allow more than one. |
 | `REQUIRE_CF_ACCESS` | Variable | **Do not add this yet.** Only after step 3b is finished — see the warning there. |

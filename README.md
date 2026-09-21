@@ -8,7 +8,7 @@
 Pick your university → college → study plan, then track every course,
 prerequisite, and your GPA — in English or Arabic, on any phone.
 
-### ▶️ **[Open the app](https://jo0dile.github.io/MyMenuPack/)**
+### ▶️ **[Open the app](https://jo0dile.github.io/AAUPath/)**
 
 </div>
 
