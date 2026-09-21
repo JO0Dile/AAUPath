@@ -49,7 +49,7 @@
 //        SESSION_SECRET        (Secret)   any long random string
 //        GITHUB_TOKEN          (Secret)   fine-grained PAT, Contents: Read+Write, this repo only
 //        REPO_OWNER            (Variable) JO0Dile
-//        REPO_NAME             (Variable) MyMenuPack
+//        REPO_NAME             (Variable) AAUPath
 //        REPO_BRANCH           (Variable) main
 //        ALLOWED_ORIGIN        (Variable) https://jo0dile.github.io
 //        REQUIRE_CF_ACCESS     (Variable) LEAVE THIS UNSET until Cloudflare Access is
@@ -73,7 +73,7 @@ const enc = new TextEncoder();
 
 // An origin is scheme + host + port and nothing else. ALLOWED_ORIGIN is typed
 // by hand, so it routinely arrives as the full app URL
-// ("https://example.github.io/MyMenuPack/") or with a trailing slash — neither
+// ("https://example.github.io/AAUPath/") or with a trailing slash — neither
 // of which ever equals the Origin header a browser sends. The mismatch is
 // invisible from the outside: the Worker keeps working in an address bar,
 // because a top-level navigation sends no Origin at all, and only fetches from

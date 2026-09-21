@@ -12,7 +12,7 @@
 //   2. Add these Variables/Secrets to the Worker:
 //        GITHUB_TOKEN   (Secret)  fine-grained token, Contents: Read+Write, this repo only
 //        REPO_OWNER               e.g. JO0Dile
-//        REPO_NAME                e.g. MyMenuPack
+//        REPO_NAME                e.g. AAUPath
 //        REPO_BRANCH              e.g. main
 //        COLLECT_SECRET (Secret)  a word you make up; match APP_COLLECT_SECRET in plan.html
 //   3. Put the Worker's URL in APP_COLLECT_URL in plan.html.

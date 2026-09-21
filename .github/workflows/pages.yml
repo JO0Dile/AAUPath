@@ -1,7 +1,7 @@
 name: Deploy web/ to GitHub Pages
 
 # Publishes the web/ folder as a static site — this workflow IS the app's
-# hosting: it's what puts https://jo0dile.github.io/MyMenuPack/ online and
+# hosting: it's what puts https://jo0dile.github.io/AAUPath/ online and
 # updates it on every push to main. The app is fully self-contained (its
 # catalogue ships in web/plans.json), so this is the only deployment there is.
 #
