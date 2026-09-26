@@ -173,6 +173,10 @@
       run: function(id){ window.AAUP_ACHIEVEMENTS.open(id); } }
   ];
   var EXTRAS = [
+    // The one place to switch major: here, beside it. Only offered once a
+    // major is chosen — before that, Choose a Plan is the same question.
+    { key: 'switch', icon: 'shuffle', needs: true, onlyWithPlan: true, en: 'Switch major', ar: 'غيّر التخصص',
+      run: function(id){ window.AAUP_SIDEBAR.openPlanChooser(id); } },
     { key: 'share', icon: 'send', needs: true, en: 'Share my plan', ar: 'شارك خطتي',
       run: function(id){ window.AAUP_SHARE.open(id); } },
     { key: 'about', icon: 'help', needs: false, en: 'About', ar: 'عن التطبيق',
@@ -328,7 +332,7 @@
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
           '<div class="hm-grid">' + FEATURES.map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
           '<div class="hm-also"><span class="hm-label">' + esc(L('Also here', 'كمان هون')) + '</span>' +
-            EXTRAS.map(function(f){ return '<button type="button" class="hm-pill" data-hm-go="' + f.key + '">' + ic(f.icon, 15) + esc(L(f.en, f.ar)) + '</button>'; }).join('') +
+            EXTRAS.filter(function(f){ return !f.onlyWithPlan || id; }).map(function(f){ return '<button type="button" class="hm-pill" data-hm-go="' + f.key + '">' + ic(f.icon, 15) + esc(L(f.en, f.ar)) + '</button>'; }).join('') +
           '</div>' +
           '<div class="hm-foot"><span class="app-version-badge">v' + esc(window.APP_VERSION || '?') + '</span>' +
             '<button type="button" class="dev-link" data-hm-dev>' + esc(L('Developer', 'المطوّر')) + '</button></div>' +

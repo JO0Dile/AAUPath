@@ -2925,27 +2925,6 @@
   }
   .ach-grid-save:hover{border-color:var(--accent);color:var(--text);}
 
-  /* "Next Up" hero — the locked-but-applicable achievement closest to being
-     unlocked, so the modal leads with something concrete to chase instead of
-     a wall of badges. Uses the same fixed gold as .achievement-badge.unlocked
-     (achievement color stays constant across themes, like other category
-     colors in this app) rather than the per-theme --accent. */
-  .ach-next{
-    display:flex;align-items:center;gap:12px;
-    background:linear-gradient(180deg, rgba(242,185,61,.16), rgba(242,185,61,.04));
-    border:1px solid #f2b93d;border-radius:14px;
-    padding:13px 15px;margin-bottom:14px;
-  }
-  .ach-next-icon{
-    font-size:22px;flex:0 0 auto;width:44px;height:44px;border-radius:12px;
-    background:rgba(242,185,61,.16);display:flex;align-items:center;justify-content:center;
-  }
-  .ach-next-icon .app-icon-svg{width:22px;height:22px;color:#f2b93d;}
-  .ach-next-body{flex:1 1 auto;min-width:0;}
-  .ach-next-kicker{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#f2b93d;}
-  .ach-next-title{font-size:13px;font-weight:800;margin-top:2px;color:var(--text);}
-  .ach-next-track{margin-top:7px;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
-  .ach-next-track > span{display:block;height:100%;background:#f2b93d;border-radius:3px;transition:width .4s ease;}
 
   .achievement-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
 
@@ -2999,40 +2978,29 @@
   }
   .achievement-badge .ab-share:hover{background:var(--accent);color:var(--on-accent);}
 
-  /* Filter chips, section labels and the "Recently unlocked" strip are phone-only
-     structural additions (mockup-driven); desktop keeps its plain single-grid
-     layout, so these stay hidden there. */
-  .ach-cats, .ach-section-label, .ach-recent-scroll{display:none;}
-
-  @media (max-width:720px){
-    .ach-cats{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 14px;padding-bottom:2px;}
-    .ach-cat-pill{
-      flex:0 0 auto;font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:999px;
-      border:1px solid var(--line);background:none;color:var(--text-dim);
-      font-family:inherit;cursor:pointer;white-space:nowrap;
-    }
-    .ach-cat-pill:hover{border-color:var(--accent);color:var(--text);}
-    .ach-cat-pill.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
-
-    .ach-section-label{
-      display:block;font-size:10.5px;font-weight:800;color:var(--text-dim);text-transform:uppercase;
-      letter-spacing:.06em;margin:16px 2px 8px;
-    }
-
-    .ach-recent-scroll{display:flex;gap:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 0 4px;padding-bottom:2px;}
-    .ach-recent-card{
-      flex:0 0 auto;width:118px;background:rgba(255,255,255,.03);border:1px solid var(--line);
-      border-radius:12px;padding:11px;
-    }
-    .ach-recent-icon{
-      width:32px;height:32px;border-radius:50%;margin-bottom:8px;
-      display:flex;align-items:center;justify-content:center;
-      background:rgba(242,185,61,.16);border:2px solid #f2b93d;
-    }
-    .ach-recent-icon .app-icon-svg{width:17px;height:17px;color:#f2b93d;}
-    .ach-recent-title{font-size:11px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:3px;}
-    .ach-recent-when{font-size:9.5px;color:var(--text-dim);}
+  /* Earned · Almost there · See all badges (js/24-achievements.js). The
+     labels and the filter chips are on every screen size now — the chips
+     live inside "See all badges". */
+  .ach-cats{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0 14px;padding-bottom:2px;}
+  .ach-cat-pill{
+    flex:0 0 auto;font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:999px;
+    border:1px solid var(--line);background:none;color:var(--text-dim);
+    font-family:inherit;cursor:pointer;white-space:nowrap;
   }
+  .ach-cat-pill:hover{border-color:var(--accent);color:var(--text);}
+  .ach-cat-pill.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  .ach-section-label{
+    display:block;font-size:10.5px;font-weight:800;color:var(--text-dim);text-transform:uppercase;
+    letter-spacing:.06em;margin:16px 2px 8px;
+  }
+  .ach-empty{font-size:13px;color:var(--text-dim);margin:14px 2px;}
+  .ach-all{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
+  .ach-all-sum{
+    cursor:pointer;list-style:none;padding:10px 2px;font-size:13.5px;font-weight:800;color:var(--accent);
+  }
+  .ach-all-sum::-webkit-details-marker{display:none;}
+  .ach-all-sum::after{content:' \25BE';}
+  .ach-all[open] > .ach-all-sum::after{content:' \25B4';}
   /* ================= AI STUDY ADVISOR ================= */
 
   /* ---------- the travelling progress meter (js/69-phone-header.js) ----------
@@ -8312,18 +8280,30 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 .cdk.is-fail.is-on{background:var(--danger,#e8557c); border-color:var(--danger,#e8557c);}
 .cdk-clear{color:var(--text-dim); font-size:12px; font-weight:700;}
 .cdk:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-/* Marks, folded: one line until asked for. */
-.cd-marks{border:1px solid var(--line); border-radius:12px; margin-top:4px;}
-.cd-marks-sum{
-  display:flex; align-items:center; gap:8px; padding:11px 13px; cursor:pointer; list-style:none;
-  font-size:13px; font-weight:700; color:var(--text);
+/* "Add something" (optional): marks, difficulty, workload and notes behind
+   one button. Filled sections stay open; the menu offers the empty ones. */
+.cd-optbox{display:flex; flex-direction:column; gap:12px; margin-top:6px;}
+.cd-opt{border:1px solid var(--line); border-radius:12px; padding:11px 13px;}
+.cd-opt[hidden]{display:none;}
+.cd-opt > .k{display:block; margin-bottom:8px;}
+.cd-opt .pass-mark-toggle{margin-top:0;}
+.cd-opt-add{
+  display:flex; align-items:center; gap:9px; width:100%; cursor:pointer; text-align:start;
+  font-family:inherit; font-size:13.5px; font-weight:700; color:var(--text);
+  padding:12px 13px; border-radius:12px; border:1px solid var(--line); background:none;
 }
-.cd-marks-sum::-webkit-details-marker{display:none;}
-.cd-marks-sum::before{content:'+'; font-weight:900; color:var(--accent); width:12px;}
-.cd-marks[open] > .cd-marks-sum::before{content:'\2212';}
-.cd-marks-opt{margin-inline-start:auto; font-size:11px; font-weight:700; color:var(--text-dim);}
-.cd-marks-body{padding:0 13px 13px;}
-.cd-marks-body .pass-mark-toggle{margin-top:0;}
+.cd-opt-add[hidden]{display:none;}
+.cd-opt-add:hover{border-color:var(--accent);}
+.cd-opt-plus{color:var(--accent); font-weight:900; font-size:16px; line-height:1;}
+.cd-opt-optional{margin-inline-start:auto; font-size:11px; font-weight:700; color:var(--text-dim);}
+.cd-opt-menu{display:flex; flex-wrap:wrap; gap:8px; margin-top:-4px;}
+.cd-opt-menu[hidden]{display:none;}
+.cd-opt-choice{
+  font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;
+  padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--search-bg); color:var(--text);
+}
+.cd-opt-choice:hover{border-color:var(--accent);}
+.cd-opt-add:focus-visible, .cd-opt-choice:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .cd-addmark{margin-top:10px;}
 .cd-addmark-btn{
   font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;
@@ -8465,3 +8445,57 @@ details.way-card > .way-chips{margin:0 15px 14px;}
 }
 /* On the panel the ring's empty track needs the line colour, not the header's. */
 .dash-summary .dph-ring .track{stroke:var(--line);}
+
+/* =========================================================================
+   EDIT MODE: A DONE BAR THAT IS ALWAYS THERE  (js/28-imported.js)
+
+   Pinned to the bottom of the screen for as long as the plan is in Edit
+   Mode, so you always know you are editing and how to finish. On a phone
+   it takes the tab bar's place (the tabs would only take you away
+   mid-edit); on a laptop it sits under the plan, clear of the sidebar.
+   ========================================================================= */
+.edit-donebar{
+  position:fixed; z-index:960; left:50%; transform:translateX(-50%);
+  bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+  width:min(560px, calc(100vw - 24px));
+  display:flex; align-items:center; gap:11px;
+  padding:10px 10px 10px 14px; border-radius:18px;
+  background:var(--header-bg); border:1px solid color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow:0 -4px 30px rgba(0,0,0,.45); color:var(--text);
+}
+body.has-sidebar .edit-donebar{left:calc(50% + 115px);}
+.edit-donebar-ic{flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent);}
+.edit-donebar-ic .app-icon-svg{color:inherit;}
+.edit-donebar-text{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.3;}
+.edit-donebar-text b{font-size:13.5px;}
+.edit-donebar-text span{font-size:11.5px; color:var(--text-dim);}
+.edit-donebar-btn{
+  flex:none; font-family:inherit; font-size:14px; font-weight:800; cursor:pointer;
+  padding:10px 22px; border-radius:12px; border:0; background:var(--accent); color:var(--on-accent);
+}
+.edit-donebar-btn:hover{filter:brightness(1.08);}
+.edit-donebar-btn:focus-visible{outline:2px solid var(--text); outline-offset:2px;}
+/* Room at the end of the plan so the bar never hides the last row. */
+.sheet-plan.editing{padding-bottom:96px;}
+@media (max-width:720px){
+  body.has-sidebar .edit-donebar{left:50%;}
+  body:has(.sheet-plan.editing) .sb-tabbar{display:none;}
+}
+
+/* What students said about this course (js/49-course-detail.js saidHTML). */
+.cd-said{
+  display:flex; flex-direction:column; gap:5px; width:100%; margin:14px 0 0; padding:12px 14px;
+  text-align:start; cursor:pointer; font-family:inherit; color:var(--text);
+  background:var(--search-bg); border:1px solid var(--line); border-radius:12px;
+}
+.cd-said:hover{border-color:var(--accent);}
+.cd-said:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.cd-said-top{display:flex; justify-content:space-between; gap:10px; font-size:13px;}
+.cd-said-top span{color:var(--accent); font-weight:800; font-size:12px; white-space:nowrap;}
+.cd-said-quote{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
+/* Student Thoughts can open from inside a course ("3 students wrote about
+   this"), so it sits one step above the course window it opens over. */
+#thoughtsModalOverlay{z-index:1001;}
+/* "Almost there" is the row worth looking at, so it is not greyed out like
+   the rest of the locked badges. */
+.ach-closest .achievement-badge.locked{opacity:1; filter:none;}

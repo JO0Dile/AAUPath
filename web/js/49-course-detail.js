@@ -55,7 +55,9 @@
       opensCount: function(n){ return 'Taking this keeps ' + n + ' later course' + (n === 1 ? '' : 's') + ' on schedule.'; },
       credits: 'Hours', unlocksN: 'Unlocks', status: 'Status', needsN: 'Needs', none: 'None',
       year: function(n){ return 'Year ' + n; }, sem: { s1: 'First semester', s2: 'Second semester', s3: 'Summer' },
-      viewTree: 'View in course tree'
+      viewTree: 'View in course tree',
+      said: function(n){ return n === 1 ? '1 student wrote about this' : n + ' students wrote about this'; },
+      readAll: 'Read them'
     },
     ar: {
       why: 'لماذا يمكنك أخذ هذا المساق الآن',
@@ -74,7 +76,9 @@
       opensCount: function(n){ return 'أخذه الآن يبقي ' + n + ' مساقاً لاحقاً في موعده.'; },
       credits: 'الساعات', unlocksN: 'يفتح', status: 'الحالة', needsN: 'يحتاج', none: 'ولا شي',
       year: function(n){ return 'سنة ' + n; }, sem: { s1: 'الفصل الأول', s2: 'الفصل الثاني', s3: 'الصيفي' },
-      viewTree: 'اعرضه في شجرة المساقات'
+      viewTree: 'اعرضه في شجرة المساقات',
+      said: function(n){ return n === 1 ? 'طالب واحد كتب عن هذا المساق' : n + ' طلاب كتبوا عن هذا المساق'; },
+      readAll: 'اقرأها'
     }
   };
 
@@ -226,6 +230,32 @@
     return '<div class="cd-mini-chain">' + parts.join('<span class="cd-prereq-arrow">' + (rtl ? '←' : '→') + '</span>') + '</div>';
   }
 
+  // What students said about THIS course, from the major's Student Thoughts
+  // wall (js/59-thoughts.js, already cached on this device): posts that name
+  // the course, its Arabic name or its number. Nothing when none do, and
+  // nothing is fetched just for this.
+  function reEsc(x){ return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function saidHTML(prefix, slug, rtl, t, info){
+    if(!window.AAUP_THOUGHTS || !window.AAUP_THOUGHTS.wallFor) return '';
+    var name = String(info.name || '').trim();
+    var arName = String(info.ar || '').trim();
+    var num = String(info.num || '').trim();
+    if(!name && !arName) return '';
+    // Whole name only, and "Calculus I" must not match "Calculus II".
+    var enRe = name ? new RegExp('(^|[^a-z0-9])' + reEsc(name) + '(?![a-z0-9])(?!\\s+i\\b)', 'i') : null;
+    var hits = window.AAUP_THOUGHTS.wallFor(prefix).filter(function(p){
+      var txt = String(p.text || '');
+      return (enRe && enRe.test(txt)) || (arName && txt.indexOf(arName) !== -1) ||
+        (num && num !== '-' && num.length > 4 && txt.indexOf(num) !== -1);
+    });
+    if(!hits.length) return '';
+    var quote = String(hits[0].text || '');
+    if(quote.length > 110) quote = quote.slice(0, 107) + '…';
+    return '<button type="button" class="cd-said" data-cd-said="' + esc(prefix) + '">' +
+      '<span class="cd-said-top"><b>' + esc(t.said(hits.length)) + '</b><span>' + esc(t.readAll) + ' ›</span></span>' +
+      '<span class="cd-said-quote">“' + esc(quote) + '”</span></button>';
+  }
+
   // course is the plan's own record (credit hours, term); info is the
   // registered course table (number, theoretical/practical split, Arabic name).
   function build(prefix, slug, course, rtl){
@@ -264,6 +294,7 @@
           '</div>' +
           '<div class="cd-swipe-dots" id="cdSlideDots"><span class="on"></span><span></span></div>' +
           dropsHTML(prefix, slug, rtl) +
+          saidHTML(prefix, slug, rtl, t, info) +
           // 52 · The English placement question, asked on the three courses
           // it decides rather than as a gate in front of the whole app.
           // Empty for every other course, and once it has been answered.
@@ -322,6 +353,13 @@
       slides.addEventListener('scroll', function(){
         var idx = Math.round(slides.scrollLeft / slides.clientWidth);
         dotEls.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
+      });
+    }
+    var saidBtn = container.querySelector('[data-cd-said]');
+    if(saidBtn){
+      // Opens on top of the course, so going back lands on the course again.
+      saidBtn.addEventListener('click', function(){
+        if(window.AAUP_THOUGHTS) window.AAUP_THOUGHTS.open(saidBtn.getAttribute('data-cd-said'));
       });
     }
     var viewTreeBtn = container.querySelector('[data-cd-view-tree]');

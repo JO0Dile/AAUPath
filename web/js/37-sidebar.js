@@ -138,7 +138,7 @@
     var saved = window.AAUP_IMPORTED ? Object.keys(window.AAUP_IMPORTED.loadImportedPlans() || {}).length : 0;
     var r = ar();
     body.innerHTML =
-      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('shuffle', 20) + (r ? 'تغيير الخطة' : 'Change plan') + '</h2>' +
+      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('shuffle', 20) + (r ? 'غيّر التخصص' : 'Switch major') + '</h2>' +
       '<div class="cp-choice"' + (r ? ' dir="rtl"' : '') + '>' +
         '<button type="button" class="cp-choice-btn" id="cpMajor">' +
           '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('compass', 20) + '</span>' +
@@ -257,7 +257,6 @@
       else soloItems.push(item);
     });
     byGroup.account.push({ key: 'settings', icon: 'gear', label: 'Settings', ar: 'الإعدادات' });
-    byGroup.account.push({ key: 'switch', icon: 'shuffle', label: 'Change plan', ar: 'تغيير الخطة' });
 
     function rowHtml(item){
       return '<button type="button" class="sb-mrow' + (item.key === activeKey ? ' active' : '') +
@@ -322,8 +321,10 @@
         '<div class="sb-adv-panel" id="sbAdvancedPanel-flat"' + (advExpanded ? '' : ' hidden') + '>' +
           advItems.map(itemHtml).join('') + '</div>';
     }
-    html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button>' +
-      '<button type="button" class="sb-item" data-sb-key="switch"><span class="sb-icon">' + window.AAUP_ICONS.preview('shuffle', 16) + '</span><span>' + (ar() ? 'تغيير الخطة' : 'Change plan') + '</span></button></div>';
+    // "Change plan" used to sit here as well as on the dashboard and in the
+    // Course Library. Switching major lives in one place now: the home
+    // screen (js/90-task-home.js), next to the major it switches.
+    html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button></div>';
     html += '</div>';
     html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey) + '</div>';
     sidebar.innerHTML = html;
@@ -360,7 +361,6 @@
         // tapped. Read before closeMobile() clears .open below.
         var openedFromMoreDrawer = sidebar.classList.contains('open');
         closeMobile();
-        if(key === 'switch'){ openPlanChooser(prefix); return; }
         if(key === 'settings'){ openSettings(); tagOpenedFromMore(openedFromMoreDrawer); return; }
         if(key === 'home'){ goHome(); return; }
         var item = itemsFor(prefix).filter(function(i){ return i.key === key; })[0];
