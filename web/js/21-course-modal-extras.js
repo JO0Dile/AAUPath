@@ -218,14 +218,32 @@
   // and once it is finished. showApply is the only difference: "use as my
   // grade" needs a grade dropdown to write into, and there is not one until
   // the course is done.
+  // Completely optional, so it starts folded: one line that says what it is
+  // for. Inside, the pass mark and a single "Add a mark" button whose choices
+  // (Mid Term, Lab, Quiz…) appear only when it is tapped — the five preset
+  // buttons and the pass-mark switch used to sit open on every course.
+  function marksBoxHtml(rows, summary, rtl, showApply, scale){
+    return '<details class="cd-marks"' + (rows.length ? ' open' : '') + '>' +
+      '<summary class="cd-marks-sum">' + (rtl ? 'احسب علامتي من علاماتي الجزئية' : 'Work out my grade from my marks') +
+        '<span class="cd-marks-opt">' + (rtl ? 'اختياري' : 'optional') + '</span></summary>' +
+      '<div class="cd-marks-body">' +
+        passMarkToggleHtml(scale, rtl) +
+        assessmentBlockHtml(rows, summary, rtl, showApply) +
+      '</div></details>';
+  }
+
   function assessmentBlockHtml(rows, summary, rtl, showApply){
     return '<div class="assessment-breakdown" id="assessmentBreakdown">' +
       '<div class="assessment-rows" id="assessmentRows">' + assessmentRowsHtml(rows, rtl) + '</div>' +
-      '<div class="assessment-quick-add" id="assessmentQuickAdd">' +
-        ASSESSMENT_PRESETS_EN.map(function(p){
-          return '<button type="button" class="aq-btn" data-preset="' + p + '">+ ' + (rtl ? ASSESSMENT_PRESETS_AR[p] : p) + '</button>';
-        }).join('') +
-        '<button type="button" class="aq-btn" data-preset="">+ ' + (rtl ? 'آخر' : 'Other') + '</button>' +
+      '<div class="cd-addmark">' +
+        '<button type="button" class="cd-addmark-btn" id="assessmentAddBtn" aria-expanded="false" aria-controls="assessmentQuickAdd">+ ' +
+          (rtl ? 'أضف علامة' : 'Add a mark') + '</button>' +
+        '<div class="assessment-quick-add" id="assessmentQuickAdd" hidden>' +
+          ASSESSMENT_PRESETS_EN.map(function(p){
+            return '<button type="button" class="aq-btn" data-preset="' + p + '">' + (rtl ? ASSESSMENT_PRESETS_AR[p] : p) + '</button>';
+          }).join('') +
+          '<button type="button" class="aq-btn" data-preset="">' + (rtl ? 'آخر' : 'Other') + '</button>' +
+        '</div>' +
       '</div>' +
       '<div class="assessment-summary" id="assessmentSummary">' + summary.html + '</div>' +
       (showApply
@@ -308,7 +326,7 @@
       { v: '', en: 'Not started', ar: 'لم يبدأ' },
       { v: 'in_progress', en: 'In progress', ar: 'قيد الإنجاز' },
       { v: 'planned', en: 'Planned', ar: 'مخطط' },
-      { v: 'done', en: 'Done', ar: 'مكتمل' }
+      { v: 'done', en: 'Passed', ar: 'منجز' }
     ];
     var statusHtml = statusOptions.map(function(o){
       var isDoneOption = o.v === 'done';
@@ -334,10 +352,21 @@
       var breakdownAll = window.AAUP_GPA.loadAssessmentBreakdown();
       var rows = breakdownAll[pid] || [];
       var summary = assessmentSummaryHtml(rows, prefix, pid, rtl, currentGrade || null);
+      // The letters as a keypad, one tap each — the same keypad the grades
+      // screen uses (js/51-gpa-studio.js). The <select> stays, hidden, as
+      // the one control the rest of this file reads and writes, so every
+      // path that sets a grade (the keypad, "Use as my grade") goes through
+      // the same change handler as before.
+      var keys = window.AAUP_GPA.GRADE_ORDER.map(function(g){
+        var fail = window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(g);
+        return '<button type="button" class="cdk' + (fail ? ' is-fail' : '') + (g === currentGrade ? ' is-on' : '') +
+          '" data-cdk="' + g + '" aria-pressed="' + (g === currentGrade) + '" title="' + window.__escapeHtml(window.AAUP_GPA.gradeLabel(g)) + '">' + g + '</button>';
+      }).join('') +
+        '<button type="button" class="cdk cdk-clear" data-cdk="" aria-label="' + (rtl ? 'امسح العلامة' : 'Clear the grade') + '">' + (rtl ? 'امسح' : 'Clear') + '</button>';
       gradeHtml = '<div class="modal-row-block"><span class="k">' + (rtl ? 'العلامة' : 'Grade') + '</span>' +
-        '<select class="grade-select" id="courseGradeSelect">' + opts + '</select>' +
-        passMarkToggleHtml(scale, rtl) +
-        assessmentBlockHtml(rows, summary, rtl, true) +
+        '<div class="cdk-keys" id="courseGradeKeys" role="group" aria-label="' + (rtl ? 'العلامة' : 'Grade') + '">' + keys + '</div>' +
+        '<select class="grade-select" id="courseGradeSelect" hidden aria-hidden="true" tabindex="-1">' + opts + '</select>' +
+        marksBoxHtml(rows, summary, rtl, true, scale) +
         '</div>';
     } else {
       // The marks calculator used to be locked behind "mark this course
@@ -350,9 +379,8 @@
       var rowsOpen = breakdownOpen[pid] || [];
       var summaryOpen = assessmentSummaryHtml(rowsOpen, prefix, pid, rtl, null);
       gradeHtml = '<div class="modal-row-block"><span class="k">' + (rtl ? 'العلامة' : 'Grade') + '</span>' +
-        '<p class="ex-note">' + (rtl ? 'أكمل هذا المساق أولًا لإدخال علامة.' : 'Mark this course complete to enter a grade.') + '</p>' +
-        passMarkToggleHtml(scaleOpen, rtl) +
-        assessmentBlockHtml(rowsOpen, summaryOpen, rtl, false) +
+        '<p class="ex-note">' + (rtl ? 'علّم المساق «منجز» فوق لتضع علامته.' : 'Set the status to Passed above to enter a grade.') + '</p>' +
+        marksBoxHtml(rowsOpen, summaryOpen, rtl, false, scaleOpen) +
         '</div>';
     }
 
@@ -415,7 +443,7 @@
     // size.
     return '<div class="modal-extras' + (isDone ? ' is-done' : '') + (locked ? ' is-locked' : '') + '" data-pid="' + pid + '" data-slug="' + slug + '">' +
       nameFieldHtml +
-      '<div class="modal-row-block cd-locked-hide"><span class="k">' + (rtl ? 'حالة التخطيط' : 'Planning status') + '</span>' +
+      '<div class="modal-row-block cd-locked-hide"><span class="k">' + (rtl ? 'الحالة' : 'Status') + '</span>' +
       '<div class="status-btn-group">' + statusHtml + '</div>' + whoElseHtml + '</div>' +
       '<div class="cd-review-block">' +
       gradeHtml +
@@ -556,8 +584,36 @@
     });
 
     var gradeSelect = container.querySelector('#courseGradeSelect');
+    var gradeKeys = container.querySelector('#courseGradeKeys');
+    function syncKeys(){
+      if(!gradeKeys || !gradeSelect) return;
+      gradeKeys.querySelectorAll('[data-cdk]').forEach(function(k){
+        var on = !!gradeSelect.value && k.getAttribute('data-cdk') === gradeSelect.value;
+        k.classList.toggle('is-on', on);
+        k.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+    if(gradeKeys && gradeSelect){
+      gradeKeys.addEventListener('click', function(e){
+        var k = e.target.closest && e.target.closest('[data-cdk]');
+        if(!k) return;
+        var val = k.getAttribute('data-cdk');
+        // Tapping the grade already set clears it, as on the grades screen.
+        gradeSelect.value = (val && gradeSelect.value !== val) ? val : '';
+        gradeSelect.dispatchEvent(new window.Event('change'));
+      });
+    }
+    var addMarkBtn = container.querySelector('#assessmentAddBtn');
+    var addMarkMenu = container.querySelector('#assessmentQuickAdd');
+    if(addMarkBtn && addMarkMenu){
+      addMarkBtn.addEventListener('click', function(){
+        addMarkMenu.hidden = !addMarkMenu.hidden;
+        addMarkBtn.setAttribute('aria-expanded', addMarkMenu.hidden ? 'false' : 'true');
+      });
+    }
     if(gradeSelect){
       gradeSelect.addEventListener('change', function(){
+        syncKeys();
         if(window.__applyGradeChange){ window.__applyGradeChange(prefix, pid, gradeSelect.value); }
         // Picking a letter directly (e.g. copying it from an official
         // transcript) also feeds the reverse final-exam-range lookup below.
@@ -652,6 +708,8 @@
           assessRowsEl.innerHTML = assessmentRowsHtml(rows, rtlBind);
           bindRowInputs();
           refreshAssessmentTotal();
+          if(addMarkMenu){ addMarkMenu.hidden = true; }
+          if(addMarkBtn){ addMarkBtn.setAttribute('aria-expanded', 'false'); }
           var newScoreInput = assessRowsEl.querySelector('.assessment-row[data-idx="' + (rows.length - 1) + '"] .ar-score');
           if(newScoreInput){ newScoreInput.focus(); }
         });
@@ -663,6 +721,7 @@
         if(!pendingLetter) return;
         gradeSelect.value = pendingLetter;
         if(window.__applyGradeChange){ window.__applyGradeChange(prefix, pid, pendingLetter); }
+        syncKeys();
       });
     }
 
