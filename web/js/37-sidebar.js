@@ -49,18 +49,21 @@
   // only move you somewhere else. It is a mode, so it belongs where modes
   // are chosen, at the top of the menu, and the plan page is left showing
   // the plan.
+  // One menu: the phone's tab bar (TABS below) decides it and the laptop
+  // copies it — Home, My Plan, Grades first, in the same order, then the
+  // rest. My Plan is one place with two tabs, Courses and Progress (what the
+  // Dashboard was), and opens on whichever was used last.
   var ITEMS = [
-    { key: 'edit', icon: 'pen', label: 'Edit Mode', ar: 'وضع التعديل', group: null, planOnly: true,
+    { key: 'myplan', icon: 'planpin', label: 'My Plan', ar: 'خطتي', group: null, tab: true, action: function(prefix){ openMyPlan(prefix); } },
+    { key: 'audit', icon: 'clipboard', label: 'Grades', ar: 'العلامات', group: null, tab: true, action: function(prefix){ window.AAUP_AUDIT.open(prefix, 'now'); } },
+    { key: 'edit', icon: 'pen', label: 'Edit Mode', ar: 'وضع التعديل', group: 'plan', planOnly: true,
       action: function(prefix){ if(window.AAUP_IMPORTED) window.AAUP_IMPORTED.toggleEdit(prefix); } },
-    { key: 'dashboard', icon: 'chart', label: 'Dashboard', ar: 'لوحة التحكم', group: null, action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
-    { key: 'studyplan', icon: 'planpin', label: 'My Study Plan', ar: 'خطتي الدراسية', group: 'plan', action: function(prefix){ window.AAUP_DASHBOARD.openStudyPlan(prefix); } },
     // Four rows left this list, each into the screen that was already
     // answering the same question:
     //   My Path            -> requirement chips on the plan's own filter
     //   What if… (GPA)     -> the Degree Audit's second mode
     //   Plan My Next Sem.  -> under "You are here" on the plan
     //   Overview & Print   -> Share this plan, as the third way out
-    { key: 'audit', icon: 'clipboard', label: 'Degree Audit & GPA', ar: 'التدقيق والمعدل', group: 'plan', action: function(prefix){ window.AAUP_AUDIT.open(prefix); } },
     // The split below is one rule: a row about THIS plan sits in the list,
     // anything that is not mainly about the plan — other students, the
     // professors, the whole course catalogue, the app itself — sits behind
@@ -98,6 +101,20 @@
   // Edit Mode, Export and Contribute all act on an imported plan through
   // AAUP_IMPORTED. A built-in major has none of those, so the rows are not
   // offered there rather than being offered and doing nothing.
+  // My Plan remembers its tab, so the menu takes you back to what you were
+  // last looking at: the courses, or how the plan is going.
+  var MYPLAN_KEY = 'aaup_myplan_tab';
+  function myPlanTab(){ try{ return localStorage.getItem(MYPLAN_KEY) === 'progress' ? 'progress' : 'courses'; }catch(e){ return 'courses'; } }
+  function setMyPlanTab(t){ try{ localStorage.setItem(MYPLAN_KEY, t); }catch(e){} }
+  function openMyPlan(prefix, tab){
+    tab = tab || myPlanTab();
+    setMyPlanTab(tab);
+    if(tab === 'progress') window.AAUP_DASHBOARD.open(prefix);
+    else window.AAUP_DASHBOARD.openStudyPlan(prefix);
+  }
+  // Both halves of My Plan light up the one My Plan entry.
+  function navKey(k){ return (k === 'dashboard' || k === 'studyplan') ? 'myplan' : k; }
+
   function itemsFor(prefix){
     var imported = isImportedPlan(prefix);
     return ITEMS.filter(function(i){ return imported || !i.planOnly; });
@@ -252,6 +269,8 @@
     // pile of unrelated leftovers.
     var soloItems = [];
     itemsFor(prefix).forEach(function(item){
+      // My Plan and Grades are on the tab bar right under this sheet.
+      if(item.tab) return;
       if(item.advanced){ adv.push(item); return; }
       if(item.group && byGroup[item.group]) byGroup[item.group].push(item);
       else soloItems.push(item);
@@ -294,6 +313,7 @@
   }
 
   function render(prefix, activeKey){
+    activeKey = navKey(activeKey);
     var sidebar = document.getElementById('appSidebar');
     if(!sidebar) return;
     var name = planName(prefix);
@@ -370,7 +390,7 @@
           // it never becomes the "active" nav row. It re-renders instead, so
           // the row can redraw itself as Exit Edit Mode.
           if(key === 'edit'){ render(prefix, activeKey); return; }
-          if(key !== 'dashboard' && key !== 'studyplan'){ setActive(key); }
+          if(key !== 'myplan'){ setActive(key); }
           tagOpenedFromMore(openedFromMoreDrawer);
         }
       });
@@ -422,6 +442,7 @@
   else { window.addEventListener('load', watchMoreReturn); }
 
   function setActive(key){
+    key = navKey(key);
     activeKeyNow = key;
     var sidebar = document.getElementById('appSidebar');
     if(!sidebar) return;
@@ -480,8 +501,8 @@
   // the tab bar was the only way around a phone that had no way back to it.
   var TABS = [
     { key: 'home', icon: 'home', label: 'Home', ar: 'الرئيسية', action: function(){ goHome(); } },
-    { key: 'dashboard', icon: 'chart', label: 'Dashboard', ar: 'لوحة التحكم', action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
-    { key: 'studyplan', icon: 'planpin', label: 'Plan', ar: 'الخطة', action: function(prefix){ window.AAUP_DASHBOARD.openStudyPlan(prefix); } },
+    { key: 'myplan', icon: 'planpin', label: 'My Plan', ar: 'خطتي', action: function(prefix){ openMyPlan(prefix); } },
+    { key: 'audit', icon: 'clipboard', label: 'Grades', ar: 'العلامات', action: function(prefix){ window.AAUP_AUDIT.open(prefix, 'now'); } },
     { key: 'assistant', icon: 'chatdots', label: 'Assistant', ar: 'المساعد', action: function(){ if(window.AAUP_ASSISTANT_UI) window.AAUP_ASSISTANT_UI.open(); } },
     { key: 'more', icon: 'menu', label: 'More', ar: 'المزيد', action: function(){ toggleMobile(); } }
   ];
@@ -494,7 +515,7 @@
     bar.className = 'sb-tabbar';
     bar.innerHTML = TABS.map(function(tItem){
       return '<button type="button" class="sb-tab" data-sb-tab="' + tItem.key + '">' +
-        '<span class="sb-tab-ic">' + window.AAUP_ICONS.preview(tItem.icon, 20) + (tItem.key === 'dashboard' ? '<span class="sb-tab-badge" id="sbTabProgress" hidden></span>' : '') + '</span>' +
+        '<span class="sb-tab-ic">' + window.AAUP_ICONS.preview(tItem.icon, 20) + (tItem.key === 'myplan' ? '<span class="sb-tab-badge" id="sbTabProgress" hidden></span>' : '') + '</span>' +
         '<span class="sb-tab-lbl">' + (ar() ? tItem.ar : tItem.label) + '</span>' +
         '</button>';
     }).join('');
@@ -525,6 +546,7 @@
   }
 
   function syncTabBar(prefix, activeKey){
+    activeKey = navKey(activeKey);
     var bar = ensureTabBar();
     bar.querySelectorAll('[data-sb-tab]').forEach(function(el){
       el.classList.toggle('active', el.getAttribute('data-sb-tab') === activeKey);
@@ -592,7 +614,7 @@
         : '') +
       '<div class="form-field-row">' +
       '<div class="form-field"><input type="text" id="newAcctName" maxlength="40" placeholder="' + (r ? 'اسم حساب جديد' : 'New account name') + '"></div>' +
-      '<button type="button" class="home-btn" id="newAcctBtn" style="border-color:var(--accent);color:var(--text);align-self:flex-start;">' + window.AAUP_ICONS.preview('plus', 14) + (r ? 'إنشاء' : 'Create') + '</button>' +
+      '<button type="button" class="home-btn btn-pri" id="newAcctBtn" style="align-self:flex-start;">' + window.AAUP_ICONS.preview('plus', 14) + (r ? 'إنشاء' : 'Create') + '</button>' +
       '</div>' +
       '<div id="acctMsg"></div>';
   }
@@ -946,7 +968,25 @@
     if(currentPrefix) render(currentPrefix, activeKeyNow);
   }
 
-  window.AAUP_SIDEBAR = { show: show, hide: hide, setActive: setActive, toggleMobile: toggleMobile, closeMobile: closeMobile, openSettings: openSettings, refresh: refresh, openPlanChooser: openPlanChooser };
+  // The two big buttons at the top of My Plan (js/28-imported.js puts them
+  // on the courses page, js/36-dashboard.js on the progress page).
+  function myPlanTabsHtml(prefix, active){
+    var r = ar();
+    function b(key, en, arTx){
+      var on = active === key;
+      return '<button type="button" class="mp-tab' + (on ? ' on' : '') + '" data-myplan-tab="' + key + '" data-myplan-prefix="' + prefix + '" aria-pressed="' + on + '">' + (r ? arTx : en) + '</button>';
+    }
+    return '<div class="mp-tabs" role="group" aria-label="' + (r ? 'خطتي' : 'My Plan') + '">' +
+      b('courses', 'Courses', 'المساقات') + b('progress', 'Progress', 'التقدّم') + '</div>';
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-myplan-tab]');
+    if(!b || b.classList.contains('on')) return;
+    openMyPlan(b.getAttribute('data-myplan-prefix'), b.getAttribute('data-myplan-tab'));
+  });
+
+  window.AAUP_SIDEBAR = { show: show, hide: hide, setActive: setActive, toggleMobile: toggleMobile, closeMobile: closeMobile, openSettings: openSettings, refresh: refresh, openPlanChooser: openPlanChooser,
+    openMyPlan: openMyPlan, myPlanTabsHtml: myPlanTabsHtml };
   // Called from js/28-imported.js's own post-render hook chain (same one
   // js/69-phone-header.js's refresh already sits in) so the tab bar's
   // progress badge updates the moment a course gets checked, not only the
