@@ -292,14 +292,18 @@
   // The audit and What-if are both about one number: where the GPA is, and
   // where it would be. What-if used to be a menu row of its own; it is now
   // this screen's other mode, drawn into the same body by AAUP_WHATIF.mount.
+  // Grades is one place for everything about grades: the GPA and every
+  // grade (My grades), what would change it (What if), and what the degree
+  // still needs (Requirements). 'now' stays the key for My grades so older
+  // callers that open this screen on it still land in the right place.
   var mode = 'now';
 
   function modeBarHtml(rtl){
-    if(!window.AAUP_WHATIF || !window.AAUP_WHATIF.mount) return '';
     var tabs = [
-      ['now', rtl ? 'وين أنا' : 'Where I am'],
-      ['whatif', rtl ? 'ماذا لو…' : 'What if…']
-    ];
+      ['now', rtl ? 'علاماتي' : 'My grades'],
+      window.AAUP_WHATIF && window.AAUP_WHATIF.mount ? ['whatif', rtl ? 'ماذا لو' : 'What if'] : null,
+      ['req', rtl ? 'المتطلبات' : 'Requirements']
+    ].filter(Boolean);
     return '<div class="au-modes" role="group">' + tabs.map(function(pair){
       var on = mode === pair[0];
       return '<button type="button" class="au-mode' + (on ? ' au-mode-on' : '') +
@@ -391,7 +395,7 @@
        window.AAUP_GPA_STUDIO && window.AAUP_GPA_STUDIO.resetChanged){
       window.AAUP_GPA_STUDIO.resetChanged();
     }
-    if(startMode === 'now' || startMode === 'whatif'){ mode = startMode; }
+    if(startMode === 'now' || startMode === 'whatif' || startMode === 'req'){ mode = startMode; }
     var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
     // The sentence that used to sit here explained which screen set a grade
     // and which screen edited one. It was true, and it only had to exist
@@ -411,7 +415,7 @@
     // that module is missing for any reason, the original three-card
     // summary is the fallback, not a blank space.
     var head = '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('clipboard', 20) +
-      (rtl ? 'التدقيق الأكاديمي والمعدل' : 'Degree Audit &amp; GPA') + '</h2>' + modeBarHtml(rtl);
+      (rtl ? 'العلامات' : 'Grades') + '</h2>' + modeBarHtml(rtl);
 
     if(mode === 'whatif'){
       body.innerHTML = head + '<div id="auditWhatIfBody"></div>';
@@ -421,25 +425,24 @@
       return;
     }
 
+    if(mode === 'req'){
+      body.innerHTML = head + advisoryHtml(prefix, rtl) + renderAuditTable(prefix, rtl);
+      overlay.classList.add('open');
+      bindModes(prefix);
+      markScrollable(body);
+      return;
+    }
+
+    // My grades. The reach-a-target slider is part of the studio's layout;
+    // the second target tool that used to follow it here asked the same
+    // question of the same hours, so it is not drawn twice.
     body.innerHTML = head +
       (window.AAUP_GPA_STUDIO ? window.AAUP_GPA_STUDIO.layout(prefix, rtl) : renderGpaDashboard(prefix, rtl)) +
-      // "What do I need to reach…" needs a current GPA to answer from. With
-      // none it printed its heading over the words "No grades yet." — a
-      // second empty state stacked on the one right above it.
-      (window.AAUP_GPA_TARGET && anyGrades
-        ? '<div class="gt-section"><h3 style="margin-bottom:6px;">' + window.AAUP_GPA_TARGET.title(rtl) + '</h3>' +
-          '<div id="auditGpaTargetBody"></div></div>'
-        : '') +
-      renderSemesterGpas(prefix, rtl) +
-      advisoryHtml(prefix, rtl) +
-      renderAuditTable(prefix, rtl);
+      (anyGrades ? renderSemesterGpas(prefix, rtl) : '');
     overlay.classList.add('open');
     bindModes(prefix);
     markScrollable(body);
     if(window.AAUP_GPA_STUDIO) window.AAUP_GPA_STUDIO.bind(prefix, rtl);
-    if(window.AAUP_GPA_TARGET && document.getElementById('auditGpaTargetBody')){
-      window.AAUP_GPA_TARGET.render(prefix, 'auditGpaTargetBody', rtl);
-    }
   }
 
   // The table has always scrolled sideways — .audit-table-wrap carries

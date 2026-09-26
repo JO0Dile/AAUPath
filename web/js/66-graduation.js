@@ -160,7 +160,10 @@
     done: { en: 'Nothing left to plan for — every course is done.', ar: 'ما بقي إشي تخطط له — كل المساقات منجزة.' },
     years1: { en: '(≈1 year)', ar: '(≈سنة)' },
     yearsN: { en: '(≈{n} years)', ar: '(≈{n} سنوات)' },
-    saveImg: { en: 'Save as image', ar: 'احفظ كصورة' }
+    saveImg: { en: 'Save as image', ar: 'احفظ كصورة' },
+    youFinish: { en: 'You finish in {term}', ar: 'بتتخرّج {term}' },
+    atLoad: { en: 'at {load} hours a semester', ar: 'على {load} ساعة بالفصل' },
+    how: { en: 'How is this worked out?', ar: 'كيف انحسبت؟' }
   };
   function t(k, r){ return r ? TX[k].ar : TX[k].en; }
 
@@ -218,6 +221,9 @@
     };
   }
 
+  // Dragging the slider redraws the card; the working stays open while it does.
+  var howOpen = false;
+
   function render(prefix, hostId){
     var host = document.getElementById(hostId);
     if(!host) return;
@@ -266,14 +272,17 @@
 
     // The answer first, then the one control that changes it. The old order
     // put a paragraph and a slider above the date the card exists to give.
+    // Rule 2: the answer, then the working one tap away. The date and the
+    // load it assumes are the answer; the slider, the steps and the caveats
+    // are how it was worked out, folded underneath.
     host.innerHTML =
-      '<div class="grad-finish">' +
-        '<span>' + t('finish', rtl) + '</span>' +
-        '<b>' + termLabel(finish, rtl) + ' · ' +
+      '<div class="grad-answer">' +
+        '<b>' + t('youFinish', rtl).replace('{term}', termLabel(finish, rtl)) + '</b>' +
+        '<span>' + t('atLoad', rtl).replace('{load}', load) + ' · ' +
           (semesters === 1 ? t('sems', rtl).replace('{n}', semesters) : t('semsPl', rtl).replace('{n}', semesters)) +
-          ' <span class="grad-years-hint">' + yearsHint(semesters, rtl) + '</span>' +
-        '</b>' +
+          ' <span class="grad-years-hint">' + yearsHint(semesters, rtl) + '</span></span>' +
       '</div>' +
+      '<details class="grad-how" id="' + hostId + 'How"' + (howOpen ? ' open' : '') + '><summary>' + t('how', rtl) + '</summary>' +
       '<div class="grad-head">' +
         '<span class="grad-load-label">' + t('load', rtl) + '</span>' +
         '<span class="grad-load-val" id="' + hostId + 'LoadVal">' + load + 'H</span>' +
@@ -288,8 +297,11 @@
             ? '<p class="grad-note grad-note-pace">' + t('pace', rtl).replace('{load}', load) + '</p>'
             : '')) +
       '<p class="grad-caveat">' + t('caveat', rtl) + '</p>' +
+      '</details>' +
       '<button type="button" class="grad-save-img" id="' + hostId + 'SaveImg">' + window.AAUP_ICONS.preview('download', 14) + t('saveImg', rtl) + '</button>';
 
+    var how = document.getElementById(hostId + 'How');
+    if(how) how.addEventListener('toggle', function(){ howOpen = how.open; });
     var slider = document.getElementById(hostId + 'Slider');
     if(slider){
       slider.addEventListener('input', function(){

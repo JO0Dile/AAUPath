@@ -302,7 +302,7 @@
     return head +
       '<p class="form-note" style="margin-top:0;">' + (r ? 'غير مسجّل الدخول' : 'Not signed in') + '</p>' +
       '<div class="form-actions" style="justify-content:flex-start;">' +
-      '<button type="button" class="home-btn" id="cloudOpenBtn" style="border-color:var(--accent);color:var(--text);">' + ICONBTN('server') +
+      '<button type="button" class="home-btn btn-pri" id="cloudOpenBtn">' + ICONBTN('server') +
         (r ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Sign Up') +
       '</button></div>';
   }
@@ -341,7 +341,7 @@
       '<div class="form-field"><input type="password" id="cloudPassword" placeholder="' + (r ? 'كلمة المرور' : 'Password') + '" autocomplete="current-password"></div>' +
       '</div>' +
       '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;">' +
-      '<button type="button" class="home-btn" id="cloudSignInBtn" style="border-color:var(--accent);color:var(--text);">' + ICONBTN('unlock') + (r ? 'تسجيل الدخول' : 'Sign in') + '</button>' +
+      '<button type="button" class="home-btn btn-pri" id="cloudSignInBtn">' + ICONBTN('unlock') + (r ? 'تسجيل الدخول' : 'Sign in') + '</button>' +
       '<button type="button" class="home-btn" id="cloudToggleSignUpBtn">' + ICONBTN('plus') + (r ? 'إنشاء حساب' : 'Sign up') + '</button>' +
       '</div>' +
       '<div id="cloudSignUpBox" style="display:none;margin-top:10px;">' +
@@ -350,7 +350,7 @@
         : 'Create an account with the email above — an optional username makes signing in later easier than typing a full email.') + '</p>' +
       '<div class="form-field"><input type="text" id="cloudSignUpUsername" placeholder="' + (r ? 'اسم مستخدم (اختياري)' : 'Username (optional)') + '" autocomplete="username"></div>' +
       '<div class="form-actions" style="justify-content:flex-start;">' +
-      '<button type="button" class="home-btn" id="cloudSignUpBtn" style="border-color:var(--accent);color:var(--text);">' + ICONBTN('plus') + (r ? 'إنشاء الحساب' : 'Create account') + '</button>' +
+      '<button type="button" class="home-btn btn-pri" id="cloudSignUpBtn">' + ICONBTN('plus') + (r ? 'إنشاء الحساب' : 'Create account') + '</button>' +
       '</div></div>' +
       '<div id="cloudMsg"></div>';
   }
@@ -421,7 +421,7 @@
         box.innerHTML =
           '<div class="form-field"><input type="text" id="cloudUsernameInput" value="' + window.__escapeHtml(getUsername()) + '" placeholder="' + (rtl ? 'اسم مستخدم' : 'Username') + '" autocomplete="username"></div>' +
           '<div class="form-actions" style="justify-content:flex-start;">' +
-          '<button type="button" class="home-btn" id="cloudUsernameSubmit" style="border-color:var(--accent);color:var(--text);">' + (rtl ? 'حفظ' : 'Save') + '</button>' +
+          '<button type="button" class="home-btn btn-pri" id="cloudUsernameSubmit">' + (rtl ? 'حفظ' : 'Save') + '</button>' +
           '</div>';
         box.querySelector('#cloudUsernameSubmit').addEventListener('click', function(){
           var val = box.querySelector('#cloudUsernameInput').value.trim();
@@ -446,7 +446,7 @@
           '<div class="form-field"><input type="password" id="cloudPwNew" placeholder="' + (rtl ? 'كلمة المرور الجديدة' : 'New password') + '" autocomplete="new-password"></div>' +
           '</div>' +
           '<div class="form-actions" style="justify-content:flex-start;">' +
-          '<button type="button" class="home-btn" id="cloudPwSubmit" style="border-color:var(--accent);color:var(--text);">' + (rtl ? 'تحديث' : 'Update') + '</button>' +
+          '<button type="button" class="home-btn btn-pri" id="cloudPwSubmit">' + (rtl ? 'تحديث' : 'Update') + '</button>' +
           '</div>';
         box.querySelector('#cloudPwSubmit').addEventListener('click', function(){
           var cur = box.querySelector('#cloudPwCurrent').value;

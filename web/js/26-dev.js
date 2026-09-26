@@ -91,7 +91,7 @@
     return '<h2 style="margin-top:0;">🔒 ' + (rtl ? 'وضع المطورين' : 'Developer Mode') + '</h2>' +
       '<div class="form-field"><label for="devPasswordInput">' + (rtl ? 'كلمة المرور' : 'Password') + '</label>' +
       '<input type="password" id="devPasswordInput" autocomplete="off"></div>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="devPasswordSubmit" style="border-color:var(--accent);color:var(--text);">' +
+      '<div class="form-actions"><button type="button" class="home-btn btn-pri" id="devPasswordSubmit">' +
       (rtl ? 'دخول' : 'Enter') + '</button></div>' +
       (lastWrong ? '<p class="dev-wrong-pass">' + (rtl ? 'كلمة مرور خاطئة حقًا!؟' : 'Incorrect Password really!?') + '</p>' : '');
   }
@@ -149,7 +149,7 @@
 
       '<div class="dev-panel-section"><h3>📥 ' + (rtl ? 'استيراد خطة دراسية' : 'Import Study Plan') + '</h3>' +
       '<textarea class="notes-textarea" id="devPlanJsonInput" rows="5" placeholder=\'{"majorName":{"en":"...","ar":"..."},"courses":[{"id":"...","name":"...","ar":"...","creditHours":3,"category":"core","semester":"Y1S1"}],"prerequisites":[["a","b"]]}\'></textarea>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="devPlanImportBtn" style="border-color:var(--accent);color:var(--text);">' +
+      '<div class="form-actions"><button type="button" class="home-btn btn-pri" id="devPlanImportBtn">' +
       (rtl ? 'استيراد' : 'Import') + '</button></div><div id="devPlanImportMsg"></div></div>' +
 
       '<div class="dev-panel-section"><h3>📋 ' + (rtl ? 'الخطط المستوردة' : 'Imported Study Plans') + '</h3>' +
@@ -177,7 +177,7 @@
         '<div class="form-field"><label for="devUniNameAr">' + (rtl ? 'الاسم بالعربية' : 'Name — Arabic') + '</label>' +
         '<input type="text" id="devUniNameAr" maxlength="70" placeholder="جامعة النجاح الوطنية"></div>' +
       '</div>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="devUniAddBtn" style="border-color:var(--accent);color:var(--text);">' +
+      '<div class="form-actions"><button type="button" class="home-btn btn-pri" id="devUniAddBtn">' +
       (rtl ? 'أضف الجامعة' : 'Add university') + '</button></div><div id="devUniMsg"></div></div>' +
 
       // Admin Mode is a different thing from this panel and says so. This one
@@ -189,14 +189,14 @@
         ? 'يعدّل البيانات المنشورة لجميع الطلاب — الجامعات والتخصصات والمساقات والشعارات. يتطلب اسم مستخدم وكلمة مرور يتم التحقق منهما على الخادم.'
         : 'Edits the published data every student sees — universities, majors, courses, logos. Needs a username and password, checked on the server. This panel, by contrast, only ever changes this one device.') +
       '</p>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="devAdminBtn" style="border-color:var(--accent);color:var(--text);">' +
+      '<div class="form-actions"><button type="button" class="home-btn btn-pri" id="devAdminBtn">' +
       (rtl ? 'افتح وضع المسؤول' : 'Open Admin Mode') + '</button></div></div>' +
 
       '<div class="dev-panel-section"><h3>📥 ' + (rtl ? 'استيراد ملاحظات المجتمع (من البريد)' : 'Import Community Feedback (from Email)') + '</h3>' +
       '<label for="devFeedbackJsonInput" style="font-size:11.5px;color:var(--text-dim);display:block;margin-bottom:6px;">' +
       (rtl ? 'ألصق نص JSON من البريد هنا' : 'Paste the JSON from the email here') + '</label>' +
       '<textarea class="notes-textarea" id="devFeedbackJsonInput" rows="5"></textarea>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="devFeedbackImportBtn" style="border-color:var(--accent);color:var(--text);">' +
+      '<div class="form-actions"><button type="button" class="home-btn btn-pri" id="devFeedbackImportBtn">' +
       (rtl ? 'استيراد' : 'Import') + '</button></div><div id="devFeedbackImportMsg"></div></div>';
   }
 
