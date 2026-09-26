@@ -177,18 +177,13 @@
     return t('yearsN', rtl).replace('{n}', label);
   }
 
-  function render(prefix, hostId){
-    var host = document.getElementById(hostId);
-    if(!host) return;
-    var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
-    var page = document.getElementById('page-' + prefix);
-    if(!page){ host.innerHTML = ''; return; }
-
+  // The projection on its own, so the home screen can show the same answer
+  // this card gives without drawing the card. null when the plan is not on
+  // the page yet or has nothing left to take.
+  function project(prefix){
+    if(!document.getElementById('page-' + prefix)) return null;
     var cd = chainDepths(prefix);
-    if(!cd.notDone.length){
-      host.innerHTML = '<p class="grad-msg">' + t('done', rtl) + '</p>';
-      return;
-    }
+    if(!cd.notDone.length) return null;
     var bottleneck = bottleneckChain(prefix, cd.depths);
     var load = loadFor(prefix);
 
@@ -210,6 +205,33 @@
     var chainBinding = chainSemesters > hoursSemesters;
 
     var finish = stepForward(currentTerm(), semesters);
+    return { bottleneck: bottleneck, load: load, semesters: semesters, chainBinding: chainBinding, finish: finish };
+  }
+
+  function estimate(prefix, rtl){
+    var pr = project(prefix);
+    if(!pr) return null;
+    return {
+      term: termLabel(pr.finish, rtl),
+      left: pr.semesters === 1 ? t('sems', rtl).replace('{n}', 1) : t('semsPl', rtl).replace('{n}', pr.semesters),
+      semesters: pr.semesters
+    };
+  }
+
+  function render(prefix, hostId){
+    var host = document.getElementById(hostId);
+    if(!host) return;
+    var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
+    var page = document.getElementById('page-' + prefix);
+    if(!page){ host.innerHTML = ''; return; }
+
+    var pr = project(prefix);
+    if(!pr){
+      host.innerHTML = '<p class="grad-msg">' + t('done', rtl) + '</p>';
+      return;
+    }
+    var bottleneck = pr.bottleneck, load = pr.load, semesters = pr.semesters,
+        chainBinding = pr.chainBinding, finish = pr.finish;
 
     // Index 0 is "now"; index `semesters` is the real finish. Six dots is
     // the most that fit — a long remaining chain shows the first five steps
@@ -297,5 +319,5 @@
 
   // Change Major measures "how much longer would this take" with the same
   // load this estimate runs on, rather than picking a second number.
-  window.AAUP_GRADUATION = { render: render, loadFor: loadFor, title: function(rtl){ return t('title', rtl); } };
+  window.AAUP_GRADUATION = { render: render, estimate: estimate, loadFor: loadFor, title: function(rtl){ return t('title', rtl); } };
 })();

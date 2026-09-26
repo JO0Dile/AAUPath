@@ -233,58 +233,9 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
 
 <div id="dashboard" class="dashboard-page" style="display:none;"></div>
 
-<div id="home" class="home-wrap">
-  <div class="home-header">
-    <img class="home-header-mascot" src="assets/icons/icon-any-384.png" alt="" aria-hidden="true">
-    <div class="home-header-body">
-      <h1 class="home-wordmark">AAUPATH<span class="home-wordmark-ar">طريقك</span></h1>
-      <p data-ar="شهادتك، شاشة واحدة في كل مرة">Your degree, one screen at a time</p>
-      <div class="home-header-stats" id="homeHeaderStats"></div>
-    </div>
-  </div>
-
-  <div class="home-resume" id="homeResumeCard" style="display:none;" role="button" tabindex="0"></div>
-
-  <div class="home-install-row" id="homeInstallRow" hidden></div>
-  <p class="home-intro" id="homeIntroText"><strong data-ar="اختر كليتك.">Pick your faculty.</strong></p>
-
-  <div class="search-wrap" id="homeSearchWrap">
-    <div class="search-box" id="homeSearchBox">
-      <span class="search-ic" data-app-icon="search" aria-hidden="true"></span>
-      <input type="text" id="homeSearchInput" class="search-input" placeholder="Search a major or a course…" data-ar-placeholder="ابحث عن تخصص أو مساق…" autocomplete="off">
-      <button type="button" class="search-clear" id="homeSearchClear" aria-label="Clear" data-ar-label="مسح"><span data-app-icon="close" data-app-icon-size="15" aria-hidden="true"></span></button>
-    </div>
-    <div class="search-dropdown" id="homeSearchDropdown"></div>
-  </div>
-
-  <div class="home-breadcrumb" id="homeBreadcrumb" style="display:none;"></div>
-
-  <div class="home-step" id="homeStepUniversities">
-    <div class="plan-grid" id="homeUniversityGrid"></div>
-  </div>
-
-  <div class="home-step" id="homeStepColleges" style="display:none;">
-    <div class="plan-grid" id="homeCollegeGrid"></div>
-  </div>
-
-  <div class="home-step" id="homeStepPlans" style="display:none;">
-  <div class="plan-grid">
-    <div class="new-plan-card" id="newPlanCard" onclick="AAUP_PLAN_EDITOR.openNewPlanDialog()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')AAUP_PLAN_EDITOR.openNewPlanDialog()">
-      <span class="npc-plus">+</span>
-      <p class="npc-label" data-ar="لا تجد تخصصك؟ أنشئ خطة جديدة.">Don't see your major? Create a new plan.</p>
-    </div>
-    <p class="home-step-empty-note" id="homePlansEmptyNote" style="display:none;" data-ar="لا توجد خطط هنا بعد — كن أول من يضيف واحدة عبر &quot;+ خطة جديدة&quot; بالأعلى.">No plans here yet — be the first to add one with "+ New Plan" above.</p>
-  </div>
-
-  <div id="importedPlansContainer"></div>
-  </div>
-
-  <div class="home-footer">
-    <button type="button" class="dev-link" onclick="AAUP_ABOUT.open()"><span data-app-icon="people" data-app-icon-size="14" aria-hidden="true"></span> <span data-ar="من نحن">About us</span></button>
-    <button type="button" class="dev-link" onclick="AAUP_SIDEBAR.openSettings()"><span data-app-icon="gear" data-app-icon-size="14" aria-hidden="true"></span> <span data-ar="الإعدادات">Settings</span></button>
-    <span class="dev-link app-version-badge"></span>
-    <button type="button" class="dev-link" onclick="AAUP_DEV.openDialog()" data-ar="المطوّر">Developer</button>
-  </div>
+<!-- The home screen: js/90-task-home.js draws everything inside it. -->
+<div id="home" class="hm-home">
+  <div id="taskHome" class="hm"></div>
 </div>
 
 <input type="file" id="importFileInput" accept="application/json,.json" style="display:none">

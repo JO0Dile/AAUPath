@@ -107,10 +107,10 @@
   // the screen or has become a MOMENT mark below.
   var MARKS = {
     home: {
-      target: function(){ return firstVisible('#homeCollegeGrid .plan-card') || firstVisible('#homeSearchBox'); },
-      title: { en: 'Faculty, then major', ar: 'الكلية، بعدين التخصص' },
-      text: { en: 'Pick your faculty, then your major — two taps. Or search it by name in the box above.',
-              ar: 'اختار كليتك، بعدين تخصصك — نقرتين. أو دوّر عليه بالاسم بالمربع فوق.' }
+      target: function(){ return firstVisible('#taskHome .hm-search'); },
+      title: { en: 'Start with what you need', ar: 'ابدأ باللي بدك إياه' },
+      text: { en: 'Type anything here — a course, a professor, your GPA — or tap one of the cards below. Nothing has to come first.',
+              ar: 'اكتب أي إشي هون — مساق، محاضر، معدلك — أو اضغط وحدة من البطاقات تحت. ما في إشي لازم يكون أول.' }
     },
     dashboard: {
       target: function(){ return firstVisible('#dashboard .ph-card') || firstVisible('#dashboard .dash-phone-hero') || firstVisible('#dashboard .dash-card'); },

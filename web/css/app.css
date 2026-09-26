@@ -224,7 +224,7 @@
      those controls already has its own :hover, :active and :focus-visible
      styling, which says the same thing without covering anything up. */
   button, a, summary, [role="button"], [role="checkbox"], [data-ro-expand],
-  .course, .plan-card, .dash-quicklink, .sb-item, .sb-mrow, .sb-tab, .lib-row{
+  .course, .dash-quicklink, .sb-item, .sb-mrow, .sb-tab, .lib-row{
     -webkit-tap-highlight-color:transparent;
   }
   /* And a long press is a gesture in this app — hold a course to trace it,
@@ -347,7 +347,6 @@
 
   .plan-page.rtl-mode .brand > div{text-align:right;}
 
-
   footer{
     display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
     padding:14px 32px;
@@ -405,302 +404,11 @@
      4. HOME PAGE — the major-picker landing screen: intro text, plan cards,
      the "+ New Plan" card, home footer
      ========================================================================== */
-  /* ---------- homepage ---------- */
-
-  .home-wrap{max-width:1100px;margin:0 auto;padding:20px;}
-
-  .home-header{
-    background:linear-gradient(120deg, var(--header-bg), var(--surface-bg));
-    border:1px solid var(--line);
-    border-radius:16px;
-    padding:22px 28px;
-    display:flex;align-items:center;gap:18px;
-    margin-bottom:22px;
-  }
-
-  .home-header-mascot{
-    width:96px;height:96px;object-fit:contain;flex:0 0 auto;border-radius:16px;
-  }
-
-  .home-header-body{flex:1 1 auto;min-width:0;}
-
-  .home-header h1{margin:0;font-size:20px;font-weight:800;letter-spacing:.02em;}
-  /* The app's name, with the Arabic tagline riding beside it. Baseline-aligned
-     rather than centred, so the two read as one lockup instead of two words
-     that happen to be next to each other. */
-  .home-wordmark{
-    display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
-    font-size:23px;font-weight:900;letter-spacing:.09em;
-  }
-  .home-wordmark-ar{
-    font-size:15px;font-weight:700;letter-spacing:.02em;color:var(--accent);
-    direction:rtl;
-  }
-
-  .home-header p{margin:4px 0 0;font-size:13px;color:var(--text-dim);}
-
-  .home-header-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
-
-  .home-header-stats span{
-    font-size:11px;font-weight:700;color:var(--text);
-    background:rgba(255,255,255,.05);
-    border:1px solid var(--line);
-    border-radius:999px;
-    padding:5px 12px;
-    white-space:nowrap;
-  }
-
-  .home-header .ar{
-    margin-left:auto;text-align:right;direction:rtl;flex:0 0 auto;
-  }
-
-  .home-header .ar .ar1{font-size:15px;font-weight:700;}
-
-  .home-header .ar .ar2{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
-
-
-  .home-intro{
-    font-size:14px;color:var(--text-dim);
-    margin:0 4px 20px;
-    line-height:1.6;
-  }
-
-  .home-intro strong{color:var(--text);}
-
-  /* "Continue where you left off" card — only shown on the top-level
-     university step when there's a previously-opened plan to resume. */
-  .home-resume{
-    display:flex;align-items:center;gap:14px;
-    background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent) 5%, transparent));
-    border:1px solid var(--accent);
-    border-radius:14px;
-    padding:14px 16px;
-    margin:0 4px 18px;
-    cursor:pointer;
-    transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-  }
-  .home-resume:hover, .home-resume:focus-visible{
-    box-shadow:0 0 20px color-mix(in srgb, var(--accent) 18%, transparent);
-    transform:translateY(-1px);
-    outline:none;
-  }
-  .home-resume .hr-icon{
-    font-size:26px;flex:0 0 auto;width:46px;height:46px;border-radius:11px;
-    background:color-mix(in srgb, var(--accent) 14%, transparent);display:flex;align-items:center;justify-content:center;
-  }
-  .home-resume .hr-body{flex:1 1 auto;min-width:0;}
-  .home-resume .hr-kicker{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);}
-  .home-resume .hr-name{font-size:15px;font-weight:800;color:var(--text);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .home-resume .hr-sub{font-size:11.5px;color:var(--text-dim);margin-top:3px;}
-  .home-resume .hr-go{flex:0 0 auto;font-size:20px;color:var(--accent);}
-  .home-resume .hr-progress{margin-top:6px;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
-  .home-resume .hr-progress > span{display:block;height:100%;background:var(--accent);border-radius:3px;}
-
-
-  .plan-grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:18px;
-  }
-
-  .plan-card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:22px 22px 20px;
-    cursor:pointer;
-    text-align:left;
-    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-    display:flex;flex-direction:column;gap:12px;
-    min-width:0;
-  }
-
-  .plan-card:hover{
-    transform:translateY(-3px);
-    border-color:var(--accent);
-    box-shadow:0 10px 26px rgba(0,0,0,.35);
-  }
-
-  .plan-card .pc-icon{
-    width:52px;height:52px;border-radius:12px;
-    background:color-mix(in srgb, var(--accent) 12%, transparent);
-    display:flex;align-items:center;justify-content:center;
-  }
-
-  .plan-card .pc-icon svg{width:30px;height:30px;}
-
-  .plan-card h2{margin:0;font-size:16px;font-weight:800;line-height:1.3;}
-
-  .plan-card h2 em{color:var(--accent);font-style:normal;display:block;font-size:14px;margin-top:2px;}
-
-  .plan-card p{margin:0;font-size:12.5px;color:var(--text-dim);line-height:1.55;}
 
   /* A plan's bio can be a full paragraph (credit-hour breakdown, source
      caveats) — same clamp-to-3-lines treatment .pc-uni-desc already uses for
      a university's own description, so a long bio doesn't blow out the card
      and bury the "View plans" CTA below the fold. */
-  /* One line. Three lines of a bio on a card in a grid of seventy is a wall
-     of dense grey nobody reads from outside the plan — the full text is on
-     the plan's own page, which is where someone who wants it already is. */
-  .plan-card p.pc-bio{
-    display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;
-  }
-
-  .plan-card .pc-cta{
-    margin-top:auto;
-    font-size:12px;font-weight:700;color:var(--accent);
-    display:flex;align-items:center;gap:6px;
-  }
-
-  /* A faculty tile is one row: the faculty's icon, its name, and how many
-     plans sit behind it. The stacked .plan-card layout above — icon on its
-     own line, then paragraphs, then a CTA — is for tiles that have something
-     to say. A signpost doesn't, so it gets a row and stays short. */
-  .plan-card-faculty{
-    flex-direction:row;
-    align-items:center;
-    gap:14px;
-    padding:16px 18px;
-  }
-
-  .plan-card-faculty .pc-icon{
-    width:44px;height:44px;border-radius:10px;flex:0 0 auto;
-  }
-
-  .plan-card-faculty .pc-icon svg{width:26px;height:26px;}
-
-  .pc-faculty-body{min-width:0;display:flex;flex-direction:column;gap:2px;}
-  .pc-faculty-body h2{font-size:15px;}
-  .pc-faculty-body p{font-size:12px;}
-
-  /* The count is a number, not a sentence — "8 plans" spelled out is exactly
-     the kind of line this tile stopped carrying. The words are on the tile's
-     aria-label for a screen reader and on this badge's title for a hover. */
-  .pc-faculty-count{
-    flex:0 0 auto;margin-inline-start:auto;
-    min-width:30px;padding:3px 9px;border-radius:999px;
-    background:color-mix(in srgb, var(--accent) 12%, transparent);color:var(--accent);
-    font-size:13px;font-weight:800;text-align:center;
-    font-variant-numeric:tabular-nums;
-  }
-
-  .pc-faculty-count-none{background:rgba(255,255,255,.05);color:var(--text-dim);}
-
-  /* The faculty screen's "Add a plan" tile shares a grid row with the faculty
-     tiles, so its 150px column height would stretch every row beside it back
-     to the size the tiles just stopped being. On this screen only, it becomes
-     the same row shape they are. */
-  #homeCollegeGrid .new-plan-card{
-    flex-direction:row;justify-content:flex-start;gap:14px;
-    min-height:0;padding:16px 18px;
-  }
-
-  #homeCollegeGrid .new-plan-card .npc-plus{
-    width:44px;height:44px;border-radius:10px;border-width:1px;font-size:24px;
-  }
-
-  #homeCollegeGrid .new-plan-card .npc-label{text-align:left;}
-
-
-  .home-footer{
-    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
-    padding:16px 4px 4px;
-    color:var(--text-dim);font-size:12px;
-    border-top:1px solid var(--line);
-    margin-top:24px;
-  }
-
-
-  @media (max-width:900px){
-    .plan-grid{grid-template-columns:1fr;}
-    .home-header .ar{display:none;}
-    .home-header{padding:16px 18px;gap:12px;}
-    .home-header-mascot{width:56px;height:56px;border-radius:12px;}
-    .home-header-stats span{font-size:10px;padding:4px 9px;}
-  }
-
-  /* Phone-width screens: .home-wrap's 20px padding plus .home-header's own
-     16-18px on top of it compounded into ~35-40px of dead space per side —
-     18-20% of a typical phone's width. Tighten both so the header, search
-     bar, and plan/college cards reach close to the screen edges instead. */
-  @media (max-width:480px){
-    .home-wrap{padding:10px;}
-    .home-header{padding:14px;border-radius:12px;gap:10px;}
-    .search-wrap{margin-left:0;margin-right:0;}
-    .plan-grid{gap:10px;}
-    .plan-card{padding:16px 14px 14px;}
-    .plan-card-faculty,
-    #homeCollegeGrid .new-plan-card{padding:14px;gap:12px;}
-  }
-
-  /* A resting border only earns its keep on a device with hover to promote
-     it to something brighter — on a phone .plan-card just sat there as a
-     thin outline, since :hover's lift/glow below almost never fires on
-     touch. Elevation reads as "tappable" without needing a hover state to
-     prove it, same reasoning as every other card in this redesign. */
-  @media (max-width:720px){
-    .plan-card{border:none; box-shadow:0 4px 14px rgba(0,0,0,.22);}
-  }
-
-  .plan-card{position:relative;}
-
-  .imp-origin-badge{
-    position:absolute; top:10px; right:14px; z-index:5;
-    font-size:10px; font-weight:700; color:var(--text-dim);
-    background:rgba(255,255,255,.06); border-radius:999px; padding:2px 9px;
-  }
-  .new-plan-card{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
-    background:var(--panel); border:2px dashed var(--line); border-radius:12px;
-    min-height:150px; cursor:pointer; transition:border-color .2s ease, background .2s ease;
-    padding:16px;
-  }
-
-  .new-plan-card:hover{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 5%, transparent);}
-
-  .new-plan-card .npc-plus{
-    width:56px; height:56px; border-radius:50%;
-    background:color-mix(in srgb, var(--accent) 12%, transparent); border:2px solid var(--accent); color:var(--accent);
-    display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:300;
-  }
-
-  .new-plan-card .npc-label{margin:0; font-size:12.5px; color:var(--text-dim); text-align:center;}
-
-  /* ---------- University → College → Plan drill-down ---------- */
-  .home-breadcrumb{
-    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
-    font-size:12.5px; color:var(--text-dim); margin:0 4px 16px;
-  }
-  .home-breadcrumb button{
-    background:none; border:none; color:var(--accent); font-family:inherit;
-    font-size:12.5px; font-weight:700; cursor:pointer; padding:2px 0;
-  }
-  .home-breadcrumb button:hover{text-decoration:underline;}
-  .home-breadcrumb .hb-sep{opacity:.5;}
-  .home-breadcrumb .hb-current{color:var(--text); font-weight:700;}
-
-  .home-tile-badge{
-    position:absolute; top:10px; right:14px; z-index:5;
-    font-size:10px; font-weight:700; color:var(--text-dim);
-    background:rgba(255,255,255,.06); border-radius:999px; padding:2px 9px;
-  }
-  .home-tile-empty{
-    font-size:11px; color:var(--text-dim); opacity:.7; font-style:italic;
-  }
-  .pc-major-list{margin:-2px 0 0;}
-  .pc-major-row{
-    display:flex; justify-content:space-between; align-items:center; gap:8px;
-    padding:7px 0; border-top:1px solid var(--line); font-size:12px;
-  }
-  .pc-major-name{color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1 1 auto;}
-  .pc-major-cr{color:var(--text-dim); font-size:10.5px; white-space:nowrap; flex:none;}
-  .pc-major-more{font-size:11px; color:var(--accent); font-weight:700; padding-top:6px;}
-  html[dir="rtl"] .pc-major-row, .plan-page.rtl-mode .pc-major-row{direction:rtl;}
-  .home-step-empty-note{
-    grid-column:1 / -1; font-size:13px; color:var(--text-dim);
-    text-align:center; padding:30px 10px; border:1px dashed var(--line);
-    border-radius:12px;
-  }
 
   /* ==========================================================================
      5. PAGE LAYOUT — the four-year course grid skeleton: year rows, semester
@@ -732,9 +440,7 @@
      treatment below via one shared media-query rule. */
   .imp-body-pad{padding:20px 32px;}
 
-
   .years{display:flex;flex-direction:column;gap:16px;position:relative;}
-
 
   .year-row{
     display:grid;
@@ -764,7 +470,6 @@
   .year-badge .num span{transform:rotate(-45deg);}
 
   .year-badge .label{font-size:11.5px;font-weight:700;letter-spacing:.04em;color:var(--text);text-transform:uppercase;}
-
 
   .semesters{display:flex;flex-direction:column;gap:10px;}
 
@@ -827,7 +532,6 @@
     margin:2px 0 10px 4px;
   }
 
-
   @media (max-width:980px){
     .body-grid{grid-template-columns:1fr;}
     .year-row{grid-template-columns:1fr;}
@@ -881,8 +585,6 @@
     .connector-layer path.edge.search-active{ transition:opacity .15s ease; stroke-dashoffset:0 !important; }
   }
 
-  .search-wrap{position:relative;margin:0 4px 20px;}
-
   .course-search-wrap{position:relative;margin:14px 32px 0;}
 
   .search-box{
@@ -922,7 +624,6 @@
   .search-clear:hover{color:var(--text);}
 
   .search-box.has-value .search-clear{display:block;}
-
 
   .search-dropdown{
     position:absolute;
@@ -999,7 +700,6 @@
 
   .search-empty{padding:14px 12px;font-size:12.5px;color:var(--text-dim);text-align:center;}
 
-
   .plan-page.rtl-mode .course-search-wrap{direction:rtl;}
 
   .plan-page.rtl-mode .search-hit .sh-ar{text-align:right;}
@@ -1049,7 +749,6 @@
 
   .plan-page.rtl-mode .course.search-unlock .search-badge{right:auto;left:-6px;}
 
-
   .connector-layer path.edge.search-active{
     stroke-width:3.4;
     opacity:1;
@@ -1066,7 +765,6 @@
   }
 
   .connector-layer path.edge.search-dim{opacity:.04;}
-
 
   @media (max-width:640px){
     .course-search-wrap{margin-left:16px;margin-right:16px;}
@@ -1149,7 +847,6 @@
   [id$="-prereqArrow"] path{fill:var(--prereq);opacity:.5;transition:opacity .35s cubic-bezier(.4,0,.2,1), fill .35s cubic-bezier(.4,0,.2,1);}
 
   [id$="-prereqArrowActive"] path{fill:#ff6fb8;}
-
 
   .course{
     flex:1 1 130px;
@@ -1749,7 +1446,6 @@
 
   .progress-widget::after{ right:2px; border-right:2px solid var(--accent); }
 
-
   .progress-widget .pw-label{
     font-weight:800; font-size:11px; letter-spacing:.09em; text-transform:uppercase;
     color:var(--accent); white-space:nowrap;
@@ -1763,7 +1459,6 @@
     transform:rotate(45deg);
     box-shadow:0 0 6px var(--accent);
   }
-
 
   .progress-widget .pw-track{
     flex:1 1 170px; min-width:120px; height:11px;
@@ -1841,7 +1536,6 @@
   .highlight h3{margin:0 0 3px;font-size:12.5px;font-weight:700;}
 
   .highlight p{margin:0;font-size:11.5px;color:var(--text-dim);line-height:1.5;}
-
 
   .notes ul{margin:0;padding-left:18px;}
 
@@ -2670,7 +2364,6 @@
   .ab-when b{font-size:13px; font-variant-numeric:tabular-nums;}
   .ab-when span{font-size:11px; color:var(--text-dim);}
   .ab-acts{display:flex; gap:6px; flex-wrap:wrap;}
-
 
   /* ONE COURSE OPEN AT A TIME (js/51-gpa-studio.js).
      This was a four-column table with every course's fourteen grade chips
@@ -5144,16 +4837,6 @@
   .form-field-row .form-field{flex:1;}
   /* ================= PLAN EDITOR (developer drag-and-drop) ================= */
 
-  .dev-edit-link{
-    position:absolute; top:12px; right:14px; z-index:6;
-    background:rgba(224,83,140,.15); border:1px solid var(--prereq); color:#ff9ecb;
-    border-radius:999px; padding:4px 12px; font-size:11px; font-weight:800;
-    cursor:pointer; font-family:inherit; letter-spacing:.03em;
-  }
-
-  .dev-edit-link:hover{background:rgba(224,83,140,.28);}
-
-
   .edit-mode-banner{
     display:none; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
     background:linear-gradient(90deg, rgba(224,83,140,.18), rgba(224,83,140,.05));
@@ -5263,7 +4946,6 @@
   .acct-row{display:inline-flex;align-items:stretch;gap:4px;}
   .acct-delete-btn{padding:6px 10px;border-color:#ff5d5d;color:#ff8f8f;flex:0 0 auto;}
   .acct-delete-btn:hover{background:rgba(255,93,93,.12);}
-
 
   .editing .course[id]{
     cursor:grab;
@@ -5616,8 +5298,8 @@
   .dashboard-page{max-width:1100px;margin:20px auto;padding:0 20px 40px;}
   /* Subtle "console" flavor: cards get a soft accent glow on hover — enough
      personality to feel alive, restrained enough to stay formal. */
-  .dash-card, .dash-quicklink, .plan-card{transition:border-color .18s ease, box-shadow .18s ease, transform .15s ease;}
-  .dash-card:hover, .plan-card:hover{border-color:var(--accent); box-shadow:0 0 18px color-mix(in srgb, var(--accent) 14%, transparent), 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent) inset;}
+  .dash-card, .dash-quicklink{transition:border-color .18s ease, box-shadow .18s ease, transform .15s ease;}
+  .dash-card:hover{border-color:var(--accent); box-shadow:0 0 18px color-mix(in srgb, var(--accent) 14%, transparent), 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent) inset;}
   .app-sidebar .sb-brand .sb-mark{filter:drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 50%, transparent));}
   .dash-header{
     display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
@@ -5882,7 +5564,6 @@
     .tut-spotlight, .tut-tooltip{transition:none;}
   }
 
-
   /* 11 · THE WATERMARK IS FOR THINGS THAT LEAVE THE APP.
      It sat fixed over every screen at z-index 9999 — on top of table rows, on
      top of the plan, on top of a student's own grades, permanently. The name
@@ -5923,24 +5604,6 @@
   .plan-lang-btn:hover{color:var(--text);}
   .plan-lang-btn.is-on{background:var(--accent); color:var(--on-accent);}
   .plan-lang-btn:focus-visible{outline:2px solid var(--accent); outline-offset:-2px;}
-
-  /* 10 · SAY THAT IT WORKS OFFLINE.
-     Offline-first is the app's best feature and it was completely invisible.
-     A student on campus wifi that drops needs to know BEFORE it drops. One
-     line on the home screen, and it changes rather than disappearing when the
-     connection actually goes — which is the moment it is worth reading. */
-  .offline-note{
-    display:inline-flex; align-items:center; gap:7px;
-    font-size:11.5px; font-weight:600; color:var(--text-dim);
-    padding:5px 11px; border-radius:999px;
-    border:1px solid var(--line); background:var(--surface);
-  }
-  .offline-note::before{
-    content:''; width:7px; height:7px; border-radius:50%;
-    background:var(--ok, #3fbf7f); flex:none;
-  }
-  .offline-note.is-offline{color:var(--text); border-color:var(--accent);}
-  .offline-note.is-offline::before{background:var(--accent);}
 
   /* 64 · "WHERE ARE YOU NOW?" — one tap instead of forty.
      Only on a plan with nothing marked, which is the one moment it helps. */
@@ -6077,22 +5740,6 @@
     padding:6px 14px; border-radius:999px; font-weight:800; font-size:12px;
     cursor:pointer; font-family:inherit; white-space:nowrap;
   }
-
-/* Catalogue loading / unreachable state on the home grid. Grid-column span so
-   it reads as one message rather than pretending to be a plan card. */
-.catalogue-status{
-  grid-column:1/-1; text-align:center; padding:26px 18px; line-height:1.6;
-  color:var(--text-dim); font-size:13.5px;
-}
-.catalogue-status .home-btn{margin-top:12px;}
-
-/* A published programme whose course list has not been transcribed yet. Muted
-   rather than hidden: its existence is real information for a student choosing
-   a major, but the card must not promise a page it cannot show. */
-.plan-card-pending{opacity:.62;}
-.plan-card-pending:hover{opacity:.78;}
-.plan-card-pending .pc-cta{color:var(--text-dim); border-color:transparent;}
-
 
 /* ==========================================================================
    19. ASSISTANT — launcher, chat window, and Guided Mode
@@ -6234,7 +5881,6 @@
   .guide-spot, .guide-tip{transition:none;}
   .guide-spot::after{animation:none;}
 }
-
 
 /* ==========================================================================
    20. FIX PANEL — problem report and repairs
@@ -6416,7 +6062,6 @@ body.has-sidebar .fix-panel{left:calc(230px + 16px);}
   body.has-sidebar .fix-panel{left:8px;}
 }
 
-
 /* ---- Smart assistant: mode toggle, thinking indicator, consent ----------
    The ✨/💤 toggle is hidden entirely until a Worker is configured, so an
    install with no AI endpoint looks exactly as it did before. */
@@ -6505,8 +6150,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
 /* Beats the older `.plan-card .pc-icon svg{width:30px}` rule, which sized the
    built-in cards' inline SVGs directly. Here the wrapper owns the size and the
    SVG just fills it, so one markup() call works at every call site. */
-.pc-icon .app-icon-svg svg,
-.hr-icon .app-icon-svg svg,
 .mark .app-icon-svg svg{width:100%; height:100%;}
 
 /* The sidebar and its phone tab bar are the one place these icons sit next
@@ -7072,15 +6715,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
   .admin-markpreview{flex-direction:column; align-items:flex-start;}
 }
 
-/* A university's description, set in Admin Mode. Sits under the Arabic name on
-   its home tile; hidden entirely when empty so nothing shifts for a university
-   that has none. */
-.plan-card .pc-uni-desc{
-  font-size:12px; line-height:1.6; color:var(--text-dim);
-  margin:6px 0 0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-
 /* ============================================================================
    CLOUD SYNC — the signed-in status card (js/52-cloud.js sectionHtml)
 
@@ -7571,6 +7205,7 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
    whatever row happens to land under it. */
 @media (max-width:720px){
   body:has(.modal-overlay.open) .fix-launcher,
+  body:has(.hm-sheet-overlay.open) .fix-launcher,
   body:has(.app-sidebar.open) .fix-launcher{display:none !important;}
 }
 
@@ -8252,3 +7887,241 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   font-size:13px; line-height:1.6; color:var(--text-dim);
 }
 
+/* ==========================================================================
+   HOME — task first (js/90-task-home.js)
+
+   One search box and every feature as an equal card. On a phone it is a
+   light page like the rest of the app; from 900px it becomes a dark hero
+   band carrying the campus drawing, with a "your plan at a glance" panel
+   overlapping its lower edge.
+
+   Every colour comes from the theme tokens so it holds in all six themes and
+   a custom one. The hero is the accent mixed toward black: always dark
+   enough for white type, and always the theme's own hue.
+   ========================================================================== */
+.hm-home{margin:-20px;}
+
+.hm, .hm-sheet{
+  /* The accent as text. A theme's accent is chosen to fill a button, and a
+     pale one (a custom yellow, say) is too light to read as words on a light
+     page; leaning it toward the theme's own text colour keeps the hue and
+     brings back the contrast. On the shipped themes the shift is slight. */
+  --hm-ink:color-mix(in srgb, var(--accent) 62%, var(--text));
+}
+.hm{color:var(--text);}
+/* Icons here take the colour of what they sit in (the global rule paints
+   every icon in the accent, which vanishes on the dark hero). */
+.hm .app-icon-svg, .hm-sheet .app-icon-svg{color:inherit;}
+.hm-sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+.hm button{font-family:inherit; cursor:pointer;}
+.hm button:focus-visible, .hm input:focus-visible,
+.hm-sheet button:focus-visible, .hm-sheet input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+.hm-hero{position:relative; padding:14px 16px 4px;}
+.hm-hero-art{display:none;}
+.hm-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.hm-brand{display:flex; align-items:center; gap:10px; font-size:18px; font-weight:800;}
+.hm-brand img{width:32px; height:32px; border-radius:9px;}
+.hm-top-actions{display:flex; gap:6px;}
+.hm-iconbtn{
+  min-width:44px; height:44px; padding:0 12px; box-sizing:border-box;
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:12px; border:1px solid var(--line); background:var(--surface-bg); color:var(--text);
+  font-size:14px; font-weight:700;
+}
+.hm-hero-body{position:relative; z-index:2; display:flex; flex-direction:column; gap:10px; padding-top:14px;}
+.hm-greet{display:none;}
+.hm-title{margin:0; font-size:26px; line-height:1.2; font-weight:800; text-wrap:balance;}
+
+.hm-search{position:relative;}
+.hm-search input{
+  width:100%; height:52px; box-sizing:border-box; padding-inline:46px 14px;
+  border-radius:14px; border:1px solid color-mix(in srgb, var(--line), var(--text) 22%);
+  background:var(--search-bg, var(--surface-bg)); color:var(--text); font:inherit; font-size:15px;
+}
+.hm-search input::placeholder{color:var(--text-dim);}
+.hm-search-ic{position:absolute; inset-inline-start:14px; top:15px; display:flex; color:var(--text-dim); pointer-events:none;}
+.hm-try{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.hm-try > span{font-size:12px; font-weight:700; color:var(--text-dim);}
+.hm-chip{
+  min-height:36px; padding:0 12px; border-radius:999px;
+  border:1px solid var(--line); background:var(--panel); color:var(--text); font-size:13px; font-weight:600;
+}
+
+.hm-results{
+  margin-top:10px; display:flex; flex-direction:column; overflow:hidden;
+  border-radius:16px; border:1px solid var(--line); background:var(--panel); color:var(--text);
+}
+.hm-results[hidden]{display:none;}
+.hm-res{
+  width:100%; min-height:56px; box-sizing:border-box; padding:8px 14px;
+  display:flex; align-items:center; gap:12px; text-align:start;
+  border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--text); font-size:14px;
+}
+.hm-res:hover, .hm-res:focus-visible{background:color-mix(in srgb, var(--accent) 8%, transparent);}
+.hm-res-kind{flex:none; width:76px; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--hm-ink);}
+.hm-res-body{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.hm-res-body b{font-size:14.5px; line-height:1.3;}
+.hm-res-body span{font-size:12px; line-height:1.3; color:var(--text-dim);}
+.hm-res-ask{min-height:50px; gap:8px; border-bottom:0; color:var(--hm-ink); font-weight:700; font-size:13.5px;}
+/* A phone has no room for results AND cards: the results replace them. */
+.hm.hm-has-q .hm-try, .hm.hm-has-q .hm-body{display:none;}
+
+.hm-body{display:flex; flex-direction:column; gap:16px; padding:14px 16px 84px;}
+.hm-main{display:flex; flex-direction:column; gap:14px; min-width:0;}
+.hm-main .home-install-row{margin:0;}
+.hm-label{font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+.hm-label-desk{display:none;}
+.hm-grid{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+.hm-card{
+  min-width:0; min-height:104px; padding:12px; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:start;
+  border-radius:14px; border:1px solid var(--line); background:var(--panel); color:var(--text);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.hm-card-top{width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px;}
+.hm-card-ic{
+  width:38px; height:38px; border-radius:11px; flex:none;
+  display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 15%, var(--panel)); color:var(--hm-ink);
+  transition:background .18s ease, color .18s ease;
+}
+.hm-card-val{font-size:18px; font-weight:800; line-height:1; color:var(--hm-ink);}
+.hm-card-title{font-size:14px; font-weight:700; line-height:1.25;}
+.hm-card-desc{
+  max-width:100%; font-size:12px; line-height:1.35; color:var(--text-dim);
+  display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;
+}
+.hm-card-desc.hm-card-major{color:var(--hm-ink); font-weight:700;}
+.hm-card:hover{border-color:color-mix(in srgb, var(--line), var(--text) 25%);}
+.hm-card:hover .hm-card-ic{background:var(--accent); color:var(--on-accent);}
+@media (hover:hover){ .hm-card:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.14);} }
+@media (prefers-reduced-motion: reduce){ .hm-card, .hm-card-ic{transition:none;} .hm-card:hover{transform:none;} }
+
+.hm-also{display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
+.hm-also .hm-label{flex-basis:100%;}
+.hm-pill{
+  min-height:44px; padding:0 16px; display:inline-flex; align-items:center; gap:7px;
+  border-radius:999px; border:1px solid var(--line); background:var(--surface-bg); color:var(--text);
+  font-size:13px; font-weight:600;
+}
+.hm-foot{display:flex; align-items:center; justify-content:center; gap:14px; padding-top:4px;}
+.hm-rail{display:none;}
+.hm-dim{color:var(--text-dim); font-size:12.5px; font-weight:400;}
+
+@media (min-width:900px){
+  .hm-hero{
+    padding:0 48px 30px; color:#fff;
+    background:var(--accent);
+    background:color-mix(in srgb, var(--accent) 38%, #0b0608);
+  }
+  .hm-hero-art{
+    display:block; position:absolute; top:0; bottom:0; inset-inline-end:24px;
+    width:520px; height:100%; object-fit:cover; object-position:50% 40%;
+    filter:grayscale(1) brightness(1.7); mix-blend-mode:screen; opacity:.55; pointer-events:none;
+    -webkit-mask-image:linear-gradient(to left, #000 55%, transparent);
+    mask-image:linear-gradient(to left, #000 55%, transparent);
+  }
+  .hm[dir="rtl"] .hm-hero-art{
+    -webkit-mask-image:linear-gradient(to right, #000 55%, transparent);
+    mask-image:linear-gradient(to right, #000 55%, transparent);
+  }
+  .hm-top{position:relative; z-index:2; height:68px;}
+  .hm-brand{font-size:20px;}
+  .hm-hero .hm-iconbtn{border-color:rgba(255,255,255,.3); background:rgba(255,255,255,.08); color:#fff;}
+  .hm-hero-body{width:min(640px, 100%); padding-top:18px; gap:14px;}
+  .hm-greet{display:block; font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.72);}
+  .hm-title{font-size:42px; line-height:1.1;}
+  .hm-search input{height:56px; padding-inline:52px 18px; border:0; border-radius:16px; font-size:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);}
+  .hm-search-ic{inset-inline-start:18px; top:17px;}
+  .hm-try > span{color:rgba(255,255,255,.72);}
+  .hm-chip{border-color:rgba(255,255,255,.35); background:rgba(255,255,255,.08); color:#fff;}
+  .hm-results{position:absolute; z-index:30; top:64px; inset-inline:0; margin:0; box-shadow:0 18px 40px rgba(0,0,0,.25);}
+  .hm.hm-has-q .hm-try{display:flex;}
+  .hm.hm-has-q .hm-body{display:flex;}
+
+  .hm-body{flex-direction:row; align-items:flex-start; gap:24px; max-width:1400px; margin:0 auto; box-sizing:border-box; padding:28px 48px 84px;}
+  .hm-main{flex:1;}
+  .hm-label-desk{display:block;}
+  .hm-grid{grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px;}
+  .hm-card{min-height:128px; padding:16px; border-radius:16px; gap:8px;}
+  .hm-card-ic{width:42px; height:42px; border-radius:12px;}
+  .hm-card-title{font-size:15px; font-weight:800;}
+  .hm-card-desc{font-size:13px; line-height:1.4; -webkit-line-clamp:2;}
+  /* On a wide screen the numbers live in the panel beside the cards. */
+  .hm-card-val{display:none;}
+  .hm-also .hm-label{flex-basis:auto; margin-inline-end:4px;}
+  .hm-foot{justify-content:flex-start;}
+
+  .hm-rail{
+    display:flex; flex-direction:column; gap:14px; flex:none; width:320px; box-sizing:border-box;
+    position:relative; z-index:3; margin-top:-86px; padding:22px;
+    border-radius:20px; border:1px solid var(--line); background:var(--surface-bg);
+    box-shadow:0 16px 40px rgba(0,0,0,.18);
+  }
+}
+.hm-rail-kicker{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+.hm-rail-name{font-size:16px; font-weight:800; line-height:1.3; margin-top:-8px;}
+.hm-rail-ring{display:flex; align-items:center; gap:16px;}
+.hm-rail-ring > span{display:flex; flex-direction:column;}
+.hm-ring-track{stroke:color-mix(in srgb, var(--accent) 16%, var(--panel));}
+.hm-ring-val{stroke:var(--accent);}
+.hm-rail-pct{font-size:34px; font-weight:800; line-height:1;}
+.hm-rail-rows{display:flex; flex-direction:column;}
+.hm-rail-row{display:flex; align-items:baseline; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--line); font-size:13px; color:var(--text-dim);}
+.hm-rail-v{display:flex; flex-wrap:wrap; align-items:baseline; justify-content:flex-end; column-gap:8px; row-gap:2px; color:var(--text); text-align:end;}
+.hm-rail-v b{white-space:nowrap;}
+.hm-rail-v b{font-size:18px; font-weight:800;}
+.hm-rail-v b.hm-letter{font-size:20px; color:var(--hm-ink);}
+.hm-badge{font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap;}
+.hm-rail-btn{min-height:46px; border:0; border-radius:12px; background:var(--accent); color:var(--on-accent); font-size:14.5px; font-weight:700;}
+.hm-rail-ic{
+  width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 15%, var(--panel)); color:var(--hm-ink);
+}
+.hm-rail-empty-t{font-size:18px; font-weight:800; line-height:1.3;}
+.hm-rail-empty-b{margin:-6px 0 0; font-size:13.5px; line-height:1.55; color:var(--text-dim);}
+
+/* The one-time question: college, then major. A sheet from the bottom on a
+   phone, a card in the middle on a wide screen. Fixed height so it does not
+   jump when you step from colleges into majors. */
+.hm-sheet-overlay{position:fixed; inset:0; z-index:1000; display:none; flex-direction:column; justify-content:flex-end; background:rgba(0,0,0,.45);}
+.hm-sheet-overlay.open{display:flex;}
+.hm-sheet{
+  height:min(620px, 88vh); box-sizing:border-box; padding:10px 16px 16px;
+  display:flex; flex-direction:column; gap:12px;
+  border-radius:20px 20px 0 0; background:var(--surface-bg); color:var(--text);
+  box-shadow:0 -8px 30px rgba(0,0,0,.2);
+}
+.hm-sheet button{font-family:inherit; cursor:pointer;}
+.hm-grab{align-self:center; width:40px; height:4px; border-radius:4px; background:var(--line);}
+.hm-sheet-head{display:flex; align-items:flex-start; gap:8px;}
+.hm-sheet-head h2{margin:0; font-size:20px; line-height:1.25; font-weight:800; text-wrap:balance;}
+.hm-sheet-head p{margin:3px 0 0; font-size:13.5px; line-height:1.5; color:var(--text-dim);}
+.hm-back{flex:none;}
+.hm-sheet-search{display:flex; flex-direction:column; gap:6px;}
+.hm-sheet-search label{font-size:12px; font-weight:700; color:var(--text-dim);}
+.hm-sheet-search input{
+  height:46px; box-sizing:border-box; padding:0 14px; border-radius:12px;
+  border:1px solid var(--line); background:var(--search-bg, var(--panel)); color:var(--text); font:inherit; font-size:14px;
+}
+.hm-sheet-list{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-bottom:2px;}
+.hm-row{
+  flex:none; min-height:56px; box-sizing:border-box; padding:8px 14px;
+  display:flex; align-items:center; gap:10px; text-align:start;
+  border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text);
+}
+.hm-row:hover{border-color:color-mix(in srgb, var(--line), var(--text) 25%);}
+.hm-row-body{flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;}
+.hm-row-body b{font-size:14px; line-height:1.3;}
+.hm-row-body span{font-size:12px; line-height:1.3; color:var(--text-dim);}
+.hm-chev{flex:none; display:flex; color:var(--text-dim);}
+.hm-soon{flex:none; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; background:color-mix(in srgb, var(--text-dim) 16%, transparent); color:var(--text-dim);}
+.hm-none{margin:8px 2px; font-size:13.5px; color:var(--text-dim);}
+.hm-sheet-foot{display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+.hm-link{min-height:44px; padding:0 2px; border:0; background:none; color:var(--hm-ink); font-size:13px; font-weight:700; text-decoration:underline; text-underline-offset:3px;}
+@media (min-width:900px){
+  .hm-sheet-overlay{align-items:center; justify-content:center;}
+  .hm-sheet{width:420px; height:min(640px, 86vh); border-radius:20px;}
+  .hm-grab{display:none;}
+}

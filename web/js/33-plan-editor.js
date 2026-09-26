@@ -416,7 +416,10 @@
     return out || ('plan-' + Date.now());
   }
 
-  function openNewPlanDialog(){
+  // prefill {university, college}: where the student was when they asked —
+  // the college they had open in the major picker — so the new plan lands
+  // under it instead of at the top of the list.
+  function openNewPlanDialog(prefill){
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
     if(!overlay || !body) return;
@@ -454,10 +457,7 @@
       '<p class="form-note">This creates the plan with one empty Year 1 — add courses and more years from inside it once created. · يُنشئ الخطة بسنة أولى فارغة — أضف المساقات والسنوات من داخلها بعد الإنشاء.</p>';
     overlay.classList.add('open');
 
-    // Prefill from wherever the "+ New Plan" tile was clicked from, so a
-    // plan started inside a specific university/college drill-down lands
-    // right back in that same tile instead of the top of the list.
-    var sel = (window.AAUP_HOME && window.AAUP_HOME.getSelection) ? window.AAUP_HOME.getSelection() : null;
+    var sel = prefill || null;
     if(sel && sel.university){
       var uniSelect = document.getElementById('npUniversity');
       if(uniSelect) uniSelect.value = sel.university;
@@ -508,8 +508,14 @@
         importedAt: new Date().toISOString()
       };
       saveImportedPlans(plans);
-      if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.renderHomeCards(); }
-      msg.innerHTML = '<p class="dev-success-msg">✅ Created "' + window.__escapeHtml(enBig) + '". Close this and open it from the home page to start adding courses. · تم الإنشاء — أغلق هذه النافذة وافتح الخطة من الصفحة الرئيسية لإضافة المساقات.</p>';
+      if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
+      // Straight into the new plan, in edit mode: it has one empty year and
+      // the next thing anyone does with it is add courses. It becomes the
+      // student's plan too — they made it because it is their major.
+      overlay.classList.remove('open');
+      window.AAUP_DASHBOARD.select(id);
+      window.AAUP_DASHBOARD.openStudyPlan(id);
+      window.AAUP_IMPORTED.toggleEdit(id);
     });
   }
 

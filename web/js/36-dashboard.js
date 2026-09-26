@@ -119,23 +119,12 @@
     if(window.AAUP_TUTORIAL){ window.AAUP_TUTORIAL.startWhenClear('studyplan'); }
   }
 
-  // Explicitly shows the major-picker regardless of any previously
-  // selected plan — the "switch plan" escape hatch. Home ("🏠") elsewhere
-  // in the app intentionally does NOT do this once a plan is selected
-  // (see the showPage('home') interception below) — this is the one
-  // deliberate way back to it.
+  // "Pick another plan": the same college-then-major question the home
+  // screen asks, opened over home. The old University -> Faculty -> Major
+  // page is no longer where anyone is sent.
   function choosePlan(){
-    document.getElementById('dashboard').style.display = 'none';
-    var importedHost = document.getElementById('importedPlanView');
-    if(importedHost) importedHost.style.display = 'none';
-    ['robotics', 'cybersecurity', 'medical', 'cs'].forEach(function(p){
-      var el = document.getElementById('page-' + p);
-      if(el) el.style.display = 'none';
-    });
-    var homeEl = document.getElementById('home');
-    if(homeEl) homeEl.style.display = 'block';
-    if(window.AAUP_HOME){ window.AAUP_HOME.showUniversities(); }
-    if(window.AAUP_SIDEBAR){ window.AAUP_SIDEBAR.hide(); }
+    window.AAUP_TASK_HOME.show();
+    window.AAUP_TASK_HOME.openSheet('plan');
   }
 
   function tx9(rtl, en, ar){ return rtl ? ar : en; }
@@ -301,25 +290,23 @@
     }
   }
 
-  // showPage('home') now means "take me to my personal landing point" —
-  // once a plan is selected, that's the Dashboard, not the major-picker.
+  // showPage('home') means "take me to my landing point", and that is the
+  // task-first home for everyone now, with or without a plan: the dashboard
+  // is one of the things on it ("Degree Progress"), not the place you land.
   // Every existing "🏠 Home" button across every page already calls
   // showPage('home'), so this one interception point covers all of them
   // without editing each one individually.
   var _origShowPage = window.showPage;
   if(typeof _origShowPage === 'function'){
     window.showPage = function(id){
-      if(id === 'home'){
-        var selected = getSelected();
-        if(selected){ open(selected); return; }
-      }
+      if(id === 'home'){ window.AAUP_TASK_HOME.show(); return; }
       return _origShowPage(id);
     };
   }
 
   window.AAUP_DASHBOARD = {
     open: open, selectAndOpen: selectAndOpen, openStudyPlan: openStudyPlan,
-    choosePlan: choosePlan, getSelected: getSelected,
+    choosePlan: choosePlan, getSelected: getSelected, select: setSelected,
     planDisplayInfo: planDisplayInfo, isImportedPlan: isImportedPlan,
     // Best-effort completion percentage for the Home "continue" card.
     // Built-in plan pages are always in the DOM (just hidden) so
@@ -354,12 +341,9 @@
       };
       window.AAUP_DATA.__backupWrapped = true;
     }
-    var selected = getSelected();
-    if(selected && document.getElementById('home').style.display !== 'none'){
-      // Returning visit with a plan already chosen — skip the picker
-      // entirely rather than making them re-select every time.
-      open(selected);
-    }
+    // A returning student is no longer dropped straight into their plan's
+    // dashboard here. Everyone lands on the home screen (js/90-task-home.js),
+    // which shows their plan and numbers on its tiles.
   }
   if(document.readyState === 'complete'){ init(); }
   else { window.addEventListener('load', init); }

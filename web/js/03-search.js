@@ -260,8 +260,8 @@
     }
   }
 
-  /* ---------------- homepage major search ---------------- */
-  // ---- every course in every plan, not just the one you are standing in.
+  /* ---------------- every course in every plan ---------------- */
+  // Used by the home screen's search box (js/90-task-home.js).
   //
   // Seventy-seven plans ship with the app and all of their courses are
   // already on the device. "Who teaches Cryptography, and in which year?"
@@ -324,9 +324,13 @@
   // Open the plan, then land on the course inside it. The plan renders
   // asynchronously, so the card is waited for rather than assumed — and
   // given up on after a second rather than polling forever.
+  //
+  // It opens the plan without making it the student's own: looking up
+  // Cryptography in someone else's major must not quietly swap which major
+  // the home screen, GPA and progress are about.
   function openCourseInPlan(planId, slug){
-    if(!(window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.selectAndOpen)) return;
-    window.AAUP_DASHBOARD.selectAndOpen(planId);
+    if(!(window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.openStudyPlan)) return;
+    window.AAUP_DASHBOARD.openStudyPlan(planId);
     var tries = 0;
     (function land(){
       var el = document.getElementById(planId + '-c-' + slug);
@@ -335,38 +339,7 @@
       setTimeout(land, 50);
     })();
   }
-
-  function initHomeSearch(){
-    var input = document.getElementById('homeSearchInput');
-    var box = document.getElementById('homeSearchBox');
-    var clear = document.getElementById('homeSearchClear');
-    var dropdown = document.getElementById('homeSearchDropdown');
-    if(!input) return;
-    // Rebuilt on every keystroke rather than snapshotted once at init —
-    // imported/custom plan cards (and their data-search-* attributes) are
-    // re-rendered into the DOM whenever a plan is created/edited/deleted,
-    // well after this module's own load-time init runs.
-    function buildIndex(){
-      var majors = Array.prototype.map.call(document.querySelectorAll('.plan-card[data-page]'), function(el){
-        return { page: el.dataset.page, imported: el.dataset.imported === '1', en: el.dataset.searchEn || '', ar: el.dataset.searchAr || '', el: el };
-      });
-      // Majors first: a student typing "cyber" wants the major, not the
-      // fourteen courses across four plans with the word in their name.
-      return majors.concat(allPlanCourses());
-    }
-    attachSearch({
-      input: input, box: box, clear: clear, dropdown: dropdown,
-      getIndex: buildIndex,
-      emptyText: 'No matching major or course / لا يوجد تخصص أو مساق مطابق',
-      onSelect: function(r){
-        input.value = '';
-        box.classList.remove('has-value');
-        if(r.isCourse){ openCourseInPlan(r.page, r.slug); }
-        else if(r.imported && window.AAUP_DASHBOARD){ window.AAUP_DASHBOARD.selectAndOpen(r.page); }
-        else { showPage(r.page); }
-      }
-    });
-  }
+  window.AAUP_SEARCH = { allCourses: allPlanCourses, openCourse: openCourseInPlan, normalize: normalize, fuzzyContains: fuzzyContains };
 
   /* ---------------- per-plan course search ---------------- */
   function buildCourseIndex(prefix){
@@ -738,7 +711,6 @@
 
   function initAll(){
     initFloatingPopup();
-    initHomeSearch();
     Object.keys(window.__PLAN_DATA || {}).forEach(initCourseSearch);
   }
 

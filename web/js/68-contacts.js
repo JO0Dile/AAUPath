@@ -215,9 +215,14 @@
     bindCopy();
   }
 
-  function open(prefix){
+  // opts.category / opts.query open it already narrowed — "Find a Professor"
+  // lands on Instructors, and a name picked from the home search lands on
+  // that one person. Left out, it opens however it was last left.
+  function open(prefix, opts){
     var overlay = document.getElementById('contactsOverlay');
     if(!overlay) return;
+    if(opts && opts.category) activeCat = opts.category;
+    if(opts && typeof opts.query === 'string') search = opts.query;
     render(prefix);
     overlay.classList.add('open');
   }
@@ -236,5 +241,5 @@
   if(document.readyState === 'complete'){ bindOverlay(); }
   else { window.addEventListener('load', bindOverlay); }
 
-  window.AAUP_CONTACTS = { open: open };
+  window.AAUP_CONTACTS = { open: open, data: load };
 })();

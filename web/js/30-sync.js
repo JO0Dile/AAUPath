@@ -341,7 +341,7 @@
     if(window.__showToast){
       window.__showToast(accept ? '✅ Updated to the official plan.' : '👍 Kept your version.');
     }
-    if(accept && window.AAUP_IMPORTED.renderHomeCards) window.AAUP_IMPORTED.renderHomeCards();
+    if(accept) window.AAUP_IMPORTED.plansChanged();
     showNextConsent();
   }
 

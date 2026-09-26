@@ -54,7 +54,7 @@ GROUPS = {
         '14-storage.js', '60-backbar.js', '70-skeleton.js', '71-qrcode.js',
     ],
     'shell': [
-        '15-student.js', '17-theme.js', '22-feedback.js', '26-dev.js', '29-home.js',
+        '15-student.js', '17-theme.js', '22-feedback.js', '26-dev.js',
         '32-tutorial.js', '37-sidebar.js', '38-accounts.js', '44-fix-analyzers.js',
         '45-fix.js', '55-onboarding.js', '56-story-stack.js', '61-theme-custom.js',
         '68-contacts.js', '89-install.js',
@@ -75,7 +75,7 @@ GROUPS = {
         '74-course-gestures.js', '75-about.js', '76-course-pairs.js', '77-english-level.js',
         '78-you-are-here.js', '79-plan-filter.js', '81-calendar.js', '82-follow.js',
         '84-autobackup.js', '85-carry.js', '86-prereq-report.js',
-        '87-plan-health.js', '88-empty.js',
+        '87-plan-health.js', '88-empty.js', '90-task-home.js',
     ],
     'server': [
         '30-sync.js', '31-collect.js', '41-assistant-kb.js', '42-assistant.js',

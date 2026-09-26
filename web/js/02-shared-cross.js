@@ -14,7 +14,7 @@
 // worst — a user can only attack their own browser with their own data).
 // It stops being a non-issue the moment plan text can arrive from someone
 // ELSE's browser — which is exactly what the online plans feed and the
-// "Contribute" pipeline do (see AAUP_HOME / APP_PLANS_FEED_URL). Every
+// "Contribute" pipeline do (see AAUP_SYNC / APP_PLANS_FEED_URL). Every
 // place that ingests a plan FROM that feed escapes text fields through
 // this before they ever reach an innerHTML template.
 window.__escapeHtml = function(s){
