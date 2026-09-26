@@ -159,7 +159,7 @@ window.APP_GITHUB_REPO = 'JO0Dile/AAUPath';
 //   small feature             -> +0.1   (2.0  -> 2.1)
 //   big feature / redesign    -> next .5, or next whole number if already
 //                                 past x.5 (2.0 -> 2.5, 2.5 -> 3.0)
-window.APP_VERSION = '6.0';
+window.APP_VERSION = '6.5';
 
 (function(){
   // The catalogue ships with the app. Relative on purpose: it must resolve the

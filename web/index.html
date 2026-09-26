@@ -233,7 +233,12 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
 
 <div id="dashboard" class="dashboard-page" style="display:none;"></div>
 
-<div id="home" class="home-wrap">
+<div id="home" class="home-wrap hm-mode">
+  <!-- The home screen (js/90-task-home.js). Everything below it is the old
+       University -> Faculty -> Major page, which nothing opens any more. -->
+  <div id="taskHome" class="hm"></div>
+
+  <div id="homePicker" hidden>
   <div class="home-header">
     <img class="home-header-mascot" src="assets/icons/icon-any-384.png" alt="" aria-hidden="true">
     <div class="home-header-body">
@@ -245,7 +250,6 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
 
   <div class="home-resume" id="homeResumeCard" style="display:none;" role="button" tabindex="0"></div>
 
-  <div class="home-install-row" id="homeInstallRow" hidden></div>
   <p class="home-intro" id="homeIntroText"><strong data-ar="اختر كليتك.">Pick your faculty.</strong></p>
 
   <div class="search-wrap" id="homeSearchWrap">
@@ -284,6 +288,7 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
     <button type="button" class="dev-link" onclick="AAUP_SIDEBAR.openSettings()"><span data-app-icon="gear" data-app-icon-size="14" aria-hidden="true"></span> <span data-ar="الإعدادات">Settings</span></button>
     <span class="dev-link app-version-badge"></span>
     <button type="button" class="dev-link" onclick="AAUP_DEV.openDialog()" data-ar="المطوّر">Developer</button>
+  </div>
   </div>
 </div>
 

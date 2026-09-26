@@ -384,7 +384,7 @@
           else if (args.page === 'advisor' && window.AAUP_ADVISOR) window.AAUP_ADVISOR.open(prefix);
           else if (args.page === 'overview' && window.AAUP_OVERVIEW) window.AAUP_OVERVIEW.open(prefix);
           else if (args.page === 'settings' && window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings();
-          else if (args.page === 'home' && D) D.choosePlan();
+          else if (args.page === 'home' && window.AAUP_TASK_HOME) window.AAUP_TASK_HOME.show();
         } catch (e) { return null; }
         return null;
       }
