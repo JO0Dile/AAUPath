@@ -269,8 +269,8 @@
     if(hasProgress && (Date.now() - lastBackup) > 30 * 24 * 60 * 60 * 1000){
       html += '<p class="form-note" style="text-align:center;margin-top:18px;">' +
         window.AAUP_ICONS.preview('save', 13) + ' ' +
-        (rtl ? 'نصيحة: صدّر نسخة احتياطية من تقدمك من الإعدادات — بيانات المتصفح قد تُمسح.' :
-               'Tip: export a backup of your progress from Settings \u2014 browser data can be wiped.') + '</p>';
+        (rtl ? 'نصيحة: احفظ نسخة احتياطية من الإعدادات ← بياناتي — بيانات المتصفح قد تُمسح.' :
+               'Tip: save a backup in Settings \u2192 My data \u2014 browser data can be wiped.') + '</p>';
     }
     host.innerHTML = html;
     if(window.AAUP_FOLLOW){ window.AAUP_FOLLOW.bind(prefix); }

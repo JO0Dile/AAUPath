@@ -86,7 +86,10 @@
       el.className = 'notice-extra notice-extra-' + (x.kind || 'plain');
       if(x.action){ el.type = 'button'; }
       el.innerHTML = iconFor(x.kind);
-      el.appendChild(document.createTextNode(x.text + (x.action ? ' · ' + x.action.label : '')));
+      // The action's label is said once: on the box's own button when that
+      // button already says it ("See the rest" twice read as a stutter).
+      var sameAsButton = x.action && current.action && x.action.label === current.action.label;
+      el.appendChild(document.createTextNode(x.text + (x.action && !sameAsButton ? ' · ' + x.action.label : '')));
       if(x.action){ el.addEventListener('click', function(){ hide(); try{ x.action.fn(); }catch(err){} }); }
       e.extras.appendChild(el);
     });
