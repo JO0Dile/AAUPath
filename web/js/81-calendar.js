@@ -23,12 +23,18 @@
 
   var TX = {
     title:   { en: 'Add a semester to your calendar', ar: 'أضف فصلًا إلى تقويمك' },
+    sub:     { en: 'Download one file, open it, and the semester’s courses appear in your calendar.',
+               ar: 'نزّل ملف واحد وافتحه، وبتطلع مساقات الفصل على تقويمك.' },
+    usual:   { en: 'These are the usual dates for that semester. Change them if yours are different.',
+               ar: 'هاي التواريخ المعتادة لهذا الفصل. غيّرها إذا فصلك مختلف.' },
+    courses: { en: 'courses', ar: 'مساقات' },
+    hours:   { en: 'hours', ar: 'ساعة' },
     which:   { en: 'Which semester', ar: 'أي فصل' },
     from:    { en: 'First day', ar: 'أول يوم' },
     to:      { en: 'Last day', ar: 'آخر يوم' },
-    note:    { en: 'AAUPath does not know your class times — the university issues those at registration. This file carries the semester and the courses in it; add the times in your calendar once you have them.',
-               ar: 'التطبيق ما بيعرف أوقات محاضراتك — الجامعة بتطلعها وقت التسجيل. هذا الملف بيحمل الفصل والمساقات اللي فيه؛ ضيف الأوقات بتقويمك لما توصلك.' },
-    go:      { en: 'Download .ics', ar: 'نزّل ملف .ics' },
+    note:    { en: 'AAUPath doesn’t know your class times. The university gives those out at registration. Add the times in your calendar once you have them.',
+               ar: 'التطبيق ما بيعرف أوقات محاضراتك، الجامعة بتطلعها وقت التسجيل. ضيف الأوقات بتقويمك لما توصلك.' },
+    go:      { en: 'Download calendar file', ar: 'نزّل ملف التقويم' },
     cancel:  { en: 'Cancel', ar: 'إلغاء' },
     needDates:{ en: 'Pick both dates first.', ar: 'اختر التاريخين الأول.' },
     badRange:{ en: 'The last day is before the first.', ar: 'آخر يوم قبل أول يوم.' },
@@ -132,6 +138,26 @@
 
   // ---- the sheet -----------------------------------------------------------
 
+  // Roughly when each AAUP semester runs, as [month, day] pairs (months are
+  // 1-based). Only a starting point so most students can press Download
+  // straight away; both fields stay editable and the sheet says so.
+  var USUAL = { s1: [[9, 1], [1, 20]], s2: [[2, 10], [6, 10]], s3: [[6, 25], [8, 20]] };
+  function iso(y, md){ return y + '-' + (md[0] < 10 ? '0' : '') + md[0] + '-' + (md[1] < 10 ? '0' : '') + md[1]; }
+  // The next time that semester runs: the one in progress, or the coming one.
+  function usualDates(semKey){
+    var type = String(semKey || '').split('|')[1];
+    var r = USUAL[type];
+    if(!r) return null;
+    var now = new Date();
+    var today = iso(now.getFullYear(), [now.getMonth() + 1, now.getDate()]);
+    for(var y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++){
+      var endYear = r[1][0] < r[0][0] ? y + 1 : y;
+      var from = iso(y, r[0]), to = iso(endYear, r[1]);
+      if(to >= today) return { from: from, to: to };
+    }
+    return null;
+  }
+
   function open(prefix){
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
@@ -144,25 +170,46 @@
     }
 
     body.innerHTML =
-      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('calendar', 20) + esc(t('title', rtl)) + '</h2>' +
+      '<div class="cal-sheet">' +
+      '<div class="cal-head"><span class="cal-head-ic">' + window.AAUP_ICONS.preview('calendar', 18) + '</span>' +
+        '<h2 class="cal-title">' + esc(t('title', rtl)) + '</h2></div>' +
+      '<p class="cal-sub">' + esc(t('sub', rtl)) + '</p>' +
       '<div class="form-field"><label for="icsSem">' + esc(t('which', rtl)) + '</label>' +
         '<select id="icsSem">' + sems.map(function(s){
-          return '<option value="' + esc(s.key) + '">' + esc(s.label) + ' — ' + s.courses.length +
-            ' · ' + s.hours + 'H</option>';
+          return '<option value="' + esc(s.key) + '">' + esc(s.label) + ' · ' + s.courses.length + ' ' + esc(t('courses', rtl)) +
+            ' · ' + s.hours + ' ' + esc(t('hours', rtl)) + '</option>';
         }).join('') + '</select></div>' +
-      '<div class="form-field-row">' +
+      '<div class="cal-dates">' +
         '<div class="form-field"><label for="icsFrom">' + esc(t('from', rtl)) + '</label>' +
           '<input type="date" id="icsFrom"></div>' +
         '<div class="form-field"><label for="icsTo">' + esc(t('to', rtl)) + '</label>' +
           '<input type="date" id="icsTo"></div>' +
       '</div>' +
-      '<p class="form-note">' + esc(t('note', rtl)) + '</p>' +
-      '<div class="form-actions">' +
-        '<button type="button" class="home-btn" id="icsGo" style="border-color:var(--accent);color:var(--text);">' +
-          window.AAUP_ICONS.preview('download', 14) + esc(t('go', rtl)) + '</button>' +
-        '<button type="button" class="home-btn" id="icsCancel">' + esc(t('cancel', rtl)) + '</button>' +
-      '</div>';
+      '<p class="cal-usual" id="icsUsual" hidden>' + esc(t('usual', rtl)) + '</p>' +
+      '<div class="cal-note">' + window.AAUP_ICONS.preview('help', 15) + '<span>' + esc(t('note', rtl)) + '</span></div>' +
+      '<div class="cal-actions">' +
+        '<button type="button" class="cal-btn" id="icsCancel">' + esc(t('cancel', rtl)) + '</button>' +
+        '<button type="button" class="cal-btn cal-btn-primary" id="icsGo">' +
+          window.AAUP_ICONS.preview('download', 15) + esc(t('go', rtl)) + '</button>' +
+      '</div></div>';
     overlay.classList.add('open');
+
+    // Fill the usual dates for whichever semester is picked, until the
+    // student types their own — after that, switching semester leaves
+    // their dates alone.
+    var fromEl = document.getElementById('icsFrom'), toEl = document.getElementById('icsTo');
+    var semEl = document.getElementById('icsSem'), usualEl = document.getElementById('icsUsual');
+    var touched = false;
+    function fillUsual(){
+      if(touched) return;
+      var d = usualDates(semEl.value);
+      fromEl.value = d ? d.from : '';
+      toEl.value = d ? d.to : '';
+      usualEl.hidden = !d;
+    }
+    [fromEl, toEl].forEach(function(el){ el.addEventListener('input', function(){ touched = true; usualEl.hidden = true; }); });
+    semEl.addEventListener('change', fillUsual);
+    fillUsual();
 
     document.getElementById('icsCancel').addEventListener('click', function(){
       overlay.classList.remove('open');

@@ -168,7 +168,10 @@
     shareVia: { en: 'Share via…', ar: 'شارك عبر…' },
     print:    { en: 'Print', ar: 'طباعة' },
     calendar: { en: 'Calendar', ar: 'التقويم' },
-    progress: { en: 'My progress', ar: 'تقدّمي' }
+    progress: { en: 'My progress', ar: 'تقدّمي' },
+    linkLabel: { en: 'Link', ar: 'الرابط' },
+    otherWays: { en: 'Or send it another way', ar: 'أو ابعتها بطريقة ثانية' },
+    copyShort: { en: 'Copy', ar: 'انسخ' }
   };
   function t(k, r){ return r ? TX[k].ar : TX[k].en; }
 
@@ -186,7 +189,15 @@
       var qrCanvasId = 'shareQrCanvas';
       body.innerHTML =
         (window.__backBarHTML ? window.__backBarHTML('', 'shareOverlay', rtl) : '') +
-        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('link', 20) + t('title', rtl) + '</h2>' +
+        '<div class="share-head"><span class="share-head-ic">' + window.AAUP_ICONS.preview('link', 18) + '</span>' +
+          '<h2 class="share-title">' + t('title', rtl) + '</h2></div>' +
+        '<p class="share-lead">' + t(res.isCustom ? 'customLead' : 'builtinLead', rtl) + '</p>' +
+        // Code on one side, everything else on the other: the window used to
+        // be 420px wide with five buttons and a long link in one column, so
+        // the row ran off both edges and the whole window scrolled sideways.
+        // It is wider now (.share-card) and stacks back into one column on a
+        // phone.
+        '<div class="share-grid">' +
         // The QR is the thing this screen exists for and the one part of it
         // that works across the room, so it opens the screen at a size a
         // phone camera can actually read. It used to sit last, under a lead
@@ -203,23 +214,28 @@
           // overlay on every screen in the app instead.
           '<p class="share-credit">AAUPath \u00b7 @Dile (AL-Hammam_Natsha)</p>' +
         '</div>' +
+        '<div class="share-side">' +
+        // The link and its Copy button sit together; a long link ends in an
+        // ellipsis inside its own box rather than stretching the window.
+        '<p class="share-field-label">' + t('linkLabel', rtl) + '</p>' +
+        '<div class="share-link-row">' +
+          '<input type="text" id="shareLinkInput" class="share-link-input" readonly dir="ltr" aria-label="' + t('linkLabel', rtl) + '" value="' + esc(res.url) + '">' +
+          '<button type="button" class="home-btn share-copy-btn" id="shareCopyBtn">' + window.AAUP_ICONS.preview('copy', 14) + t('copyShort', rtl) + '</button>' +
+        '</div>' +
+        '<p class="share-field-label">' + t('otherWays', rtl) + '</p>' +
         // Overview & Print used to be its own menu row. It answers the same
         // question this screen answers — get this plan out of the app — one
         // as a link, one on paper, so it is a third way out from here rather
         // than a fourteenth destination in the menu.
         '<div class="share-actions">' +
           (navigator.share ? '<button type="button" class="home-btn share-native-btn" id="shareNativeBtn">' + window.AAUP_ICONS.preview('send', 14) + t('shareVia', rtl) + '</button>' : '') +
-          '<button type="button" class="home-btn" id="shareCopyBtn">' + window.AAUP_ICONS.preview('copy', 14) + t('copy', rtl) + '</button>' +
           (window.AAUP_OVERVIEW ? '<button type="button" class="home-btn" id="sharePrintBtn">' + window.AAUP_ICONS.preview('printer', 14) + t('print', rtl) + '</button>' : '') +
           (window.AAUP_CALENDAR ? '<button type="button" class="home-btn" id="shareIcsBtn">' + window.AAUP_ICONS.preview('calendar', 14) + t('calendar', rtl) + '</button>' : '') +
           // A link to the PLAN says what the degree is; this one says where
           // the sender has got to on it (js/82-follow.js).
           (window.AAUP_FOLLOW ? '<button type="button" class="home-btn" id="shareProgressBtn">' + window.AAUP_ICONS.preview('people', 14) + t('progress', rtl) + '</button>' : '') +
         '</div>' +
-        '<p class="form-note share-lead">' + t(res.isCustom ? 'customLead' : 'builtinLead', rtl) + '</p>' +
-        '<div class="share-link-row">' +
-          '<input type="text" id="shareLinkInput" class="share-link-input" readonly dir="ltr" value="' + esc(res.url) + '">' +
-        '</div>';
+        '</div></div>';
 
       // The native share sheet, when the platform has one, goes straight
       // into whatever app the student actually wants to send this through —
@@ -255,7 +271,7 @@
         copyBtn.addEventListener('click', function(){
           var done = function(){
             copyBtn.innerHTML = window.AAUP_ICONS.preview('check', 14) + t('copied', rtl);
-            setTimeout(function(){ copyBtn.innerHTML = window.AAUP_ICONS.preview('copy', 14) + t('copy', rtl); }, 1500);
+            setTimeout(function(){ copyBtn.innerHTML = window.AAUP_ICONS.preview('copy', 14) + t('copyShort', rtl); }, 1500);
           };
           if(navigator.clipboard && navigator.clipboard.writeText){
             navigator.clipboard.writeText(res.url).then(done, function(){

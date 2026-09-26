@@ -152,7 +152,7 @@
       words: ['thought', 'review', 'opinion', 'أفكار', 'رأي', 'آراء'],
       run: function(id){ window.AAUP_THOUGHTS.open(id); } },
     { key: 'prof', icon: 'cap', needs: false, en: 'Find a Professor', ar: 'ابحث عن محاضر',
-      dEn: 'Names, courses and @aaup.edu email', dAr: 'الأسماء والمساقات والإيميل',
+      dEn: 'Professors, offices and university contacts', dAr: 'المحاضرين والمكاتب وجهات اتصال الجامعة',
       words: ['prof', 'instructor', 'doctor', 'teacher', 'lecturer', 'محاضر', 'دكتور', 'أستاذ'],
       run: function(id){ window.AAUP_CONTACTS.open(id, { category: 'instructor', query: '' }); } },
     { key: 'courses', icon: 'book', needs: false, en: 'Browse Courses', ar: 'تصفّح المساقات',
@@ -167,21 +167,30 @@
       dEn: 'How far you are and what is left', dAr: 'وين وصلت وشو ضايل',
       words: ['progress', 'audit', 'graduat', 'dashboard', 'تقدم', 'تخرج'],
       run: function(id){ window.AAUP_DASHBOARD.open(id); } },
-    { key: 'contacts', icon: 'people', needs: false, en: 'University Contacts', ar: 'جهات اتصال الجامعة',
-      dEn: 'Registration, finance, IT, deans', dAr: 'التسجيل، المالية، تقنية المعلومات، العمادات',
-      words: ['contact', 'registration', 'finance', 'email', 'office', 'اتصال', 'تسجيل', 'مالي', 'مكتب'],
-      run: function(id){ window.AAUP_CONTACTS.open(id, { category: 'all', query: '' }); } }
+    { key: 'ach', icon: 'trophy', needs: true, en: 'Achievements', ar: 'الإنجازات',
+      dEn: 'Badges you’ve earned so far', dAr: 'الشارات اللي حصّلتها لهلق',
+      words: ['achiev', 'badge', 'إنجاز', 'شار'],
+      run: function(id){ window.AAUP_ACHIEVEMENTS.open(id); } }
   ];
   var EXTRAS = [
-    { key: 'ach', icon: 'trophy', needs: true, en: 'Achievements', ar: 'الإنجازات',
-      run: function(id){ window.AAUP_ACHIEVEMENTS.open(id); } },
     { key: 'share', icon: 'send', needs: true, en: 'Share my plan', ar: 'شارك خطتي',
       run: function(id){ window.AAUP_SHARE.open(id); } },
     { key: 'about', icon: 'help', needs: false, en: 'About', ar: 'عن التطبيق',
       run: function(){ window.AAUP_ABOUT.open(); } }
   ];
+  // Found by search, never drawn as a card. University Contacts opened the
+  // same screen as Find a Professor, just on a different tab, so the home
+  // keeps one card for it — but "registration" or "finance" should still
+  // land a student on the right tab.
+  var SEARCH_ONLY = [
+    { key: 'contacts', icon: 'people', needs: false, en: 'University Contacts', ar: 'جهات اتصال الجامعة',
+      dEn: 'Registration, finance, IT, deans', dAr: 'التسجيل، المالية، تقنية المعلومات، العمادات',
+      words: ['contact', 'registration', 'finance', 'email', 'office', 'اتصال', 'تسجيل', 'مالي', 'مكتب'],
+      run: function(id){ window.AAUP_CONTACTS.open(id, { category: 'all', query: '' }); } }
+  ];
+  function everything(){ return FEATURES.concat(EXTRAS, SEARCH_ONLY); }
   function feature(key){
-    return FEATURES.concat(EXTRAS).filter(function(f){ return f.key === key; })[0];
+    return everything().filter(function(f){ return f.key === key; })[0];
   }
 
   // Why a feature needs the major — said once, on the sheet that asks.
@@ -357,7 +366,7 @@
     var q = norm(state.q.trim());
     if(!q) return [];
     var out = [];
-    FEATURES.concat(EXTRAS).forEach(function(f){
+    everything().forEach(function(f){
       var hay = norm(f.en + ' ' + f.ar);
       var hit = hay.indexOf(q) >= 0 || (f.words || []).some(function(w){ w = norm(w); return q.indexOf(w) >= 0 || w.indexOf(q) === 0; });
       if(hit) out.push({ kind: L('Feature', 'ميزة'), title: L(f.en, f.ar), sub: f.dEn ? L(f.dEn, f.dAr) : '', go: 'f:' + f.key });

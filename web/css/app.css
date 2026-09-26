@@ -1759,6 +1759,7 @@
   .form-field input[type="number"],
   .form-field input[type="email"],
   .form-field input[type="password"],
+  .form-field input[type="date"],
   .form-field select,
   .form-field textarea{
     width:100%;background:var(--search-bg);border:1px solid var(--line);
@@ -3134,13 +3135,7 @@
 
   /* ---------- share link + QR (js/72-share.js) ---------- */
   .share-loading{font-size:12.5px;color:var(--text-dim);}
-  .share-native-btn{
-    /* width:100% was for when this button owned its own row; it now shares
-       one with Copy link, and flex sizing in .share-actions does the work. */
-    display:flex;justify-content:center;margin:0;
-    background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:800;
-  }
-  .share-link-row{display:flex;gap:8px;margin:14px 0 0;}
+  .share-link-row{display:flex;gap:8px;margin:0;}
   .share-link-input{
     flex:1 1 auto;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
     background:var(--search-bg);color:var(--text);font-family:monospace;font-size:12px;
@@ -3173,9 +3168,12 @@
 
   /* The two things most people actually came to do, directly under the code
      and above the link field they mostly do not need. */
-  .share-actions{display:flex;gap:8px;margin:14px 0 0;}
-  .share-actions .home-btn{flex:1;justify-content:center;}
-  .share-lead{margin:16px 0 0;}
+  /* Two per row, so four buttons never run off the edge. */
+  .share-actions{display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:8px;margin:0;}
+  .share-actions .home-btn{justify-content:flex-start;margin:0;min-width:0;}
+  /* Share via… only exists where the device has a share sheet, so the count
+     is three or four; an odd last button takes the whole row. */
+  .share-actions .home-btn:last-child:nth-child(odd){grid-column:1 / -1;}
 
   /* ---------- contacts (js/68-contacts.js) ---------- */
   .ct-privacy{
@@ -5130,11 +5128,24 @@
     display:flex; flex-direction:column; padding:18px 0; overflow-y:auto;
     transition:transform .25s ease;
   }
+  /* The plan's name is a button (it goes home), without the button chrome. */
   .app-sidebar .sb-brand{
     display:flex; align-items:center; gap:10px; padding:0 18px 16px; margin-bottom:8px;
-    border-bottom:1px solid var(--line); font-weight:800; font-size:14px;
+    border:none; border-bottom:1px solid var(--line); font-weight:800; font-size:14px;
+    background:none; width:100%; color:var(--text); font-family:inherit;
+    text-align:start; cursor:pointer; line-height:1.35;
   }
   .app-sidebar .sb-brand .sb-mark{font-size:20px;}
+  .app-sidebar .sb-brand:hover{color:var(--accent);}
+  /* Home: set apart from the plan's own rows as a small outlined button, so
+     it reads as "leave the plan" rather than one more screen inside it. */
+  .app-sidebar .sb-home{
+    display:flex; align-items:center; gap:10px; margin:4px 12px 10px; padding:9px 12px;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    color:var(--text); font-family:inherit; font-size:13px; font-weight:700; cursor:pointer; text-align:start;
+  }
+  .app-sidebar .sb-home:hover{border-color:var(--accent);}
+  .app-sidebar .sb-home .app-icon-svg{color:inherit;}
   .app-sidebar .sb-section-label{
     font-size:10.5px; font-weight:800; color:var(--text-dim); text-transform:uppercase;
     letter-spacing:.05em; padding:14px 18px 6px;
@@ -6130,7 +6141,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
 .ach-cat-pill.active .app-icon-svg,
 .ct-chip-on .app-icon-svg,
 .settings-tab.active .app-icon-svg,
-.share-native-btn .app-icon-svg,
 .wiz-continue .app-icon-svg,
 .story-continue .app-icon-svg,
 .tut-next .app-icon-svg,
@@ -6762,38 +6772,51 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
    Replaces three lines of prose that used to sit under every screen of the
    plan picker. One button, one page.
    ========================================================================= */
-.ab-lead{font-size:13px; line-height:1.65; color:var(--text-dim); margin:0 0 12px;}
-.ab-flag{
-  display:flex; align-items:center; gap:9px; margin:0 0 18px;
+.abt-card{max-width:720px;}
+.abt-head{display:flex; align-items:center; gap:10px; margin:0 0 10px;}
+.abt-head-ic{
+  flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+}
+.abt-head-ic .app-icon-svg{color:inherit;}
+.abt-title{margin:0; font-size:20px; font-weight:800; line-height:1.25;}
+.abt-lead{font-size:13px; line-height:1.65; color:var(--text-dim); margin:0 0 10px; max-width:62ch;}
+.abt-flag{
+  display:flex; align-items:center; gap:9px; margin:0 0 16px;
   font-size:12.5px; color:var(--text-dim); line-height:1.5;
 }
-.ab-flag-mark{font-size:17px; flex:none; line-height:1;}
-.ab-rows{display:flex; flex-direction:column; gap:2px;}
-.ab-row{
-  display:flex; align-items:flex-start; gap:12px;
-  padding:12px 4px; border-top:1px solid var(--line);
+.abt-flag-mark{flex:none; border-radius:2px; box-shadow:0 0 0 1px var(--line);}
+/* One column on a phone; the university and the maker side by side once
+   there is room for both. */
+.abt-cols{display:grid; grid-template-columns:minmax(0, 1fr); column-gap:24px;}
+@media (min-width:620px){ .abt-cols{grid-template-columns:repeat(2, minmax(0, 1fr));} }
+.abt-rows{display:flex; flex-direction:column;}
+.abt-row{
+  display:flex; align-items:flex-start; gap:12px; text-align:start;
+  padding:11px 2px; border-top:1px solid var(--line);
 }
-.ab-row-ic{
+.abt-row-ic{
   flex:none; width:30px; height:30px; border-radius:9px;
   background:color-mix(in srgb, var(--accent) 13%, transparent); color:var(--accent);
   display:flex; align-items:center; justify-content:center;
 }
-.ab-row-body{display:flex; flex-direction:column; gap:3px; min-width:0;}
-.ab-row-label{
+.abt-row-ic .app-icon-svg{color:inherit;}
+.abt-row-body{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.abt-row-label{
   font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
   color:var(--text-dim);
 }
-.ab-row-value{font-size:13.5px; line-height:1.5; color:var(--text); overflow-wrap:anywhere;}
-.ab-row-value a{color:var(--accent); text-decoration:none; font-weight:700;}
-.ab-row-value a:hover{text-decoration:underline;}
+.abt-row-value{font-size:13.5px; line-height:1.5; color:var(--text); overflow-wrap:anywhere;}
+.abt-row-value a{color:var(--accent); text-decoration:none; font-weight:700;}
+.abt-row-value a:hover{text-decoration:underline;}
 /* A fax number sits under its campus switchboard: same row, quieter, and
    never a link, because nothing dials a fax. */
-.ab-sub{font-size:12px; color:var(--muted); font-weight:600;}
-.ab-row-value code{
+.abt-sub{font-size:12px; color:var(--text-dim); font-weight:600;}
+.abt-row-value code{
   font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12.5px;
   background:var(--search-bg); border-radius:6px; padding:2px 7px;
 }
-.ab-more{margin-top:16px;}
+.abt-more{margin:14px 0 0; font-size:12px; color:var(--text-dim);}
 
 /* ============================================================================
    COURSE DETAIL PANEL  (js/49-course-detail.js)
@@ -8124,4 +8147,77 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   .hm-sheet-overlay{align-items:center; justify-content:center;}
   .hm-sheet{width:420px; height:min(640px, 86vh); border-radius:20px;}
   .hm-grab{display:none;}
+}
+
+/* =========================================================================
+   ADD A SEMESTER TO YOUR CALENDAR  (js/81-calendar.js)
+
+   A title that fits on one line, full-size date fields drawn by the theme
+   (html's color-scheme, set in js/17-theme.js, makes the browser's own
+   picker dark on dark themes), and one filled main button beside a quiet
+   Cancel.
+   ========================================================================= */
+.cal-head{display:flex; align-items:center; gap:10px;}
+.cal-head-ic{
+  flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+}
+.cal-head-ic .app-icon-svg{color:inherit;}
+.cal-title{margin:0; font-size:19px; font-weight:800; line-height:1.25; text-wrap:balance;}
+.cal-sub{margin:6px 0 16px; font-size:13px; line-height:1.55; color:var(--text-dim);}
+.cal-dates{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px;}
+.cal-dates .form-field{margin-bottom:0;}
+.cal-sheet input[type="date"]{min-height:40px; font-variant-numeric:tabular-nums;}
+.cal-sheet input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer; opacity:.7;}
+.cal-usual{margin:8px 0 0; font-size:11.5px; color:var(--text-dim);}
+.cal-note{
+  display:flex; gap:9px; align-items:flex-start; margin:14px 0 0; padding:10px 12px;
+  background:var(--search-bg); border-radius:10px;
+  font-size:12px; line-height:1.55; color:var(--text-dim);
+}
+.cal-note .app-icon-svg{flex:none; margin-top:2px; color:var(--accent);}
+.cal-actions{display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:18px;}
+.cal-btn{
+  display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:10px;
+  border:1px solid var(--line); background:none; color:var(--text);
+  font-family:inherit; font-size:13.5px; font-weight:800; cursor:pointer;
+}
+.cal-btn:hover{border-color:var(--text-dim);}
+.cal-btn-primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.cal-btn-primary:hover{filter:brightness(1.08); border-color:var(--accent);}
+.cal-btn-primary .app-icon-svg{color:inherit;}
+.cal-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+@media (max-width:420px){
+  .cal-dates{grid-template-columns:minmax(0, 1fr);}
+  .cal-actions .cal-btn{flex:1; justify-content:center;}
+}
+
+/* =========================================================================
+   SHARE THIS PLAN — layout  (js/72-share.js)
+
+   Wide enough for the code and the ways out side by side; one column on a
+   phone. Nothing in it is wider than the window, so it never scrolls
+   sideways.
+   ========================================================================= */
+.share-card{max-width:760px;}
+.share-head{display:flex; align-items:center; gap:10px;}
+.share-head-ic{
+  flex:none; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+}
+.share-head-ic .app-icon-svg{color:inherit;}
+.share-title{margin:0; font-size:20px; font-weight:800; line-height:1.25;}
+.share-lead{margin:6px 0 16px; font-size:13px; line-height:1.55; color:var(--text-dim); max-width:62ch;}
+.share-grid{display:grid; grid-template-columns:minmax(0, 1fr); gap:18px; align-items:start;}
+.share-side{display:flex; flex-direction:column; gap:8px; min-width:0;}
+.share-field-label{margin:4px 0 0; font-size:12px; font-weight:700; color:var(--text-dim);}
+.share-link-input{text-overflow:ellipsis; white-space:nowrap;}
+.share-copy-btn{
+  flex:none; margin:0; justify-content:center;
+  background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:800;
+}
+.share-copy-btn .app-icon-svg{color:inherit;}
+@media (min-width:680px){
+  .share-grid{grid-template-columns:260px minmax(0, 1fr);}
+  .share-side{padding-top:2px;}
 }

@@ -237,8 +237,8 @@
           text: { en: 'Now tap + in any semester — name, credit hours, category, even prerequisites. Try it.',
                   ar: 'الآن اضغط + في أي فصل — الاسم والساعات والفئة وحتى المتطلبات السابقة. جرّب.' } },
         { target: firstVisible(['#importedPlanView .home-btn[onclick*="openLibrary"]']),
-          text: { en: 'Or skip the typing: Course Library copies a course straight from another plan.',
-                  ar: 'أو تجنّب الكتابة: «مكتبة المساقات» تنسخ مساقًا جاهزًا من خطة أخرى.' } }
+          text: { en: 'Or skip the typing: Browse Courses copies a course straight from another plan.',
+                  ar: 'أو تجنّب الكتابة: «تصفّح المساقات» تنسخ مساقًا جاهزًا من خطة أخرى.' } }
       ]
     },
     editPlan: {
@@ -326,14 +326,18 @@
     },
     {
       id: 'menu',
-      tags: { en: ['menu', 'sidebar', 'navigation', 'navigate', 'where is the menu', 'buttons on the side'],
+      tags: { en: ['menu', 'sidebar', 'navigation', 'navigate', 'where is the menu', 'buttons on the side', 'go home', 'back to home', 'main menu'],
               ar: ['قائمة', 'الشريط الجانبي', 'تنقل'] },
       title: { en: 'The menu', ar: 'القائمة' },
       body: {
-        en: ['Edit Mode · Dashboard · My Study Plan · Degree Audit & GPA, then Advanced for Achievements, Student Thoughts, Contacts, Course Library, Export and Contribute.',
+        en: ['Home is at the top, and so is the plan’s name: both take you back to “What do you need?”.',
+             'Then everything about your plan: Edit Mode · Dashboard · My Study Plan · Degree Audit & GPA · My Schedule · Achievements · Send this plan.',
+             'Advanced holds the rest: Student Thoughts, Find a Professor, Browse Courses and About.',
              'At the bottom: Settings and Change plan.',
              'On a phone it is behind the menu button in the corner.'],
-        ar: ['وضع التعديل · لوحة التحكم · خطتي الدراسية · التدقيق والمعدّل، وتحت «متقدم»: الإنجازات وأفكار الطلبة وجهات الاتصال ومكتبة المساقات والتصدير والإرسال.',
+        ar: ['«الرئيسية» في الأعلى، واسم الخطة كمان: الاثنين بيرجعوك لـ«شو بدك؟».',
+             'بعدها كل ما يخص خطتك: وضع التعديل · لوحة التحكم · خطتي الدراسية · التدقيق والمعدّل · جدولي · الإنجازات · إرسال هذه الخطة.',
+             'وتحت «متقدم» الباقي: أفكار الطلبة وابحث عن محاضر وتصفّح المساقات وعن التطبيق.',
              'في الأسفل: الإعدادات وتغيير الخطة.',
              'على الهاتف تجدها خلف زر القائمة في الزاوية.']
       },

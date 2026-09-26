@@ -52,7 +52,7 @@
   var ITEMS = [
     { key: 'edit', icon: 'pen', label: 'Edit Mode', ar: 'وضع التعديل', group: null, planOnly: true,
       action: function(prefix){ if(window.AAUP_IMPORTED) window.AAUP_IMPORTED.toggleEdit(prefix); } },
-    { key: 'dashboard', icon: 'home', label: 'Dashboard', ar: 'لوحة التحكم', group: null, action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
+    { key: 'dashboard', icon: 'chart', label: 'Dashboard', ar: 'لوحة التحكم', group: null, action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
     { key: 'studyplan', icon: 'planpin', label: 'My Study Plan', ar: 'خطتي الدراسية', group: 'plan', action: function(prefix){ window.AAUP_DASHBOARD.openStudyPlan(prefix); } },
     // Four rows left this list, each into the screen that was already
     // answering the same question:
@@ -61,12 +61,20 @@
     //   Plan My Next Sem.  -> under "You are here" on the plan
     //   Overview & Print   -> Share this plan, as the third way out
     { key: 'audit', icon: 'clipboard', label: 'Degree Audit & GPA', ar: 'التدقيق والمعدل', group: 'plan', action: function(prefix){ window.AAUP_AUDIT.open(prefix); } },
-    { key: 'achievements', icon: 'trophy', label: 'Achievements', ar: 'الإنجازات', group: 'plan', advanced: true, action: function(prefix){ window.AAUP_ACHIEVEMENTS.open(prefix); } },
+    // The split below is one rule: a row about THIS plan sits in the list,
+    // anything that is not mainly about the plan — other students, the
+    // professors, the whole course catalogue, the app itself — sits behind
+    // Advanced. Names match the home screen's cards (js/90-task-home.js), so
+    // the same screen is never called two things.
+    { key: 'schedule', icon: 'calendar', label: 'My Schedule', ar: 'جدولي', group: 'plan', action: function(prefix){ if(window.AAUP_CALENDAR) window.AAUP_CALENDAR.open(prefix); } },
+    { key: 'achievements', icon: 'trophy', label: 'Achievements', ar: 'الإنجازات', group: 'plan', action: function(prefix){ window.AAUP_ACHIEVEMENTS.open(prefix); } },
     // The one place in the app where students talk to each other rather than
     // to their own data — so it sits with the rest of the plan's screens, not
     // hidden behind a floating button nobody presses.
     { key: 'thoughts', icon: 'speech', label: 'Student Thoughts', ar: 'أفكار الطلبة', group: 'community', advanced: true, action: function(prefix){ if(window.AAUP_THOUGHTS) window.AAUP_THOUGHTS.open(prefix); } },
-    { key: 'contacts', icon: 'people', label: 'Contacts', ar: 'جهات الاتصال', group: 'community', advanced: true, action: function(prefix){ if(window.AAUP_CONTACTS) window.AAUP_CONTACTS.open(prefix); } },
+    { key: 'contacts', icon: 'cap', label: 'Find a Professor', ar: 'ابحث عن محاضر', group: 'community', advanced: true, action: function(prefix){ if(window.AAUP_CONTACTS) window.AAUP_CONTACTS.open(prefix, { category: 'instructor', query: '' }); } },
+    { key: 'library', icon: 'book', label: 'Browse Courses', ar: 'تصفّح المساقات', group: 'community', advanced: true, planOnly: true, action: function(prefix){ if(window.AAUP_IMPORTED) window.AAUP_IMPORTED.openLibrary(prefix); } },
+    { key: 'about', icon: 'help', label: 'About', ar: 'عن التطبيق', group: 'community', advanced: true, action: function(){ if(window.AAUP_ABOUT) window.AAUP_ABOUT.open(); } },
     // These two also came off the plan header. Neither is an everyday
     // action, so they land in Advanced rather than the top list — but they
     // do land somewhere: a control that is removed from one surface and
@@ -77,7 +85,7 @@
     // destination, so picking between them meant already knowing what each
     // one did. One row now, and it asks where. Same pattern as the plan
     // chooser above, and for the same reason.
-    { key: 'send', icon: 'download', label: 'Send this plan', ar: 'إرسال هذه الخطة', group: 'account', advanced: true, planOnly: true,
+    { key: 'send', icon: 'download', label: 'Send this plan', ar: 'إرسال هذه الخطة', group: 'plan', planOnly: true,
       action: function(prefix){ openSendChooser(prefix); } }
   ];
   var GROUP_LABELS = { plan: 'Plan', community: 'Community', account: 'Account' };
@@ -111,6 +119,15 @@
   // (what carries over, what it costs) or opening one of your own saved
   // plans — instead of making the student pick the right row for a
   // difference the labels never explained.
+  // Back to "What do you need?" (js/90-task-home.js), which hides this
+  // sidebar and the tab bar on its own.
+  function goHome(){
+    closeMobile();
+    document.querySelectorAll('.modal-overlay.open').forEach(function(o){ o.classList.remove('open'); });
+    if(window.AAUP_TASK_HOME){ window.AAUP_TASK_HOME.show(); }
+    else if(window.showPage){ window.showPage('home'); }
+  }
+
   function openPlanChooser(prefix){
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
@@ -197,10 +214,6 @@
     try{ localStorage.setItem(ADV_KEY, v ? '1' : '0'); }catch(e){}
   }
   function isAdvancedKey(key){
-    // 'library' is appended at render time rather than living in ITEMS, so
-    // it is named here too — otherwise opening the Course Library would
-    // collapse the section the row was clicked in.
-    if(key === 'library') return true;
     var item = ITEMS.filter(function(i){ return i.key === key; })[0];
     return !!(item && item.advanced);
   }
@@ -230,7 +243,7 @@
   // exactly one of the two per breakpoint (see .sb-groups/.sb-flat-list in
   // app.css), and both share the same [data-sb-key] attribute so the one
   // click handler in render() covers whichever markup is actually visible.
-  function moreGroupsHtml(prefix, activeKey, hasLibrary){
+  function moreGroupsHtml(prefix, activeKey){
     var byGroup = { plan: [], community: [], account: [] };
     var adv = [];
     // The advanced rows leave their own groups and gather into one list, in
@@ -243,9 +256,6 @@
       if(item.group && byGroup[item.group]) byGroup[item.group].push(item);
       else soloItems.push(item);
     });
-    if(hasLibrary){
-      adv.push({ key: 'library', icon: 'book', label: 'Course Library', ar: 'مكتبة المساقات' });
-    }
     byGroup.account.push({ key: 'settings', icon: 'gear', label: 'Settings', ar: 'الإعدادات' });
     byGroup.account.push({ key: 'switch', icon: 'shuffle', label: 'Change plan', ar: 'تغيير الخطة' });
 
@@ -290,16 +300,17 @@
     var name = planName(prefix);
     var iconEntity = isImportedPlan(prefix) ? (window.AAUP_IMPORTED.loadImportedPlans()[prefix] || {}) :
       { icon: BUILT_IN_ICONS[prefix] || '🎓', iconKey: BUILT_IN_ICON_KEYS[prefix] || '' };
-    var hasLibrary = isImportedPlan(prefix);
 
-    var html = '<div class="sb-brand"><span class="sb-mark">' + window.AAUP_ICONS.markup(iconEntity, { size: 20 }) + '</span><span>' + name + '</span></div>';
+    // The plan's name goes home too — it is where people click first when
+    // they want out, so it does what they expect.
+    var html = '<button type="button" class="sb-brand" data-sb-key="home" title="' + (ar() ? 'الرئيسية' : 'Home') + '"><span class="sb-mark">' + window.AAUP_ICONS.markup(iconEntity, { size: 20 }) + '</span><span>' + name + '</span></button>' +
+      '<button type="button" class="sb-home" data-sb-key="home"><span class="sb-icon">' + window.AAUP_ICONS.preview(ar() ? 'chevronRight' : 'chevronLeft', 16) + '</span><span>' + (ar() ? 'الرئيسية' : 'Home') + '</span></button>';
     function itemHtml(item){
       return '<button type="button" class="sb-item' + (item.key === activeKey ? ' active' : '') +
         (item.key === 'edit' && isEditing(prefix) ? ' sb-item-on' : '') + '" data-sb-key="' + item.key + '">' +
         '<span class="sb-icon">' + window.AAUP_ICONS.preview(item.icon, 16) + '</span><span>' + labelFor(item, prefix) + '</span></button>';
     }
     var advItems = itemsFor(prefix).filter(function(i){ return i.advanced; });
-    if(hasLibrary){ advItems = advItems.concat([{ key: 'library', icon: 'book', label: 'Course Library', ar: 'مكتبة المساقات' }]); }
     var advExpanded = advancedExpanded(activeKey);
 
     html += '<div class="sb-flat-list">';
@@ -314,7 +325,7 @@
     html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button>' +
       '<button type="button" class="sb-item" data-sb-key="switch"><span class="sb-icon">' + window.AAUP_ICONS.preview('shuffle', 16) + '</span><span>' + (ar() ? 'تغيير الخطة' : 'Change plan') + '</span></button></div>';
     html += '</div>';
-    html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey, hasLibrary) + '</div>';
+    html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey) + '</div>';
     sidebar.innerHTML = html;
 
     // Toggling Advanced re-renders in place rather than re-running render(),
@@ -351,7 +362,7 @@
         closeMobile();
         if(key === 'switch'){ openPlanChooser(prefix); return; }
         if(key === 'settings'){ openSettings(); tagOpenedFromMore(openedFromMoreDrawer); return; }
-        if(key === 'library'){ if(window.AAUP_IMPORTED) window.AAUP_IMPORTED.openLibrary(prefix); tagOpenedFromMore(openedFromMoreDrawer); return; }
+        if(key === 'home'){ goHome(); return; }
         var item = itemsFor(prefix).filter(function(i){ return i.key === key; })[0];
         if(item){
           item.action(prefix);
@@ -465,8 +476,11 @@
   //
   // icon is a js/04-icons.js ICONS key, same as ITEMS above — reusing
   // 'home'/'planpin' for the same two destinations the sidebar already has.
+  // Home is first: it is the one place every other screen hangs off, and
+  // the tab bar was the only way around a phone that had no way back to it.
   var TABS = [
-    { key: 'dashboard', icon: 'home', label: 'Dashboard', ar: 'لوحة التحكم', action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
+    { key: 'home', icon: 'home', label: 'Home', ar: 'الرئيسية', action: function(){ goHome(); } },
+    { key: 'dashboard', icon: 'chart', label: 'Dashboard', ar: 'لوحة التحكم', action: function(prefix){ window.AAUP_DASHBOARD.open(prefix); } },
     { key: 'studyplan', icon: 'planpin', label: 'Plan', ar: 'الخطة', action: function(prefix){ window.AAUP_DASHBOARD.openStudyPlan(prefix); } },
     { key: 'assistant', icon: 'chatdots', label: 'Assistant', ar: 'المساعد', action: function(){ if(window.AAUP_ASSISTANT_UI) window.AAUP_ASSISTANT_UI.open(); } },
     { key: 'more', icon: 'menu', label: 'More', ar: 'المزيد', action: function(){ toggleMobile(); } }
