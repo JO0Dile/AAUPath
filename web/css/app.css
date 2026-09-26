@@ -4498,7 +4498,6 @@
   /* One drawn arrow, mirrored for Arabic, rather than two characters: the
      ← and → glyphs came from the body font and sat a pixel or two off
      centre in the circle, which is what made the bar look unfinished. */
-  .back-bar-rtl .back-bar-arrow svg{transform:scaleX(-1);}
   /* --panel is the card's own background and --accent is picked to stand out
      against it, so accent-on-panel is readable in all six themes without any
      theme having to declare a seventh colour for this one button. */
@@ -4692,6 +4691,10 @@
      Degree Audit exports) is completely untouched. ---- */
   .editing .imp-year-block{display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;}
   .editing .imp-year-header{flex:1 1 100%;margin-bottom:4px;}
+  /* The semesters sit inside .imp-year-body (the part a folded year hides),
+     so the side-by-side row has to be on it too — without this every year
+     in Edit Mode was one long column. */
+  .editing .imp-year-body{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;}
   .editing .imp-semester-block{
     flex:1 1 220px;min-width:200px;max-width:280px;margin-bottom:0;
     background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;
@@ -5028,11 +5031,11 @@
   .app-sidebar .sb-item{
     display:flex; align-items:center; gap:11px; padding:10px 18px; cursor:pointer;
     color:var(--text-dim); font-size:13px; font-weight:600; border:none; background:none;
-    width:100%; text-align:left; font-family:inherit; border-left:3px solid transparent;
+    width:100%; text-align:start; font-family:inherit; border-inline-start:3px solid transparent;
   }
   .app-sidebar .sb-item:hover{background:rgba(255,255,255,.04); color:var(--text);}
   .app-sidebar .sb-item.active{
-    background:color-mix(in srgb, var(--accent) 10%, transparent); color:var(--accent); border-left-color:var(--accent); font-weight:700;
+    background:color-mix(in srgb, var(--accent) 10%, transparent); color:var(--accent); border-inline-start-color:var(--accent); font-weight:700;
   }
   .app-sidebar .sb-icon{font-size:16px; width:20px; text-align:center; flex:0 0 auto;}
   .app-sidebar .sb-spacer{flex:1;}
@@ -5043,7 +5046,7 @@
      a student can see there is something behind it without opening it. */
   .app-sidebar .sb-adv-toggle{
     display:flex; align-items:center; gap:11px; width:100%;
-    padding:10px 18px; background:none; border:none; border-left:3px solid transparent;
+    padding:10px 18px; background:none; border:none; border-inline-start:3px solid transparent;
     color:var(--text-dim); font-family:inherit; font-size:13.5px; font-weight:600;
     cursor:pointer; text-align:start;
   }
@@ -5079,7 +5082,7 @@
   .sheet-plan-simple{max-width:1100px;}
 
   body.has-sidebar .dashboard-page,
-  body.has-sidebar .sheet{margin-left:230px;}
+  body.has-sidebar .sheet{margin-inline-start:230px;}
 
   @media (max-width:900px){
     .app-sidebar{transform:translateX(-100%);}
@@ -5091,7 +5094,7 @@
     .sb-toggle-btn{display:block;}
     .sb-overlay.open{display:block;}
     body.has-sidebar .dashboard-page,
-    body.has-sidebar .sheet{margin-left:0;}
+    body.has-sidebar .sheet{margin-inline-start:0;}
   }
 
   /* Below the tab bar's own breakpoint, "More" is one of its four tabs —
@@ -7507,7 +7510,6 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 .eng-opt-sub{font-size:11.5px;color:var(--text-dim);font-weight:600;}
 .eng-opt-chev{flex:0 0 auto;color:var(--text-dim);display:inline-flex;}
 .eng-opt:hover .eng-opt-chev{color:var(--accent);}
-[dir="rtl"] .eng-opt-chev svg{transform:scaleX(-1);}
 @media (prefers-reduced-motion:reduce){
   .eng-opt{transition:none;}
   .eng-opt:active{transform:none;}
@@ -7592,7 +7594,10 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 [dir="rtl"] .imp-semester-block.sem-now,
 .rtl-mode .imp-semester-block.sem-now{
   background:linear-gradient(270deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 62%);
+  border-radius:10px 0 0 10px;
 }
+/* In Edit Mode it is one card in a row, so it lines up with its neighbours. */
+.editing .imp-semester-block.sem-now{margin-inline-start:0; border-radius:10px;}
 .now-tag{
   display:flex; align-items:center; gap:8px;
   margin:0 0 8px;
@@ -8499,3 +8504,33 @@ body.has-sidebar .edit-donebar{left:calc(50% + 115px);}
 /* "Almost there" is the row worth looking at, so it is not greyed out like
    the rest of the locked badges. */
 .ach-closest .achievement-badge.locked{opacity:1; filter:none;}
+
+/* ==========================================================================
+   Arabic mirrors the whole app. js/09-language.js puts dir="rtl" on <html>,
+   so text, flex rows and logical properties already follow; these are the
+   pieces pinned to a physical side. The sidebar moves to the right, and
+   everything that makes room for it moves with it. Arrows flip through
+   .app-icon-dir (js/04-icons.js preview).
+   ========================================================================== */
+html[dir="rtl"] .app-icon-dir svg{transform:scaleX(-1);}
+html[dir="rtl"] [dir="ltr"] .app-icon-dir svg{transform:none;}
+html[dir="rtl"] .lib-shelf-open .lib-shelf-chev{transform:rotate(-90deg);}
+html[dir="rtl"] .app-sidebar{left:auto; right:0; border-right:none; border-left:1px solid var(--line);}
+html[dir="rtl"] .sb-toggle-btn{left:auto; right:14px;}
+html[dir="rtl"] .edit-donebar{padding:10px 14px 10px 10px;}
+html[dir="rtl"] body.has-sidebar .edit-donebar{left:calc(50% - 115px);}
+html[dir="rtl"] body.has-sidebar .fix-launcher,
+html[dir="rtl"] body.has-sidebar .fix-panel{left:16px;}
+@media (max-width:900px){
+  html[dir="rtl"] .app-sidebar{transform:translateX(100%);}
+  html[dir="rtl"] .app-sidebar.open{transform:translateX(0);}
+}
+@media (max-width:720px){
+  html[dir="rtl"] .app-sidebar{left:0; right:0; border-left:none; transform:translateY(100%);}
+  html[dir="rtl"] .app-sidebar.open{transform:translateY(0);}
+  html[dir="rtl"] body.has-sidebar .edit-donebar{left:50%;}
+}
+@media (max-width:560px){
+  html[dir="rtl"] body.has-sidebar .fix-launcher{left:12px;}
+  html[dir="rtl"] body.has-sidebar .fix-panel{left:8px;}
+}

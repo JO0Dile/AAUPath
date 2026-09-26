@@ -33,8 +33,20 @@
     // the plan itself is re-rendered by whoever flipped the switch. The
     // document direction is set here so a screen with no plan behind it
     // (Settings, the home picker) still turns around.
-    try{ document.documentElement.setAttribute('lang', cached); }catch(e){}
+    applyDir();
     return cached;
+  }
+  // WHOLE-APP MIRRORING.
+  // The page's reading direction follows the language, so every screen —
+  // menus, bars, sheets, cards — lays out right-to-left in Arabic, not only
+  // the few that used to flip themselves. Direction-sensitive CSS keys off
+  // html[dir="rtl"] (or uses logical properties, which follow it for free).
+  function applyDir(){
+    try{
+      var el = document.documentElement;
+      el.setAttribute('lang', cached);
+      el.setAttribute('dir', cached === 'ar' ? 'rtl' : 'ltr');
+    }catch(e){}
   }
   function toggle(){ return set(isAr() ? 'en' : 'ar'); }
 
@@ -80,6 +92,10 @@
   }
 
   function setAndApply(v){ var r = set(v); applyStatic(); return r; }
+
+  // Before first paint, so an Arabic student never sees the app laid out
+  // left-to-right for a moment.
+  get(); applyDir();
 
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', function(){ applyStatic(); });

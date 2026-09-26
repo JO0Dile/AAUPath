@@ -504,7 +504,7 @@
       return '<button type="button" class="hm-row" data-hm-college="' + esc(c.key) + '">' +
         '<span class="hm-row-body"><b>' + clean(c.name) + '</b><span>' +
           esc(n === 1 ? L('1 major', 'تخصص واحد') : L(n + ' majors', n + ' تخصصات')) + '</span></span>' +
-        '<span class="hm-chev" aria-hidden="true">' + ic(ar() ? 'chevronLeft' : 'chevronRight', 18) + '</span></button>';
+        '<span class="hm-chev" aria-hidden="true">' + ic('chevronRight', 18) + '</span></button>';
     }).join('');
   }
 
@@ -517,7 +517,7 @@
     card.innerHTML =
       '<span class="hm-grab" aria-hidden="true"></span>' +
       '<div class="hm-sheet-head">' +
-        (inCollege ? '<button type="button" class="hm-iconbtn hm-back" data-hm-back aria-label="' + esc(L('Back to colleges', 'رجوع للكليات')) + '">' + ic(ar() ? 'chevronRight' : 'chevronLeft', 20) + '</button>' : '') +
+        (inCollege ? '<button type="button" class="hm-iconbtn hm-back" data-hm-back aria-label="' + esc(L('Back to colleges', 'رجوع للكليات')) + '">' + ic('chevronLeft', 20) + '</button>' : '') +
         '<div><h2 id="hmSheetTitle">' + (g ? clean(g.name) : esc(L('Which college is your major in?', 'تخصصك بأي كلية؟'))) + '</h2>' +
         '<p>' + esc(inCollege ? L('Pick your major.', 'اختار تخصصك.') : L(reason[0], reason[1])) + '</p></div>' +
       '</div>' +

@@ -303,7 +303,7 @@
     // The plan's name goes home too — it is where people click first when
     // they want out, so it does what they expect.
     var html = '<button type="button" class="sb-brand" data-sb-key="home" title="' + (ar() ? 'الرئيسية' : 'Home') + '"><span class="sb-mark">' + window.AAUP_ICONS.markup(iconEntity, { size: 20 }) + '</span><span>' + name + '</span></button>' +
-      '<button type="button" class="sb-home" data-sb-key="home"><span class="sb-icon">' + window.AAUP_ICONS.preview(ar() ? 'chevronRight' : 'chevronLeft', 16) + '</span><span>' + (ar() ? 'الرئيسية' : 'Home') + '</span></button>';
+      '<button type="button" class="sb-home" data-sb-key="home"><span class="sb-icon">' + window.AAUP_ICONS.preview('chevronLeft', 16) + '</span><span>' + (ar() ? 'الرئيسية' : 'Home') + '</span></button>';
     function itemHtml(item){
       return '<button type="button" class="sb-item' + (item.key === activeKey ? ' active' : '') +
         (item.key === 'edit' && isEditing(prefix) ? ' sb-item-on' : '') + '" data-sb-key="' + item.key + '">' +
