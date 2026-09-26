@@ -2555,6 +2555,8 @@
   };
   var LIB_ELECTIVE = { univElec: true, specElec: true, freeElec: true };
 
+  // The library is English-only for now, so it keeps left-to-right reading
+  // even while the rest of the app is mirrored for Arabic.
   function openLibrary(currentPlanId){
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
@@ -2565,7 +2567,7 @@
     var prefixList = Object.keys(prefixes).sort(function(a, b){ return planLabel(a).localeCompare(planLabel(b)); });
 
     function showPicker(){
-      body.innerHTML =
+      body.innerHTML = '<div dir="ltr">' +
         '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('book', 20) + 'Course Library</h2>' +
         '<p class="form-note" style="margin-top:-6px;">Choose a study plan to browse its courses.</p>' +
         (currentPlanId ? '<p class="form-note" style="margin-top:-2px;">Currently in <b>' + window.__escapeHtml(planLabel(currentPlanId)) + '</b>.</p>' : '') +
@@ -2573,7 +2575,7 @@
         '<option value="">— choose a plan —</option>' +
         prefixList.map(function(pref){ return '<option value="' + pref + '">' + planLabel(pref) + '</option>'; }).join('') +
         '</select></div>' +
-        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div>';
+        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div></div>';
       overlay.classList.add('open');
       document.getElementById('libClose').addEventListener('click', function(){ overlay.classList.remove('open'); });
       document.getElementById('libPlanSelect').addEventListener('change', function(e){
@@ -2693,14 +2695,14 @@
       // "Change plan" at the top of a screen for looking courses up read as
       // "switch the major I'm on". What it did was browse another major's
       // courses, so it says that, as a small switch beside the name.
-      body.innerHTML =
+      body.innerHTML = '<div dir="ltr">' +
         '<div class="lib-head"><span class="lib-head-ic">' + window.AAUP_ICONS.preview('book', 20) + '</span>' +
           '<h2 class="lib-title">Browse Courses</h2></div>' +
         '<div class="lib-showing"><span>Showing <b>' + window.__escapeHtml(planTitle(browsePrefix)) + '</b></span>' +
           '<button type="button" class="lib-other" id="libBack">Other major' + window.AAUP_ICONS.preview('chevron', 13) + '</button></div>' +
         '<div class="form-field"><input type="text" id="libSearch" aria-label="Search courses" placeholder="Search by name or course code…"></div>' +
         '<div id="libList" class="lib-list"></div>' +
-        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div>';
+        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div></div>';
       document.getElementById('libList').innerHTML = renderList('');
       overlay.classList.add('open');
 
@@ -2748,7 +2750,7 @@
           (y.hasSummer ? '<option value="' + y.id + '|s3">Year ' + (i + 1) + ' — Summer</option>' : '');
       }).join('');
 
-      body.innerHTML =
+      body.innerHTML = '<div dir="ltr">' +
         '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('plus', 20) + 'Add "' + course.name + '"</h2>' +
         (alreadyExists
           ? '<p class="dev-error-msg">This plan already has a course with the same ID (' + course.slug + '). Adding it again isn\u2019t possible from here — check the plan first.</p>' +
@@ -2756,7 +2758,7 @@
           : '<div class="form-field"><label for="libTargetSem">Add to which semester?</label><select id="libTargetSem">' + yearOptions + '</select></div>' +
             '<p class="form-note">Same name, ID, category, and credit hours as the original — prerequisites aren\u2019t copied, since they depend on what already exists in this plan.</p>' +
             '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">← Back</button>' +
-            '<button type="button" class="home-btn" id="libTargetConfirm" style="border-color:var(--accent);color:var(--text);">Add to Plan</button></div>');
+            '<button type="button" class="home-btn" id="libTargetConfirm" style="border-color:var(--accent);color:var(--text);">Add to Plan</button></div>') + '</div>';
       overlay.classList.add('open');
 
       document.getElementById('libTargetBack').addEventListener('click', function(){ showBrowse(course.prefix); });

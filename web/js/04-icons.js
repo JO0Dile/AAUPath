@@ -338,13 +338,17 @@
       ' style="font-size:' + Math.round(size * 0.82) + 'px;line-height:1;">' + esc(emoji) + '</span>';
   }
 
+  var DIRECTIONAL = { chevronRight:1, chevronLeft:1, back:1 };
   window.AAUP_ICONS = {
     markup: markup,
     keys: function(){ return Object.keys(ICONS).sort(); },
     has: function(k){ return Object.prototype.hasOwnProperty.call(ICONS, k); },
     // Used by the admin icon picker to draw the whole set as choosable tiles.
     preview: function(key, size){
-      return ICONS[key] ? '<span class="app-icon app-icon-svg" aria-hidden="true" style="width:' +
+      // Left/right arrows point the way the page reads: flipped by CSS
+      // under html[dir="rtl"], so callers never pick a direction themselves.
+      var dir = DIRECTIONAL[key] ? ' app-icon-dir' : '';
+      return ICONS[key] ? '<span class="app-icon app-icon-svg' + dir + '" aria-hidden="true" style="width:' +
         (size || 24) + 'px;height:' + (size || 24) + 'px;">' + ICONS[key] + '</span>' : '';
     },
     safeImageUrl: safeImageUrl,
