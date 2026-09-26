@@ -176,7 +176,7 @@
     ['AAUP_ACHIEVEMENTS', '24-achievements.js'],
     ['AAUP_ADVISOR', '25-advisor.js'], ['AAUP_DEV', '26-dev.js'],
     ['AAUP_COMMUNITY', '27-community.js'], ['AAUP_IMPORTED', '28-imported.js'],
-    ['AAUP_HOME', '29-home.js'], ['AAUP_SYNC', '30-sync.js'],
+    ['AAUP_SYNC', '30-sync.js'],
     ['AAUP_COLLECT', '31-collect.js'], ['AAUP_TUTORIAL', '32-tutorial.js'],
     ['AAUP_PLAN_EDITOR', '33-plan-editor.js'], ['AAUP_STRUCTURE', '34-structure.js'],
     ['AAUP_LINKS', '35-links.js'], ['AAUP_DASHBOARD', '36-dashboard.js'],

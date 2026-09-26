@@ -159,7 +159,7 @@ window.APP_GITHUB_REPO = 'JO0Dile/AAUPath';
 //   small feature             -> +0.1   (2.0  -> 2.1)
 //   big feature / redesign    -> next .5, or next whole number if already
 //                                 past x.5 (2.0 -> 2.5, 2.5 -> 3.0)
-window.APP_VERSION = '6.5';
+window.APP_VERSION = '6.51';
 
 (function(){
   // The catalogue ships with the app. Relative on purpose: it must resolve the
@@ -223,43 +223,21 @@ window.APP_VERSION = '6.5';
     try{ localStorage.setItem(REGISTRY_KEY, JSON.stringify(reg)); }catch(e){ /* quota/private mode */ }
   }
 
-  // Only shown when there is nothing cached to draw yet — an empty grid is
-  // indistinguishable from "this app has no study plans".
-  function showGridMessage(text, withRetry){
-    var grid = document.getElementById('homeUniversityGrid');
-    var step = document.getElementById('homeStepUniversities');
-    if(!grid || !step || step.style.display === 'none') return;
-    if(grid.querySelector('.plan-card')) return;
-    grid.innerHTML = '';
-    var box = document.createElement('div');
-    box.className = 'catalogue-status';
-    box.textContent = text;
-    if(withRetry){
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'home-btn';
-      btn.textContent = 'Try again';
-      btn.addEventListener('click', function(){ boot(); });
-      box.appendChild(document.createElement('br'));
-      box.appendChild(btn);
-    }
-    grid.appendChild(box);
+  // Whether the catalogue is usable yet, for the screens that list plans:
+  // 'loading' only while there is nothing cached to show, 'failed' when that
+  // first read did not arrive, 'ready' once plans are on the device. Every
+  // change is announced with the same 'aaup:plans' event a plan edit fires,
+  // so a screen listing plans has one thing to listen for.
+  window.__catalogueStatus = 'loading';
+  function announce(status){
+    if(status) window.__catalogueStatus = status;
+    try{ window.dispatchEvent(new window.Event('aaup:plans')); }catch(e){}
   }
-
-  // Repaint step 1 only while the student is still looking at it — calling
-  // this after they have drilled into a college would yank them back out.
-  function repaintHomeIfIdle(){
-    var step = document.getElementById('homeStepUniversities');
-    var visible = step && step.style.display !== 'none';
-    if(visible && window.AAUP_HOME && window.AAUP_HOME.showUniversities){
-      window.AAUP_HOME.showUniversities();
-    }
-  }
+  window.__retryCatalogue = function(){ boot(); };
 
   function boot(){
     var haveCache = applyRegistry(cachedRegistry());
-    if(haveCache){ repaintHomeIfIdle(); }
-    else { showGridMessage('\u2026 Loading study plans\u2026', false); }
+    announce(haveCache ? 'ready' : 'loading');
 
     fetch(window.APP_PLANS_FEED_URL, { cache: 'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -274,17 +252,17 @@ window.APP_VERSION = '6.5';
           }
         });
         window.APP_FREE_ELECTIVE_SUGGESTIONS = suggestions;
-        repaintHomeIfIdle();
+        announce('ready');
         // Hand the plans to the module that has always merged them, so a
         // student's own edits are still protected from being overwritten.
         if(window.AAUP_SYNC) return window.AAUP_SYNC.checkForUpdates(false, feed);
       })
-      .then(function(){ repaintHomeIfIdle(); })
+      .then(function(){ announce(); })
       .catch(function(){
         // With a cached catalogue the app is fully usable, so a failed read is
         // not worth interrupting anyone over.
         if(haveCache) return;
-        showGridMessage('\u26a0\ufe0f Could not load the study plans. Try reloading the page.', true);
+        announce('failed');
       });
   }
 

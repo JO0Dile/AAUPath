@@ -68,6 +68,11 @@
     return !!(el && el.offsetParent !== null);
   }
 
+  function sheetOpen() {
+    var el = document.getElementById('hmSheetOverlay');
+    return !!(el && el.classList.contains('open'));
+  }
+
   function homeVisible() {
     var home = document.getElementById('home');
     return !!(home && home.offsetParent !== null);
@@ -77,20 +82,20 @@
     findPlan: {
       title: { en: 'Finding your study plan', ar: 'الوصول إلى خطتك الدراسية' },
       steps: [
-        { target: q('#homeSearchBox'),
-          text: { en: 'Know your major already? Type it here — this jumps straight to it.',
-                  ar: 'تعرف تخصصك؟ اكتبه هنا — سينقلك مباشرة إليه.' } },
-        { target: q('#homeUniversityGrid .plan-card'),
-          text: { en: 'Otherwise start here: tap your university.',
-                  ar: 'أو ابدأ من هنا: اضغط على جامعتك.' },
-          waitFor: function () { return document.getElementById('homeStepColleges').style.display !== 'none'; } },
-        { target: q('#homeCollegeGrid .plan-card'),
-          text: { en: 'Now your college — the faculty your major belongs to.',
-                  ar: 'الآن كليتك — الكلية التي ينتمي إليها تخصصك.' },
-          waitFor: function () { return document.getElementById('homeStepPlans').style.display !== 'none'; } },
-        { target: q('#homeStepPlans .plan-card'),
-          text: { en: 'And finally your major. That opens its dashboard.',
-                  ar: 'وأخيرًا تخصصك. سيفتح ذلك لوحة التحكم الخاصة به.' } }
+        { target: q('#taskHome .hm-search'),
+          text: { en: 'Know your major already? Type its name here — it finds it straight away.',
+                  ar: 'تعرف تخصصك؟ اكتب اسمه هنا — بيلاقيه على طول.' } },
+        { target: q('#taskHome .hm-card[data-hm-go="plan"]'),
+          text: { en: 'Otherwise tap here to pick it from the list.',
+                  ar: 'أو اضغط هنا واختاره من القائمة.' },
+          waitFor: sheetOpen },
+        { target: q('#hmSheetList [data-hm-college]'),
+          text: { en: 'First your college — the faculty your major belongs to.',
+                  ar: 'أولًا كليتك — الكلية اللي بينتمي إلها تخصصك.' },
+          waitFor: function () { return !!document.querySelector('#hmSheetList [data-hm-major]'); } },
+        { target: q('#hmSheetList [data-hm-major]'),
+          text: { en: 'And then your major. That opens your plan, and AAUPath remembers it.',
+                  ar: 'وبعدين تخصصك. هيك بتفتح خطتك، وAAUPath بيتذكرها.' } }
       ]
     },
     settings: {
@@ -190,9 +195,13 @@
     newPlan: {
       title: { en: 'Creating your own plan', ar: 'إنشاء خطة خاصة بك' },
       steps: [
-        { target: q('#newPlanCard'),
+        { target: q('#taskHome .hm-card[data-hm-go="plan"]'),
+          text: { en: 'Open the list of majors from here.',
+                  ar: 'افتح قائمة التخصصات من هون.' },
+          waitFor: sheetOpen },
+        { target: q('[data-hm-newplan]'),
           text: { en: 'If your major is not listed, build it here — years, semesters, courses, prerequisites.',
-                  ar: 'إذا لم يكن تخصصك مدرجًا، ابنِه هنا — السنوات والفصول والمساقات والمتطلبات.' } }
+                  ar: 'إذا تخصصك مش موجود، ابنيه من هون — السنوات والفصول والمساقات والمتطلبات.' } }
       ]
     },
     switchPlan: {
@@ -277,12 +286,12 @@
               ar: ['ابدأ', 'كيف استخدم', 'جديد', 'البداية', 'مساعدة', 'شو هذا', 'ايش هذا'] },
       title: { en: 'Getting started', ar: 'البداية' },
       body: {
-        en: ['Pick your university, then your college, then your major.',
-             'That opens your Dashboard: progress, GPA, achievements, and what you can take next.',
-             'Tick off courses you have already passed — everything else updates from that.'],
-        ar: ['اختر جامعتك، ثم كليتك، ثم تخصصك.',
-             'سيفتح ذلك لوحة التحكم: التقدّم والمعدّل والإنجازات والمساقات المتاحة لك.',
-             'ضع علامة على المساقات التي أنجزتها — وكل شيء آخر يتحدّث تلقائيًا.']
+        en: ['The home screen asks what you need: search anything, or tap one of the cards.',
+             'The first time something needs your major, you pick it once — your college, then your major.',
+             'Tick off courses you have already passed — your GPA, progress and everything else update from that.'],
+        ar: ['الشاشة الرئيسية بتسألك شو بدك: دوّر على أي إشي، أو اضغط وحدة من البطاقات.',
+             'أول مرة بتحتاج ميزة تخصصك، بتختاره مرة وحدة — كليتك، بعدين تخصصك.',
+             'علّم المساقات اللي خلّصتها — معدلك وتقدّمك وكل إشي تاني بيتحدّث منها.']
       },
       guide: 'findPlan'
     },
@@ -292,24 +301,24 @@
               ar: ['جامعة', 'جامعات', 'كلية', 'كليات'] },
       title: { en: 'Universities and colleges', ar: 'الجامعات والكليات' },
       body: {
-        en: ['The app is organised as University → College → Study plan.',
+        en: ['Majors are listed by college: pick your college, then your major.',
              'Only the universities loaded in this app are available — I list the exact ones if you ask "what universities are there".'],
-        ar: ['التطبيق مرتب هكذا: جامعة ← كلية ← خطة دراسية.',
+        ar: ['التخصصات مرتبة حسب الكلية: اختر كليتك، ثم تخصصك.',
              'تتوفر فقط الجامعات المحمّلة في هذا التطبيق — اسألني «ما الجامعات المتوفرة» لأعرضها لك.']
       },
       guide: 'findPlan'
     },
     {
       id: 'dashboard',
-      tags: { en: ['dashboard', 'home screen', 'main screen', 'overview screen'],
-              ar: ['لوحة', 'الشاشة الرئيسية', 'لوحة التحكم'] },
+      tags: { en: ['dashboard', 'degree progress', 'overview screen'],
+              ar: ['لوحة', 'تقدمي الدراسي', 'لوحة التحكم'] },
       title: { en: 'The Dashboard', ar: 'لوحة التحكم' },
       body: {
-        en: ['Your summary screen once a plan is chosen.',
+        en: ['Your plan\'s summary — "Degree Progress" on the home screen opens it.',
              'Progress: completed credit hours out of your degree total.',
              'GPA: calculated from the grades you have entered.',
              'Achievements and "What can I take next" are one tap away.'],
-        ar: ['شاشة الملخّص بعد اختيار خطة.',
+        ar: ['ملخّص خطتك — «تقدّمي الدراسي» في الشاشة الرئيسية بيفتحه.',
              'التقدّم: الساعات المعتمدة المنجزة من إجمالي درجتك.',
              'المعدّل: يُحسب من العلامات التي أدخلتها.',
              'الإنجازات و«ما الذي يمكنني أخذه» على بعد ضغطة واحدة.']
@@ -505,10 +514,10 @@
               ar: ['بحث', 'ابحث', 'دور', 'وين', 'اين'] },
       title: { en: 'Search', ar: 'البحث' },
       body: {
-        en: ['On the home screen: search for a major by name.',
+        en: ['On the home screen: one box finds features, professors, courses and majors.',
              'Inside a plan: search for a course by name or course number — it scrolls straight to it and highlights it.',
              'You can also just ask me here, in either language.'],
-        ar: ['في الشاشة الرئيسية: ابحث عن تخصص بالاسم.',
+        ar: ['في الشاشة الرئيسية: مربّع واحد بيلاقي الميزات والمحاضرين والمساقات والتخصصات.',
              'داخل الخطة: ابحث عن مساق بالاسم أو رقم المساق — سينتقل إليه ويبرزه.',
              'أو اسألني هنا مباشرة بأي من اللغتين.']
       },

@@ -54,7 +54,7 @@ GROUPS = {
         '14-storage.js', '60-backbar.js', '70-skeleton.js', '71-qrcode.js',
     ],
     'shell': [
-        '15-student.js', '17-theme.js', '22-feedback.js', '26-dev.js', '29-home.js',
+        '15-student.js', '17-theme.js', '22-feedback.js', '26-dev.js',
         '32-tutorial.js', '37-sidebar.js', '38-accounts.js', '44-fix-analyzers.js',
         '45-fix.js', '55-onboarding.js', '56-story-stack.js', '61-theme-custom.js',
         '68-contacts.js', '89-install.js',

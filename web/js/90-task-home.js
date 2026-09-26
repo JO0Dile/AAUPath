@@ -38,6 +38,7 @@
     return String(s == null ? '' : s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   }
+  function norm(v){ return window.AAUP_SEARCH ? window.AAUP_SEARCH.normalize(v) : String(v == null ? '' : v).toLowerCase(); }
   function ic(k, n){ return window.AAUP_ICONS ? window.AAUP_ICONS.preview(k, n || 22) : ''; }
   function toast(msg){ if(window.__showToast) window.__showToast(msg); }
 
@@ -46,7 +47,10 @@
   // arrives through the same sync as a student's own — so one registry
   // answers every question here.
   function plans(){ return (window.AAUP_IMPORTED && window.AAUP_IMPORTED.loadImportedPlans()) || {}; }
-  function isPending(p){ return !p || !Array.isArray(p.courses) || !p.courses.length; }
+  // A published plan whose course list has not been typed in yet. Only the
+  // catalogue's own plans can be that: a plan a student made starts empty on
+  // purpose and is theirs to fill, so it opens like any other.
+  function isPending(p){ return !p || (p.official && (!Array.isArray(p.courses) || !p.courses.length)); }
   // A catalogue name is two parts: the major ("Cyber Security") and a detail
   // line ("B.Sc. · 132 CH · Program 24051"). Titles show the first; the
   // detail is only worth its space on the list you pick from.
@@ -327,32 +331,55 @@
   }
 
   // ---------------------------------------------------------------------
-  // Search — features, instructors and majors, in one list.
+  // Search — features, instructors, courses and majors, in one list.
+  //
+  // Courses come from every plan on the device (js/03-search.js keeps that
+  // index), the student's own plan first. The same course sits in dozens of
+  // plans, so each is listed once, from the first plan that has it.
+  function courseResults(q){
+    if(!window.AAUP_SEARCH) return [];
+    var seen = {}, out = [];
+    var S = window.AAUP_SEARCH;
+    S.allCourses().some(function(c){
+      var hay = norm(c.en + ' ' + c.ar + ' ' + c.code);
+      if(hay.indexOf(q) < 0 && !(q.length >= 4 && S.fuzzyContains(q, norm(c.en)))) return false;
+      var key = norm(c.en) + '|' + c.code;
+      if(seen[key]) return false;
+      seen[key] = true;
+      out.push({ kind: L('Course', 'مساق'), title: plain(ar() && c.ar ? c.ar : c.en),
+                 sub: plain((c.code ? c.code + ' \u00b7 ' : '') + c.where), go: 'c:' + c.page + '|' + c.slug });
+      return out.length >= 3;
+    });
+    return out;
+  }
+
   function results(){
-    var q = state.q.trim().toLowerCase();
+    var q = norm(state.q.trim());
     if(!q) return [];
     var out = [];
     FEATURES.concat(EXTRAS).forEach(function(f){
-      var hay = (f.en + ' ' + f.ar).toLowerCase();
-      var hit = hay.indexOf(q) >= 0 || (f.words || []).some(function(w){ return q.indexOf(w) >= 0 || w.indexOf(q) === 0; });
+      var hay = norm(f.en + ' ' + f.ar);
+      var hit = hay.indexOf(q) >= 0 || (f.words || []).some(function(w){ w = norm(w); return q.indexOf(w) >= 0 || w.indexOf(q) === 0; });
       if(hit) out.push({ kind: L('Feature', 'ميزة'), title: L(f.en, f.ar), sub: f.dEn ? L(f.dEn, f.dAr) : '', go: 'f:' + f.key });
     });
     if(contacts && contacts !== 'error' && contacts.contacts){
       contacts.contacts.forEach(function(c){
         if(c.category !== 'instructor') return;
-        var hay = (c.name + ' ' + (c.courses || []).join(' ')).toLowerCase();
-        if(hay.indexOf(q) >= 0) out.push({ kind: L('Professor', 'محاضر'), title: c.name, sub: (c.courses || []).join(' · '), go: 'p:' + c.name });
+        if(norm(c.name + ' ' + (c.courses || []).join(' ')).indexOf(q) >= 0){
+          out.push({ kind: L('Professor', 'محاضر'), title: c.name, sub: (c.courses || []).join(' \u00b7 '), go: 'p:' + c.name });
+        }
       });
     }
+    out = out.concat(courseResults(q));
     var all = plans();
     Object.keys(all).forEach(function(id){
       var p = all[id];
       if(!p || !p.majorName) return;
-      if(planNameBoth(p).toLowerCase().indexOf(q) >= 0){
+      if(norm(planNameBoth(p)).indexOf(q) >= 0){
         out.push({ kind: L('Major', 'تخصص'), title: plain(planName(p)), sub: plain(collegeName(collegeKey(p), p)), go: 'm:' + id });
       }
     });
-    return out.slice(0, 7);
+    return out.slice(0, 8);
   }
 
   function renderResults(){
@@ -384,6 +411,10 @@
     if(kind === 'f:') go(val);
     else if(kind === 'p:') window.AAUP_CONTACTS.open(selected(), { category: 'instructor', query: val });
     else if(kind === 'm:') choose(val, 'plan');
+    else if(kind === 'c:'){
+      var bar = val.indexOf('|');
+      window.AAUP_SEARCH.openCourse(val.slice(0, bar), val.slice(bar + 1));
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -406,11 +437,12 @@
       else if(t.closest('[data-hm-back]')){ state.sheetCollege = null; renderSheet(); focusSheet(); }
       else if(t.closest('[data-hm-close]')){ closeSheet(); }
       else if(t.closest('[data-hm-newplan]')){
+        // Started from inside a college, the new plan is filed under it.
+        var key = state.sheetCollege, col = key && (window.APP_COLLEGES || {})[key];
         closeSheet();
-        if(window.AAUP_HOME && window.AAUP_HOME.startNewPlan){
-          window.AAUP_HOME.startNewPlan(Object.keys(window.APP_UNIVERSITIES || {})[0] || 'aaup');
-        }
+        window.AAUP_PLAN_EDITOR.openNewPlanDialog(col ? { university: col.university, college: key } : null);
       }
+      else if(t.closest('[data-hm-retry]')){ if(window.__retryCatalogue) window.__retryCatalogue(); renderSheetList(); }
     });
     el.addEventListener('input', function(e){
       if(e.target && e.target.id === 'hmSheetSearch'){
@@ -435,9 +467,17 @@
   }
 
   function sheetListHtml(){
-    var all = plans(), q = state.sheetQ.trim().toLowerCase();
+    var all = plans(), q = norm(state.sheetQ.trim());
+    // Nothing on the device yet: the catalogue is still arriving, or its first
+    // read failed. An empty list would read as "this app has no majors".
+    if(!Object.keys(all).length){
+      return window.__catalogueStatus === 'failed'
+        ? '<p class="hm-none">' + esc(L('Could not load the list of majors. Check your connection.', 'ما قدرنا نحمّل قائمة التخصصات. تأكد من الاتصال.')) + '</p>' +
+          '<button type="button" class="hm-pill" data-hm-retry>' + esc(L('Try again', 'حاول مرة ثانية')) + '</button>'
+        : '<p class="hm-none">' + esc(L('Loading the list of majors\u2026', 'عم نحمّل قائمة التخصصات\u2026')) + '</p>';
+    }
     if(q){
-      var hits = Object.keys(all).filter(function(id){ return all[id] && all[id].majorName && planNameBoth(all[id]).toLowerCase().indexOf(q) >= 0; });
+      var hits = Object.keys(all).filter(function(id){ return all[id] && all[id].majorName && norm(planNameBoth(all[id])).indexOf(q) >= 0; });
       hits.sort(function(a, b){ return planName(all[a]).localeCompare(planName(all[b]), ar() ? 'ar' : 'en'); });
       return hits.length ? hits.map(function(id){ return majorRow(id, all[id], true); }).join('')
         : '<p class="hm-none">' + esc(L('No major matches that.', 'ما في تخصص بهالاسم.')) + '</p>';
@@ -523,9 +563,7 @@
       if(el) el.style.display = 'none';
     });
     var home = document.getElementById('home');
-    if(home){ home.style.display = 'block'; home.classList.add('hm-mode'); }
-    var picker = document.getElementById('homePicker');
-    if(picker) picker.hidden = true;
+    if(home) home.style.display = 'block';
     var host = document.getElementById('taskHome');
     if(host) host.hidden = false;
     if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.hide();
@@ -616,25 +654,26 @@
     Lang.__hmWrapped = true;
   }
 
-  // The catalogue lands a moment after the page does. Whenever the plan
-  // list is redrawn, redraw this screen too so a returning student's major
-  // and numbers appear without a reload.
-  function watchPlans(){
-    var I = window.AAUP_IMPORTED;
-    if(!I || I.__hmWrapped || !I.renderHomeCards) return;
-    var orig = I.renderHomeCards;
-    I.renderHomeCards = function(){
-      var r = orig.apply(I, arguments);
+  // The catalogue lands a moment after the page does, and plans are saved,
+  // synced and deleted while the app is open. Each fires 'aaup:plans'
+  // (js/28-imported.js, js/01-catalogue.js); redraw once for a burst of them,
+  // and only what is on screen.
+  var redrawQueued = false;
+  function onPlansChanged(){
+    if(redrawQueued) return;
+    redrawQueued = true;
+    setTimeout(function(){
+      redrawQueued = false;
       if(visible()) render();
-      return r;
-    };
-    I.__hmWrapped = true;
+      var sheet = document.getElementById('hmSheetOverlay');
+      if(sheet && sheet.classList.contains('open')) renderSheetList();
+    }, 0);
   }
 
   function init(){
     bind();
     watchLanguage();
-    watchPlans();
+    window.addEventListener('aaup:plans', onPlansChanged);
     startHints();
     if(window.AAUP_CONTACTS && window.AAUP_CONTACTS.data){
       window.AAUP_CONTACTS.data().then(function(d){ contacts = d; if(state.q) renderResults(); });

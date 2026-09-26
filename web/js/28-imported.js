@@ -41,7 +41,7 @@
     });
     return out;
   }
-  function saveImportedPlans(m){ window.AAUP_STORAGE.setJSON('aaup_importedPlans', m); renderHomeCards(); }
+  function saveImportedPlans(m){ window.AAUP_STORAGE.setJSON('aaup_importedPlans', m); plansChanged(); }
 
   // Old plans stored majorName.en as a plain string; new ones store
   // {big, small} to match the built-in cards' two-tone title. Reading
@@ -60,8 +60,8 @@
   // renders byte-identical and nothing double-escapes.
   //
   // This is not theoretical: writing a majorName of
-  // "<img src=x onerror=…>" straight into storage and calling
-  // renderHomeCards() ran the handler, because the card wrote the name into
+  // "<img src=x onerror=…>" straight into storage and redrawing the old
+  // home page's plan cards ran the handler, because the card wrote the name into
   // innerHTML raw. It survived only until the next boot re-sanitized it —
   // one page load is plenty.
   function txt(s){
@@ -71,9 +71,7 @@
   // A plan id lands inside a JS string inside an HTML attribute, so it needs
   // both escapes: backslash and quote for the JS layer, then HTML for the
   // attribute the browser decodes first.
-  function jsAttr(s){
-    return txt(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
-  }
+
 
   // Where a plan sits among its faculty's tiles. Empty means unplaced, not
   // zero — zero is a real position that would move the plan to the front.
@@ -131,73 +129,12 @@
     }
   }
 
-  function renderHomeCards(){
-    var rtl = window.__anyVisiblePageIsRtl ? window.__anyVisiblePageIsRtl() : false;
-    var container = document.getElementById('importedPlansContainer');
-    if(!container) return;
-    var plans = loadImportedPlans();
-    var sel = (window.AAUP_HOME && window.AAUP_HOME.getSelection) ? window.AAUP_HOME.getSelection() : null;
-    var ids = Object.keys(plans).filter(function(id){
-      if(!sel || !sel.college) return true;
-      var p = plans[id];
-      return (p.university || 'aaup') === sel.university && collegeKeyForPlan(p) === sel.college;
-    });
-    ids.sort(function(a, b){ return compareByDisplayOrder(plans[a], plans[b]); });
-    if(ids.length === 0){ container.innerHTML = ''; if(window.AAUP_HOME){ window.AAUP_HOME.refreshPlanEmptyState(); window.AAUP_HOME.refreshCounts(); } return; }
-    container.innerHTML = '<div class="plan-grid" style="margin-top:14px;">' + ids.map(function(id){
-     try {
-      var p = plans[id];
-      // A malformed/half-created plan (no name or no course list) must never
-      // throw here \u2014 one bad card would abort the whole home render and blank
-      // the app. Skip it instead.
-      if(!p || !p.majorName || (!p.majorName.en && !p.majorName.ar)) return '';
-      var en = nameParts(p.majorName.en);
-      var ar = nameParts(p.majorName.ar);
-      var courseCount = Array.isArray(p.courses) ? p.courses.length : 0;
-      // A plan with no courses yet is a real, published programme whose
-      // curriculum has not been transcribed. Opening it shows an empty grid,
-      // which reads as "this app is broken" rather than "this plan is not in
-      // yet" — so the card says so and does not pretend to be openable.
-      var pending = courseCount === 0;
-      var bio = pending
-        ? (rtl
-            ? 'الخطة التفصيلية لم تُضف بعد \u2014 قريبًا.'
-            : 'Course list not added yet \u2014 coming soon.')
-        : ((rtl && p.bio && p.bio.ar) || (p.bio && p.bio.en) ||
-           (rtl ? courseCount + ' مساقًا \u00b7 خطة من الطلبة'
-                : courseCount + ' courses \u00b7 community-imported major'));
-      var uni = (window.APP_UNIVERSITIES || {})[p.university || 'aaup'];
-      // Words, not emoji. The badge sat over a card whose every other glyph
-      // is drawn, and "✅ Official" next to "👤 User Made" was two unrelated
-      // pictures doing the work one word does.
-      var origin = p.official ? (p.wasEdited ? (rtl ? 'رسمي (معدّل)' : 'Official · edited') : (rtl ? 'رسمي' : 'Official'))
-                              : (p.wasEdited ? (rtl ? 'من طالب (معدّل)' : 'Student · edited') : (rtl ? 'من طالب' : 'Student'));
-      var badge = (uni ? txt(uni.shortName) + ' \u00b7 ' : '') + txt(origin);
-      // Reuses the exact .plan-card class the four built-in majors use —
-      // same icon box, same two-tone title, same dim bio text, same small
-      // blue CTA — rather than a bespoke look-alike that has to be kept in
-      // sync with it by hand.
-      var openAction = pending
-        ? 'AAUP_IMPORTED.notePending(\'' + jsAttr(id) + '\')'
-        : 'AAUP_DASHBOARD.selectAndOpen(\'' + jsAttr(id) + '\')';
-      return '<div class="plan-card' + (pending ? ' plan-card-pending' : '') + '" data-page="' + txt(id) + '" data-imported="1" data-pending="' + (pending ? '1' : '0') + '" data-university="' + txt(p.university || 'aaup') + '" data-college="' + txt(collegeKeyForPlan(p)) + '" data-search-en="' + window.__escapeHtml(en.big + ' ' + en.small) + '" data-search-ar="' + window.__escapeHtml(ar.big + ' ' + ar.small) + '" onclick="' + openAction + '" role="button" tabindex="0">' +
-        '<span class="imp-origin-badge">' + badge + '</span>' +
-        '<button type="button" class="dev-edit-link" data-dev-edit-btn style="display:none;top:36px;" onclick="event.stopPropagation(); AAUP_IMPORTED.confirmDelete(\'' + id + '\');">' + window.AAUP_ICONS.preview('trash', 12) + (rtl ? 'حذف' : 'Delete') + '</button>' +
-        '<div class="pc-icon">' + window.AAUP_ICONS.markup(p, { size: 30 }) + '</div>' +
-        // The card heading always read the English name, so in Arabic every
-        // plan on the picker was titled in English while everything around
-        // it was not. Fall back to English when a plan has no Arabic name
-        // rather than showing an empty card.
-        '<h2>' + txt((rtl && ar.big) ? ar.big : en.big) +
-          (function(){ var sm = (rtl && ar.big) ? ar.small : en.small;
-            return sm ? '<em>' + txt(sm) + '</em>' : ''; })() + '</h2>' +
-        '<p class="pc-bio">' + txt(bio) + '</p>' +
-        '<div class="pc-cta">' + (pending
-          ? (rtl ? 'قريبًا' : 'Coming soon')
-          : (rtl ? 'عرض الخطة ←' : 'View plan →')) + '</div></div>';
-     } catch(e){ return ''; }
-    }).join('') + '</div>';
-    if(window.AAUP_HOME){ window.AAUP_HOME.refreshPlanEmptyState(); window.AAUP_HOME.refreshCounts(); }
+  // The set of plans changed — one was saved or deleted, or the catalogue
+  // synced. Screens that list plans (the home and its major picker) listen
+  // for this event rather than being called by name; the catalogue loading
+  // fires the same one (js/01-catalogue.js).
+  function plansChanged(){
+    try{ window.dispatchEvent(new window.Event('aaup:plans')); }catch(e){}
   }
 
   // ---------- registering a plan so every shared feature module can see it ----------
@@ -2771,7 +2708,7 @@
   }
 
   window.AAUP_IMPORTED = {
-    open: open, close: close, renderHomeCards: renderHomeCards, loadImportedPlans: loadImportedPlans,
+    open: open, close: close, plansChanged: plansChanged, loadImportedPlans: loadImportedPlans,
     saveImportedPlans: saveImportedPlans, toggle: toggle, toggleEdit: toggleEdit,
     addYear: addYear, removeYear: removeYear, addSummer: addSummer, removeSummer: removeSummer,
     addCoursePrompt: openCourseCreatePopup, ICONS: ICONS, nameParts: nameParts, hasStructure: hasStructure,
@@ -2847,7 +2784,7 @@
       }
     }catch(e){ /* never let a migration failure stop the app from loading */ }
     bindCourseModal();
-    renderHomeCards();
+    plansChanged();
   }
   if(document.readyState === 'complete'){ init(); }
   else { window.addEventListener('load', init); }

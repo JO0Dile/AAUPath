@@ -72,14 +72,14 @@
     if(obj.college){ entry.college = obj.college; }
     plans[id] = entry;
     saveImportedPlans(plans);
-    if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.renderHomeCards(); }
+    if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
     return { ok: true, id: id };
   }
   function removePlan(id){
     var plans = loadImportedPlans();
     delete plans[id];
     saveImportedPlans(plans);
-    if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.renderHomeCards(); }
+    if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
   }
 
   function plainMessage(rtl){
@@ -159,8 +159,8 @@
       '<div class="dev-panel-section"><h3>🏛️ ' + (rtl ? 'الجامعات' : 'Universities') + '</h3>' +
       '<p style="font-size:11.5px;color:var(--text-dim);line-height:1.6;margin:0 0 10px;">' +
       (rtl
-        ? 'التطبيق يشحن بالجامعة العربية الأمريكية وحدها. أضف جامعة هنا لتظهر في الشاشة الرئيسية وفي قائمة «خطة جديدة» — تُحفظ على هذا الجهاز فقط، لا تُنشر لأحد.'
-        : 'The app ships with AAUP alone. Add one here and it appears on the home screen and in the New Plan dropdown — saved on this device only, not published to anyone.') +
+        ? 'التطبيق يشحن بالجامعة العربية الأمريكية وحدها. أضف جامعة هنا لتظهر في قائمة «خطة جديدة»، وخططها بتظهر بعدها بقائمة التخصصات — تُحفظ على هذا الجهاز فقط، لا تُنشر لأحد.'
+        : 'The app ships with AAUP alone. Add one here and it appears in the New Plan dropdown, and its plans then show up in the list of majors — saved on this device only, not published to anyone.') +
       '</p>' +
       '<div id="devUniList">' + uniListHtml(rtl) + '</div>' +
       '<div class="form-field-row">' +
@@ -257,23 +257,23 @@
     window.__saveDevUniversities(added);
 
     // Live, without a reload: the registries the whole app reads are updated
-    // in place and the home screen repainted.
+    // in place and every screen listing plans told.
     window.APP_UNIVERSITIES[id] = added[id];
     window.APP_UNIV_ELECTIVES[id] = [];
-    if(window.AAUP_HOME && window.AAUP_HOME.showUniversities){ window.AAUP_HOME.showUniversities(); }
+    if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
 
     ['devUniId','devUniNameEn','devUniNameAr','devUniShort','devUniIcon'].forEach(function(f){
       var el = document.getElementById(f); if(el) el.value = '';
     });
     msgEl.innerHTML = '<p class="dev-success-msg">✅ ' +
-      (rtl ? 'أُضيفت. ستجدها في الشاشة الرئيسية.' : 'Added. It is on the home screen now.') + '</p>';
+      (rtl ? 'أُضيفت. اخترها عند إنشاء خطة جديدة.' : 'Added. Pick it when you create a new plan.') + '</p>';
     document.getElementById('devUniList').innerHTML = uniListHtml(rtl);
     bindUniRemoveButtons();
   }
 
   // Removing a university does NOT touch any plan created under it. Those
-  // plans are the student's work; they simply fall back to the "Other /
-  // Community" bucket the home screen already has for a plan whose college
+  // plans are the student's work; they are still listed among the majors,
+  // under the college name the plan itself carries, for a plan whose college
   // is not in the registry, and reappear if the university is added again.
   function bindUniRemoveButtons(){
     var list = document.getElementById('devUniList');
@@ -286,7 +286,7 @@
         window.__saveDevUniversities(added);
         delete window.APP_UNIVERSITIES[uid];
         delete window.APP_UNIV_ELECTIVES[uid];
-        if(window.AAUP_HOME && window.AAUP_HOME.showUniversities){ window.AAUP_HOME.showUniversities(); }
+        if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
         document.getElementById('devUniList').innerHTML = uniListHtml(currentRtl());
         bindUniRemoveButtons();
       });
