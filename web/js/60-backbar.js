@@ -108,10 +108,10 @@
     // <html>: a global flip would turn on a large amount of RTL CSS that has
     // never run, all at once, and this is a dialog problem.
     markDirection(card);
-    if(card.querySelector(':scope > .back-bar')) return;
+    if(card.querySelector(':scope > .back-bar')){ watchTitle(card); return; }
     // A dialog that already rendered its own bar inside its body is left
     // alone — two bars would be worse than none.
-    if(card.querySelector('.back-bar')) return;
+    if(card.querySelector('.back-bar')){ watchTitle(card); return; }
     var rtl = isRtlNow(card);
     var bar = document.createElement('div');
     bar.className = 'back-bar back-bar-auto' + (rtl ? ' back-bar-rtl' : '');
@@ -121,6 +121,57 @@
         '<span>' + (rtl ? LABEL.ar : LABEL.en) + '</span>' +
       '</button>';
     card.insertBefore(bar, card.firstChild);
+    watchTitle(card);
+  }
+
+  // ============================================================
+  // THE BAR SAYS WHERE YOU ARE
+  //
+  // On a phone the way back used to be a tab stuck to the left edge, half
+  // way down, sitting on top of whatever the screen showed. It is a top bar
+  // now: the arrow and the screen's own name. The name is read from the
+  // dialog's heading, and that heading is tagged so the phone stylesheet can
+  // hide it — the bar is saying it already. Re-run whenever the dialog
+  // redraws itself (Settings rebuilds on every tab, for instance), because a
+  // rebuilt heading is a new element without the tag.
+  var TITLE_SEL = 'h2, .ct-title, .lib-title, .cal-title, .abt-title, .share-title';
+  var HEAD_WRAPS = ['ct-head', 'lib-head', 'cal-head', 'abt-head', 'share-head'];
+  function retitle(card){
+    var bar = card.querySelector('.back-bar');
+    if(!bar) return;
+    var heads = [].slice.call(card.querySelectorAll(TITLE_SEL)).filter(function(h){
+      if(h.closest('.back-bar')) return false;
+      // Visible, or already the one this bar took its name from (which the
+      // phone stylesheet has since hidden).
+      return h.offsetParent !== null || !!h.closest('.bb-title-src');
+    });
+    var h = heads[0];
+    var text = h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
+    var span = bar.querySelector('.back-bar-title');
+    if(!span){
+      span = document.createElement('span');
+      span.className = 'back-bar-title bb-auto-title';
+      bar.appendChild(span);
+    }
+    if(span.classList.contains('bb-auto-title') && span.textContent !== text){ span.textContent = text; }
+    bar.classList.toggle('bb-has-title', !!text);
+    if(h){
+      var wrap = h.parentElement && HEAD_WRAPS.some(function(c){ return h.parentElement.classList.contains(c); }) ? h.parentElement : h;
+      if(!wrap.classList.contains('bb-title-src')) wrap.classList.add('bb-title-src');
+    }
+  }
+  var titleObservers = new WeakMap();
+  function watchTitle(card){
+    retitle(card);
+    if(titleObservers.has(card)) return;
+    var pending = false;
+    var mo = new MutationObserver(function(){
+      if(pending) return;
+      pending = true;
+      requestAnimationFrame(function(){ pending = false; retitle(card); });
+    });
+    mo.observe(card, { childList: true, subtree: true });
+    titleObservers.set(card, mo);
   }
 
   // ============================================================

@@ -256,7 +256,15 @@
   // asked for, the question spells out exactly what travels and what never
   // does, and it can be switched back off at any time.
   var CONSENT = {
-    title: { en: 'Want the smarter assistant?', ar: 'تريد المساعد الأذكى؟' },
+    title: { en: 'Want smarter answers?', ar: 'بدك إجابات أذكى؟' },
+    // The question itself, in two lines. The details below are every word
+    // the card used to show, one tap away under "What gets sent?" — they
+    // are what makes the choice an informed one, so they stay, folded.
+    lead: {
+      en: 'Let me go online and I’ll understand your questions better and take you to the right screen. It’s free, and you can turn it off any time.',
+      ar: 'خليني أتصل بالإنترنت وبفهم أسئلتك أحسن وبوصلك للشاشة الصح. مجاني، وبتقدر توقفه بأي وقت.'
+    },
+    more: { en: 'What gets sent?', ar: 'شو اللي بينبعت؟' },
     body: {
       en: ['I can answer much better questions if I’m allowed to go online — I’ll understand how you actually phrase things, and I can take you to the right screen myself.',
            'Sent when you ask something: your question, your open plan, its courses and prerequisites, which ones you’ve completed, and your GPA number.',
@@ -281,11 +289,20 @@
     h.innerHTML = (window.AAUP_ICONS ? window.AAUP_ICONS.preview('bolt', 15) : '') +
       window.__escapeHtml(CONSENT.title[l] || CONSENT.title.en);
     b.appendChild(h);
+    var lead = document.createElement('p');
+    lead.textContent = CONSENT.lead[l] || CONSENT.lead.en;
+    b.appendChild(lead);
+    var details = document.createElement('details');
+    details.className = 'asst-consent-more';
+    var sum = document.createElement('summary');
+    sum.textContent = CONSENT.more[l] || CONSENT.more.en;
+    details.appendChild(sum);
     (CONSENT.body[l] || CONSENT.body.en).forEach(function (line) {
       var p = document.createElement('p');
       p.textContent = line;
-      b.appendChild(p);
+      details.appendChild(p);
     });
+    b.appendChild(details);
     var actions = document.createElement('div');
     actions.className = 'asst-actions';
     var yes = document.createElement('button');

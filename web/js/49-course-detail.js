@@ -53,7 +53,8 @@
       passed: 'Passed', open: 'Unlocked', locked: 'Locked', progress: 'In progress',
       needAll: 'Still needed:', haveAll: 'All prerequisites passed.',
       opensCount: function(n){ return 'Taking this keeps ' + n + ' later course' + (n === 1 ? '' : 's') + ' on schedule.'; },
-      credits: 'Credits', unlocksN: 'Unlocks', status: 'Status',
+      credits: 'Hours', unlocksN: 'Unlocks', status: 'Status', needsN: 'Needs', none: 'None',
+      year: function(n){ return 'Year ' + n; }, sem: { s1: 'First semester', s2: 'Second semester', s3: 'Summer' },
       viewTree: 'View in course tree'
     },
     ar: {
@@ -71,7 +72,8 @@
       passed: 'منجز', open: 'متاح', locked: 'مغلق', progress: 'قيد الدراسة',
       needAll: 'ما زال مطلوباً:', haveAll: 'جميع المتطلبات السابقة منجزة.',
       opensCount: function(n){ return 'أخذه الآن يبقي ' + n + ' مساقاً لاحقاً في موعده.'; },
-      credits: 'الساعات', unlocksN: 'يفتح', status: 'الحالة',
+      credits: 'الساعات', unlocksN: 'يفتح', status: 'الحالة', needsN: 'يحتاج', none: 'ولا شي',
+      year: function(n){ return 'سنة ' + n; }, sem: { s1: 'الفصل الأول', s2: 'الفصل الثاني', s3: 'الصيفي' },
       viewTree: 'اعرضه في شجرة المساقات'
     }
   };
@@ -193,16 +195,20 @@
     return '<span class="cd-catchip cd-catchip-' + esc(cat) + '">' + esc(cats[cat] || cat) + '</span>';
   }
 
-  function statTilesHTML(prefix, slug, course, t, st){
+  function statTilesHTML(prefix, slug, course, t){
     var unlocks = ((window.__PLAN_DATA[prefix] || {}).unlocksMap || {})[slug] || [];
     var cr = course && course.creditHours != null ? course.creditHours : null;
-    var stLabel = t[st === 'passed' ? 'passed' : st === 'locked' ? 'locked' : 'open'];
     var tiles = [];
     if(cr != null){
       tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + esc(cr) + '</div><div class="cd-stat-l">' + t.credits + '</div></div>');
     }
     tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + unlocks.length + '</div><div class="cd-stat-l">' + t.unlocksN + '</div></div>');
-    tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + esc(stLabel) + '</div><div class="cd-stat-l">' + t.status + '</div></div>');
+    // Status used to be the third tile, and also the pill above it, and also
+    // the switch below — "Passed" three times. The switch is the one that
+    // can change it, so it is the one that stays; this tile says what the
+    // course needs instead.
+    var needs = ((window.__PLAN_DATA[prefix] || {}).needsMap || {})[slug] || [];
+    tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + (needs.length ? needs.length : esc(t.none)) + '</div><div class="cd-stat-l">' + t.needsN + '</div></div>');
     return '<div class="cd-stats">' + tiles.join('') + '</div>';
   }
 
@@ -228,11 +234,12 @@
     var info = ((window.__PLAN_DATA[prefix] || {}).courseInfo || {})[slug] || {};
     var st = statusOf(prefix, slug);
     var name = courseName(prefix, slug, rtl);
-    var stLabel = t[st === 'passed' ? 'passed' : st === 'locked' ? 'locked' : 'open'];
 
+    // "Year 1 · First semester", not "Y1 · S1".
+    var ym = course && course.yearId ? /(\d+)/.exec(String(course.yearId)) : null;
     var term = course && course.yearId
-      ? String(course.yearId).toUpperCase() +
-        (course.semester ? ' · ' + String(course.semester).toUpperCase() : '')
+      ? (ym ? t.year(ym[1]) : String(course.yearId).toUpperCase()) +
+        (course.semester ? ' · ' + (t.sem[String(course.semester).toLowerCase()] || String(course.semester).toUpperCase()) : '')
       : t.unscheduled;
 
     var whyTitle = st === 'passed' ? t.whyDone : st === 'locked' ? t.whyLocked : t.why;
@@ -244,9 +251,8 @@
           '<div class="cd-sub">' +
             [info.num || (course && course.courseNumber), term].filter(Boolean).map(esc).join(' · ') +
           '</div></div>' +
-        '<span class="cd-pill cd-' + st + '">' + stLabel + '</span>' +
       '</div>' +
-      statTilesHTML(prefix, slug, course, t, st) +
+      statTilesHTML(prefix, slug, course, t) +
       miniChainHTML(prefix, slug, rtl) +
       '<div class="cd-body">' +
         '<div class="cd-main">' +

@@ -179,17 +179,17 @@
     searchCourse: {
       title: { en: 'Finding a course', ar: 'البحث عن مساق' },
       steps: [
-        { target: inPlan('.course-search-wrap .search-box'),
-          text: { en: 'Search by course name or course number — it scrolls straight to it.',
-                  ar: 'ابحث باسم المساق أو رقمه — سينتقل إليه مباشرة.' } }
+        { target: inPlan('.pw-search-btn'),
+          text: { en: 'Tap the magnifier in the hours bar and search by course name or number — it scrolls straight to it.',
+                  ar: 'اضغط العدسة في شريط الساعات وابحث باسم المساق أو رقمه — سينتقل إليه مباشرة.' } }
       ]
     },
     legend: {
       title: { en: 'What the colours mean', ar: 'معاني الألوان' },
       steps: [
-        { target: inPlan('.legend'),
-          text: { en: 'One swatch per requirement this degree counts — university, college, specialization, elective. Every card takes its colour from the requirement it satisfies.',
-                  ar: 'مربّع لكل متطلب تحسبه الخطة — جامعة، كلية، تخصص، اختياري. ولون كل بطاقة يتبع المتطلب الذي تحققه.' } }
+        { target: inPlan('.pf-bar .pf-req'),
+          text: { en: 'Each colour is a requirement this degree counts — university, college, specialization, elective. Every card has its requirement written on it and a stripe in that colour; tap a chip here to show only those courses.',
+                  ar: 'كل لون متطلب تحسبه الخطة — جامعة، كلية، تخصص، اختياري. كل بطاقة مكتوب عليها متطلبها وعليها شريط بلونه؛ اضغط أي شريحة هون لتعرض مساقاتها بس.' } }
       ]
     },
     newPlan: {

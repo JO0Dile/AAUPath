@@ -113,7 +113,7 @@
               ar: 'اكتب أي إشي هون — مساق، محاضر، معدلك — أو اضغط وحدة من البطاقات تحت. ما في إشي لازم يكون أول.' }
     },
     dashboard: {
-      target: function(){ return firstVisible('#dashboard .ph-card') || firstVisible('#dashboard .dash-phone-hero') || firstVisible('#dashboard .dash-card'); },
+      target: function(){ return firstVisible('#dashboard .ph-card') || firstVisible('#dashboard .dash-summary') || firstVisible('#dashboard .dash-card'); },
       title: { en: 'How the plan is going', ar: 'كيف ماشية الخطة' },
       text: { en: 'One grade for pace, load balance and prerequisite risk. It fills in as you tick off the courses you have already passed.',
               ar: 'تقدير واحد للسرعة والتوازن والمتطلبات. بيتعبّى لما تعلّم المساقات اللي خلّصتها.' }

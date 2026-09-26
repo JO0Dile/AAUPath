@@ -1557,7 +1557,7 @@
     var pairs = pairContinuations(planId);
     return '<div class="imp-year-block imp-pinned-block">' +
       '<div class="imp-year-header"><h3>' +
-      (rtl ? 'مطلوبة بلا ساعات' : 'Required, worth no hours') + '</h3></div>' +
+      (rtl ? 'مطلوبة كمان · بلا ساعات' : 'Also required · 0 hours') + '</h3></div>' +
       '<p class="imp-elective-note">' +
       (rtl
         ? 'الخطة تدرجها بصفر ساعة معتمدة — فهي لا تضيف شيئًا لأي مجموع في هذه الصفحة.'
@@ -1652,12 +1652,15 @@
       return '<button type="button" class="way-chip" data-way="' + i +
         '" data-plan="' + window.__escapeHtml(planId) + '">' + window.__escapeHtml(lab) + '</button>';
     }).join('');
-    return '<div class="way-card">' +
-      '<div class="way-head">' + window.__escapeHtml(rtl ? 'وين أنت الآن؟' : 'Where are you now?') + '</div>' +
+    // One line until it is opened: the eight semester buttons used to fill
+    // most of a phone screen above Year 1.
+    return '<details class="way-card">' +
+      '<summary class="way-head"><span>' + window.__escapeHtml(rtl ? 'وين أنت الآن؟' : 'Where are you now?') + '</span>' +
+        '<span class="way-pick">' + window.__escapeHtml(rtl ? 'اختر فصلك' : 'Pick your semester') + '</span></summary>' +
       '<p class="way-note">' + window.__escapeHtml(rtl
         ? 'اختر فصلك الحالي وسنحدّد كل ما قبله كمنجز — عدّل أي مساق لم تأخذه.'
         : 'Pick the semester you are in and everything before it is marked done — fix any you have not taken.') +
-      '</p><div class="way-chips">' + chips + '</div></div>';
+      '</p><div class="way-chips">' + chips + '</div></details>';
   }
 
   function semesterHtml(planId, plan, yearId, semester, editing, rtl, yearNum){
@@ -1873,11 +1876,10 @@
         ? '<div class="header-actions"><button type="button" class="home-btn imp-exit-edit-btn" onclick="AAUP_IMPORTED.toggleEdit(\'' + id + '\')">' + window.AAUP_ICONS.preview('close', 14) + 'Exit Edit Mode</button></div>'
         : '') +
       '</header>' +
-      legendHtml(id, p, rtl) +      '<div class="course-search-wrap"><div class="search-box" id="' + id + '-courseSearchBox">' +
-      '<span class="search-ic">' + window.AAUP_ICONS.preview('search', 15) + '</span>' +
-      '<input type="text" id="' + id + '-courseSearchInput" class="search-input" placeholder="' + (rtl ? 'ابحث عن مساق بالاسم أو الرقم…' : 'Search a course by name or code…') + '" autocomplete="off">' +
-      '<button type="button" class="search-clear" id="' + id + '-courseSearchClear" aria-label="Clear">&times;</button>' +
-      '</div><div class="search-dropdown" id="' + id + '-courseSearchDropdown"></div></div>' +
+      // The colour key stays in the page (js/19-audit.js reads its bucket
+      // names off it) but is not shown: every card now writes its bucket out,
+      // and the filter chips in the hours bar carry the same colours.
+      legendHtml(id, p, rtl) +
       '<div class="imp-body-pad">' +
       // Six lines of mission statement sat between the search box and the
       // meter, on every plan, and it is read once. Folded behind one row —
@@ -1891,8 +1893,19 @@
       // and "completed" is what a progress meter means. What is left is the
       // two numbers, plus (from js/64-milestones.js, which appends into this
       // same line) the hours to the nearest requirement still open.
+      // Search rides in the hours bar, behind a magnifier, because that bar
+      // is the one thing that stays on screen all the way down the plan — the
+      // box used to sit above it and scroll away with the header.
       '<div class="progress-widget"><div class="pw-track"><div class="pw-fill" style="width:' + pct + '%;"></div></div>' +
-      '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span></div>';
+      '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span>' +
+      '<button type="button" class="pw-search-btn" data-pw-search="' + id + '" aria-expanded="false" aria-controls="' + id + '-courseSearchWrap" aria-label="' + (rtl ? 'ابحث عن مساق' : 'Search a course') + '">' +
+        window.AAUP_ICONS.preview('search', 16) + '</button>' +
+      '<div class="course-search-wrap pw-search" id="' + id + '-courseSearchWrap" hidden><div class="search-box" id="' + id + '-courseSearchBox">' +
+      '<span class="search-ic">' + window.AAUP_ICONS.preview('search', 15) + '</span>' +
+      '<input type="text" id="' + id + '-courseSearchInput" class="search-input" placeholder="' + (rtl ? 'ابحث عن مساق بالاسم أو الرقم…' : 'Search a course by name or code…') + '" autocomplete="off">' +
+      '<button type="button" class="search-clear" id="' + id + '-courseSearchClear" aria-label="Clear">&times;</button>' +
+      '</div><div class="search-dropdown" id="' + id + '-courseSearchDropdown"></div></div>' +
+      '</div>';
 
     // Three stat chips — GPA, Credits Earned, Remaining — used to sit here,
     // on the grounds that edit mode is where a student most wants a read on
@@ -1915,7 +1928,6 @@
     // Inside .years on purpose: the connector layer above is positioned in
     // this container's coordinate space, and a card pinned outside it would
     // have its prerequisite arrows drawn to the wrong place.
-    html += pinnedHtml(id, p, rtl);
     html += whereAreYouHtml(id, p, rtl);
 
     // Each year is its own disclosure: a header button that toggles the
@@ -1951,6 +1963,10 @@
       html += '</div></div>';
     });
 
+    // The zero-hour requirements (Community Service…) sat above Year 1, and
+    // were the first cards on the page. They move nothing on any total, so
+    // they come after the degree rather than before it.
+    html += pinnedHtml(id, p, rtl);
     html += unscheduledHtml(id, p, editing, rtl);
 
     if(editing){
@@ -2139,6 +2155,33 @@
   // first half and the plan under it says the second, so it was a sentence
   // explaining a search box to people already using one. dismissSearchHint()
   // stays exported: an older cached page can still call it.
+  // The magnifier in the hours bar opens the course search right there, and
+  // closing it (the same button, or Escape) clears it.
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('[data-pw-search]');
+    if(!btn) return;
+    var planId = btn.getAttribute('data-pw-search');
+    var wrap = document.getElementById(planId + '-courseSearchWrap');
+    if(!wrap) return;
+    var opening = wrap.hidden;
+    wrap.hidden = !opening;
+    btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    btn.classList.toggle('is-on', opening);
+    var input = document.getElementById(planId + '-courseSearchInput');
+    if(opening && input){ input.focus(); }
+    else if(!opening){
+      var clear = document.getElementById(planId + '-courseSearchClear');
+      if(clear && input && input.value){ clear.click(); }
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape' || !e.target || !e.target.id || !/-courseSearchInput$/.test(e.target.id)) return;
+    var planId = e.target.id.replace(/-courseSearchInput$/, '');
+    var btn = document.querySelector('[data-pw-search="' + planId + '"]');
+    var wrap = document.getElementById(planId + '-courseSearchWrap');
+    if(btn && wrap && !wrap.hidden){ btn.click(); }
+  });
+
   // 64 · Apply the picked starting position.
   document.addEventListener('click', function(e){
     var btn = e.target.closest && e.target.closest('[data-way]');

@@ -224,7 +224,7 @@
      those controls already has its own :hover, :active and :focus-visible
      styling, which says the same thing without covering anything up. */
   button, a, summary, [role="button"], [role="checkbox"], [data-ro-expand],
-  .course, .dash-quicklink, .sb-item, .sb-mrow, .sb-tab, .lib-row{
+  .course, .sb-item, .sb-mrow, .sb-tab, .lib-row{
     -webkit-tap-highlight-color:transparent;
   }
   /* And a long press is a gesture in this app — hold a course to trace it,
@@ -5216,7 +5216,6 @@
   .dashboard-page{max-width:1100px;margin:20px auto;padding:0 20px 40px;}
   /* Subtle "console" flavor: cards get a soft accent glow on hover — enough
      personality to feel alive, restrained enough to stay formal. */
-  .dash-card, .dash-quicklink{transition:border-color .18s ease, box-shadow .18s ease, transform .15s ease;}
   .dash-card:hover{border-color:var(--accent); box-shadow:0 0 18px color-mix(in srgb, var(--accent) 14%, transparent), 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent) inset;}
   .app-sidebar .sb-brand .sb-mark{filter:drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 50%, transparent));}
   .dash-header{
@@ -5228,36 +5227,16 @@
   .dash-header .dash-icon{font-size:28px;}
   .dash-header h1{margin:0;font-size:19px;}
   .dash-header p{margin:2px 0 0;font-size:12px;color:var(--text-dim);}
-  .dash-actions{display:flex;gap:8px;flex-wrap:wrap;}
-  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px;}
-  .dash-swipe-dots{display:none;}
-  /* Phone hero (js/36-dashboard.js's phoneHeroHtml) — one progress ring plus
-     two stat chips replaces the three-tile carousel entirely below the
-     breakpoint; desktop never sees this block (display:none here, no phone
-     media query overrides it back on). */
-  .dash-phone-hero{display:none;}
+  /* The progress ring — in the dashboard's summary card on every screen
+     size now (js/36-dashboard.js), not only in a phone-only hero. */
+  .dph-ring{position:relative; width:100px; height:100px; flex:none; z-index:1;}
+  .dph-ring svg{width:100%; height:100%; transform:rotate(-90deg);}
+  .dph-ring .track{fill:none; stroke:var(--header-bg); stroke-width:9;}
+  .dph-ring .val{fill:none; stroke:var(--accent); stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset .4s ease;}
+  .dph-ring-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .dph-ring-center .n{font-size:21px; font-weight:800; color:var(--text); line-height:1;}
+  .dph-ring-center .l{font-size:8.5px; color:var(--text-dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:3px;}
   @media (max-width:720px){
-    .dash-swipe-dots, .dash-grid{display:none;}
-    .dash-phone-hero{
-      display:block; background:var(--panel); border-radius:20px; padding:18px 16px;
-      margin-bottom:16px; box-shadow:0 8px 24px rgba(0,0,0,.28);
-    }
-    .dph-ring-wrap{display:flex; align-items:center; gap:16px; position:relative;}
-    .dph-ring-glow{
-      position:absolute; left:-14px; top:-14px; width:130px; height:130px; z-index:0;
-      background:radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 70%); filter:blur(4px);
-    }
-    .dph-ring{position:relative; width:100px; height:100px; flex:none; z-index:1;}
-    .dph-ring svg{width:100%; height:100%; transform:rotate(-90deg);}
-    .dph-ring .track{fill:none; stroke:var(--header-bg); stroke-width:9;}
-    .dph-ring .val{fill:none; stroke:var(--accent); stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset .4s ease;}
-    .dph-ring-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
-    .dph-ring-center .n{font-size:21px; font-weight:800; color:var(--text); line-height:1;}
-    .dph-ring-center .l{font-size:8.5px; color:var(--text-dim); font-weight:700; letter-spacing:.05em; text-transform:uppercase; margin-top:3px;}
-    .dph-stat-stack{display:flex; flex-direction:column; gap:9px; z-index:1; flex:1; min-width:0;}
-    .dph-stat{background:var(--header-bg); border-radius:12px; padding:9px 12px;}
-    .dph-stat .n{font-size:16px; font-weight:800; color:var(--text);}
-    .dph-stat .l{font-size:10px; color:var(--text-dim); font-weight:600;}
 
     /* "Do this next" becomes the glanceable continue card the ring sits
        above — a border+glow instead of the same flat panel every other
@@ -5272,6 +5251,7 @@
     .wn-lead-name{font-size:16.5px;}
   }
   .dash-card{
+    transition:border-color .18s ease, box-shadow .18s ease, transform .15s ease;
     background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;
   }
   .dash-card h3{margin:0 0 10px;font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.03em;}
@@ -5371,39 +5351,6 @@
   .empty-link{
     font-family:inherit; font-size:12px; font-weight:800; color:var(--accent);
     background:none; border:none; padding:0; cursor:pointer; text-decoration:underline;
-  }
-  .dash-quicklinks{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-  .dash-quicklink{
-    background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:16px;text-align:center;cursor:pointer;transition:border-color .15s ease,transform .15s ease;
-    color:var(--text);text-decoration:none;display:block;
-    overflow-wrap:anywhere; min-width:0;
-  }
-  .dash-quicklink:hover{border-color:var(--accent);transform:translateY(-2px);}
-  .dash-quicklink .dq-icon{font-size:22px;display:block;margin-bottom:6px;}
-  /* Icon-grid quicklinks on phone — a circular badge + label instead of a
-     bordered rectangle each, same links, same click targets. Positioned
-     after the base rules above (not inside the earlier phone media block
-     with the ring hero) so it wins the cascade against them regardless of
-     media-query nesting — a later same-specificity rule always wins. */
-  @media (max-width:720px){
-    /* 3, not 4 — this app's own quicklink labels ("Degree Audit & GPA",
-       "Plan My Next Semester") run longer than a 4-up grid has room for
-       and wrapped three lines deep, staggering every row out of line. */
-    .dash-quicklinks{
-      display:grid; grid-template-columns:repeat(3,1fr); gap:16px 6px; background:none; border:none; padding:0;
-    }
-    .dash-quicklink{
-      background:none; border:none; padding:0; display:flex; flex-direction:column; align-items:center; gap:7px;
-      text-align:center; overflow-wrap:normal;
-    }
-    .dash-quicklink:hover{transform:none;}
-    .dash-quicklink .dq-icon{
-      display:flex; align-items:center; justify-content:center; margin-bottom:0;
-      width:46px; height:46px; border-radius:15px; background:var(--panel); box-shadow:0 6px 16px rgba(0,0,0,.25);
-    }
-    .dash-quicklink:active .dq-icon{transform:scale(.94);}
-    .dq-label{font-size:11px; line-height:1.3;}
   }
   .dash-next-list{display:flex;flex-direction:column;gap:6px;}
   .dash-next-item{
@@ -8336,3 +8283,185 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   background:var(--search-bg); color:var(--text); font-family:ui-monospace, Menlo, monospace; font-size:13px; letter-spacing:.08em;
 }
 .set-danger-row input:focus{outline:none; border-color:var(--danger,#e8557c);}
+
+/* =========================================================================
+   COURSE DETAILS: STATUS ONCE, GRADE IN ONE TAP  (js/21-course-modal-extras.js)
+   ========================================================================= */
+/* Every status option is the same height with its words centred both ways,
+   and may wrap to two lines — "Not started" was ellipsised and sat higher
+   than "Passed" beside it. */
+.cd-extras .status-btn-group .status-btn{
+  display:flex; align-items:center; justify-content:center; min-height:44px;
+  white-space:normal; overflow:visible; text-overflow:clip; line-height:1.2; padding:6px 4px;
+}
+/* Passed is green, the same green as the tick on the card. */
+.cd-extras .status-btn-group .status-btn-auto.active{background:var(--unlock); color:#06160d;}
+/* The category, as a quiet coloured label rather than a pill. */
+.cd-catchip.cd-catchip{
+  border:0; background:none; padding:0; margin-bottom:4px;
+  font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+}
+/* The grade keypad: seven across, the same shape as the grades screen. */
+.cdk-keys{display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px; margin:4px 0 12px;}
+.cdk{
+  font-family:inherit; font-size:13px; font-weight:800; padding:10px 0; border-radius:9px; cursor:pointer;
+  border:1px solid var(--line); background:var(--search-bg); color:var(--text); text-align:center; min-width:0;
+}
+.cdk:hover{border-color:var(--text-dim);}
+.cdk.is-on{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.cdk.is-fail.is-on{background:var(--danger,#e8557c); border-color:var(--danger,#e8557c);}
+.cdk-clear{color:var(--text-dim); font-size:12px; font-weight:700;}
+.cdk:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+/* Marks, folded: one line until asked for. */
+.cd-marks{border:1px solid var(--line); border-radius:12px; margin-top:4px;}
+.cd-marks-sum{
+  display:flex; align-items:center; gap:8px; padding:11px 13px; cursor:pointer; list-style:none;
+  font-size:13px; font-weight:700; color:var(--text);
+}
+.cd-marks-sum::-webkit-details-marker{display:none;}
+.cd-marks-sum::before{content:'+'; font-weight:900; color:var(--accent); width:12px;}
+.cd-marks[open] > .cd-marks-sum::before{content:'\2212';}
+.cd-marks-opt{margin-inline-start:auto; font-size:11px; font-weight:700; color:var(--text-dim);}
+.cd-marks-body{padding:0 13px 13px;}
+.cd-marks-body .pass-mark-toggle{margin-top:0;}
+.cd-addmark{margin-top:10px;}
+.cd-addmark-btn{
+  font-family:inherit; font-size:12.5px; font-weight:800; cursor:pointer;
+  padding:7px 14px; border-radius:999px; border:1px dashed var(--accent); background:none; color:var(--accent);
+}
+.cd-addmark .assessment-quick-add{margin-top:8px;}
+.cd-addmark .assessment-quick-add[hidden]{display:none;}
+
+/* =========================================================================
+   PHONE: A TOP BAR, NOT AN EDGE TAB  (js/60-backbar.js retitle)
+
+   The way back used to be a tab on the left edge, half way down, on top of
+   the content. On a phone it is now the back bar at the top: a square arrow
+   and the screen's name (read from its heading, which is hidden here since
+   the bar already says it). The phone's own back gesture still closes the
+   screen (§46 in js/60-backbar.js). The course bottom sheet keeps its ✕.
+   ========================================================================= */
+@media (max-width:720px){
+  .modal-overlay .modal-card:has(.back-bar){padding-inline-start:16px;}
+  .modal-overlay .modal-card:has(.back-bar) .modal-close{display:none;}
+  .modal-overlay .modal-card .back-bar{
+    display:flex; position:sticky; top:0; z-index:20;
+    /* No negative side margins: cards pad themselves differently, and a bar
+       pulled wider than one of them made that screen scroll sideways. */
+    margin:0 0 14px; padding:10px 0; min-height:56px;
+    background:var(--panel); border-bottom:1px solid var(--line);
+  }
+  .modal-overlay .modal-card .back-bar-rtl{flex-direction:row;}
+  .modal-overlay .modal-card .back-bar-btn > span:not(.back-bar-arrow){display:none;}
+  .modal-overlay .modal-card .back-bar-arrow{width:38px; height:38px; flex-basis:38px; border-radius:11px; background:none;}
+  .modal-overlay .modal-card .back-bar-title{
+    font-size:16px; font-weight:800; letter-spacing:0; text-transform:none; color:var(--text);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;
+  }
+  .modal-overlay .modal-card .bb-title-src{display:none;}
+  #impCourseModalOverlay .back-bar{display:none;}
+  #impCourseModalOverlay .bb-title-src{display:revert;}
+  #impCourseModalOverlay .modal-card .modal-close{display:flex;}
+}
+
+/* The assistant's opt-in: the question in two lines, the full disclosure
+   folded under "What gets sent?" (js/43-assistant-ui.js offerSmartMode). */
+.asst-consent-more{margin:2px 0 10px; font-size:12px; color:var(--text-dim);}
+.asst-consent-more > summary{cursor:pointer; color:var(--accent); font-weight:800; list-style:none;}
+.asst-consent-more > summary::-webkit-details-marker{display:none;}
+.asst-consent-more > summary::after{content:' \25BE';}
+.asst-consent-more[open] > summary::after{content:' \25B4';}
+.asst-consent-more > p{margin:6px 0 0;}
+
+/* =========================================================================
+   THE PLAN OPENS ON THE COURSES  (js/28-imported.js render)
+
+   On a phone the first course card was a screen and a half down. Above it:
+   a three-row header, the colour key, a search box, the hours bar, the
+   zero-hour courses and eight "where are you now" buttons. Now the header
+   is one line, the key is gone from view (every card writes its bucket
+   out, and the bar's chips carry the colours — the key stays in the DOM
+   because js/19-audit.js reads bucket names off it), search is a magnifier
+   in the sticky bar, "where are you now" is a single line that opens, and
+   the zero-hour courses come after the degree.
+   ========================================================================= */
+.sheet-plan .legend{display:none;}
+.pw-search-btn{
+  flex:none; width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); background:none; color:var(--text-dim); cursor:pointer; margin-inline-start:auto;
+}
+.pw-search-btn:hover, .pw-search-btn.is-on{border-color:var(--accent); color:var(--accent);}
+.pw-search-btn .app-icon-svg{color:inherit;}
+.pw-search-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.progress-widget .pw-search{flex:1 1 100%; margin:0;}
+.progress-widget .pw-search[hidden]{display:none;}
+.progress-widget .pw-search .search-box{margin:0;}
+details.way-card{padding:0;}
+details.way-card > .way-head{
+  display:flex; align-items:center; gap:10px; margin:0; padding:12px 15px; cursor:pointer; list-style:none;
+}
+details.way-card > .way-head::-webkit-details-marker{display:none;}
+.way-pick{
+  margin-inline-start:auto; font-size:12px; font-weight:800; color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius:999px; padding:4px 11px;
+}
+details.way-card[open] > .way-head .way-pick{visibility:hidden;}
+details.way-card > .way-note{margin:0 15px 11px;}
+details.way-card > .way-chips{margin:0 15px 14px;}
+@media (max-width:720px){
+  .sheet-plan > header{
+    display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center;
+    column-gap:11px; row-gap:1px; padding:12px 14px; text-align:start;
+  }
+  .sheet-plan > header .brand,
+  .sheet-plan > header .brand > div{display:contents;}
+  .sheet-plan > header .brand .mark{grid-column:1; grid-row:1 / span 2; width:38px; height:38px;}
+  .sheet-plan > header .brand h1{display:none;}
+  .sheet-plan > header .title-block,
+  .sheet-plan > header .ar-block{grid-column:2; grid-row:1; text-align:start; min-width:0;}
+  .sheet-plan > header .icon-row{justify-content:flex-start;}
+  .sheet-plan > header .title-block .en,
+  .sheet-plan > header .ar-block .ar1{font-size:16.5px; line-height:1.25;}
+  .sheet-plan > header .title-block .en em,
+  .sheet-plan > header .ar-block .ar2{display:none;}
+  .sheet-plan > header .brand p{grid-column:2; grid-row:2; margin:0; font-size:11.5px; line-height:1.35; min-width:0;}
+  .sheet-plan > header .plan-lang{grid-column:3; grid-row:1 / span 2; margin:0;}
+  .sheet-plan > header .header-actions{grid-column:1 / -1; margin-top:8px;}
+}
+
+/* =========================================================================
+   DASHBOARD: THE SAME THINGS, SAID ONCE  (js/36-dashboard.js)
+
+   One summary card (ring, hours, GPA and standing, hours left, finish),
+   then plan health, what to take next, graduation and the badges. One
+   column on a phone in that order; on a laptop two columns — where I stand
+   and what to take next on the left, the longer view on the right.
+   ========================================================================= */
+.dash-flow{display:grid; grid-template-columns:minmax(0, 1fr); gap:14px; margin-bottom:20px;}
+.dash-flow > *{margin:0 !important; min-width:0;}
+@media (min-width:980px){
+  .dash-flow{
+    grid-template-columns:minmax(0, 1.15fr) minmax(0, 1fr); align-items:start;
+    grid-template-areas:"sum health" "next grad" "next ach";
+  }
+  .dash-flow > [data-area="sum"]{grid-area:sum;}
+  .dash-flow > [data-area="health"]{grid-area:health;}
+  .dash-flow > [data-area="next"]{grid-area:next;}
+  .dash-flow > [data-area="grad"]{grid-area:grad;}
+  .dash-flow > [data-area="ach"]{grid-area:ach;}
+}
+.dash-summary{
+  display:flex; align-items:center; gap:18px; padding:18px;
+  background:var(--panel); border:1px solid var(--line); border-radius:16px;
+}
+.dsum-facts{flex:1; min-width:0; display:flex; flex-direction:column; gap:8px;}
+.dsum-row{display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:13.5px;}
+.dsum-row > span{color:var(--text-dim);}
+.dsum-row > b{font-weight:800; font-variant-numeric:tabular-nums; text-align:end;}
+.dsum-sub{color:var(--text-dim); font-weight:600;}
+@media (max-width:420px){
+  .dash-summary{gap:14px; padding:14px;}
+  .dsum-ring{width:88px; height:88px;}
+}
+/* On the panel the ring's empty track needs the line colour, not the header's. */
+.dash-summary .dph-ring .track{stroke:var(--line);}

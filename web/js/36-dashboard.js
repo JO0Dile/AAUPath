@@ -168,24 +168,9 @@
     var courseInfo = (window.__PLAN_DATA[prefix] || {}).courseInfo || {};
     function nameFor(slug){ var m = courseInfo[slug]; return m ? (rtl ? m.ar : m.name) : slug; }
 
-    // Phone-only hero (see .dash-phone-hero in app.css) — one glanceable
-    // ring instead of the three equal stat tiles below, which is what
-    // .dash-grid/.dash-swipe-dots still are for desktop. Same three
-    // numbers (pct/gpa/achievements) already computed above; this is a
-    // second rendering of them, not a second source of truth.
+    // The progress ring in the summary card below.
     var ringR = 50, ringC = Math.round(2 * Math.PI * ringR * 100) / 100;
     var ringOffset = Math.round(ringC * (1 - pct / 100) * 100) / 100;
-    var phoneHeroHtml = '<div class="dash-phone-hero">' +
-      '<div class="dph-ring-wrap"><div class="dph-ring-glow"></div><div class="dph-ring">' +
-        '<svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="' + ringR + '"/>' +
-        '<circle class="val" cx="60" cy="60" r="' + ringR + '" stroke-dasharray="' + ringC + '" stroke-dashoffset="' + ringOffset + '"/></svg>' +
-        '<div class="dph-ring-center"><span class="n">' + pct + '%</span><span class="l">' + (rtl ? 'مكتمل' : 'Complete') + '</span></div>' +
-      '</div>' +
-      '<div class="dph-stat-stack">' +
-        '<div class="dph-stat"><div class="n">' + (gpaResult.gpa != null ? gpaResult.gpa.toFixed(2) : '—') + '</div><div class="l">' + (rtl ? 'المعدل التراكمي' : 'Cumulative GPA') + '</div></div>' +
-        '<div class="dph-stat"><div class="n">' + Math.max(0, totalCr - doneCr) + 'H</div><div class="l">' + (rtl ? 'ساعة متبقية' : 'Credits left') + '</div></div>' +
-      '</div></div>' +
-    '</div>';
 
     // 29 + 9. A plan with nothing marked cannot be graded, and the honest
     // thing on an empty screen is to name the ONE action that fills it.
@@ -203,63 +188,58 @@
       });
     }
 
+    // THE SAME THINGS, SAID ONCE.
+    // Progress was on this screen three times (the ring, a Progress card and
+    // the hours in the hero), the GPA twice, and "My Study Plan" three times
+    // (a header button, a tile at the bottom, and the menu). One summary card
+    // now carries the numbers, and every destination lives in the menu.
+    // Nothing here is new: it is the same blocks, fewer of them, in the order
+    // a student reads them — where I stand, what is wrong, what to take next,
+    // when I finish, what I have earned.
+    var finish = window.AAUP_GRADUATION && window.AAUP_GRADUATION.estimate ? window.AAUP_GRADUATION.estimate(prefix, rtl) : null;
+    var fact = function(label, value){
+      return '<div class="dsum-row"><span>' + label + '</span><b>' + value + '</b></div>';
+    };
+    var summaryHtml = '<div class="dash-summary" data-area="sum">' +
+      '<div class="dph-ring dsum-ring">' +
+        '<svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="' + ringR + '"/>' +
+        '<circle class="val" cx="60" cy="60" r="' + ringR + '" stroke-dasharray="' + ringC + '" stroke-dashoffset="' + ringOffset + '"/></svg>' +
+        '<div class="dph-ring-center"><span class="n">' + pct + '%</span><span class="l">' + (rtl ? 'مكتمل' : 'Complete') + '</span></div>' +
+      '</div>' +
+      '<div class="dsum-facts">' +
+        fact(rtl ? 'الساعات' : 'Hours', doneCr + (rtl ? ' من ' : ' of ') + totalCr) +
+        fact(rtl ? 'المعدل' : 'GPA', gpaResult.gpa != null
+          ? gpaResult.gpa.toFixed(2) + (standingLabel ? ' <span class="dsum-sub">· ' + window.__escapeHtml(standingLabel) + '</span>' : '')
+          : '<span class="dsum-sub">' + (rtl ? 'لا علامات بعد' : 'No grades yet') + '</span>') +
+        fact(rtl ? 'المتبقي' : 'Left', Math.max(0, totalCr - doneCr) + (rtl ? ' ساعة' : ' hours')) +
+        (finish ? fact(rtl ? 'التخرج' : 'Finish', window.__escapeHtml(finish.term)) : '') +
+      '</div>' +
+    '</div>';
+
     var host = document.getElementById('dashboard');
     var html = '<div class="dash-header">' +
       '<div class="dash-title"><span class="dash-icon">' + window.AAUP_ICONS.markup(info, { size: 24 }) + '</span><div><h1>' + info.name + '</h1><p>' + (rtl ? 'لوحة التحكم' : 'Dashboard') + '</p></div></div>' +
-      '<div class="dash-actions">' +
-        // Same one row as the menu's (js/37-sidebar.js): it asks which kind
-        // of change rather than being one of two buttons whose labels never
-        // explained the difference.
-        '<button type="button" class="home-btn" onclick="AAUP_SIDEBAR.openPlanChooser(\'' + prefix + '\')">' + window.AAUP_ICONS.preview('shuffle', 14) + '<span>' + (rtl ? 'تغيير الخطة' : 'Change plan') + '</span></button>' +
-        '<button type="button" class="home-btn" onclick="AAUP_DASHBOARD.openStudyPlan(\'' + prefix + '\')">' + window.AAUP_ICONS.preview('planpin', 14) + '<span>' + (rtl ? 'خطتي الدراسية' : 'My Study Plan') + '</span></button>' +
-      '</div></div>' +
-      phoneHeroHtml +
-      // 29 · The judgement, before the numbers that produced it. Empty until
-      // there is something marked to judge — the empty state below asks for
-      // exactly that, rather than grading a blank plan an A.
-      healthHtml +
-      '<div class="dash-swipe-dots" id="' + prefix + '-dashDots" aria-hidden="true"><span class="active"></span><span></span></div>' +
-      '<div class="dash-grid" id="' + prefix + '-dashGrid">' +
-        '<div class="dash-card"><h3>' + (rtl ? 'التقدم' : 'Progress') + '</h3><div class="dash-big">' + pct + '%</div><div class="dash-sub">' + doneCr + ' / ' + totalCr + 'H</div></div>' +
-        '<div class="dash-card"><h3>GPA</h3><div class="dash-big">' + (gpaResult.gpa != null ? gpaResult.gpa.toFixed(2) : '\u2014') + '</div><div class="dash-sub">' + (standingLabel || (rtl ? 'لم تُدخل علامات بعد' : 'No grades entered yet')) + '</div></div>' +
       '</div>' +
-      // 28 · The badges, as a strip that is seen every time, instead of a
-      // count in a tile pointing at a screen visited once.
-      (window.AAUP_ACHIEVEMENTS && window.AAUP_ACHIEVEMENTS.stripHtml
-        ? window.AAUP_ACHIEVEMENTS.stripHtml(prefix, rtl) : '') +
-      (window.AAUP_GRADUATION
-        ? '<div class="dash-card grad-card" style="margin-bottom:20px;"><h3 class="mh">' + window.AAUP_ICONS.preview('cap', 18) + window.AAUP_GRADUATION.title(rtl) +
-          '</h3><div id="' + prefix + '-dashGradBody"></div></div>'
-        : '') +
-      '<div class="dash-card" style="margin-bottom:20px;"><h3>' + (rtl ? 'ما الذي يمكنني أخذه الآن؟' : 'What Can I Take Next') + '</h3>' +
-      (window.AAUP_WHATS_NEXT
-        ? '<div id="' + prefix + '-dashNextBody"></div>'
-        : (nextCourses.length
-            ? '<div class="dash-next-list">' + nextCourses.map(function(c){ return '<div class="dash-next-item"><span>' + nameFor(c.slug) + '</span><span>' + c.cr + 'H</span></div>'; }).join('') + '</div>'
-            : '<p class="ex-note">' + (rtl ? 'لا توجد توصيات متاحة الآن.' : 'No recommendations available right now.') + '</p>')) +
+      '<div class="dash-flow">' +
+        summaryHtml +
+        // 29 · The judgement, right after the numbers that produced it.
+        (healthHtml ? '<div class="dash-area" data-area="health">' + healthHtml + '</div>' : '') +
+        '<div class="dash-card dash-area" data-area="next"><h3>' + (rtl ? 'ما الذي يمكنني أخذه الآن؟' : 'What Can I Take Next') + '</h3>' +
+        (window.AAUP_WHATS_NEXT
+          ? '<div id="' + prefix + '-dashNextBody"></div>'
+          : (nextCourses.length
+              ? '<div class="dash-next-list">' + nextCourses.map(function(c){ return '<div class="dash-next-item"><span>' + nameFor(c.slug) + '</span><span>' + c.cr + 'H</span></div>'; }).join('') + '</div>'
+              : '<p class="ex-note">' + (rtl ? 'لا توجد توصيات متاحة الآن.' : 'No recommendations available right now.') + '</p>')) +
+        '</div>' +
+        (window.AAUP_GRADUATION
+          ? '<div class="dash-card grad-card dash-area" data-area="grad"><h3 class="mh">' + window.AAUP_ICONS.preview('cap', 18) + window.AAUP_GRADUATION.title(rtl) +
+            '</h3><div id="' + prefix + '-dashGradBody"></div></div>'
+          : '') +
+        // 28 · The badges, as a strip that is seen every time.
+        (window.AAUP_ACHIEVEMENTS && window.AAUP_ACHIEVEMENTS.stripHtml
+          ? '<div class="dash-area" data-area="ach">' + window.AAUP_ACHIEVEMENTS.stripHtml(prefix, rtl) + '</div>' : '') +
       '</div>' +
-      (window.AAUP_FOLLOW ? window.AAUP_FOLLOW.sectionHtml(prefix, rtl) : '') +
-      '<div class="dash-quicklinks">' +
-
-        '<div class="dash-quicklink" onclick="AAUP_AUDIT.open(\'' + prefix + '\')"><span class="dq-icon">' + window.AAUP_ICONS.preview('clipboard', 22) + '</span><span class="dq-label">' + (rtl ? 'التدقيق الأكاديمي وGPA' : 'Degree Audit & GPA') + '</span></div>' +
-        // The Achievements tile that used to sit here is gone. It was the
-        // third door to the same screen — a menu row, this tile, and the
-        // toast that fires the moment a badge unlocks. The toast now leads
-        // there (js/24-achievements.js) and the menu row is the way in the
-        // rest of the time; the count above still says how many are earned.
-
-        '<div class="dash-quicklink" onclick="AAUP_DASHBOARD.openStudyPlan(\'' + prefix + '\')"><span class="dq-icon">' + window.AAUP_ICONS.preview('planpin', 22) + '</span><span class="dq-label">' + (rtl ? 'خطتي الدراسية الكاملة' : 'My Full Study Plan') + '</span></div>' +
-        (window.AAUP_SHARE
-          ? '<div class="dash-quicklink" onclick="AAUP_SHARE.open(\'' + prefix + '\')"><span class="dq-icon">' + window.AAUP_ICONS.preview('link', 22) + '</span><span class="dq-label">' + (rtl ? 'شارك هذه الخطة' : 'Share this plan') + '</span></div>'
-          : '') +
-        (window.AAUP_CLOUD && window.AAUP_CLOUD.isConfigured()
-          ? '<div class="dash-quicklink" onclick="AAUP_CLOUD.open()"><span class="dq-icon">' + window.AAUP_ICONS.preview('cloud', 22) + '</span><span class="dq-label">' +
-            (window.AAUP_CLOUD.isSignedIn()
-              ? window.__escapeHtml(window.AAUP_CLOUD.displayName())
-              : (rtl ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Sign Up')) +
-            '</span></div>'
-          : '') +
-      '</div>';
+      (window.AAUP_FOLLOW ? window.AAUP_FOLLOW.sectionHtml(prefix, rtl) : '');
     // Backup nudge: only when there IS meaningful progress to lose, and no
     // backup in the last 30 days (or ever). Quiet one-liner, not a popup —
     // losing a semester of tracked progress hurts more than this line does.
@@ -276,18 +256,6 @@
     if(window.AAUP_FOLLOW){ window.AAUP_FOLLOW.bind(prefix); }
     if(window.AAUP_WHATS_NEXT){ window.AAUP_WHATS_NEXT.render(prefix, prefix + '-dashNextBody', 'lead'); }
     if(window.AAUP_GRADUATION){ window.AAUP_GRADUATION.render(prefix, prefix + '-dashGradBody'); }
-    // Phone only (see .dash-swipe-dots in app.css) — the three stat tiles
-    // swipe side by side there instead of stacking; the dots are decorative
-    // sync only, scroll-snap already does the actual paging.
-    var dashGrid = document.getElementById(prefix + '-dashGrid');
-    var dashDots = document.getElementById(prefix + '-dashDots');
-    if(dashGrid && dashDots){
-      var dots = dashDots.querySelectorAll('span');
-      dashGrid.addEventListener('scroll', function(){
-        var idx = Math.round(dashGrid.scrollLeft / Math.max(1, dashGrid.clientWidth));
-        dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
-      }, { passive: true });
-    }
   }
 
   // showPage('home') means "take me to my landing point", and that is the
