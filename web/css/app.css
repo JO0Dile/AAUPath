@@ -1136,18 +1136,6 @@
      grid and skipped by every count via .course[id]:not(.course-removed). */
   .course.course-removed{display:none !important;}
 
-  .modal-remove-block{margin-top:6px;border-top:1px dashed var(--line);padding-top:12px;}
-  .course-remove-btn{
-    width:100%;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;
-    background:rgba(224,83,140,.12);color:#ff9ecb;border:1px solid var(--prereq);
-    transition:background .15s ease;
-  }
-  .course-remove-btn:hover{background:var(--prereq);color:#fff;}
-  .course-remove-btn.is-restore{
-    background:rgba(47,191,113,.14);color:#8ff0bd;border-color:var(--unlock);
-  }
-  .course-remove-btn.is-restore:hover{background:var(--unlock);color:#04150c;}
-
   .course.jump-highlight{animation:jumpPulse 1s ease-in-out 2;}
   /* ================= COLLAPSIBLE LEGEND (mobile-friendly) ================= */
 
@@ -2230,25 +2218,7 @@
 
   .gs-hint{font-size:11.5px;color:var(--text-dim);margin:0 0 10px;line-height:1.55;}
 
-/* The way out of an empty Degree Audit. Grades are entered from a course,
-   not from this screen, so with none entered it explained where to go and
-   gave no way to go there. */
-.gs-goplan{
-  /* The button is the whole point of this empty state, and it was tucked
-     against the left edge of the block hugging its own label. Centred in the
-     block, with the icon and the label centred inside it. */
-  display:flex; align-items:center; justify-content:center; gap:9px;
-  width:fit-content; max-width:100%; min-width:min(250px, 100%);
-  margin:14px auto 0; text-align:center;
-  padding:13px 22px; border-radius:999px;
-  background:var(--accent); color:var(--on-accent);
-  border:none; font-family:inherit; font-size:14.5px; font-weight:800;
-  cursor:pointer; transition:filter .15s ease;
-}
-.gs-goplan:hover{filter:brightness(1.08);}
-.gs-goplan:focus-visible{outline:2px solid var(--accent); outline-offset:3px;}
 
-  .gs-empty{font-size:12.5px;color:var(--text-dim);}
 
   /* The transcript-shaped record under the Degree Audit (js/19-audit.js).
      Three columns read down, so the numbers line up: tabular figures, and a
@@ -2404,6 +2374,19 @@
   .gs-grade-select:focus{outline:none; border-color:var(--accent);}
 
   .gs-project-row{display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px;}
+  .gs-slider-wrap{flex:1 1 220px; min-width:0; display:flex; flex-direction:column; gap:4px;}
+  .gs-slider-wrap label{font-size:12px; color:var(--text-dim);}
+  .gs-slider-top output{font-size:26px; font-weight:900; color:var(--text); font-variant-numeric:tabular-nums;}
+  .gs-slider{
+    -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:99px; margin:8px 0 4px;
+    background:linear-gradient(to right, var(--accent) var(--fill, 50%), var(--line) var(--fill, 50%));
+    cursor:pointer;
+  }
+  html[dir="rtl"] .gs-slider{background:linear-gradient(to left, var(--accent) var(--fill, 50%), var(--line) var(--fill, 50%));}
+  .gs-slider::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:26px; height:26px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .gs-slider::-moz-range-thumb{width:22px; height:22px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  .gs-slider:focus-visible{outline:2px solid var(--accent); outline-offset:4px;}
+  .gs-slider-scale{display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); font-variant-numeric:tabular-nums;}
   .gs-remaining{font-size:12px; color:var(--text-dim); display:flex; flex-direction:column; gap:3px;}
   .gs-remaining b{font-size:18px; color:var(--text); font-weight:800;}
   .gs-project-result{
@@ -2993,7 +2976,6 @@
     display:block;font-size:10.5px;font-weight:800;color:var(--text-dim);text-transform:uppercase;
     letter-spacing:.06em;margin:16px 2px 8px;
   }
-  .ach-empty{font-size:13px;color:var(--text-dim);margin:14px 2px;}
   .ach-all{margin-top:18px;border-top:1px solid var(--line);padding-top:6px;}
   .ach-all-sum{
     cursor:pointer;list-style:none;padding:10px 2px;font-size:13.5px;font-weight:800;color:var(--accent);
@@ -4210,6 +4192,13 @@
     flex:0 0 auto;font-size:11px;font-weight:800;color:var(--accent);
     font-variant-numeric:tabular-nums;
   }
+  /* A finished year (js/28-imported.js yearFinished): one quiet line. */
+  .iy-done{
+    margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:700;color:var(--text-dim);font-variant-numeric:tabular-nums;
+  }
+  .iy-done .app-icon-svg{color:var(--unlock);}
+  .imp-year-block.is-finished .imp-year-header h3{color:var(--text-dim);}
   /* The only status a card still prints is the closed one, and it names the
      course it is waiting for rather than the word "closed". Dim, because it
      is the answer to a question you only ask about a card you cannot use. */
@@ -5245,15 +5234,15 @@
     color:var(--text-dim);
   }
   .ph-verdict{font-size:14px; font-weight:800;}
-  .ph-why{margin:10px 0 0; font-size:12px; color:var(--text-dim); line-height:1.6;}
-  .ph-chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:11px;}
-  .ph-chip{
-    font-size:10.5px; font-weight:800; letter-spacing:.02em;
-    border-radius:999px; padding:4px 11px; border:1px solid transparent;
-  }
-  .ph-good{background:color-mix(in srgb, var(--skills) 16%, transparent); color:var(--skills); border-color:var(--skills);}
-  .ph-watch{background:color-mix(in srgb, var(--warn) 16%, transparent); color:var(--warn); border-color:var(--warn);}
-  .ph-bad{background:color-mix(in srgb, var(--free) 18%, transparent); color:var(--free); border-color:var(--free);}
+  .ph-lines{list-style:none; margin:12px 0 0; padding:0; display:flex; flex-direction:column;}
+  .ph-line{display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-top:1px solid var(--line); font-size:13px; line-height:1.55;}
+  .ph-line:first-child{border-top:none; padding-top:2px;}
+  .ph-dot{width:9px; height:9px; border-radius:50%; flex:none; margin-top:6px;}
+  .ph-line-good .ph-dot{background:var(--skills);}
+  .ph-line-watch .ph-dot{background:var(--warn);}
+  .ph-line-bad .ph-dot{background:var(--free);}
+  .ph-text{flex:1; min-width:0;}
+  .ph-act{flex:none; background:none; border:0; padding:2px 0; color:var(--accent); font:inherit; font-weight:800; cursor:pointer; white-space:nowrap;}
   .ph-note{margin:11px 0 0; font-size:10.5px; color:var(--text-dim); line-height:1.55;}
 
   /* 28 · The badges as a strip on the dashboard, instead of a count in a
@@ -5958,7 +5947,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
    its own ink. The default above is a colour, not inheritance, so it won an
    accent-on-accent fight and the icon simply disappeared — which is what had
    happened to the pin on "Enter marks from my plan". */
-.gs-goplan .app-icon-svg,
 .au-mode-on .app-icon-svg,
 .po-mode.is-on .app-icon-svg,
 .status-btn.active .app-icon-svg,
@@ -5975,7 +5963,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
 .asst-send .app-icon-svg,
 .guide-next .app-icon-svg,
 .fix-btn-primary .app-icon-svg,
-.cd-action-primary .app-icon-svg,
 .cloud-live-avatar .app-icon-svg,
 .pf-chip.pf-on .app-icon-svg,
 .pg-why-locked-btn:hover .app-icon-svg,
@@ -6772,12 +6759,28 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
 .cd-swipe-dots span{width:6px; height:6px; border-radius:50%; background:var(--line); display:block;}
 .cd-swipe-dots span.on{background:var(--accent);}
 
-.cd-actions{padding:4px 22px 20px;}
-.cd-action-primary{
-  width:100%; padding:13px; border-radius:14px; border:none;
-  background:var(--accent); color:var(--on-accent); font-family:inherit;
-  font-size:13.5px; font-weight:800; cursor:pointer;
+/* The ⋯ in the course window's corner (js/49-course-detail.js moreMenuHTML). */
+.cd-more{position:relative; flex:none; align-self:flex-start;}
+.cd-more-btn{
+  width:34px; height:34px; border-radius:10px; border:1px solid var(--line);
+  background:var(--panel); color:var(--text); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
 }
+.cd-more-btn:hover, .cd-more-btn[aria-expanded="true"]{border-color:var(--accent);}
+.cd-menu{
+  position:absolute; inset-inline-end:0; top:40px; z-index:5; min-width:220px;
+  background:var(--header-bg); border:1px solid var(--line); border-radius:12px;
+  box-shadow:0 14px 34px rgba(0,0,0,.5); padding:4px;
+}
+.cd-menu[hidden]{display:none;}
+.cd-menu button{
+  display:flex; align-items:center; gap:10px; width:100%; padding:10px 11px;
+  border:0; border-radius:8px; background:none; color:var(--text);
+  font:inherit; font-size:13.5px; font-weight:600; text-align:start; cursor:pointer;
+}
+.cd-menu button:hover, .cd-menu button:focus-visible{background:rgba(255,255,255,.06);}
+.cd-menu .app-icon-svg{color:var(--text-dim);}
+.cd-menu .cd-menu-danger, .cd-menu .cd-menu-danger .app-icon-svg{color:var(--prereq, #e2596b);}
 
 /* Set by js/49-course-detail.js's bind() on the underlying course row when
    "View in course tree" scrolls to it — a brief accent flash so the row
@@ -6801,7 +6804,7 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
   .cd-main{padding:20px 24px; border-inline-end:1px solid var(--line);}
   .cd-side{padding:20px 24px;}
   .cd-head{padding:22px 50px 18px 26px;}
-  .cd-catchip, .cd-stats, .cd-mini-chain, .cd-swipe-dots, .cd-actions{display:none;}
+  .cd-catchip, .cd-stats, .cd-mini-chain, .cd-swipe-dots{display:none;}
   .cd-slides{display:block; overflow:visible;}
   .cd-slides .cd-slide{flex:none; width:auto;}
   .cd-slides .cd-slide:first-child .cd-sec{margin-bottom:20px;}
@@ -7771,7 +7774,7 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 }
 
 .hm-results{
-  margin-top:10px; display:flex; flex-direction:column; overflow:hidden;
+  margin-top:10px; display:flex; flex-direction:column; overflow-x:hidden;
   border-radius:16px; border:1px solid var(--line); background:var(--panel); color:var(--text);
 }
 .hm-results[hidden]{display:none;}
@@ -7781,7 +7784,23 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   border:0; border-bottom:1px solid var(--line); background:transparent; color:var(--text); font-size:14px;
 }
 .hm-res:hover, .hm-res:focus-visible{background:color-mix(in srgb, var(--accent) 8%, transparent);}
-.hm-res-kind{flex:none; width:76px; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--hm-ink);}
+.hm-group{display:flex; flex-direction:column; border-bottom:1px solid var(--line);}
+.hm-group-h{padding:12px 14px 4px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+.hm-group-h span{letter-spacing:0; color:var(--hm-ink, var(--accent));}
+.hm-group .hm-res:last-child{border-bottom:0;}
+.hm-res-more{border:0; background:none; color:var(--hm-ink, var(--accent)); font:inherit; font-size:13px; font-weight:800; padding:10px 14px 12px; text-align:start; cursor:pointer;}
+.hm-search-cancel{display:none;}
+/* A phone: results are their own page. The hero steps aside and the search
+   box stays pinned at the top, with Cancel beside it. */
+@media (max-width:899px){
+  .hm.hm-has-q .hm-top, .hm.hm-has-q .hm-title, .hm.hm-has-q .hm-greet{display:none;}
+  .hm.hm-has-q .hm-hero{padding-bottom:0; min-height:0;}
+  .hm.hm-has-q .hm-hero-body{padding-top:10px;}
+  .hm.hm-has-q .hm-search{display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center;}
+  .hm.hm-has-q .hm-search input{grid-column:1; grid-row:1;}
+  .hm.hm-has-q .hm-search-cancel{display:block; grid-column:2; grid-row:1; border:0; background:none; color:var(--hm-ink, var(--accent)); font:inherit; font-size:14px; font-weight:800; padding:8px 4px; cursor:pointer;}
+  .hm.hm-has-q .hm-results{grid-column:1 / -1; margin-top:4px; border-radius:14px;}
+}
 .hm-res-body{display:flex; flex-direction:column; gap:1px; min-width:0;}
 .hm-res-body b{font-size:14.5px; line-height:1.3;}
 .hm-res-body span{font-size:12px; line-height:1.3; color:var(--text-dim);}
@@ -7828,6 +7847,7 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   font-size:13px; font-weight:600;
 }
 .hm-foot{display:flex; align-items:center; justify-content:center; gap:14px; padding-top:4px;}
+.hm-ver{background:none; border:0; padding:4px 6px; font:inherit; color:var(--text-dim); font-size:12px; cursor:default; -webkit-tap-highlight-color:transparent;}
 .hm-rail{display:none;}
 .hm-dim{color:var(--text-dim); font-size:12.5px; font-weight:400;}
 
@@ -7858,7 +7878,7 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   .hm-search-ic{inset-inline-start:18px; top:17px;}
   .hm-try > span{color:rgba(255,255,255,.72);}
   .hm-chip{border-color:rgba(255,255,255,.35); background:rgba(255,255,255,.08); color:#fff;}
-  .hm-results{position:absolute; z-index:30; top:64px; inset-inline:0; margin:0; box-shadow:0 18px 40px rgba(0,0,0,.25);}
+  .hm-results{position:absolute; z-index:30; top:64px; inset-inline:0; margin:0; box-shadow:0 18px 40px rgba(0,0,0,.25); max-height:min(70vh, 640px); overflow-y:auto;}
   .hm.hm-has-q .hm-try{display:flex;}
   .hm.hm-has-q .hm-body{display:flex;}
 
@@ -8379,6 +8399,36 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 .pw-search-btn .app-icon-svg{color:inherit;}
 .pw-search-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .progress-widget .pw-search{flex:1 1 100%; margin:0;}
+/* Cards | List switch in the hours bar (js/28-imported.js planView). */
+.pw-view{display:inline-flex; margin-inline-start:auto; border:1px solid var(--line); border-radius:10px; padding:2px; gap:2px;}
+.pw-view + .pw-search-btn{margin-inline-start:0;}
+.pw-view button{border:0; background:none; color:var(--text-dim); font:inherit; font-size:12px; font-weight:800; padding:6px 10px; border-radius:8px; cursor:pointer;}
+.pw-view button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent);}
+.pw-view button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+/* List view: one line per course, a semester as one box of rows. Edit Mode
+   keeps its own card columns whichever view is chosen. */
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course-row{
+  flex-direction:column; flex-wrap:nowrap; gap:0;
+  border:1px solid var(--line); border-radius:12px; overflow:hidden;
+}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course{
+  flex:none; max-width:none; min-width:0; width:100%; min-height:0;
+  display:flex; align-items:center; gap:10px; flex-wrap:nowrap;
+  border:0; border-top:1px solid var(--line); border-radius:0;
+  padding:12px 44px 12px 14px; box-shadow:none;
+}
+html[dir="rtl"][data-plan-view="list"] .sheet-plan:not(.editing) .course{padding:12px 14px 12px 44px;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course:first-child{border-top:0;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course:hover{transform:none;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .name{flex:1; min-width:0; padding:0; font-size:13.5px;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .req-code,
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .name-alt,
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .retake-badge,
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .course-meta-badges{display:none;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .course-meta{flex:none; margin:0; font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:45%;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .course .course-check{top:50%; transform:translateY(-50%); margin-top:-5px;}
+html[data-plan-view="list"] .sheet-plan:not(.editing) .connector-layer{display:none;}
 .progress-widget .pw-search[hidden]{display:none;}
 .progress-widget .pw-search .search-box{margin:0;}
 details.way-card{padding:0;}
@@ -8534,3 +8584,21 @@ html[dir="rtl"] body.has-sidebar .fix-panel{left:16px;}
   html[dir="rtl"] body.has-sidebar .fix-launcher{left:12px;}
   html[dir="rtl"] body.has-sidebar .fix-panel{left:8px;}
 }
+
+/* One empty screen everywhere (window.__emptyState in js/14-storage.js). */
+.empty-state{
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
+  padding:22px 16px; margin:8px 0; border:1px dashed var(--line); border-radius:14px;
+  background:var(--panel);
+}
+.es-icon{width:46px; height:46px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent); margin-bottom:4px;}
+.es-icon .app-icon-svg{color:inherit;}
+.es-title{font-size:15px; font-weight:800; color:var(--text);}
+.es-text{margin:0 0 8px; font-size:13px; line-height:1.55; color:var(--text-dim); max-width:36ch;}
+.es-btn{
+  font:inherit; font-size:13.5px; font-weight:800; cursor:pointer; padding:10px 18px; border-radius:12px;
+  border:0; background:var(--accent); color:var(--on-accent);
+}
+.es-btn:hover{filter:brightness(1.08);}
+.es-btn:focus-visible{outline:2px solid var(--text); outline-offset:2px;}

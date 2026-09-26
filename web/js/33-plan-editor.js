@@ -287,7 +287,7 @@
     var rtl = window.__isRtl ? window.__isRtl(d.prefix) : false;
 
     if(check.hard){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? check.reason.ar : check.reason.en)); }
+      if(window.__showToast){ window.__showToast((rtl ? check.reason.ar : check.reason.en)); }
       snapBack(d);
       return;
     }
@@ -543,7 +543,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'emb-links';
-    btn.textContent = '🔗 Prerequisite lines';
+    btn.textContent = 'Prerequisite lines';
     btn.addEventListener('click', function(){
       if(window.AAUP_LINKS){ window.AAUP_LINKS.open(prefix); }
     });

@@ -124,7 +124,7 @@
       if (r.confirm.warn) {
         var warn = document.createElement('p');
         warn.className = 'asst-warn';
-        warn.textContent = '⚠️ ' + r.confirm.warn;
+        warn.textContent = r.confirm.warn;
         b.appendChild(warn);
       }
       var actions = document.createElement('div');
@@ -162,7 +162,7 @@
       var show = document.createElement('button');
       show.type = 'button';
       show.className = 'asst-act asst-act-primary';
-      show.textContent = '👉 ' + (KB.say.guideOffer[replyLang] || KB.say.guideOffer.en);
+      show.textContent = (KB.say.guideOffer[replyLang] || KB.say.guideOffer.en);
       show.addEventListener('click', function () { startGuide(r.guide, replyLang); });
       ga.appendChild(show);
       b.appendChild(ga);

@@ -145,12 +145,6 @@
       setOpen(prefix, idx, opening);
       applyOne(prefix, block, idx);
       redrawConnectors(prefix);
-      // 53 · The first time someone opens a year is the first time "hold it
-      // instead" means anything to them (js/32-tutorial.js). It used to be
-      // step two of a tour played before they had opened one.
-      if(opening && window.AAUP_TUTORIAL && window.AAUP_TUTORIAL.moment){
-        window.AAUP_TUTORIAL.moment('yearOpen');
-      }
     });
     bindHold(prefix, block, toggle);
   }

@@ -104,9 +104,9 @@
     }
     var s = summarize(entry);
     var html = '';
-    if(s.avgDifficulty !== null){ html += '<span class="meta-badge">⭐' + s.avgDifficulty.toFixed(1) + '</span>'; }
-    if(s.topWorkload){ html += '<span class="meta-badge">⚡' + s.topWorkload + ' (' + s.topCount + ')</span>'; }
-    if(s.notes.length){ html += '<span class="meta-badge" data-notes-for="' + prefix + '-c-' + slug + '">📝' + s.notes.length + '</span>'; }
+    if(s.avgDifficulty !== null){ html += '<span class="meta-badge">' + window.AAUP_ICONS.preview('star', 11) + s.avgDifficulty.toFixed(1) + '</span>'; }
+    if(s.topWorkload){ html += '<span class="meta-badge">' + window.AAUP_ICONS.preview('bolt', 11) + s.topWorkload + ' (' + s.topCount + ')</span>'; }
+    if(s.notes.length){ html += '<span class="meta-badge" data-notes-for="' + prefix + '-c-' + slug + '">' + window.AAUP_ICONS.preview('pen', 11) + s.notes.length + '</span>'; }
     if(!html){ if(row) row.remove(); return; }
     if(!row){ row = document.createElement('div'); row.className = 'community-badge-row'; el.appendChild(row); }
     row.innerHTML = html;

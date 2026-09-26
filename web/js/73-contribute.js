@@ -43,7 +43,7 @@
                  ar: 'ولا حدا ضاف قائمة مساقاتها لسا. فيك تضيف اللي تعرفه بنفس المحرر اللي بتستخدمه الخطط المخصصة، وترسله للمسؤول عن التطبيق — حتى لو كم مساق بس.' },
     offerOk: { en: 'Start adding courses', ar: 'ابدأ بإضافة مساقات' },
     submitting: { en: 'Sending…', ar: 'عم نرسل…' },
-    submitOk: { en: '📮 Sent — the maintainer can reply here in Settings.', ar: '📮 اترسلت — المسؤول فيه يرد هون بالإعدادات.' },
+    submitOk: { en: 'Sent — the maintainer can reply here in Settings.', ar: 'اترسلت — المسؤول فيه يرد هون بالإعدادات.' },
     submitEmpty: { en: 'Add at least one course before submitting.', ar: 'ضيف مساق واحد ع الأقل قبل الإرسال.' },
     submitFail: { en: 'Could not send it — check your connection and try again.', ar: 'ما قدرنا نرسلها — تأكد من الاتصال وجرب مرة ثانية.' },
     notConfigured: { en: 'Contributions are not accepted online yet — use Contribute to send a file instead.', ar: 'المساهمات مش مفعّلة أونلاين لسا — استخدم "ساهم" لإرسال ملف بدلاً من هيك.' },
@@ -149,7 +149,7 @@
       '<div class="contrib-row-head"><span class="contrib-major">' + esc(c.majorName || c.prefix) + '</span>' +
       '<span class="contrib-status contrib-status-' + esc(c.status) + '">' + esc(status) + '</span></div>' +
       '<div class="contrib-meta">' + esc((c.courses || []).length) + (r ? ' مساق مُرسَل' : ' course(s) sent') + '</div>' +
-      (c.adminReply ? '<p class="contrib-reply">💬 ' + esc(c.adminReply) + '</p>' : '') +
+      (c.adminReply ? '<p class="contrib-reply">' + esc(c.adminReply) + '</p>' : '') +
       '</div>';
   }
 

@@ -441,7 +441,7 @@
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    if(window.__showToast){ window.__showToast('🏆 Achievement card saved!'); }
+    if(window.__showToast){ window.__showToast('Achievement card saved'); }
   }
 
   window.AAUP_CELEBRATE = { confetti: confettiBurst, shareAchievement: shareAchievement };

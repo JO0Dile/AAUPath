@@ -175,35 +175,58 @@
   }
 
   // ---------------------------------------------------------------------
-  function chip(label, score){
-    var cls = score === 2 ? 'good' : score === 1 ? 'watch' : 'bad';
-    return '<span class="ph-chip ph-' + cls + '">' + esc(label) + '</span>';
+  // Each part as a sentence saying what it means for the student, with a
+  // coloured dot for how it is going. The chips this replaced ("pace",
+  // "prereq risk") named the measurement and left the meaning to the reader.
+  var SEM_EN = { s1: 'first semester', s2: 'second semester', s3: 'summer' };
+  var SEM_AR = { s1: 'الفصل الأول', s2: 'الفصل الثاني', s3: 'الصيفي' };
+
+  function courseName(prefix, slug, rtl){
+    var info = (((window.__PLAN_DATA || {})[prefix] || {}).courseInfo || {})[slug] || {};
+    if(rtl && info.ar) return info.ar;
+    var plan = window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans()[prefix] : null;
+    var c = plan && (plan.courses || []).filter(function(x){ return x.id === slug; })[0];
+    return (c && c.name) || slug;
   }
 
-  function summaryLine(h, rtl){
-    // One sentence naming the weakest part, because that is the part worth
-    // doing something about. When all three are healthy it says so.
-    var parts = [];
-    if(h.pace && h.pace.score < 2){
-      parts.push(tx(rtl,
-        Math.round(h.pace.done) + ' of the ' + Math.round(h.pace.scheduled) +
-          'H the plan schedules through term ' + h.pace.through,
-        Math.round(h.pace.done) + ' من ' + Math.round(h.pace.scheduled) +
-          ' ساعة الخطة بتجدولها لحد الفصل ' + h.pace.through));
+  function line(score, text, action){
+    var cls = score === 2 ? 'good' : score === 1 ? 'watch' : 'bad';
+    return '<li class="ph-line ph-line-' + cls + '"><span class="ph-dot" aria-hidden="true"></span>' +
+      '<span class="ph-text">' + text + '</span>' + (action || '') + '</li>';
+  }
+
+  function linesHtml(prefix, h, rtl){
+    var out = [];
+    var p = h.pace;
+    var done = Math.round(p.done), sch = Math.round(p.scheduled);
+    out.push(line(p.score, p.score === 2
+      ? esc(tx(rtl, 'You’re keeping pace: ' + done + ' of the ' + sch + ' hours planned so far are done.',
+                    'ماشي على الخطة: خلّصت ' + done + ' من ' + sch + ' ساعة مخططة لحد هلأ.'))
+      : esc(tx(rtl, 'You’re behind the plan: ' + done + ' of the ' + sch + ' hours planned so far are done.',
+                    'متأخر عن الخطة: خلّصت ' + done + ' من ' + sch + ' ساعة مخططة لحد هلأ.'))));
+    var b = h.balance;
+    if(b){
+      var w = b.worst;
+      var where = w ? tx(rtl, 'Year ' + w.yearNum + ' ' + SEM_EN[w.sem], SEM_AR[w.sem] + ' بالسنة ' + w.yearNum) : '';
+      out.push(line(b.score, b.score === 2
+        ? esc(tx(rtl, 'Your load is even from one semester to the next.', 'حملك متوازن من فصل لفصل.'))
+        : esc(tx(rtl, 'Your load jumps around. ' + where + ' had ' + Math.round(w.mine) + ' hours, far from your usual ' + Math.round(b.mean) + '.',
+                      'حملك مش ثابت. ' + where + ' كان فيه ' + Math.round(w.mine) + ' ساعة، بعيد عن معدلك ' + Math.round(b.mean) + '.'))));
     }
-    if(h.balance && h.balance.score < 2 && h.balance.worst){
-      parts.push(tx(rtl,
-        'load uneven in year ' + h.balance.worst.yearNum,
-        'الحمل غير متوازن بالسنة ' + h.balance.worst.yearNum));
+    var r = h.risk;
+    if(r){
+      if(r.score === 2 || !r.slug){
+        out.push(line(r.score, esc(tx(rtl, 'Everything left still fits in the semesters you have.',
+                                           'كل اللي باقي بيزبط بالفصول اللي ضايلة.'))));
+      } else {
+        var nm = '<b>' + esc(courseName(prefix, r.slug, rtl)) + '</b>';
+        out.push(line(r.score, tx(rtl,
+          nm + ' is at the end of a chain of ' + r.needs + ' semesters, and ' + r.termsLeft + ' are left. Start its chain next semester or you’ll finish late.',
+          nm + ' آخر سلسلة طولها ' + r.needs + ' فصول، وضايل ' + r.termsLeft + '. ابدأ سلسلته الفصل الجاي وإلا رح تتأخر بالتخرج.'),
+          '<button type="button" class="ph-act" data-ph-course="' + esc(prefix) + '|' + esc(r.slug) + '">' + esc(tx(rtl, 'See it', 'شوفه')) + '</button>'));
+      }
     }
-    if(h.risk && h.risk.score < 2){
-      parts.push(tx(rtl,
-        h.risk.needs + ' more terms of prerequisites, ' + h.risk.termsLeft + ' left in the plan',
-        h.risk.needs + ' فصول متطلبات كمان، وباقي ' + h.risk.termsLeft + ' بالخطة'));
-    }
-    if(!parts.length) return tx(rtl, 'pace, balance and prerequisites all clear',
-                                    'السرعة والتوازن والمتطلبات كلهم تمام');
-    return parts.join(' \u00b7 ');
+    return '<ul class="ph-lines">' + out.join('') + '</ul>';
   }
 
   // The block on the dashboard. Returns '' when there is nothing to grade —
@@ -219,17 +242,19 @@
           '<span class="ph-verdict">' + esc(tx(rtl, h.grade.en, h.grade.ar)) + '</span>' +
         '</span>' +
       '</div>' +
-      '<p class="ph-why">' + esc(summaryLine(h, rtl)) + '</p>' +
-      '<div class="ph-chips">' +
-        chip(tx(rtl, 'pace', 'السرعة'), h.pace.score) +
-        (h.balance ? chip(tx(rtl, 'balance', 'التوازن'), h.balance.score) : '') +
-        (h.risk ? chip(tx(rtl, 'prereq risk', 'المتطلبات'), h.risk.score) : '') +
-      '</div>' +
+      linesHtml(prefix, h, rtl) +
       '<p class="ph-note">' + tx(rtl,
         'This app’s own read of what you have entered, against the published advisory plan — not an academic standing.',
         'قراءة التطبيق لما أدخلته أنت، مقابل الخطة الإرشادية المنشورة — مش تقييم أكاديمي رسمي.') +
       '</p></div>';
   }
+
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-ph-course]');
+    if(!b || !window.AAUP_IMPORTED) return;
+    var parts = b.getAttribute('data-ph-course').split('|');
+    window.AAUP_IMPORTED.openCourseModal(parts[0], parts[1]);
+  });
 
   window.AAUP_PLAN_HEALTH = { compute: compute, cardHtml: cardHtml };
 })();

@@ -236,7 +236,7 @@
           (label ? '<span class="sb-chip sb-chip-' + c.cat + '">' + esc(label) + '</span>' : '') +
           (c.unlocksCount ? '<span class="sb-chip sb-chip-unlock">' + window.AAUP_ICONS.preview('unlock', 12) + ' ' +
             (rtl ? 'يفتح ' + c.unlocksCount : 'unlocks ' + c.unlocksCount) + '</span>' : '') +
-          (c.likelyHard ? '<span class="sb-chip sb-chip-hard">⚡ ' +
+          (c.likelyHard ? '<span class="sb-chip sb-chip-hard">' +
             (rtl ? 'صعب عليك سابقًا' : 'hard for you before') + '</span>' : '') +
         '</span>' +
       '</span>' +
@@ -257,7 +257,7 @@
         '<div class="sb-tray-main">' +
           '<span class="sb-tray-name">' + esc(courseName(prefix, s, rtl)) + '</span>' +
           '<span class="sb-tray-why">' + esc(reasonFor(c, rtl)) + '</span>' +
-          (caution ? '<span class="sb-tray-caution">⚡ ' + esc(caution) + '</span>' : '') +
+          (caution ? '<span class="sb-tray-caution">' + esc(caution) + '</span>' : '') +
         '</div>' +
         '<span class="sb-tray-cr">' + c.cr + 'H</span>' +
         '<button type="button" class="sb-tray-x" data-sb-remove="' + esc(s) + '" aria-label="' +

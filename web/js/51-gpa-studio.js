@@ -39,8 +39,9 @@
       title: 'Your grades', hint: 'Set or change any grade below and the dial updates immediately.',
       term: 'Term', course: 'Course', ch: 'CH', grade: 'Grade', pts: 'Points',
       excluded: 'excluded — retaken', none: 'Not counted',
-      empty: 'Nothing finished yet — mark a course done on your plan and it appears here to grade.',
-      goPlan: 'Enter marks from my plan',
+      emptyTitle: 'No grades yet',
+      empty: 'Tick the courses you have passed on your plan, then give each one a grade here.',
+      goPlan: 'Open my plan',
       project: 'Reach a target GPA', projectHint: 'Uses your real credit hours and this plan’s required total — not a guess.',
       target: 'Target cumulative GPA', remaining: 'Credit hours remaining',
       need: function(grade, n){ return 'Average at least ' + grade + ' across the remaining ' + n + ' CH.'; },
@@ -64,8 +65,9 @@
       title: 'علاماتك', hint: 'أدخل أو غيّر أي علامة أدناه وستتحدث الدائرة فوراً.',
       term: 'الفصل', course: 'المساق', ch: 'س.م', grade: 'العلامة', pts: 'النقاط',
       excluded: 'مستبعدة — أُعيد أخذه', none: 'غير محتسبة',
-      empty: 'ما خلّصت إشي بعد — علّم مساقًا كمنجز في خطتك ليظهر هنا لتضع علامته.',
-      goPlan: 'أدخل العلامات من خطتي',
+      emptyTitle: 'ما في علامات بعد',
+      empty: 'علّم المساقات اللي نجحت فيها بخطتك، وبعدين حط علامة كل واحد هون.',
+      goPlan: 'افتح خطتي',
       project: 'الوصول إلى معدل مستهدف', projectHint: 'يعتمد على ساعاتك الفعلية وإجمالي هذه الخطة — وليس تخميناً.',
       target: 'المعدل التراكمي المستهدف', remaining: 'الساعات المتبقية',
       need: function(grade, n){ return 'حافظ على معدل ' + grade + ' على الأقل خلال الساعات المتبقية (' + n + ' س.م).'; },
@@ -203,10 +205,9 @@
       // this screen was a dead end: it explained where to go and gave no way
       // to go there. The button is the whole point of the empty state.
       return '<div class="gs-block"><div class="gs-lbl">' + t.title + '</div>' +
-        '<p class="gs-empty">' + t.empty + '</p>' +
-        '<button type="button" class="gs-goplan" data-gs-goplan="' + esc(prefix) + '">' +
-          (window.AAUP_ICONS ? window.AAUP_ICONS.preview('planpin', 16) : '') + t.goPlan +
-        '</button></div>';
+        window.__emptyState({ icon: 'clipboard', title: t.emptyTitle, text: t.empty, btn: t.goPlan,
+          btnAttr: 'data-gs-goplan="' + esc(prefix) + '"' }) +
+        '</div>';
     }
     // 5 · CHIPS, NOT A NATIVE SELECT.
     // On Android a <select> throws a full-screen list over the app to choose
@@ -345,8 +346,12 @@
       '<div class="gs-lbl">' + t.project + '</div>' +
       '<p class="gs-hint">' + t.projectHint + '</p>' +
       '<div class="gs-project-row">' +
-        '<div class="form-field" style="margin:0;flex:1 1 160px;"><label for="gsTarget">' + t.target + '</label>' +
-          '<input type="number" id="gsTarget" min="0" max="4" step="0.01" placeholder="3.50"></div>' +
+        '<div class="gs-slider-wrap"><label for="gsTarget">' + t.target + '</label>' +
+          // A slider, not a typed number: drag and the answer follows.
+          // Starts a little above where the student is now.
+          '<div class="gs-slider-top"><output id="gsTargetVal" for="gsTarget">' + startTarget(cum.gpa).toFixed(2) + '</output></div>' +
+          '<input type="range" id="gsTarget" class="gs-slider" min="2" max="4" step="0.05" value="' + startTarget(cum.gpa).toFixed(2) + '">' +
+          '<div class="gs-slider-scale" aria-hidden="true"><span>2.00</span><span>3.00</span><span>4.00</span></div></div>' +
         '<div class="gs-remaining"><span>' + t.remaining + '</span><b>' + remaining + '</b></div>' +
       '</div>' +
       '<p class="gs-project-result" id="gsProjectResult" data-cum-gpa="' + (cum.gpa == null ? '' : cum.gpa) + '" ' +
@@ -456,6 +461,11 @@
     return best;
   }
 
+  function startTarget(gpa){
+    var g = gpa == null ? 3 : Math.ceil((gpa + 0.25) * 20) / 20;
+    return Math.min(4, Math.max(2, g));
+  }
+
   function bindProjection(rtl){
     var t = T[rtl ? 'ar' : 'en'];
     var input = document.getElementById('gsTarget');
@@ -467,6 +477,9 @@
       var curGpaStr = out.getAttribute('data-cum-gpa');
       var curGpa = curGpaStr === '' ? null : parseFloat(curGpaStr);
       var curCredits = parseFloat(out.getAttribute('data-cum-credits')) || 0;
+      var val = document.getElementById('gsTargetVal');
+      if(val) val.textContent = isNaN(target) ? '' : target.toFixed(2);
+      input.style.setProperty('--fill', ((target - 2) / 2 * 100) + '%');
       if(isNaN(target) || input.value === ''){ out.textContent = ''; return; }
       if(remaining <= 0){ out.textContent = t.done; return; }
       var curPoints = curGpa == null ? 0 : curGpa * curCredits;
@@ -479,6 +492,7 @@
         : t.unreachable;
     };
     input.addEventListener('input', run);
+    run();
   }
 
   function bindTable(prefix){

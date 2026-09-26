@@ -263,7 +263,7 @@
     var done = progress();
     var lines = needs.map(function (req) {
       var ok = !!done[prefix + '-c-' + req];
-      return (ok ? '✅ ' : '⬜ ') + courseName(prefix, req, lang);
+      return (ok ? '✓ ' : '○ ') + courseName(prefix, req, lang);
     });
     lines.unshift(lang === 'ar'
       ? name + ' يحتاج ' + needs.length + ' متطلبًا سابقًا:'
@@ -292,7 +292,7 @@
           : name + ' has all its prerequisites done but is still locked — some courses also require a minimum number of completed credit hours.'
       ]);
     }
-    var lines = missing.map(function (req) { return '⬜ ' + courseName(prefix, req, lang); });
+    var lines = missing.map(function (req) { return '○ ' + courseName(prefix, req, lang); });
     lines.unshift(lang === 'ar'
       ? name + ' مقفل لأن هذه المتطلبات لم تكتمل بعد:'
       : name + ' is locked because these are not completed yet:');

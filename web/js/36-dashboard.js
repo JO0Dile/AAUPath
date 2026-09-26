@@ -80,7 +80,6 @@
       render(prefix);
       if(window.AAUP_SIDEBAR){ window.AAUP_SIDEBAR.show(prefix, 'dashboard'); }
       window.scrollTo(0, 0);
-      if(window.AAUP_TUTORIAL){ window.AAUP_TUTORIAL.startWhenClear('dashboard'); }
       // A one-time orientation screen — the whole degree laid out year by
       // year — the first time this plan's Dashboard is ever opened. Never
       // shown again after that; always reachable afterward from the

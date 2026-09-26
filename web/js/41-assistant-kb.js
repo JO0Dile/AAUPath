@@ -359,15 +359,17 @@
     },
     {
       id: 'prerequisites',
-      tags: { en: ['prerequisite', 'prerequisites', 'prereq', 'requires', 'arrows', 'lines', 'before i can take', 'depends'],
-              ar: ['متطلب', 'متطلبات', 'متطلب سابق', 'اسهم', 'أسهم', 'خطوط'] },
+      tags: { en: ['prerequisite', 'prerequisites', 'prereq', 'requires', 'arrows', 'lines', 'before i can take', 'depends', 'hold', 'holding', 'long press', 'press and hold'],
+              ar: ['متطلب', 'متطلبات', 'متطلب سابق', 'اسهم', 'أسهم', 'خطوط', 'مطول', 'مطوّل', 'ضغطة طويلة'] },
       title: { en: 'Prerequisites', ar: 'المتطلبات السابقة' },
       body: {
         en: ['An arrow from A to B means you must pass A before taking B.',
              'Press and hold a course (or hover it on a computer) to light up everything it needs and everything it unlocks.',
+             'Press and hold a year title and everything you cannot take yet fades; what stays lit is open to you today.',
              'Ask me "what does <course> need" or "why is <course> locked" for a specific course.'],
         ar: ['السهم من (أ) إلى (ب) يعني أن عليك اجتياز (أ) قبل أخذ (ب).',
              'اضغط مطوّلًا على مساق (أو مرّر فوقه على الحاسوب) لإضاءة ما يحتاجه وما يفتحه.',
+             'اضغط مطوّلًا على عنوان سنة وكل اللي ما بتقدر تاخده بيبهت؛ اللي بيضل واضح متاح إلك اليوم.',
              'اسألني «ما متطلبات <المساق>» أو «لماذا <المساق> مقفل» لمساق محدد.']
       }
     },
@@ -632,9 +634,9 @@
       title: { en: 'Settings', ar: 'الإعدادات' },
       body: {
         en: ['Theme, language, backup and restore, accounts, and the walkthrough tours all live in Settings.',
-             'From inside a plan it is at the bottom of the menu; from the plan picker it is the ⚙️ link in the footer.'],
+             'From inside a plan it is at the bottom of the menu; from the plan picker it is the Settings link in the footer.'],
         ar: ['السمة واللغة والنسخ الاحتياطي والاستعادة والحسابات والجولات التعريفية كلها في الإعدادات.',
-             'من داخل خطة تجدها أسفل القائمة؛ ومن شاشة اختيار الخطط هي رابط ⚙️ في الأسفل.']
+             'من داخل خطة تجدها أسفل القائمة؛ ومن شاشة اختيار الخطط هي رابط الإعدادات في الأسفل.']
       },
       guide: 'settings'
     },
@@ -779,10 +781,10 @@
               ar: ['اصلاح', 'إصلاح', 'خلل', 'لا يعمل', 'مشكلة', 'عطل'] },
       title: { en: 'The Fix button', ar: 'زر الإصلاح' },
       body: {
-        en: ['The 🛠 button in the bottom-left corner is always there.',
+        en: ['The round button in the bottom-left corner is always there.',
              'It scans the app and your saved data for problems, explains each one in plain language, and repairs the ones it can do safely.',
              'Every repair is backed up first and can be undone.'],
-        ar: ['زر 🛠 في الزاوية السفلية اليسرى موجود دائمًا.',
+        ar: ['الزر الدائري في الزاوية السفلية موجود دائمًا.',
              'يفحص التطبيق وبياناتك المحفوظة بحثًا عن مشاكل، ويشرح كلًا منها بلغة بسيطة، ويصلح ما يمكن إصلاحه بأمان.',
              'كل إصلاح تُحفظ نسخة احتياطية قبله ويمكن التراجع عنه.']
       },

@@ -250,7 +250,7 @@
     if(!themeById(id)) return;
     try{ localStorage.setItem(KEY, id); }catch(e){}
     apply(id);
-    if(window.__showToast){ var t = themeById(id); window.__showToast(t.icon + ' ' + t.en); }
+    if(window.__showToast){ var t = themeById(id); window.__showToast(t.en); }
   }
 
   // Cycles to the next theme in the list — kept for anything still calling

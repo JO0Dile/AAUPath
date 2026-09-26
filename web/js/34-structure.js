@@ -151,10 +151,10 @@
       var hasSummer = !!document.getElementById(prefix + '-' + yearId + '-s3');
       var isUserYear = yr.hasAttribute('data-user-year');
       var html = hasSummer
-        ? '<button type="button" class="home-btn" data-act="rmSummer" data-year="' + yearId + '">🗑 ' + (rtl ? 'إزالة الصيفي' : 'Remove summer') + '</button>'
-        : '<button type="button" class="home-btn" data-act="addSummer" data-year="' + yearId + '">☀️ ' + (rtl ? 'إضافة صيفي' : 'Add summer') + '</button>';
+        ? '<button type="button" class="home-btn" data-act="rmSummer" data-year="' + yearId + '">' + window.AAUP_ICONS.preview('trash', 13) + (rtl ? 'إزالة الصيفي' : 'Remove summer') + '</button>'
+        : '<button type="button" class="home-btn" data-act="addSummer" data-year="' + yearId + '">' + window.AAUP_ICONS.preview('sun', 13) + (rtl ? 'إضافة صيفي' : 'Add summer') + '</button>';
       if(isUserYear){
-        html += '<button type="button" class="home-btn" data-act="rmYear" data-year="' + yearId + '">🗑 ' + (rtl ? 'إزالة السنة' : 'Remove year') + '</button>';
+        html += '<button type="button" class="home-btn" data-act="rmYear" data-year="' + yearId + '">' + window.AAUP_ICONS.preview('trash', 13) + (rtl ? 'إزالة السنة' : 'Remove year') + '</button>';
       }
       bar.innerHTML = html;
     });
@@ -167,7 +167,7 @@
       if(anchor){ container.insertBefore(addBar, anchor); }
       else { container.appendChild(addBar); }
     }
-    addBar.innerHTML = '<button type="button" class="home-btn" data-act="addYear">➕ ' + (rtl ? 'إضافة سنة' : 'Add year') + '</button>' +
+    addBar.innerHTML = '<button type="button" class="home-btn" data-act="addYear">' + (rtl ? 'إضافة سنة' : 'Add year') + '</button>' +
       (state.extraYears || state.summers.length
         ? '<span class="bi-structure-note">' + (rtl
             ? 'تعديلاتك على السنوات/الفصول محفوظة محليًا.'
@@ -181,12 +181,12 @@
     setForPlan(prefix, state);
     apply(prefix);
     refresh(prefix);
-    if(window.__showToast){ window.__showToast(isRtl(prefix) ? '✅ تمت إضافة سنة.' : '✅ Year added.'); }
+    if(window.__showToast){ window.__showToast(isRtl(prefix) ? 'تمت إضافة سنة.' : 'Year added.'); }
   }
   function removeYear(prefix, yearId){
     var rtl = isRtl(prefix);
     if(semesterHasCourses(prefix, yearId, 1) || semesterHasCourses(prefix, yearId, 2) || semesterHasCourses(prefix, yearId, 3)){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'السنة مش فاضية — انقل مساقاتها أولًا' : 'Year not empty — move its courses first')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'السنة مش فاضية — انقل مساقاتها أولًا' : 'Year not empty — move its courses first')); }
       return;
     }
     var state = forPlan(prefix);
@@ -194,7 +194,7 @@
     // Only the LAST added year can go, so the remaining year numbers stay
     // contiguous with the official ones (no y6 sitting after a deleted y5).
     if(yearId !== 'y' + (base + state.extraYears)){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'يمكن إزالة آخر سنة مضافة فقط.' : 'Only the last added year can be removed.')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'يمكن إزالة آخر سنة مضافة فقط.' : 'Only the last added year can be removed.')); }
       return;
     }
     var yr = yearRowFor(prefix, yearId);
@@ -204,7 +204,7 @@
     setForPlan(prefix, state);
     apply(prefix);
     refresh(prefix);
-    if(window.__showToast){ window.__showToast(rtl ? '🗑 تمت إزالة السنة.' : '🗑 Year removed.'); }
+    if(window.__showToast){ window.__showToast(rtl ? 'تمت إزالة السنة.' : 'Year removed.'); }
   }
   function addSummer(prefix, yearId){
     var state = forPlan(prefix);
@@ -212,12 +212,12 @@
     setForPlan(prefix, state);
     apply(prefix);
     refresh(prefix);
-    if(window.__showToast){ window.__showToast(isRtl(prefix) ? '☀️ تمت إضافة الفصل الصيفي.' : '☀️ Summer semester added.'); }
+    if(window.__showToast){ window.__showToast(isRtl(prefix) ? 'تمت إضافة الفصل الصيفي.' : 'Summer semester added.'); }
   }
   function removeSummer(prefix, yearId){
     var rtl = isRtl(prefix);
     if(semesterHasCourses(prefix, yearId, 3)){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'الصيفي مش فاضي — انقل مساقاته أولًا' : 'Summer not empty — move its courses first')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'الصيفي مش فاضي — انقل مساقاته أولًا' : 'Summer not empty — move its courses first')); }
       return;
     }
     var row = document.getElementById(prefix + '-' + yearId + '-s3');
@@ -232,7 +232,7 @@
     setForPlan(prefix, state);
     apply(prefix);
     refresh(prefix);
-    if(window.__showToast){ window.__showToast(rtl ? '🗑 تمت إزالة الفصل الصيفي.' : '🗑 Summer semester removed.'); }
+    if(window.__showToast){ window.__showToast(rtl ? 'تمت إزالة الفصل الصيفي.' : 'Summer semester removed.'); }
   }
 
   // Adding/removing a row changes the grid geometry, so the prerequisite

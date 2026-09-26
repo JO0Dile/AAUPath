@@ -38,6 +38,7 @@
 (function(){
   var KEY_PREFIX = 'aaup_tut_';
   var active = null; // { id, steps, index }
+  var shownThisVisit = false;
 
   function done(id){
     try{ return localStorage.getItem(KEY_PREFIX + id) === '1'; }catch(e){ return true; }
@@ -112,17 +113,11 @@
       text: { en: 'Type anything here — a course, a professor, your GPA — or tap one of the cards below. Nothing has to come first.',
               ar: 'اكتب أي إشي هون — مساق، محاضر، معدلك — أو اضغط وحدة من البطاقات تحت. ما في إشي لازم يكون أول.' }
     },
-    dashboard: {
-      target: function(){ return firstVisible('#dashboard .ph-card') || firstVisible('#dashboard .dash-summary') || firstVisible('#dashboard .dash-card'); },
-      title: { en: 'How the plan is going', ar: 'كيف ماشية الخطة' },
-      text: { en: 'One grade for pace, load balance and prerequisite risk. It fills in as you tick off the courses you have already passed.',
-              ar: 'تقدير واحد للسرعة والتوازن والمتطلبات. بيتعبّى لما تعلّم المساقات اللي خلّصتها.' }
-    },
     studyplan: {
       target: function(){ return visiblePlanRoot().querySelector('.now-tag') || visiblePlanRoot().querySelector('.imp-year-toggle'); },
-      title: { en: 'One bar per year', ar: 'شريط لكل سنة' },
-      text: { en: 'The plan opens on the semester you are in. Tap a year to see inside it; tick a course once you have passed it, and that is what feeds everything else.',
-              ar: 'الخطة بتفتح على الفصل اللي أنت فيه. اضغط سنة تشوف جوّاتها، وعلّم المساق لما تخلّصه — وهاد اللي بيغذّي كل إشي تاني.' }
+      title: { en: 'Tick a course once you have passed it', ar: 'علّم المساق لما تنجح فيه' },
+      text: { en: 'That tick is what feeds everything else: your progress, GPA and what opens next. Tap a year to see inside it.',
+              ar: 'هاي العلامة هي اللي بتغذّي كل إشي: تقدّمك ومعدلك وشو بيفتحلك بعدها. اضغط سنة تشوف جوّاتها.' }
     },
     planEditor: {
       target: function(){ return importedEditRoot().querySelector('.imp-exit-edit-btn'); },
@@ -145,34 +140,11 @@
   // trigger. Each carries its own key, so they are independent of the
   // arrival marks and of each other: a student who never opens a year never
   // sees the hold-to-focus one, which is correct.
-  var MOMENTS = {
-    yearOpen: {
-      target: function(){
-        var r = visiblePlanRoot();
-        return r.querySelector('.imp-year-block:not(.year-collapsed) .imp-year-toggle') ||
-               r.querySelector('.imp-year-toggle');
-      },
-      title: { en: 'Hold it instead', ar: 'جرّب اضغط مطوّل' },
-      text: { en: 'Press and hold a year title and everything you cannot take yet fades. What stays lit is what is open to you today.',
-              ar: 'اضغط مطوّل على عنوان السنة وكل اللي ما بتقدر تاخده بيبهت. اللي بيضل واضح هو المتاح إلك اليوم.' }
-    },
-    // Fired when the course popup CLOSES, not when it opens, and pointing at
-    // the plan rather than into the popup. Pointing inside a dialog could
-    // never work: checkHealth() pauses any mark while another modal is open,
-    // so this one showed, paused itself in the same frame, was never read and
-    // was therefore never recorded as read — firing again on every single
-    // course a student opened, forever. Its own words say "back on the plan"
-    // anyway, so the plan is where it belongs.
-    courseClose: {
-      target: function(){
-        var r = visiblePlanRoot();
-        return r.querySelector('.imp-year-body .course[id]') || r.querySelector('.course[id]');
-      },
-      title: { en: 'Hold a card, too', ar: 'والبطاقة كمان' },
-      text: { en: 'Press and hold a course: what it needs first lights up in one colour, what it opens in another.',
-              ar: 'اضغط مطوّل على مساق: اللي بدّه إياه أولًا بيضوّي بلون، واللي بيفتحه بلون تاني.' }
-    }
-  };
+  // Fewer, better-timed tips: the hold-a-year and hold-a-card tips were
+  // tricks, not things needed on day one, and they fired while students were
+  // busy doing something else. The assistant answers "what does holding do?"
+  // (js/41-assistant-kb.js) for anyone who wants them.
+  var MOMENTS = {};
 
   function resolve(mark){
     return typeof mark.target === 'function' ? mark.target() : document.querySelector(mark.target);
@@ -366,6 +338,11 @@
     }
     if(active || done(id)) return;
     if(!mark) return;
+    // Never two tips in one visit: the second waits for the next time the
+    // app is opened, instead of stacking on top of whatever the student is
+    // doing now.
+    if(shownThisVisit) return;
+    shownThisVisit = true;
     active = { id: id, mark: mark };
     document.getElementById('tutLayer').classList.add('open');
     window.addEventListener('resize', reflow);

@@ -288,7 +288,7 @@
       var cats = Object.keys(CATEGORY_ICONS);
       for(var i = 0; i < cats.length; i++){ if(el.classList.contains(cats[i])) return CATEGORY_ICONS[cats[i]]; }
     }
-    return '📖';
+    return '';
   }
 
   function statusBadgeHtml(status, t){
@@ -405,7 +405,7 @@
       needsList: function(names){ return 'Needs ' + names.join(' and ') + '.'; },
       routeStats: function(hops, ch){ return hops + (hops === 1 ? ' course' : ' courses') + ' · ' + Math.round(ch) + ' credit hours'; },
       truncated: 'Showing your closest prerequisites — this chain goes back further.',
-      whyLocked: '❓ Why is this locked?',
+      whyLocked: 'Why is this locked?',
       whyLockedBadge: 'locked', whyUnlockedBadge: 'unlocked', whyPassedBadge: 'passed',
       whyNeeds: 'Needs:', whyResolved: 'Everything it needs is already done — you can take it now.',
       whyNoPrereqs: 'No prerequisites at all.', whyDone: 'Got it!',
@@ -422,7 +422,7 @@
       needsList: function(names){ return 'يتطلب ' + names.join(' و') + '.'; },
       routeStats: function(hops, ch){ return hops + ' مساق · ' + Math.round(ch) + ' ساعة معتمدة'; },
       truncated: 'يُعرض أقرب المتطلبات فقط — هذه السلسلة تمتد أبعد من ذلك.',
-      whyLocked: '❓ لماذا هذا مغلق؟',
+      whyLocked: 'لماذا هذا مغلق؟',
       whyLockedBadge: 'مغلق', whyUnlockedBadge: 'متاح', whyPassedBadge: 'منجز',
       whyNeeds: 'يتطلب:', whyResolved: 'كل متطلباته مُنجزة بالفعل — يمكنك أخذه الآن.',
       whyNoPrereqs: 'لا متطلبات سابقة له إطلاقًا.', whyDone: 'فهمت!',

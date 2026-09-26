@@ -17,7 +17,7 @@
   'use strict';
 
   var TX = {
-    open:      { en: '🎨 Customize', ar: '🎨 تخصيص' },
+    open:      { en: 'Customize', ar: 'تخصيص' },
     title:     { en: 'My colours', ar: 'ألواني' },
     lead:      { en: 'Pick a background and an accent. Everything else — cards, borders, text — is worked out from them.',
                  ar: 'اختر لون الخلفية ولون التمييز. كل ما عدا ذلك — البطاقات والحدود والنص — يُشتق منهما.' },
@@ -25,7 +25,7 @@
     accent:    { en: 'Accent', ar: 'التمييز' },
     hex:       { en: 'Hex code', ar: 'كود اللون' },
     light:     { en: 'Lightness', ar: 'الإضاءة' },
-    undo:      { en: '↩ Undo changes', ar: '↩ تراجع' },
+    undo:      { en: 'Undo changes', ar: 'تراجع' },
     done:      { en: '✓ Done', ar: '✓ تم' },
     close:     { en: 'Close', ar: 'إغلاق' },
     preview:   { en: 'Preview', ar: 'معاينة' },

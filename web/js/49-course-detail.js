@@ -55,7 +55,12 @@
       opensCount: function(n){ return 'Taking this keeps ' + n + ' later course' + (n === 1 ? '' : 's') + ' on schedule.'; },
       credits: 'Hours', unlocksN: 'Unlocks', status: 'Status', needsN: 'Needs', none: 'None',
       year: function(n){ return 'Year ' + n; }, sem: { s1: 'First semester', s2: 'Second semester', s3: 'Summer' },
-      viewTree: 'View in course tree',
+      viewTree: 'Show in course tree',
+      more: 'More actions',
+      remove: 'Remove from my plan…',
+      restore: 'Restore to my plan',
+      removeAsk: function(n){ return 'Remove ' + n + ' from your plan? It won\u2019t count toward your requirements. Use it if you tested out of it or never took it.'; },
+      removedMsg: function(n){ return n + ' removed from your plan'; },
       said: function(n){ return n === 1 ? '1 student wrote about this' : n + ' students wrote about this'; },
       readAll: 'Read them'
     },
@@ -77,6 +82,11 @@
       credits: 'الساعات', unlocksN: 'يفتح', status: 'الحالة', needsN: 'يحتاج', none: 'ولا شي',
       year: function(n){ return 'سنة ' + n; }, sem: { s1: 'الفصل الأول', s2: 'الفصل الثاني', s3: 'الصيفي' },
       viewTree: 'اعرضه في شجرة المساقات',
+      more: 'خيارات أكثر',
+      remove: 'أزِله من خطتي…',
+      restore: 'رجّعه لخطتي',
+      removeAsk: function(n){ return 'تشيل ' + n + ' من خطتك؟ ما رح ينحسب من متطلباتك. استعمل هذا إذا تجاوزته بامتحان أو ما أخذته.'; },
+      removedMsg: function(n){ return 'انشال ' + n + ' من خطتك'; },
       said: function(n){ return n === 1 ? 'طالب واحد كتب عن هذا المساق' : n + ' طلاب كتبوا عن هذا المساق'; },
       readAll: 'اقرأها'
     }
@@ -281,6 +291,7 @@
           '<div class="cd-sub">' +
             [info.num || (course && course.courseNumber), term].filter(Boolean).map(esc).join(' · ') +
           '</div></div>' +
+        moreMenuHTML(prefix, slug, pid, t) +
       '</div>' +
       statTilesHTML(prefix, slug, course, t) +
       miniChainHTML(prefix, slug, rtl) +
@@ -318,10 +329,26 @@
           (course && course.termSuggested ? '<p class="cd-note">' + esc(t.termSuggested) + '</p>' : '') +
         '</div>' +
       '</div>' +
-      '<div class="cd-actions">' +
-        '<button type="button" class="cd-action-primary" id="cdViewTree" data-cd-view-tree="' + esc(pid) + '">' + t.viewTree + '</button>' +
-      '</div>' +
       '</div>';
+  }
+
+  // Rarely-needed actions live behind one small button in the corner, so the
+  // red Remove can't be hit by accident while scrolling the course.
+  function moreMenuHTML(prefix, slug, pid, t){
+    var removed = window.AAUP_REMOVED && window.AAUP_REMOVED.isRemoved(prefix, slug);
+    var ic = function(k){ return window.AAUP_ICONS ? window.AAUP_ICONS.preview(k, 15) : ''; };
+    return '<div class="cd-more">' +
+      '<button type="button" class="cd-more-btn" id="cdMoreBtn" aria-haspopup="true" aria-expanded="false" aria-label="' + esc(t.more) + '">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>' +
+      '</button>' +
+      '<div class="cd-menu" id="cdMenu" role="menu" hidden>' +
+        '<button type="button" role="menuitem" data-cd-view-tree="' + esc(pid) + '">' + ic('map') + '<span>' + esc(t.viewTree) + '</span></button>' +
+        (window.AAUP_REMOVED
+          ? (removed
+            ? '<button type="button" role="menuitem" data-cd-remove="0">' + ic('undo') + '<span>' + esc(t.restore) + '</span></button>'
+            : '<button type="button" role="menuitem" class="cd-menu-danger" data-cd-remove="1">' + ic('trash') + '<span>' + esc(t.remove) + '</span></button>')
+          : '') +
+      '</div></div>';
   }
 
   // Wires the swipe-dot indicator for #cdSlides and the "View in course
@@ -354,6 +381,41 @@
         var idx = Math.round(slides.scrollLeft / slides.clientWidth);
         dotEls.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
       });
+    }
+    var moreBtn = container.querySelector('#cdMoreBtn');
+    var menu = container.querySelector('#cdMenu');
+    if(moreBtn && menu){
+      var setOpen = function(open){ menu.hidden = !open; moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+      moreBtn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(menu.hidden); });
+      container.addEventListener('click', function(e){ if(!menu.hidden && !e.target.closest('.cd-more')) setOpen(false); });
+      var rmBtn = menu.querySelector('[data-cd-remove]');
+      if(rmBtn){
+        rmBtn.addEventListener('click', function(){
+          setOpen(false);
+          var slugNow = slug;
+          var removing = rmBtn.getAttribute('data-cd-remove') === '1';
+          var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
+          var t = L[rtl ? 'ar' : 'en'];
+          var h3 = container.querySelector('.cd-head h3');
+          var nm = h3 ? h3.textContent : slugNow;
+          var go = function(){
+            window.AAUP_REMOVED.setRemoved(prefix, slugNow, removing);
+            var ov = container.closest('.modal-overlay');
+            if(ov) ov.classList.remove('open');
+            // A removed card leaves the plan, so the way back is right here.
+            if(removing && window.__showUnlockToast){
+              window.__showUnlockToast(t.removedMsg(nm), '', {
+                undo: function(){ window.AAUP_REMOVED.setRemoved(prefix, slugNow, false); },
+                undoLabel: rtl ? 'تراجع' : 'Undo'
+              });
+            }
+          };
+          if(!removing) return go();
+          var msg = t.removeAsk(nm);
+          if(window.__showConfirmDialog) window.__showConfirmDialog(msg, go);
+          else if(window.confirm(msg)) go();
+        });
+      }
     }
     var saidBtn = container.querySelector('[data-cd-said]');
     if(saidBtn){
