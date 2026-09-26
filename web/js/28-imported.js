@@ -1872,8 +1872,18 @@
       (p.contributing && window.AAUP_CONTRIBUTE
         ? '<div class="header-actions"><button type="button" class="home-btn" onclick="AAUP_CONTRIBUTE.submit(\'' + id + '\')" style="border-color:var(--accent);color:var(--text);" title="Send what you have added so far — the maintainer can reply here in the app">' + window.AAUP_ICONS.preview('send', 14) + 'Submit contribution</button></div>'
         : '') +
+      // The way out of Edit Mode used to be a button in the header, which
+      // scrolled away with it — a student three years down the plan had to
+      // scroll back up to leave. It is a bar pinned to the bottom of the
+      // screen now, there the whole time you are editing, so you always
+      // know you are in Edit Mode and how to finish.
       (editing
-        ? '<div class="header-actions"><button type="button" class="home-btn imp-exit-edit-btn" onclick="AAUP_IMPORTED.toggleEdit(\'' + id + '\')">' + window.AAUP_ICONS.preview('close', 14) + 'Exit Edit Mode</button></div>'
+        ? '<div class="edit-donebar" role="region" aria-label="' + (rtl ? 'وضع التعديل' : 'Edit Mode') + '">' +
+            '<span class="edit-donebar-ic" aria-hidden="true">' + window.AAUP_ICONS.preview('pen', 16) + '</span>' +
+            '<span class="edit-donebar-text"><b>' + (rtl ? 'وضع التعديل' : 'Editing') + '</b>' +
+              '<span>' + (rtl ? 'التغييرات بتنحفظ أول بأول' : 'Changes save as you go') + '</span></span>' +
+            '<button type="button" class="edit-donebar-btn imp-exit-edit-btn" onclick="AAUP_IMPORTED.toggleEdit(\'' + id + '\')">' + (rtl ? 'تم' : 'Done') + '</button>' +
+          '</div>'
         : '') +
       '</header>' +
       // The colour key stays in the page (js/19-audit.js reads its bucket

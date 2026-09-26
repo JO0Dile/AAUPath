@@ -579,42 +579,20 @@
     var gender = studentGender();
     var unlockedCount = 0, applicableCount = 0;
 
-    var nextUp = findNextUp(prefix, unlocked);
-    var heroHtml = '';
-    if(nextUp){
-      var nt = resolveTitle(nextUp.a, gender);
-      var heroPct = Math.round(nextUp.pct * 100);
-      heroHtml = '<div class="ach-next">' +
-        '<div class="ach-next-icon">' + badgeIconHtml(nextUp.a) + '</div>' +
-        '<div class="ach-next-body">' +
-          '<div class="ach-next-kicker">' + (rtl ? 'التالي' : 'Next up') + '</div>' +
-          '<div class="ach-next-title">' + (rtl ? nt.ar : nt.en) + '</div>' +
-          '<div class="ach-next-track"><span style="width:' + heroPct + '%;"></span></div>' +
-        '</div>' +
-      '</div>';
-    }
 
     // Every applicable badge is walked once, unfiltered, so the summary
-    // counts and the "recently unlocked" list are always the true totals —
-    // only the grid markup below is filtered down to activeCat.
-    var recentUnlocks = [];
+    // counts are always the true totals — only the "See all" grid below is
+    // filtered down to activeCat.
     var gridItems = ACHIEVEMENTS.map(function(a){
       var applies = !a.appliesTo || a.appliesTo(prefix);
       var key = a.global ? a.id : (prefix + ':' + a.id);
       var isUnlocked = applies && !!unlocked[key];
       if(applies) applicableCount++;
-      if(isUnlocked){
-        unlockedCount++;
-        var at = unlocked[key] && unlocked[key].at;
-        if(at) recentUnlocks.push({ a: a, at: at });
-      }
+      if(isUnlocked){ unlockedCount++; }
       return { a: a, applies: applies, isUnlocked: isUnlocked };
     });
-    recentUnlocks.sort(function(x, y){ return new Date(y.at) - new Date(x.at); });
 
-    var badges = gridItems.filter(function(item){
-      return activeCat === 'all' || item.a.cat === activeCat;
-    }).map(function(item){
+    function badgeCard(item){
       var a = item.a, applies = item.applies, isUnlocked = item.isUnlocked;
       var title = resolveTitle(a, gender);
       var cls = !applies ? 'na' : (isUnlocked ? 'unlocked' : 'locked');
@@ -659,7 +637,34 @@
         (tag ? '<div class="ab-tag">' + tag + '</div>' : '') +
         shareBtn +
         '</div>';
-    }).join('');
+    }
+
+    // EARNED, THEN THE THREE CLOSEST, THEN THE REST FOLDED.
+    // Twenty cards, mostly greyed-out, made it hard to see either what you
+    // have or what is within reach. The screen now opens on those two, and
+    // every other badge waits under "See all badges" with its filters.
+    function progressOf(item){
+      if(!item.applies || item.isUnlocked || typeof item.a.prog !== 'function') return -1;
+      var pr = null;
+      try{ pr = item.a.prog(prefix); }catch(e){ pr = null; }
+      return pr && pr.total > 0 ? pr.done / pr.total : 0;
+    }
+    var earned = gridItems.filter(function(i){ return i.isUnlocked; });
+    var closest = gridItems.filter(function(i){ return i.applies && !i.isUnlocked; })
+      .map(function(i){ return { item: i, p: progressOf(i) }; })
+      .sort(function(x, y){ return y.p - x.p; })
+      .slice(0, 3).map(function(x){ return x.item; });
+    var badges = gridItems.filter(function(item){
+      return activeCat === 'all' || item.a.cat === activeCat;
+    }).map(badgeCard).join('');
+    var earnedHtml = earned.length
+      ? '<div class="ach-section-label">' + (rtl ? 'اللي حققته' : 'Earned') + ' · ' + earned.length + '</div>' +
+        '<div class="achievement-grid">' + earned.map(badgeCard).join('') + '</div>'
+      : '<p class="ach-empty">' + (rtl ? 'أول إنجاز بييجي لما تنجح بأول مساق.' : 'Your first badge comes when you pass your first course.') + '</p>';
+    var closestHtml = closest.length
+      ? '<div class="ach-section-label">' + (rtl ? 'قربت عليها' : 'Almost there') + '</div>' +
+        '<div class="achievement-grid ach-closest">' + closest.map(badgeCard).join('') + '</div>'
+      : '';
 
     var majorNameForGrid = (window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.planDisplayInfo) ? window.AAUP_DASHBOARD.planDisplayInfo(prefix).name : '';
     return '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('trophy', 20) + (rtl ? 'الإنجازات' : 'Achievements') + '</h2>' +
@@ -672,11 +677,13 @@
           window.AAUP_ICONS.preview('download', 14) +
           (rtl ? 'احفظ التقدّم كصورة' : 'Save progress as image') + '</button>' +
       '</div>' +
-      catChipsHtml(rtl) +
-      heroHtml +
-      recentUnlockedHtml(recentUnlocks.slice(0, 4), gender, rtl) +
-      '<div class="ach-section-label">' + (rtl ? 'كل الإنجازات' : 'All badges') + '</div>' +
-      '<div class="achievement-grid">' + badges + '</div>';
+      earnedHtml +
+      closestHtml +
+      '<details class="ach-all" id="achAll"' + (allOpen ? ' open' : '') + '>' +
+        '<summary class="ach-all-sum">' + (rtl ? 'كل الإنجازات' : 'See all badges') + ' · ' + applicableCount + '</summary>' +
+        catChipsHtml(rtl) +
+        '<div class="achievement-grid">' + badges + '</div>' +
+      '</details>';
   }
 
   // Category filter chips — phone-only visually (see CSS), but built
@@ -703,35 +710,9 @@
     return a.icon;
   }
 
-  // "2 days ago" / "3 weeks ago" — coarse on purpose, this is a celebratory
-  // timestamp, not a log; nobody needs to know it was 2 days and 4 hours.
-  function relativeTime(iso, rtl){
-    var ms = Date.now() - new Date(iso).getTime();
-    var mins = Math.floor(ms / 60000);
-    if(mins < 60) return rtl ? 'الآن' : 'just now';
-    var hours = Math.floor(mins / 60);
-    if(hours < 24) return rtl ? (hours + ' ساعة') : (hours + (hours === 1 ? ' hour ago' : ' hours ago'));
-    var days = Math.floor(hours / 24);
-    if(days < 7) return rtl ? (days + ' يوم') : (days + (days === 1 ? ' day ago' : ' days ago'));
-    var weeks = Math.floor(days / 7);
-    if(weeks < 5) return rtl ? (weeks + ' أسبوع') : (weeks + (weeks === 1 ? ' week ago' : ' weeks ago'));
-    var months = Math.floor(days / 30);
-    return rtl ? (months + ' شهر') : (months + (months === 1 ? ' month ago' : ' months ago'));
-  }
 
-  function recentUnlockedHtml(recent, gender, rtl){
-    if(!recent.length) return '';
-    return '<div class="ach-section-label">' + (rtl ? 'أُنجز مؤخرًا' : 'Recently unlocked') + '</div>' +
-      '<div class="ach-recent-scroll">' + recent.map(function(r){
-        var t = resolveTitle(r.a, gender);
-        return '<div class="ach-recent-card">' +
-          '<div class="ach-recent-icon">' + badgeIconHtml(r.a) + '</div>' +
-          '<div><div class="ach-recent-title">' + (rtl ? t.ar : t.en) + '</div>' +
-          '<div class="ach-recent-when">' + relativeTime(r.at, rtl) + '</div></div>' +
-          '</div>';
-      }).join('') + '</div>';
-  }
-
+  // Stays open across the re-render a category chip causes.
+  var allOpen = false;
   var lastPrefix = null;
   function open(prefix){
     lastPrefix = prefix;
@@ -776,6 +757,7 @@
       if(!btn || !lastPrefix) return;
       e.stopPropagation();
       activeCat = btn.getAttribute('data-ach-cat');
+      allOpen = true;
       open(lastPrefix);
     });
     overlay.addEventListener('click', function(e){

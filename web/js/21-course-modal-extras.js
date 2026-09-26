@@ -218,20 +218,6 @@
   // and once it is finished. showApply is the only difference: "use as my
   // grade" needs a grade dropdown to write into, and there is not one until
   // the course is done.
-  // Completely optional, so it starts folded: one line that says what it is
-  // for. Inside, the pass mark and a single "Add a mark" button whose choices
-  // (Mid Term, Lab, Quiz…) appear only when it is tapped — the five preset
-  // buttons and the pass-mark switch used to sit open on every course.
-  function marksBoxHtml(rows, summary, rtl, showApply, scale){
-    return '<details class="cd-marks"' + (rows.length ? ' open' : '') + '>' +
-      '<summary class="cd-marks-sum">' + (rtl ? 'احسب علامتي من علاماتي الجزئية' : 'Work out my grade from my marks') +
-        '<span class="cd-marks-opt">' + (rtl ? 'اختياري' : 'optional') + '</span></summary>' +
-      '<div class="cd-marks-body">' +
-        passMarkToggleHtml(scale, rtl) +
-        assessmentBlockHtml(rows, summary, rtl, showApply) +
-      '</div></details>';
-  }
-
   function assessmentBlockHtml(rows, summary, rtl, showApply){
     return '<div class="assessment-breakdown" id="assessmentBreakdown">' +
       '<div class="assessment-rows" id="assessmentRows">' + assessmentRowsHtml(rows, rtl) + '</div>' +
@@ -335,7 +321,7 @@
         (rtl ? o.ar : o.en) + '</button>';
     }).join('');
 
-    var gradeHtml;
+    var gradeHtml, marksInner, marksFilled;
     if(isDone){
       var grades = window.AAUP_GPA.loadGrades();
       var currentGrade = grades[pid] || '';
@@ -366,8 +352,9 @@
       gradeHtml = '<div class="modal-row-block"><span class="k">' + (rtl ? 'العلامة' : 'Grade') + '</span>' +
         '<div class="cdk-keys" id="courseGradeKeys" role="group" aria-label="' + (rtl ? 'العلامة' : 'Grade') + '">' + keys + '</div>' +
         '<select class="grade-select" id="courseGradeSelect" hidden aria-hidden="true" tabindex="-1">' + opts + '</select>' +
-        marksBoxHtml(rows, summary, rtl, true, scale) +
         '</div>';
+      marksInner = passMarkToggleHtml(scale, rtl) + assessmentBlockHtml(rows, summary, rtl, true);
+      marksFilled = rows.length > 0;
     } else {
       // The marks calculator used to be locked behind "mark this course
       // complete" — which is after the exam. "What do I need on the final"
@@ -380,8 +367,9 @@
       var summaryOpen = assessmentSummaryHtml(rowsOpen, prefix, pid, rtl, null);
       gradeHtml = '<div class="modal-row-block"><span class="k">' + (rtl ? 'العلامة' : 'Grade') + '</span>' +
         '<p class="ex-note">' + (rtl ? 'علّم المساق «منجز» فوق لتضع علامته.' : 'Set the status to Passed above to enter a grade.') + '</p>' +
-        marksBoxHtml(rowsOpen, summaryOpen, rtl, false, scaleOpen) +
         '</div>';
+      marksInner = passMarkToggleHtml(scaleOpen, rtl) + assessmentBlockHtml(rowsOpen, summaryOpen, rtl, false);
+      marksFilled = rowsOpen.length > 0;
     }
 
     var ratings = window.AAUP_PERSONAL.loadRatings();
@@ -403,6 +391,40 @@
 
     var notes = window.AAUP_PERSONAL.loadNotes();
     var noteText = notes[pid] || '';
+
+    // ADD SOMETHING (OPTIONAL).
+    // Marks, difficulty, workload and notes are all things a student may
+    // want once in a while and never needs to see otherwise. They used to be
+    // four open sections under every passed course. Now there is one button;
+    // it offers whichever of the four are still empty, and anything already
+    // filled in stays on screen so it can be read and changed.
+    var OPT = [
+      { k: 'marks', en: 'Marks', ar: 'العلامات الجزئية', filled: marksFilled, body: marksInner },
+      { k: 'difficulty', en: 'Difficulty', ar: 'الصعوبة', filled: !!r.difficulty,
+        body: '<div class="star-rating" id="difficultyStars">' + starsHtml + '</div>' },
+      { k: 'workload', en: 'Workload', ar: 'عبء العمل', filled: !!r.workload,
+        body: '<div class="workload-btn-group">' + workloadHtml + '</div>' },
+      { k: 'notes', en: 'My notes', ar: 'ملاحظاتي', filled: !!noteText.trim(),
+        body: '<textarea class="notes-textarea" id="courseNotesTextarea" maxlength="2000" rows="3" placeholder="' +
+          (rtl ? 'ملاحظات شخصية عن هذا المساق…' : 'Personal notes about this course…') + '">' + noteText + '</textarea>' }
+    ];
+    var anyEmpty = OPT.some(function(o){ return !o.filled; });
+    var optHtml = '<div class="cd-optbox" id="cdOptBox">' +
+      OPT.map(function(o){
+        return '<div class="cd-opt" data-opt="' + o.k + '"' + (o.filled ? '' : ' hidden') + '>' +
+          '<span class="k">' + (rtl ? o.ar : o.en) + '</span>' + o.body + '</div>';
+      }).join('') +
+      (anyEmpty
+        ? '<button type="button" class="cd-opt-add" id="cdOptAdd" aria-expanded="false" aria-controls="cdOptMenu">' +
+            '<span class="cd-opt-plus" aria-hidden="true">+</span>' + (rtl ? 'أضف شي' : 'Add something') +
+            '<span class="cd-opt-optional">' + (rtl ? 'اختياري' : 'optional') + '</span></button>' +
+          '<div class="cd-opt-menu" id="cdOptMenu" hidden>' +
+            OPT.filter(function(o){ return !o.filled; }).map(function(o){
+              return '<button type="button" class="cd-opt-choice" data-opt-show="' + o.k + '">' + (rtl ? o.ar : o.en) + '</button>';
+            }).join('') +
+          '</div>'
+        : '') +
+      '</div>';
 
     var removed = window.AAUP_REMOVED && window.AAUP_REMOVED.isRemoved(prefix, slug);
     var removeHtml = '<div class="modal-row-block modal-remove-block">' +
@@ -447,13 +469,7 @@
       '<div class="status-btn-group">' + statusHtml + '</div>' + whoElseHtml + '</div>' +
       '<div class="cd-review-block">' +
       gradeHtml +
-      '<div class="modal-row-block"><span class="k">' + (rtl ? 'مستوى الصعوبة' : 'Difficulty') + '</span>' +
-      '<div class="star-rating" id="difficultyStars">' + starsHtml + '</div></div>' +
-      '<div class="modal-row-block"><span class="k">' + (rtl ? 'عبء العمل' : 'Workload') + '</span>' +
-      '<div class="workload-btn-group">' + workloadHtml + '</div></div>' +
-      '<div class="modal-row-block"><span class="k">📝 ' + (rtl ? 'ملاحظاتي' : 'My notes') + '</span>' +
-      '<textarea class="notes-textarea" id="courseNotesTextarea" maxlength="2000" rows="3" placeholder="' +
-      (rtl ? 'ملاحظات شخصية عن هذا المساق…' : 'Personal notes about this course…') + '">' + noteText + '</textarea></div>' +
+      optHtml +
       '</div>' +
       removeHtml +
       '</div>';
@@ -601,6 +617,29 @@
         // Tapping the grade already set clears it, as on the grades screen.
         gradeSelect.value = (val && gradeSelect.value !== val) ? val : '';
         gradeSelect.dispatchEvent(new window.Event('change'));
+      });
+    }
+    var optAdd = container.querySelector('#cdOptAdd');
+    var optMenu = container.querySelector('#cdOptMenu');
+    if(optAdd && optMenu){
+      optAdd.addEventListener('click', function(){
+        optMenu.hidden = !optMenu.hidden;
+        optAdd.setAttribute('aria-expanded', optMenu.hidden ? 'false' : 'true');
+      });
+      optMenu.addEventListener('click', function(e){
+        var c = e.target.closest && e.target.closest('[data-opt-show]');
+        if(!c) return;
+        var sec = container.querySelector('.cd-opt[data-opt="' + c.getAttribute('data-opt-show') + '"]');
+        if(sec){
+          sec.hidden = false;
+          var first = sec.querySelector('textarea, input, button');
+          if(first && first.focus) first.focus();
+        }
+        c.remove();
+        optMenu.hidden = true;
+        optAdd.setAttribute('aria-expanded', 'false');
+        // Every choice taken: the button has nothing left to offer.
+        if(!optMenu.querySelector('[data-opt-show]')){ optAdd.hidden = true; }
       });
     }
     var addMarkBtn = container.querySelector('#assessmentAddBtn');

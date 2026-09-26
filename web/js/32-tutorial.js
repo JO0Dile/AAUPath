@@ -127,8 +127,8 @@
     planEditor: {
       target: function(){ return importedEditRoot().querySelector('.imp-exit-edit-btn'); },
       title: { en: 'This is your copy', ar: 'هاي نسختك أنت' },
-      text: { en: 'Add, remove and drag anything. Nothing is shared until you choose to Export or Contribute, and there is no Save button — it already has been.',
-              ar: 'ضيف واحذف واسحب زي ما بدك. ما بينشارك إشي إلا لما تختار تصدير أو مساهمة، وما في زر حفظ — انحفظ من زمان.' }
+      text: { en: 'Add, remove and drag anything — every change saves as you go. Press Done at the bottom when you have finished. Nothing is shared until you choose to Send it.',
+              ar: 'ضيف واحذف واسحب زي ما بدك — كل تغيير بينحفظ أول بأول. اضغط «تم» تحت لما تخلص. ما بينشارك إشي إلا لما تختار ترسله.' }
     },
     devEdit: {
       target: function(){ return visiblePlanRoot().querySelector('.emb-exit'); },

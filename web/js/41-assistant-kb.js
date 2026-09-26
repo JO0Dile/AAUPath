@@ -207,9 +207,9 @@
     switchPlan: {
       title: { en: 'Changing plan', ar: 'تغيير الخطة' },
       steps: [
-        { target: q('.sb-item[data-sb-key="switch"]'),
-          text: { en: 'Change plan asks which: move to another major (and see what carries over), or just open another of your plans. Nothing is lost either way.',
-                  ar: '«تغيير الخطة» بيسأل أي واحدة: تنتقل لتخصص ثاني (وتشوف شو بينحسب إلك)، أو تفتح خطة ثانية عندك. ما بضيع إشي بالحالتين.' } }
+        { target: q('#taskHome [data-hm-go="switch"]'),
+          text: { en: 'Switch major is on the home screen. It asks which: move to another major (and see what carries over), or just open another of your plans. Nothing is lost either way.',
+                  ar: '«غيّر التخصص» موجود بالشاشة الرئيسية. بيسأل أي واحدة: تنتقل لتخصص ثاني (وتشوف شو بينحسب إلك)، أو تفتح خطة ثانية عندك. ما بضيع إشي بالحالتين.' } }
       ]
     },
     menu: {
@@ -262,8 +262,8 @@
           text: { en: 'The ✕ removes it — you always get an "are you sure" first.',
                   ar: '«✕» يحذفه — ويُسألك دائمًا للتأكيد أولًا.' } },
         { target: firstVisible(['#importedPlanView .imp-exit-edit-btn']),
-          text: { en: 'Tap here when you’re done. There is nothing to save — it already has been.',
-                  ar: 'اضغط هنا عند الانتهاء. لا شيء لحفظه — فقد حُفظ بالفعل.' } }
+          text: { en: 'Press Done when you have finished. Changes are saved as you make them.',
+                  ar: 'اضغط «تم» لما تخلص. التغييرات بتنحفظ أول بأول.' } }
       ]
     },
     fix: {
@@ -333,12 +333,12 @@
         en: ['Home is at the top, and so is the plan’s name: both take you back to “What do you need?”.',
              'Then everything about your plan: Edit Mode · Dashboard · My Study Plan · Degree Audit & GPA · My Schedule · Achievements · Send this plan.',
              'Advanced holds the rest: Student Thoughts, Find a Professor, Browse Courses and About.',
-             'At the bottom: Settings and Change plan.',
+             'At the bottom: Settings. To switch major, use Switch major on the home screen.',
              'On a phone it is behind the menu button in the corner.'],
         ar: ['«الرئيسية» في الأعلى، واسم الخطة كمان: الاثنين بيرجعوك لـ«شو بدك؟».',
              'بعدها كل ما يخص خطتك: وضع التعديل · لوحة التحكم · خطتي الدراسية · التدقيق والمعدّل · جدولي · الإنجازات · إرسال هذه الخطة.',
              'وتحت «متقدم» الباقي: أفكار الطلبة وابحث عن محاضر وتصفّح المساقات وعن التطبيق.',
-             'في الأسفل: الإعدادات وتغيير الخطة.',
+             'في الأسفل: الإعدادات. ولتغيير التخصص، استخدم «غيّر التخصص» بالشاشة الرئيسية.',
              'على الهاتف تجدها خلف زر القائمة في الزاوية.']
       },
       guide: 'menu'
