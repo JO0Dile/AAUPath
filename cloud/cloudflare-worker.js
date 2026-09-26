@@ -437,6 +437,10 @@ export default {
       return json({ ok: true }, 200, env, request);
     }
 
+    // `return await`, never a bare `return`: an un-awaited handler promise
+    // leaves this try before it settles, so its rejection skips the catch and
+    // escapes as Cloudflare's HTML error page with no CORS header — which the
+    // browser then reports as a CORS block instead of the real error.
     try {
       if (path === '/api/signup' && request.method === 'POST') return await handleSignup(request, env);
       if (path === '/api/login' && request.method === 'POST') return await handleLogin(request, env);
@@ -446,12 +450,12 @@ export default {
       if (gate.error) return gate.error;
       const user = gate.user;
 
-      if (path === '/api/me' && request.method === 'GET') return handleMe(env, request, user);
-      if (path === '/api/username' && request.method === 'POST') return handleSetUsername(request, env, user);
-      if (path === '/api/password/change' && request.method === 'POST') return handleChangePassword(request, env, user);
-      if (path === '/api/account' && request.method === 'DELETE') return handleDeleteAccount(env, request, user);
-      if (path === '/api/sync' && request.method === 'GET') return handleGetSync(env, request, user);
-      if (path === '/api/sync' && request.method === 'POST') return handlePostSync(request, env, user);
+      if (path === '/api/me' && request.method === 'GET') return await handleMe(env, request, user);
+      if (path === '/api/username' && request.method === 'POST') return await handleSetUsername(request, env, user);
+      if (path === '/api/password/change' && request.method === 'POST') return await handleChangePassword(request, env, user);
+      if (path === '/api/account' && request.method === 'DELETE') return await handleDeleteAccount(env, request, user);
+      if (path === '/api/sync' && request.method === 'GET') return await handleGetSync(env, request, user);
+      if (path === '/api/sync' && request.method === 'POST') return await handlePostSync(request, env, user);
 
       return json({ error: 'not found' }, 404, env, request);
     } catch (err) {

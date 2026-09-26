@@ -1015,6 +1015,12 @@ export default {
       return json({ error: 'not found' }, 404, env, request);
     }
 
+    // Every handler below is `return await`, never a bare `return`. Returning
+    // an async handler's promise un-awaited hands it straight out of this try,
+    // so a rejection skips the catch entirely and escapes as Cloudflare's own
+    // HTML error page — which carries no CORS header, so the browser reports a
+    // CORS block instead of the real failure. An expired GITHUB_TOKEN showed up
+    // exactly that way: "blocked by CORS policy" on a 500 from /api/tree.
     try {
       if (path === '/api/login' && request.method === 'POST') return await handleLogin(request, env);
 
@@ -1032,34 +1038,34 @@ export default {
           branch: env.REPO_BRANCH || 'main',
         }, 200, env);
       }
-      if (path === '/api/tree' && request.method === 'GET') return handleTree(env, request);
+      if (path === '/api/tree' && request.method === 'GET') return await handleTree(env, request);
 
       // /api/majors/:university — names and faculties for one university's
       // majors, so the browser can group them. Must be tested before the
       // /api/major/ routes below, which are a different (singular) path.
       if (seg[1] === 'majors' && seg[2] && request.method === 'GET') {
-        return handleMajorsMeta(env, seg[2], request);
+        return await handleMajorsMeta(env, seg[2], request);
       }
 
       // /api/university/:slug
       if (seg[1] === 'university' && seg[2]) {
-        if (request.method === 'GET') return handleGetUniversity(env, seg[2], request);
-        if (request.method === 'PUT') return handlePutUniversity(request, env, seg[2]);
-        if (request.method === 'DELETE') return handleDeleteUniversity(env, seg[2], request);
+        if (request.method === 'GET') return await handleGetUniversity(env, seg[2], request);
+        if (request.method === 'PUT') return await handlePutUniversity(request, env, seg[2]);
+        if (request.method === 'DELETE') return await handleDeleteUniversity(env, seg[2], request);
       }
 
       // /api/major/:university/:slug
       if (seg[1] === 'major' && seg[2] && seg[3]) {
-        if (request.method === 'GET') return handleGetMajor(env, seg[2], seg[3], request);
-        if (request.method === 'PUT') return handlePutMajor(request, env, seg[2], seg[3]);
-        if (request.method === 'DELETE') return handleDeleteMajor(env, seg[2], seg[3], request);
+        if (request.method === 'GET') return await handleGetMajor(env, seg[2], seg[3], request);
+        if (request.method === 'PUT') return await handlePutMajor(request, env, seg[2], seg[3]);
+        if (request.method === 'DELETE') return await handleDeleteMajor(env, seg[2], seg[3], request);
       }
 
       // /api/assets  ·  /api/assets/:filename
       if (seg[1] === 'assets') {
-        if (request.method === 'GET' && !seg[2]) return handleListAssets(env, request);
-        if (request.method === 'POST' && !seg[2]) return handleUpload(request, env);
-        if (request.method === 'DELETE' && seg[2]) return handleDeleteAsset(env, seg[2], request);
+        if (request.method === 'GET' && !seg[2]) return await handleListAssets(env, request);
+        if (request.method === 'POST' && !seg[2]) return await handleUpload(request, env);
+        if (request.method === 'DELETE' && seg[2]) return await handleDeleteAsset(env, seg[2], request);
       }
 
       return json({ error: 'not found' }, 404, env, request);
