@@ -1019,16 +1019,7 @@
   };
   function bucketOf(c){ return (c && BUCKET_CLASS[c.requirement]) ? c.requirement : ''; }
 
-  // The plan encodes six requirement buckets in colour alone, and roughly one
-  // man in twelve cannot separate the green from the orange — nor can anyone
-  // reading a printed plan in black and white. A three-letter code carries the
-  // same fact without asking the eye to compare hues. Deliberately the same
-  // code in both languages: it is an identifier like a course number, not a
-  // word, and an Arabic abbreviation of "متطلب جامعي" is longer than the tag.
-  var BUCKET_CODE = {
-    univReq: 'UNI', univElec: 'UEL', colgReq: 'COL', specReq: 'SPC',
-    specElec: 'SEL', freeElec: 'FRE', supportCourses: 'SUP'
-  };
+
 
   // 32: once a grade is in, the requirement bucket has done its job — you
   // already know which block the course belongs to. The card switches to
@@ -1272,8 +1263,12 @@
       checkboxHtml +
       cardButtons +
       (c.isRetake ? '<span class="retake-badge">\u21bb ' + (rtl ? 'إعادة' : 'Retake') + '</span>' : '') +
-      (bucket && BUCKET_CODE[bucket]
-        ? '<span class="req-code" aria-hidden="true">' + BUCKET_CODE[bucket] + '</span>' : '') +
+      // The bucket written out ("College Req.") on its own line above the
+      // name. As a three-letter code in the corner it printed over the
+      // course name on a phone; with the card no longer filled by the bucket
+      // colour, this label and the edge stripe are what carry it.
+      (bucket && BUCKET_LABEL[bucket]
+        ? '<span class="req-code" aria-hidden="true">' + BUCKET_LABEL[bucket][rtl ? 1 : 0] + '</span>' : '') +
       '<div class="name">' + displayName + '</div>' +
       (otherName ? '<div class="name-alt">' + bidi(otherName) + '</div>' : '') +
       '<div class="course-meta">' + meta + '</div>' +
@@ -2066,14 +2061,20 @@
     }
     node.textContent = msg;
 
-    // The same news, visibly — only worth a toast when something actually
-    // opened up; ticking a leaf course with nothing downstream of it has
-    // nothing new to announce on screen either.
-    if(done && opened.length && window.__showUnlockToast){
-      var title = (rtl ? '✓ ' : '✓ ') + name + ' — ' + (rtl ? 'مُنجز' : 'marked passed');
-      var subtitle = (rtl ? 'أصبح متاحًا الآن: ' : 'Now open to you: ') + opened.slice(0, 3).join(', ') +
-        (opened.length > 3 ? (rtl ? ' وغيرها' : ' and more') : '');
-      window.__showUnlockToast(title, subtitle);
+    // The same news, visibly, with an Undo — a tick is easy to land on the
+    // wrong card with a thumb. What it opened up rides underneath, and an
+    // achievement it earned joins the same message (js/14-storage.js) rather
+    // than arriving as a second one on top.
+    if(done && window.__showUnlockToast){
+      var title = name + ': ' + (rtl ? 'مُنجز' : 'passed');
+      var subtitle = opened.length
+        ? (rtl ? 'صار متاح لك: ' : 'You can now take ') + opened.slice(0, 3).join(', ') +
+          (opened.length > 3 ? (rtl ? ' وغيرها' : ' and more') : '')
+        : '';
+      window.__showUnlockToast(title, subtitle, {
+        undoLabel: rtl ? 'تراجع' : 'Undo',
+        undo: function(){ if(isDone(planId, slug)) toggle(planId, slug); }
+      });
     }
   }
 
@@ -2490,11 +2491,16 @@
   // BUCKET_ORDER / BUCKET_META), so a bucket is named identically wherever a
   // student meets it.
   var LIB_BUCKET_ORDER = ['univReq', 'univElec', 'colgReq', 'specReq', 'specElec', 'freeElec', 'supportCourses'];
+  // Written out in full: "Colg. Req." and "Spec. Elec." are the
+  // registrar's shorthand, and a first-year student browsing courses has no
+  // reason to know it. Each shelf wears its bucket's colour (BUCKET_CLASS,
+  // the plan legend's own palette) so the two screens match.
   var LIB_BUCKET_LABEL = {
-    univReq: 'Univ. Req.', univElec: 'Univ. Elec.', colgReq: 'Colg. Req.',
-    specReq: 'Spec. Req.', specElec: 'Spec. Elec.', freeElec: 'Free Elec.',
-    supportCourses: 'Support', _none: 'Not categorised'
+    univReq: 'University requirements', univElec: 'University electives', colgReq: 'College requirements',
+    specReq: 'Major requirements', specElec: 'Major electives', freeElec: 'Free electives',
+    supportCourses: 'Support courses', _none: 'Not categorised'
   };
+  var LIB_ELECTIVE = { univElec: true, specElec: true, freeElec: true };
 
   function openLibrary(currentPlanId){
     var overlay = document.getElementById('devModalOverlay');
@@ -2543,6 +2549,8 @@
       // states its own count and hours, and courses whose plan published no
       // requirement data fall into one honest "Not categorised" shelf rather
       // than being silently assigned to a bucket nobody said they were in.
+      var reqHours = (loadImportedPlans()[browsePrefix] || {}).requirementHours || {};
+      var progress = window.__getProgress ? window.__getProgress() : {};
       function shelvesFor(filtered){
         var byBucket = {};
         filtered.forEach(function(c){
@@ -2554,7 +2562,24 @@
         }).map(function(k){
           var items = byBucket[k];
           var hours = items.reduce(function(a, c){ return a + (Number(c.cr) || 0); }, 0);
-          return { key: k, label: LIB_BUCKET_LABEL[k], items: items, hours: hours };
+          // What the bucket asks for (the plan's published figure) and how
+          // much of it this student has finished — done is only meaningful
+          // on a plan they are actually following, so other majors show 0.
+          var need = reqHours[k] ? Number(reqHours[k]) : 0;
+          var done = items.reduce(function(a, c){
+            var pid = window.AAUP_GPA && window.AAUP_GPA.primaryId ? window.AAUP_GPA.primaryId(browsePrefix, c.slug) : (browsePrefix + '-c-' + c.slug);
+            return a + (progress[pid] ? (Number(c.cr) || 0) : 0);
+          }, 0);
+          // An elective shelf lists the options; "pick 3" says how many of
+          // them the degree wants, from the hours it needs over the usual size.
+          var pick = 0;
+          if(LIB_ELECTIVE[k] && need){
+            var sizes = {};
+            items.forEach(function(c){ var n = Number(c.cr) || 0; if(n) sizes[n] = (sizes[n] || 0) + 1; });
+            var unit = Number(Object.keys(sizes).sort(function(a, b){ return sizes[b] - sizes[a]; })[0]) || 3;
+            pick = Math.max(1, Math.round(need / unit));
+          }
+          return { key: k, label: LIB_BUCKET_LABEL[k], items: items, hours: hours, need: need, done: Math.min(done, need || done), pick: pick };
         });
       }
 
@@ -2594,23 +2619,33 @@
         var openAll = !!f;
         return shelves.map(function(sh, i){
           var id = 'libShelf' + i;
-          return '<div class="lib-shelf' + (openAll ? ' lib-shelf-open' : '') + '">' +
+          var cls = BUCKET_CLASS[sh.key] || 'misc';
+          var total = sh.need || sh.hours;
+          var pct = total ? Math.round(sh.done / total * 100) : 0;
+          var sub = sh.pick ? 'pick ' + sh.pick : sh.items.length + (sh.items.length === 1 ? ' course' : ' courses');
+          return '<div class="lib-shelf' + (openAll ? ' lib-shelf-open' : '') + '" style="--lib-c:var(--' + cls + ')">' +
             '<button type="button" class="lib-shelf-head" data-lib-shelf="' + id + '"' +
               ' aria-expanded="' + (openAll ? 'true' : 'false') + '" aria-controls="' + id + '">' +
+              '<span class="lib-shelf-dot" aria-hidden="true"></span>' +
+              '<span class="lib-shelf-main"><span class="lib-shelf-label">' + sh.label + '</span>' +
+                '<span class="lib-shelf-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></span>' +
+              '<span class="lib-shelf-count"><span><b>' + sh.done + '</b> of ' + total + ' hours</span><span>' + sub + '</span></span>' +
               '<span class="lib-shelf-chev" aria-hidden="true">' + window.AAUP_ICONS.preview('chevronRight', 14) + '</span>' +
-              '<span class="lib-shelf-label">' + sh.label + '</span>' +
-              '<span class="lib-shelf-count">' + sh.items.length + ' · ' + sh.hours + 'H</span>' +
             '</button>' +
             '<div class="lib-shelf-body" id="' + id + '">' + sh.items.map(rowHtml).join('') + '</div>' +
             '</div>';
         }).join('');
       }
 
+      // "Change plan" at the top of a screen for looking courses up read as
+      // "switch the major I'm on". What it did was browse another major's
+      // courses, so it says that, as a small switch beside the name.
       body.innerHTML =
-        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('book', 20) + window.__escapeHtml(planTitle(browsePrefix)) + '</h2>' +
-        '<button type="button" class="home-btn" id="libBack" style="margin-bottom:10px;">' + window.AAUP_ICONS.preview('shuffle', 14) + 'Change plan</button>' +
-        (currentIsSame ? '<p class="form-note">This is the plan you\u2019re already editing.</p>' : '') +
-        '<div class="form-field"><input type="text" id="libSearch" placeholder="Search by name or course code…"></div>' +
+        '<div class="lib-head"><span class="lib-head-ic">' + window.AAUP_ICONS.preview('book', 20) + '</span>' +
+          '<h2 class="lib-title">Browse Courses</h2></div>' +
+        '<div class="lib-showing"><span>Showing <b>' + window.__escapeHtml(planTitle(browsePrefix)) + '</b></span>' +
+          '<button type="button" class="lib-other" id="libBack">Other major' + window.AAUP_ICONS.preview('chevron', 13) + '</button></div>' +
+        '<div class="form-field"><input type="text" id="libSearch" aria-label="Search courses" placeholder="Search by name or course code…"></div>' +
         '<div id="libList" class="lib-list"></div>' +
         '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div>';
       document.getElementById('libList').innerHTML = renderList('');

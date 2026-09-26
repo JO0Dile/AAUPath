@@ -49,7 +49,7 @@
     notConfigured: { en: 'Contributions are not accepted online yet — use Contribute to send a file instead.', ar: 'المساهمات مش مفعّلة أونلاين لسا — استخدم "ساهم" لإرسال ملف بدلاً من هيك.' },
     settingsTitle: { en: 'My contributions', ar: 'مساهماتي' },
     settingsLead: { en: 'Anything you have submitted while helping build a major, and any reply back.', ar: 'أي شي بعتّه وأنت عم تساعد تبني خطة، وأي رد رجع.' },
-    refresh: { en: '🔄 Refresh', ar: '🔄 تحديث' },
+    refresh: { en: 'Refresh', ar: 'تحديث' },
     none: { en: 'Nothing sent yet.', ar: 'ما في شي مُرسَل لسا.' },
     statusPending: { en: 'Waiting for a reply', ar: 'بانتظار رد' },
     statusReplied: { en: 'Replied', ar: 'تم الرد' }

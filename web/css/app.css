@@ -1421,31 +1421,13 @@
       linear-gradient(180deg, color-mix(in srgb, var(--accent) 7%, transparent), color-mix(in srgb, var(--accent) 0%, transparent) 60%),
       var(--panel);
     border:1px solid var(--line);
-    border-radius:4px;
+    border-radius:14px;
     display:flex;
     align-items:center;
     gap:16px;
     flex-wrap:wrap;
     position:relative;
   }
-  /* corner tick brackets, echoing the diamond/angular language used in the year badges */
-
-  .progress-widget::before,
-  .progress-widget::after{
-    content:"";
-    position:absolute;
-    top:4px; bottom:4px;
-    width:7px;
-    border-top:2px solid var(--accent);
-    border-bottom:2px solid var(--accent);
-    opacity:.5;
-    pointer-events:none;
-  }
-
-  .progress-widget::before{ left:2px; border-left:2px solid var(--accent); }
-
-  .progress-widget::after{ right:2px; border-right:2px solid var(--accent); }
-
   .progress-widget .pw-label{
     font-weight:800; font-size:11px; letter-spacing:.09em; text-transform:uppercase;
     color:var(--accent); white-space:nowrap;
@@ -1460,29 +1442,20 @@
     box-shadow:0 0 6px var(--accent);
   }
 
+  /* A plain rounded bar. The slanted ends, tick marks, stripes and corner
+     brackets it used to wear read as decoration on a phone, and the
+     brackets looked like the widget had been cropped. */
   .progress-widget .pw-track{
-    flex:1 1 170px; min-width:120px; height:11px;
-    background:rgba(255,255,255,.06);
-    border:1px solid var(--line);
-    clip-path:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);
+    flex:1 1 170px; min-width:120px; height:8px;
+    background:var(--search-bg);
+    border-radius:99px;
     position:relative;
     overflow:hidden;
   }
 
-  .progress-widget .pw-track::before{
-    content:"";
-    position:absolute; inset:0;
-    background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.14) 0 1px, transparent 1px 13px);
-    pointer-events:none;
-    z-index:1;
-  }
-
   .progress-widget .pw-fill{
-    height:100%; width:0%;
-    background-image:
-      repeating-linear-gradient(135deg, rgba(255,255,255,.22) 0 5px, transparent 5px 10px),
-      linear-gradient(90deg,#2ecc71,var(--accent));
-    box-shadow:0 0 9px color-mix(in srgb, var(--accent) 60%, transparent);
+    height:100%; width:0%; border-radius:inherit;
+    background-image:linear-gradient(90deg,#2ecc71,var(--accent));
     transition:width .35s ease;
   }
 
@@ -2371,9 +2344,9 @@
      permanently expanded — correct per row, unusable as a list: forty courses
      came to about eight thousand pixels of scrolling. A row is a summary now,
      and only the row being edited shows its chips. */
-  .gs-list{
-    border:1px solid var(--line); border-radius:10px; overflow:hidden;
-  }
+  /* Each semester is its own box now (.gs-sem), so the list is just the gap
+     between them. */
+  .gs-list{display:flex; flex-direction:column; gap:10px;}
   .gs-row + .gs-row{border-top:1px solid var(--line);}
   .gs-row.is-open{background:color-mix(in srgb, var(--accent) 6%, transparent);}
 
@@ -2418,7 +2391,7 @@
   }
 
   .gs-panel{padding:0 13px 13px;}
-  .gs-panel .gs-grade-chip{min-width:38px; padding:9px 8px; font-size:12px;}
+  .gs-panel .gs-grade-chip{min-width:0; padding:10px 0; font-size:13px; font-weight:800; border-radius:9px; color:var(--text); text-align:center;}
 
   .gs-code{color:var(--text-dim); font-size:10.5px;}
   .gs-excluded{color:var(--text-dim); font-size:11px; font-style:italic;}
@@ -3139,6 +3112,7 @@
   .share-link-input{
     flex:1 1 auto;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;
     background:var(--search-bg);color:var(--text);font-family:monospace;font-size:12px;
+    text-overflow:ellipsis;white-space:nowrap;
   }
   /* The QR opens the screen. It is the one part of sharing that works
      across a room, and it used to sit last, under a paragraph, a button and
@@ -3174,71 +3148,6 @@
   /* Share via… only exists where the device has a share sheet, so the count
      is three or four; an odd last button takes the whole row. */
   .share-actions .home-btn:last-child:nth-child(odd){grid-column:1 / -1;}
-
-  /* ---------- contacts (js/68-contacts.js) ---------- */
-  .ct-privacy{
-    font-size:11px;color:var(--text-dim);background:var(--surface-bg);
-    border:1px solid var(--line);border-radius:8px;padding:8px 11px;margin:0 0 12px;
-  }
-  .ct-loading{font-size:12.5px;color:var(--text-dim);}
-  .ct-search{
-    width:100%;font-family:inherit;font-size:13px;padding:9px 12px;
-    border-radius:10px;border:1px solid var(--line);background:var(--search-bg);
-    color:var(--text);margin-bottom:10px;
-  }
-  .ct-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
-  .ct-chip{
-    font-size:11.5px;font-weight:700;padding:6px 13px;border-radius:999px;
-    border:1px solid var(--line);background:none;color:var(--text-dim);
-    font-family:inherit;cursor:pointer;white-space:nowrap;
-  }
-  .ct-chip:hover{border-color:var(--accent);color:var(--text);}
-  .ct-chip-on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
-  .ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
-
-  /* Directory sections. Same headed-shelf treatment the Course Library uses,
-     so two lists in the same app that group things group them the same way.
-     The header sticks while its own section scrolls — on a long section the
-     heading leaves the screen well before its last card does, and after
-     that every card looks alike again. */
-  .ct-group + .ct-group{margin-top:16px;}
-  .ct-group-head{
-    position:sticky; top:0; z-index:1;
-    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
-    padding:6px 0 5px; margin-bottom:8px;
-    background:var(--panel); border-bottom:1px solid var(--accent);
-  }
-  .ct-group-label{
-    font-size:10.5px; font-weight:800; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--accent);
-  }
-  .ct-group-count{
-    font-size:10.5px; font-weight:700; color:var(--text-dim);
-    font-variant-numeric:tabular-nums;
-  }
-  .ct-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel);}
-  .ct-card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
-  .ct-avatar{
-    width:34px;height:34px;flex:0 0 34px;border-radius:50%;background:var(--surface-bg);
-    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;
-  }
-  .ct-card-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .ct-name{font-size:13px;font-weight:800;color:var(--text);line-height:1.3;}
-  .ct-sub{font-size:11px;color:var(--text-dim);line-height:1.4;}
-  .ct-email-row{display:flex;align-items:center;gap:8px;justify-content:space-between;}
-  .ct-email{
-    font-size:11.5px;color:var(--accent);text-decoration:none;overflow:hidden;
-    text-overflow:ellipsis;white-space:nowrap;min-width:0;
-  }
-  .ct-email:hover{text-decoration:underline;}
-  .ct-copy{
-    font-size:10.5px;font-weight:700;color:var(--text-dim);background:none;
-    border:1px solid var(--line);border-radius:999px;padding:3px 10px;
-    font-family:inherit;cursor:pointer;flex:0 0 auto;
-  }
-  .ct-copy:hover{border-color:var(--accent);color:var(--text);}
-  .ct-noemail{font-size:11px;color:var(--text-dim);font-style:italic;}
-  .ct-empty{font-size:12.5px;color:var(--text-dim);margin-top:10px;}
 
   /* ---------- when do I graduate (js/66-graduation.js) ---------- */
   .grad-msg{font-size:12.5px;color:var(--text-dim);margin:0;}
@@ -4027,7 +3936,7 @@
      the old inline styles exactly, so desktop is pixel-identical. */
   .lib-row{font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .lib-row-meta{color:var(--text-dim);}
-  .lib-list{max-height:300px;overflow-y:auto;}
+  .lib-list{max-height:none;}
   .lib-add-btn{padding:3px 10px;font-size:11px;}
 
   /* Shelves. A plan's courses are grouped by the requirement each satisfies,
@@ -4041,28 +3950,47 @@
      up. Closed until asked for. */
   .lib-shelf-head{
     position:sticky; top:0; z-index:1;
-    display:flex; align-items:center; gap:10px; width:100%;
-    padding:9px 2px; margin-bottom:2px;
-    background:var(--panel); border:none; border-bottom:1px solid var(--accent);
-    font-family:inherit; cursor:pointer; text-align:start;
+    display:flex; align-items:center; gap:12px; width:100%;
+    padding:12px 2px; margin-bottom:2px;
+    background:var(--panel); border:none; border-top:1px solid var(--line);
+    font-family:inherit; color:var(--text); cursor:pointer; text-align:start;
   }
   .lib-shelf-chev{
-    flex:none; font-size:16px; line-height:1; color:var(--accent);
+    flex:none; font-size:16px; line-height:1; color:var(--text-dim);
     transition:transform .18s ease;
   }
   .lib-shelf-open .lib-shelf-chev{transform:rotate(90deg);}
-  .lib-shelf-count{margin-inline-start:auto;}
   .lib-shelf-body{display:none;}
   .lib-shelf-open .lib-shelf-body{display:block; padding-top:4px;}
   @media (prefers-reduced-motion:reduce){ .lib-shelf-chev{transition:none;} }
-  .lib-shelf-label{
-    font-size:10.5px; font-weight:800; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--accent);
-  }
+  /* The shelf's own colour (--lib-c, set inline from the plan legend's
+     palette) marks the dot and the progress bar; the name stays plain text
+     so it reads in every theme. */
+  .lib-shelf-dot{flex:none; width:11px; height:11px; border-radius:3px; background:var(--lib-c, var(--accent));}
+  .lib-shelf-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:7px;}
+  .lib-shelf-label{font-size:13.5px; font-weight:800; color:var(--text);}
+  .lib-shelf-bar{display:block; height:5px; border-radius:99px; background:var(--search-bg); overflow:hidden;}
+  .lib-shelf-bar i{display:block; height:100%; border-radius:inherit; background:var(--lib-c, var(--accent));}
   .lib-shelf-count{
-    font-size:10.5px; font-weight:700; color:var(--text-dim);
+    display:flex; flex-direction:column; align-items:flex-end; gap:2px;
+    font-size:12px; font-weight:600; color:var(--text-dim);
     font-variant-numeric:tabular-nums; white-space:nowrap;
   }
+  .lib-shelf-count b{color:var(--text); font-weight:800;}
+  .lib-head{display:flex; align-items:center; gap:10px; margin:0 0 8px;}
+  .lib-head-ic{
+    flex:none; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+  }
+  .lib-head-ic .app-icon-svg{color:inherit;}
+  .lib-title{margin:0; font-size:20px; font-weight:800;}
+  .lib-showing{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 10px; font-size:13px; color:var(--text-dim);}
+  .lib-showing b{color:var(--text);}
+  .lib-other{
+    display:inline-flex; align-items:center; gap:4px; flex:none; padding:4px 2px;
+    background:none; border:none; color:var(--accent); font-family:inherit; font-size:13px; font-weight:800; cursor:pointer;
+  }
+  .lib-other .app-icon-svg{color:inherit;}
   .lib-row-name{min-width:0;}
 
   /* Settings modal's top tab bar — four groups (Account/Preferences/Data/
@@ -5047,69 +4975,48 @@
     background:#fff;padding:3px;flex:0 0 auto;
   }
 
-  .toast-msg{
-    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
-    background:var(--panel);border:1px solid var(--accent);color:var(--text);
-    padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:600;
-    box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:1200;
-    opacity:0;transition:opacity .25s ease, transform .25s ease;
-    pointer-events:none;white-space:nowrap;
+  /* ONE MESSAGE BOX (js/14-storage.js notify). Replaces the plain toast,
+     the action toast and the unlock card, which each drew on their own and
+     stacked on top of each other. A card: icon, title, an optional line
+     under it, any merged extras, and at most one button. */
+  .notice{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(8px);
+    width:max-content; max-width:min(460px, calc(100vw - 24px));
+    display:flex; align-items:flex-start; gap:11px;
+    background:var(--panel); border:1px solid var(--line); color:var(--text);
+    padding:12px 14px; border-radius:16px;
+    box-shadow:0 12px 32px rgba(0,0,0,.42); z-index:1202;
+    opacity:0; pointer-events:none; transition:opacity .25s ease, transform .25s ease;
   }
-
-  .toast-msg.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
-
-  /* Like .toast-msg but interactive — carries an inline action button
-     (e.g. "Undo" after a drag move). Separate element so it never fights
-     the plain, pointer-events:none status toast. */
-  .toast-action{
-    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
-    background:var(--panel);border:1px solid var(--accent);color:var(--text);
-    padding:11px 11px 11px 15px;font-size:12.5px;font-weight:600;
-    box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:1201;
-    display:flex;align-items:center;gap:12px;
-    opacity:0;transition:opacity .25s ease, transform .25s ease;
-    /* A pill is right for "Moved — saved." and wrong for a sentence: with no
-       width limit and a 999px radius, the leftover-data notice wrapped into a
-       tall box and the radius drew it as an ellipse with the text spilling
-       out of it. A card that is allowed to wrap, and a width it cannot pass. */
-    /* left:50% leaves a fixed-position box only the right half of the screen
-       to shrink-to-fit into, so without max-content it laid itself out 195px
-       wide on a 390px phone and grew downwards instead. */
-    width:max-content; max-width:min(520px, calc(100vw - 28px));
-    border-radius:16px; text-align:start;
+  .notice.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+  .notice-ic{
+    flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent);
   }
-  .toast-action .ta-text{flex:1 1 auto; min-width:0; line-height:1.45;}
-  .toast-action.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
-  .toast-action .ta-btn{
-    background:var(--accent);color:var(--on-accent);border:none;border-radius:999px;
-    flex:0 0 auto;align-self:center;
-    padding:6px 16px;font-size:12.5px;font-weight:800;font-family:inherit;cursor:pointer;
-    white-space:nowrap;
+  .notice-ok .notice-ic{background:color-mix(in srgb, var(--unlock) 18%, transparent); color:color-mix(in srgb, var(--unlock) 75%, var(--text));}
+  .notice-award .notice-ic{background:rgba(242,185,61,.16); color:#f2b93d;}
+  .notice-ic .app-icon-svg{color:inherit;}
+  .notice-body{display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 auto; padding-top:3px;}
+  .notice-title{font-size:13px; font-weight:800; line-height:1.35;}
+  .notice-sub{font-size:12px; color:var(--text-dim); line-height:1.4;}
+  .notice-sub[hidden], .notice-extras[hidden], .notice-btn[hidden]{display:none;}
+  .notice-extras{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+  .notice-extra{
+    display:inline-flex; align-items:center; gap:5px; font-family:inherit;
+    font-size:11.5px; font-weight:800; line-height:1.3; padding:3px 9px; border-radius:999px; border:0;
+    background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--text);
   }
-  .toast-action .ta-btn:hover{filter:brightness(1.08);}
-
-  /* The visible half of "say it out loud" — two lines, so a rounded card
-     rather than the one-line pill the plain toasts use. Sits above them
-     (z-index) since an unlock is the more consequential of the two. */
-  .unlock-toast{
-    position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(8px);
-    max-width:min(420px, calc(100vw - 32px));
-    display:flex;align-items:flex-start;gap:10px;
-    background:var(--panel);border:1px solid var(--unlock);color:var(--text);
-    padding:12px 16px;border-radius:14px;
-    box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:1202;
-    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
+  .notice-extra-award{background:rgba(242,185,61,.16);}
+  .notice-extra-award .app-icon-svg{color:#f2b93d;}
+  button.notice-extra{cursor:pointer;}
+  button.notice-extra:hover{filter:brightness(1.12);}
+  .notice-btn{
+    flex:none; align-self:center; margin-inline-start:4px;
+    background:none; border:0; color:var(--accent); cursor:pointer;
+    font-family:inherit; font-size:13px; font-weight:800; padding:6px 4px;
   }
-  .unlock-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .unlock-toast .ut-icon{
-    flex:0 0 auto;width:22px;height:22px;border-radius:50%;
-    background:var(--unlock);color:var(--panel);font-size:12px;font-weight:800;
-    display:flex;align-items:center;justify-content:center;margin-top:1px;
-  }
-  .unlock-toast .ut-body{display:flex;flex-direction:column;gap:2px;min-width:0;}
-  .unlock-toast .ut-title{font-size:13px;font-weight:800;line-height:1.35;}
-  .unlock-toast .ut-sub{font-size:12px;color:var(--text-dim);line-height:1.4;}
-  .unlock-toast .ut-sub[hidden]{display:none;}
+  .notice-btn:hover{text-decoration:underline;}
+  .notice-btn:focus-visible, button.notice-extra:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
   /* Respect the OS-level "reduce motion" accessibility setting. */
   @media (prefers-reduced-motion: reduce){
@@ -7328,9 +7235,7 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
      so it has to clear those too or .toast-action's own button ends up
      under one of them. The bottom of a phone screen now stacks in three
      bands — tab bar, launchers, toasts — none of them overlapping. */
-  body.has-sidebar .toast-msg,
-  body.has-sidebar .toast-action,
-  body.has-sidebar .unlock-toast{bottom:152px;}
+  body.has-sidebar .notice{bottom:152px;}
 }
 
 /* ---------- long-press quick actions (js/74-course-gestures.js) ----------
@@ -7631,38 +7536,6 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 }
 
 /* ==========================================================================
-   PHONE CONTACTS — a bordered auto-fill grid becomes one elevated list
-   .ct-grid's auto-fill(minmax(230px,1fr)) already collapses to a single
-   column under ~390px, so the layout was never broken on phone — but each
-   .ct-card kept its desktop treatment (thin border, flat background), which
-   reads as a form field repeated N times rather than a directory. Same
-   elevation-over-border language as every other list in this redesign
-   (course rows above, the More sheet's .sb-item rows); markup and js/68-
-   contacts.js are untouched, only how the existing cards are painted. */
-@media (max-width:720px){
-  .ct-search{border-radius:14px; padding:11px 14px; box-shadow:0 2px 8px rgba(0,0,0,.18);}
-  .ct-chips{flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px;}
-  .ct-chip{flex:0 0 auto;}
-  .ct-grid{display:flex; flex-direction:column; gap:8px;}
-  /* var(--panel) matches the card this scrolls inside; a sticky header has
-     to be opaque to cover the rows passing under it. */
-  .ct-group-head{background:var(--panel); border-bottom:none; padding:8px 2px 6px; margin-bottom:2px;}
-  .ct-group + .ct-group{margin-top:8px;}
-  .ct-card{
-    border:none; border-radius:14px; padding:13px 14px;
-    box-shadow:0 4px 14px rgba(0,0,0,.22);
-  }
-  .ct-card-top{align-items:center;}
-  .ct-avatar{
-    width:40px; height:40px; flex:0 0 40px; font-size:18px;
-    background:color-mix(in srgb, var(--accent) 14%, transparent); border:none; color:var(--accent);
-  }
-  .ct-name{font-size:14px;}
-  .ct-email-row{margin-top:2px;}
-  .ct-copy{padding:5px 12px;}
-}
-
-/* ==========================================================================
    PHONE PLAN MY NEXT SEMESTER — the pool/tray builder (js/25-advisor.js)
    loses its thin borders the same way every other list in this redesign
    did. Every selector is scoped under #advisorModalBody: .sb- here is a
@@ -7828,7 +7701,13 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   margin-top:9px; padding-top:9px;
   border-top:1px solid var(--line);
   scrollbar-width:none;
+  /* Fades at the trailing edge, so a row cut off by the screen reads as
+     "there is more this way" rather than as a chip chopped in half. */
+  mask-image:linear-gradient(90deg, #000 88%, transparent);
+  padding-inline-end:28px;
 }
+.plan-page.rtl-mode .pf-bar,
+.sheet.rtl-mode .pf-bar{mask-image:linear-gradient(270deg, #000 88%, transparent);}
 .pf-bar::-webkit-scrollbar{display:none;}
 .pf-chip{
   flex:0 0 auto; padding:6px 12px; border-radius:999px; cursor:pointer;
@@ -8211,7 +8090,6 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
 .share-grid{display:grid; grid-template-columns:minmax(0, 1fr); gap:18px; align-items:start;}
 .share-side{display:flex; flex-direction:column; gap:8px; min-width:0;}
 .share-field-label{margin:4px 0 0; font-size:12px; font-weight:700; color:var(--text-dim);}
-.share-link-input{text-overflow:ellipsis; white-space:nowrap;}
 .share-copy-btn{
   flex:none; margin:0; justify-content:center;
   background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:800;
@@ -8221,3 +8099,240 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
   .share-grid{grid-template-columns:260px minmax(0, 1fr);}
   .share-side{padding-top:2px;}
 }
+
+/* =========================================================================
+   YOUR GRADES — BY SEMESTER  (js/51-gpa-studio.js)
+
+   Each semester is its own box with its GPA in the header; a row shows the
+   grade as a pill (or a dashed "Grade" when there is none), and the open
+   row's letters are a 7-across keypad. Later semesters sit folded below.
+   ========================================================================= */
+.gs-sem{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card-bg, var(--panel));}
+.gs-sem-h{
+  display:flex; align-items:center; gap:10px; padding:11px 13px;
+  background:var(--panel); font-size:13.5px; font-weight:800;
+}
+.gs-sem-name{flex:1; min-width:0;}
+.gs-sem-meta{font-size:12px; font-weight:600; color:var(--text-dim); text-align:end;}
+.gs-sem-meta b{color:var(--text); font-weight:800; font-variant-numeric:tabular-nums;}
+.gs-sem .gs-row{border-top:1px solid var(--line);}
+.gs-sem-later .gs-sem-h{background:none; color:var(--text-dim); font-weight:700;}
+.gs-sem .gs-head-grade{
+  min-width:38px; background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent);
+  border-radius:8px; padding:5px 9px; font-size:12.5px; font-weight:900;
+}
+.gs-sem .gs-head-grade.is-fail{background:color-mix(in srgb, var(--danger,#e8557c) 18%, transparent); color:var(--danger,#e8557c);}
+.gs-sem .gs-head-set{
+  border:1px dashed var(--line); color:var(--text-dim); font-weight:700; border-radius:8px; padding:5px 10px;
+}
+.gs-sem .gs-row.is-open{background:var(--search-bg);}
+.gs-panel-lbl{font-size:11.5px; color:var(--text-dim); margin:0 0 8px;}
+.gs-panel .gs-grade-chips{display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:6px;}
+.gs-summary{
+  display:flex; align-items:center; gap:12px; margin:6px 0 12px; padding:12px 14px;
+  background:var(--header-bg); border:1px solid var(--line); border-radius:12px;
+}
+.gs-summary b{display:block; font-size:24px; font-weight:900; line-height:1.1; font-variant-numeric:tabular-nums;}
+.gs-summary span{display:block; font-size:11.5px; color:var(--text-dim);}
+.gs-summary-r{margin-inline-start:auto; text-align:end;}
+.gs-summary-r b{font-size:13.5px; font-weight:800;}
+/* Once the dial card sits beside the list (860px, see .gs-layout) it already says this. */
+@media (min-width:860px){ .gs-summary{display:none;} }
+
+/* =========================================================================
+   FIND A PROFESSOR  (js/68-contacts.js)
+
+   A full page rather than a pop-up. The directory is read top to bottom,
+   so it gets the whole window with the content centred up to ~1040px and
+   type sized for reading from a step back: a big title, a tall search box,
+   chips on one scrolling row, and one line per person with large Copy and
+   Email buttons. On a phone every dialog is already a full page, so only
+   the sizes step down there.
+   ========================================================================= */
+@media (min-width:721px){
+  .ct-overlay{padding:0; align-items:stretch; justify-content:stretch; background:var(--page-bg);}
+  .ct-overlay .modal-card.ct-page{
+    max-width:none; width:100%; height:100%; max-height:100%;
+    border:0; border-radius:0; box-shadow:none; padding:0; background:var(--page-bg);
+  }
+  .ct-overlay .modal-card.ct-page > .modal-body{
+    padding:28px max(32px, calc((100% - 1040px) / 2)) 56px;
+  }
+}
+.ct-head{display:flex; align-items:center; gap:16px; margin:6px 0 22px;}
+.ct-head-ic{
+  flex:none; width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+}
+.ct-head-ic .app-icon-svg{color:inherit;}
+.ct-title{margin:0; font-size:clamp(26px, 3.2vw, 40px); font-weight:900; line-height:1.15;}
+.ct-loading{font-size:14px; color:var(--text-dim);}
+.ct-search-wrap{
+  display:flex; align-items:center; gap:12px; margin:0 0 16px; padding:0 20px;
+  background:var(--search-bg); border:1px solid var(--line); border-radius:16px; cursor:text;
+}
+.ct-search-wrap:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);}
+.ct-search-ic{flex:none; color:var(--text-dim); display:flex;}
+.ct-search-ic .app-icon-svg{color:inherit;}
+.ct-search{
+  flex:1; min-width:0; border:0; background:none; outline:none; color:var(--text);
+  font-family:inherit; font-size:clamp(16px, 1.6vw, 20px); padding:18px 0;
+}
+.ct-chips{
+  display:flex; gap:10px; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none;
+  margin:0 0 10px; padding-bottom:4px;
+  mask-image:linear-gradient(90deg, #000 92%, transparent);
+}
+.ct-chips::-webkit-scrollbar{display:none;}
+.ct-chip{
+  flex:0 0 auto; font-family:inherit; cursor:pointer; white-space:nowrap;
+  font-size:clamp(14px, 1.3vw, 17px); font-weight:800; padding:10px 20px; border-radius:999px;
+  border:1px solid var(--line); background:none; color:var(--text-dim);
+}
+.ct-chip:hover{border-color:var(--accent); color:var(--text);}
+.ct-chip-on{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.ct-chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.ct-grid{display:flex; flex-direction:column;}
+.ct-group{margin-top:18px;}
+.ct-group-head{
+  position:sticky; top:0; z-index:1; display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+  padding:10px 0 8px; background:var(--page-bg); border-bottom:1px solid var(--line);
+}
+.ct-group-label{font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--accent);}
+.ct-group-count{font-size:12px; font-weight:700; color:var(--text-dim); font-variant-numeric:tabular-nums;}
+.ct-card{display:flex; align-items:center; gap:16px; padding:16px 2px; border-top:1px solid var(--line);}
+.ct-group .ct-card:first-child{border-top:none;}
+.ct-avatar{
+  flex:none; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent);
+}
+.ct-avatar .app-icon-svg{color:inherit;}
+.ct-avatar-initials{font-size:17px; font-weight:900; letter-spacing:.02em;}
+.ct-card-main{flex:1; min-width:0; display:flex; flex-direction:column; gap:6px;}
+.ct-name{font-size:clamp(16px, 1.6vw, 21px); font-weight:800; color:var(--text); line-height:1.25;}
+.ct-sub{font-size:14px; color:var(--text-dim); line-height:1.4;}
+.ct-courses{display:flex; flex-wrap:wrap; gap:6px;}
+.ct-course{font-size:13.5px; font-weight:600; padding:3px 10px; border-radius:8px; background:var(--panel); color:var(--text-dim);}
+/* Mixed toward the theme's own text colour so the green stays readable on
+   light themes as well as dark ones. */
+.ct-course-mine{background:color-mix(in srgb, var(--unlock) 16%, transparent); color:color-mix(in srgb, var(--unlock) 70%, var(--text));}
+.ct-email-text{font-size:12.5px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.ct-noemail{font-size:12.5px; color:var(--text-dim); font-style:italic;}
+.ct-acts{flex:none; display:flex; gap:10px;}
+.ct-icbtn{
+  width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--line); background:none; color:var(--text); cursor:pointer; text-decoration:none;
+}
+.ct-icbtn .app-icon-svg{color:inherit;}
+.ct-icbtn:hover{border-color:var(--accent);}
+.ct-icbtn.is-done{color:color-mix(in srgb, var(--unlock) 70%, var(--text)); border-color:var(--unlock);}
+.ct-icbtn-pri{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.ct-icbtn-pri:hover{filter:brightness(1.08);}
+.ct-icbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.ct-empty{font-size:15px; color:var(--text-dim); margin-top:18px;}
+.ct-foot{display:flex; align-items:flex-start; gap:10px; margin:22px 0 0; font-size:14px; color:var(--text-dim);}
+.ct-foot .app-icon-svg{flex:none; margin-top:2px;}
+@media (max-width:720px){
+  .ct-head{margin:4px 0 14px; gap:12px;}
+  .ct-head-ic{width:44px; height:44px; border-radius:12px;}
+  .ct-card{gap:12px; padding:13px 0;}
+  .ct-avatar{width:42px; height:42px;}
+  .ct-avatar-initials{font-size:14px;}
+  .ct-course{font-size:12px; padding:2px 8px;}
+  .ct-icbtn{width:44px; height:44px; border-radius:12px;}
+  .ct-acts{gap:8px;}
+  .ct-email-text{display:none;}
+}
+
+/* =========================================================================
+   60 · DARK CARD, COLOURED EDGE  (js/28-imported.js courseCardHtml)
+
+   The card used to be FILLED with its requirement colour. On a phone that
+   made a semester a wall of saturated green and blue, the Arabic name was
+   dim text on a bright fill, and the three-letter code in the corner
+   printed over the course name. Now the card is the theme's own panel with
+   light-on-dark (or dark-on-light) text in every theme, the bucket colour
+   is a stripe down the leading edge, and the bucket is written out on its
+   own line above the name.
+
+   --cat carries the bucket colour; a graded course swaps it for its grade
+   band (section 32 above), so a finished year still reads as a shape.
+   ========================================================================= */
+.course:is(.core){--cat:var(--core);}
+.course:is(.skills){--cat:var(--skills);}
+.course:is(.math){--cat:var(--math);}
+.course:is(.dept){--cat:var(--dept);}
+.course:is(.eng){--cat:var(--eng);}
+.course:is(.uni){--cat:var(--uni);}
+.course:is(.free){--cat:var(--free);}
+.course:is(.intern){--cat:var(--intern);}
+.course:is(.summer){--cat:var(--summer);}
+.course.course{
+  background:var(--panel); color:var(--text);
+  overflow:hidden; padding-inline-start:14px;
+}
+.course.course::after{
+  content:''; position:absolute; inset-block:0; inset-inline-start:0; width:4px;
+  background:var(--cat, var(--misc)); pointer-events:none;
+}
+/* Done: a soft green wash, full-strength text. */
+.course.course.completed{
+  opacity:1; background:color-mix(in srgb, var(--unlock) 8%, var(--panel));
+}
+.course.course.completed[class*=" grade-"]{
+  --cat:var(--card-grade);
+  background:color-mix(in srgb, var(--card-grade) 12%, var(--panel)) !important;
+  color:var(--text) !important;
+}
+.course.course .course-meta,
+.course.course.completed[class*=" grade-"] .course-meta{color:var(--text-dim); opacity:1;}
+.course.course .name-alt,
+.course.course.completed[class*=" grade-"] .name-alt{color:var(--text-dim); opacity:1;}
+.course.course .name{padding-top:0;}
+/* The bucket, written out, on its own line: never over the name. Mixed
+   toward the text colour so a yellow or pale bucket still reads. */
+.course.course .req-code,
+.course.course.completed[class*=" grade-"] .req-code{
+  position:static; display:block; margin:0 0 3px; padding-inline-end:22px;
+  font-family:inherit; font-size:calc(9.5px * var(--card-scale, 1)); font-weight:800;
+  letter-spacing:.06em; text-transform:uppercase; line-height:1.3;
+  color:color-mix(in srgb, var(--cat, var(--misc)) 72%, var(--text)); opacity:1;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* The tick's circle was drawn for a coloured fill (a white ring on a dark
+   wash); on the panel it takes the theme's own ink. */
+.course.course:not(.completed) .course-check::before{
+  background:transparent; border-color:color-mix(in srgb, var(--text-dim) 80%, transparent);
+}
+:root[data-card-size="compact"] .course.course .req-code{display:none;}
+
+/* =========================================================================
+   SETTINGS → MY DATA, GROUPED  (js/37-sidebar.js renderSettingsBody)
+
+   One box per job: sync, backup (with the restore points inside it), the
+   people who share this device — and last, alone and red, erasing
+   everything, which asks for the word RESET first.
+   ========================================================================= */
+.set-grp{
+  border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:0 0 12px;
+  background:var(--surface-bg);
+}
+.set-grp > h3:first-child, .set-grp > .set-grp-h:first-child{margin-top:0;}
+.set-grp-h{margin:0 0 6px;}
+.set-grp-danger{
+  border-color:color-mix(in srgb, var(--danger,#e8557c) 45%, var(--line));
+  background:color-mix(in srgb, var(--danger,#e8557c) 6%, var(--surface-bg));
+  margin-top:18px;
+}
+.set-grp-danger .set-grp-h{color:var(--danger,#e8557c);}
+.set-grp-danger .set-grp-h .app-icon-svg{color:inherit;}
+.home-btn.set-danger-btn{border-color:color-mix(in srgb, var(--danger,#e8557c) 60%, transparent); color:var(--danger,#e8557c);}
+.home-btn.set-danger-btn .app-icon-svg{color:inherit;}
+.home-btn.set-danger-btn:disabled{opacity:.45; cursor:not-allowed;}
+.set-danger-lbl{display:block; font-size:12px; font-weight:700; color:var(--text-dim); margin:4px 0 6px;}
+.set-danger-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+.set-danger-row input{
+  flex:1 1 140px; min-width:0; padding:9px 11px; border-radius:8px; border:1px solid var(--line);
+  background:var(--search-bg); color:var(--text); font-family:ui-monospace, Menlo, monospace; font-size:13px; letter-spacing:.08em;
+}
+.set-danger-row input:focus{outline:none; border-color:var(--danger,#e8557c);}

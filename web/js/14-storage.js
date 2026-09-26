@@ -43,70 +43,126 @@
   }
   window.AAUP_STORAGE = { getJSON: getJSON, setJSON: setJSON };
 
-  var hideTimer = null;
-  function showToast(msg){
-    var el = document.getElementById('globalToast');
-    if(!el) return;
-    el.textContent = msg;
-    el.classList.add('show');
-    if(hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
-  }
+  // ONE MESSAGE AT A TIME.
+  //
+  // There used to be three toasts — a plain one, one with a button, and the
+  // "now open to you" card — each on its own timer in its own element. Tick
+  // one course and up to three landed at once, stacked over the plan and the
+  // tab bar. Now there is one box and one queue:
+  //   - a message that arrives while another has only just appeared (the
+  //     achievement a tick unlocked, say) joins it as an extra line, so the
+  //     whole moment is one message;
+  //   - anything later waits until the current one has gone;
+  //   - the box has at most one button; a merged message that has its own
+  //     action becomes a tappable line instead.
+  var MERGE_MS = 1500;
+  var queue = [], current = null, hideTimer = null;
 
-  // "Say it out loud" — the toast half of the same moment the screen-reader
-  // announcer already speaks (see announceToggle in js/28-imported.js and
-  // js/11-module11.js's built-in-plan equivalent). A tick can silently
-  // unlock three more courses with nothing on screen changing anywhere near
-  // where the student is looking; this puts the news where the eye already
-  // is, for the three seconds it takes to read it, then gets out of the way.
-  var unlockHideTimer = null;
-  function showUnlockToast(title, subtitle){
-    var el = document.getElementById('globalUnlockToast');
-    var titleEl = document.getElementById('globalUnlockToastTitle');
-    var subEl = document.getElementById('globalUnlockToastSub');
-    if(!el || !titleEl) return;
-    titleEl.textContent = title;
-    if(subEl){ subEl.textContent = subtitle || ''; subEl.hidden = !subtitle; }
-    el.classList.add('show');
-    if(unlockHideTimer) clearTimeout(unlockHideTimer);
-    unlockHideTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+  function noticeEls(){
+    return {
+      box: document.getElementById('globalNotice'),
+      icon: document.getElementById('globalNoticeIcon'),
+      title: document.getElementById('globalNoticeTitle'),
+      sub: document.getElementById('globalNoticeSub'),
+      extras: document.getElementById('globalNoticeExtras'),
+      btn: document.getElementById('globalNoticeBtn')
+    };
   }
-
-  // A toast that carries one tappable action (used for "Moved — Undo").
-  // Stays up a little longer than the plain toast to give a real chance to
-  // hit the button, and is dismissed either by tapping the action or when
-  // it times out. onAction runs at most once.
-  var actionHideTimer = null;
-  function showActionToast(msg, actionLabel, onAction){
-    var el = document.getElementById('globalActionToast');
-    var textEl = document.getElementById('globalActionToastText');
-    var btn = document.getElementById('globalActionToastBtn');
-    if(!el || !textEl || !btn){ showToast(msg); return; }
-    textEl.textContent = msg;
-    btn.textContent = actionLabel;
-    el.style.display = 'flex';
-    // force reflow so the .show transition runs even if the element was
-    // just flipped from display:none
-    void el.offsetWidth;
-    el.classList.add('show');
-    if(actionHideTimer) clearTimeout(actionHideTimer);
-    var done = false;
-    function dismiss(){
-      el.classList.remove('show');
-      setTimeout(function(){ if(!el.classList.contains('show')) el.style.display = 'none'; }, 300);
-    }
-    var newBtn = btn.cloneNode(true); // drop any handler from a previous toast
-    btn.parentNode.replaceChild(newBtn, btn);
-    newBtn.addEventListener('click', function(){
-      if(done) return;
-      done = true;
-      if(actionHideTimer) clearTimeout(actionHideTimer);
-      dismiss();
-      try{ onAction(); }catch(e){}
+  function iconFor(kind){
+    var key = kind === 'ok' ? 'tick' : kind === 'award' ? 'trophy' : 'help';
+    return window.AAUP_ICONS ? window.AAUP_ICONS.preview(key, 14) : '';
+  }
+  function paint(){
+    var e = noticeEls();
+    if(!e.box || !current) return;
+    e.box.className = 'notice notice-' + (current.kind || 'plain') + ' show';
+    if(e.icon) e.icon.innerHTML = iconFor(current.kind);
+    e.title.textContent = current.title;
+    e.sub.textContent = current.sub || '';
+    e.sub.hidden = !current.sub;
+    e.extras.innerHTML = '';
+    current.extras.forEach(function(x){
+      var el = document.createElement(x.action ? 'button' : 'span');
+      el.className = 'notice-extra notice-extra-' + (x.kind || 'plain');
+      if(x.action){ el.type = 'button'; }
+      el.innerHTML = iconFor(x.kind);
+      // The action's label is said once: on the box's own button when that
+      // button already says it ("See the rest" twice read as a stutter).
+      var sameAsButton = x.action && current.action && x.action.label === current.action.label;
+      el.appendChild(document.createTextNode(x.text + (x.action && !sameAsButton ? ' · ' + x.action.label : '')));
+      if(x.action){ el.addEventListener('click', function(){ hide(); try{ x.action.fn(); }catch(err){} }); }
+      e.extras.appendChild(el);
     });
-    actionHideTimer = setTimeout(dismiss, 6000);
+    e.extras.hidden = !current.extras.length;
+    if(current.action){
+      e.btn.hidden = false;
+      e.btn.textContent = current.action.label;
+    } else {
+      e.btn.hidden = true;
+    }
+  }
+  function arm(){
+    if(hideTimer) clearTimeout(hideTimer);
+    var ms = current.ms || (current.action ? 6000 : 3200);
+    hideTimer = setTimeout(hide, ms + current.extras.length * 1500);
+  }
+  function hide(){
+    var e = noticeEls();
+    if(hideTimer){ clearTimeout(hideTimer); hideTimer = null; }
+    current = null;
+    if(e.box) e.box.classList.remove('show');
+    if(queue.length){ setTimeout(function(){ if(!current && queue.length) show(queue.shift()); }, 280); }
+  }
+  function show(n){
+    current = n;
+    n.extras = n.extras || [];
+    n.shownAt = Date.now();
+    paint();
+    arm();
+  }
+  function notify(n){
+    if(!n || !n.title) return;
+    // The same words twice in a row (a double tap) are one message.
+    if(current && current.title === n.title && current.sub === n.sub){ arm(); return; }
+    if(current && Date.now() - current.shownAt < MERGE_MS){
+      current.extras.push({ text: n.sub ? n.title + ' — ' + n.sub : n.title, kind: n.kind, action: n.action });
+      paint();
+      arm();
+      return;
+    }
+    if(current){ queue.push(n); return; }
+    show(n);
+  }
+  function bindNotice(){
+    var e = noticeEls();
+    if(!e.btn || e.btn.__bound) return;
+    e.btn.__bound = true;
+    e.btn.addEventListener('click', function(){
+      var a = current && current.action;
+      hide();
+      if(a){ try{ a.fn(); }catch(err){} }
+    });
+  }
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bindNotice); }
+  else { bindNotice(); }
+
+  function showToast(msg){ notify({ title: String(msg || ''), kind: 'plain' }); }
+  // "Say it out loud" — the visible half of what the screen-reader announcer
+  // already speaks when a tick opens other courses (announceToggle in
+  // js/28-imported.js). opts.undo puts an Undo button on it.
+  function showUnlockToast(title, subtitle, opts){
+    notify({ title: title, sub: subtitle || '', kind: 'ok',
+             action: opts && opts.undo ? { label: opts.undoLabel || 'Undo', fn: opts.undo } : null,
+             ms: opts && opts.undo ? 5000 : 0 });
+  }
+  // A message with one tappable action ("Moved — Undo", "Achievement — See
+  // the rest"). onAction runs at most once. opts.kind picks the icon.
+  function showActionToast(msg, actionLabel, onAction, opts){
+    notify({ title: String(msg || ''), kind: (opts && opts.kind) || 'plain',
+             action: { label: actionLabel, fn: onAction } });
   }
   window.__showActionToast = showActionToast;
+  window.__notify = notify;
   // Ten modules ask this question — the assistant, the Fix panel, the export
   // dialog, achievements, the back bar, the developer panel — and it used to
   // answer it by looking for a visible `.plan-page` carrying rtl-mode. That
