@@ -79,12 +79,22 @@
     return '<a href="tel:' + esc(n.replace(/[^+0-9]/g, '')) + '">' + esc(n) + '</a>';
   }
 
+  // The classes are abt-*, not ab-*: the Settings restore points
+  // (js/84-autobackup.js) already own .ab-row, and its boxed,
+  // space-between rows were being applied here too — which is what pushed
+  // every value on this page to the far edge.
   function row(iconKey, label, valueHtml){
-    return '<div class="ab-row">' +
-      '<span class="ab-row-ic">' + ic(iconKey, 16) + '</span>' +
-      '<span class="ab-row-body"><span class="ab-row-label">' + esc(label) + '</span>' +
-      '<span class="ab-row-value">' + valueHtml + '</span></span></div>';
+    return '<div class="abt-row">' +
+      '<span class="abt-row-ic">' + ic(iconKey, 16) + '</span>' +
+      '<span class="abt-row-body"><span class="abt-row-label">' + esc(label) + '</span>' +
+      '<span class="abt-row-value">' + valueHtml + '</span></span></div>';
   }
+
+  // Drawn, not the 🇵🇸 emoji: Windows has no flag emoji and printed the two
+  // letters "PS" in its place.
+  var FLAG = '<svg class="abt-flag-mark" width="22" height="15" viewBox="0 0 30 20" aria-hidden="true" focusable="false">' +
+    '<rect width="30" height="20" fill="#fff"/><rect width="30" height="6.67" fill="#000"/>' +
+    '<rect y="13.33" width="30" height="6.67" fill="#149954"/><path d="M0 0L12 10L0 20z" fill="#e4312b"/></svg>';
 
   function render(rtl){
     var t = T[rtl ? 'ar' : 'en'];
@@ -108,7 +118,7 @@
       var cname = rtl && cm.nameAr ? cm.nameAr : (cm.name || '');
       var value = telLink(cm.phone);
       if(cm.fax){
-        value += '<br><span class="ab-sub">' + esc(t.fax) + ' ' + esc(cm.fax) + '</span>';
+        value += '<br><span class="abt-sub">' + esc(t.fax) + ' ' + esc(cm.fax) + '</span>';
       }
       campusRows += row('mobile', cname || t.uniPhone, value);
     }
@@ -120,20 +130,27 @@
       : '';
 
     return (window.__backBarHTML ? window.__backBarHTML('', 'aboutOverlay', rtl) : '') +
-      '<h2 class="mh" style="margin-top:0;">' + ic('people', 20) + esc(t.title) + '</h2>' +
-      '<p class="ab-lead">' + esc(t.what) + '</p>' +
-      '<p class="ab-flag"><span class="ab-flag-mark" aria-hidden="true">🇵🇸</span>' + esc(t.madeIn) + '</p>' +
-      '<div class="ab-rows">' +
-        (u ? row('university', t.uniLabel,
-          '<b>' + esc(uniName(u, rtl)) + '</b><br>' + siteHtml) : '') +
-        campusRows +
-        emailRow +
-        row('person', t.makerLabel,
-          '<b>' + esc(MAKER.name) + '</b><br>' + esc(MAKER.handles.join(' · '))) +
-        row('speech', t.discord, '<code>' + esc(MAKER.discord) + '</code>') +
-        row('mobile', t.phone, telLink(MAKER.phone)) +
+      '<div class="abt-head"><span class="abt-head-ic">' + ic('help', 18) + '</span>' +
+        '<h2 class="abt-title">' + esc(t.title) + '</h2></div>' +
+      '<p class="abt-lead">' + esc(t.what) + '</p>' +
+      '<p class="abt-flag">' + FLAG + esc(t.madeIn) + '</p>' +
+      // Two groups — the university, and whoever made this — side by side
+      // on a wide screen, one after the other on a phone.
+      '<div class="abt-cols">' +
+        '<div class="abt-rows">' +
+          (u ? row('university', t.uniLabel,
+            '<b>' + esc(uniName(u, rtl)) + '</b><br>' + siteHtml) : '') +
+          campusRows +
+          emailRow +
+        '</div>' +
+        '<div class="abt-rows">' +
+          row('person', t.makerLabel,
+            '<b>' + esc(MAKER.name) + '</b><br><span class="abt-sub">' + esc(MAKER.handles.join(' · ')) + '</span>') +
+          row('speech', t.discord, '<code>' + esc(MAKER.discord) + '</code>') +
+          row('mobile', t.phone, telLink(MAKER.phone)) +
+        '</div>' +
       '</div>' +
-      '<p class="form-note ab-more">' + esc(t.more) + '</p>';
+      '<p class="abt-more">' + esc(t.more) + '</p>';
   }
 
   function open(){

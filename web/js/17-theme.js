@@ -227,6 +227,11 @@
     // the screen for every light theme.
     var meta = document.querySelector('meta[name="theme-color"]');
     if(meta){ meta.setAttribute('content', t.bg); }
+    // The browser draws its own date pickers, dropdown lists and scrollbars,
+    // and without this it drew them light on every theme — a white calendar
+    // popping up over a dark screen. Measured from the theme's own ground,
+    // so a custom theme gets the right one too.
+    document.documentElement.style.colorScheme = relLum(t.bg) < 0.22 ? 'dark' : 'light';
     // Every swatch button in the (possibly currently-open) Settings picker
     // updates its own "active" ring directly — no full re-render needed.
     document.querySelectorAll('[data-theme-swatch]').forEach(function(el){
