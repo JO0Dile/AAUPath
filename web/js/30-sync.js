@@ -299,13 +299,13 @@
     var apply = document.createElement('button');
     apply.type = 'button';
     apply.className = 'home-btn sync-consent-apply';
-    apply.textContent = '✅ Apply changes to my plan';
+    apply.textContent = 'Apply changes to my plan';
     apply.addEventListener('click', function(){ resolveConsent(item, true, el); });
 
     var keep = document.createElement('button');
     keep.type = 'button';
     keep.className = 'home-btn';
-    keep.textContent = '❌ Keep my current version';
+    keep.textContent = 'Keep my current version';
     keep.addEventListener('click', function(){ resolveConsent(item, false, el); });
 
     actions.appendChild(apply);
@@ -339,7 +339,7 @@
     consentQueue = consentQueue.filter(function(q){ return q.id !== item.id; });
     consentOpen = false;
     if(window.__showToast){
-      window.__showToast(accept ? '✅ Updated to the official plan.' : '👍 Kept your version.');
+      window.__showToast(accept ? 'Updated to the official plan.' : 'Kept your version.');
     }
     if(accept) window.AAUP_IMPORTED.plansChanged();
     showNextConsent();
@@ -373,7 +373,7 @@
     if(!manual && autoCheck) return autoCheck;
     var run = (presetFeed ? Promise.resolve(presetFeed) : fetchFeed()).then(function(feed){
       if(!feed){
-        if(manual && window.__showToast){ window.__showToast('⚠️ Could not reach the plans feed — check your connection.'); }
+        if(manual && window.__showToast){ window.__showToast('Could not reach the plans feed — check your connection.'); }
         return { added: 0, updated: 0, pending: 0, cosmetic: 0 };
       }
       var result = applyFeed(feed);
@@ -395,7 +395,7 @@
         if(result.updated) bits.push(result.updated + ' updated');
         if(result.cosmetic) bits.push(result.cosmetic + ' refreshed');
         if(!bits.length) bits.push('already up to date');
-        var msg = '🔄 ' + bits.join(', ') +
+        var msg = bits.join(', ') +
           (result.pending ? ' · ' + result.pending + ' need' + (result.pending === 1 ? 's' : '') + ' your decision' : '') + '.';
         if(window.__showToast){ window.__showToast(msg); }
       }

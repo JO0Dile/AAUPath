@@ -660,7 +660,10 @@
     var earnedHtml = earned.length
       ? '<div class="ach-section-label">' + (rtl ? 'اللي حققته' : 'Earned') + ' · ' + earned.length + '</div>' +
         '<div class="achievement-grid">' + earned.map(badgeCard).join('') + '</div>'
-      : '<p class="ach-empty">' + (rtl ? 'أول إنجاز بييجي لما تنجح بأول مساق.' : 'Your first badge comes when you pass your first course.') + '</p>';
+      : window.__emptyState({ icon: 'trophy',
+          title: rtl ? 'ما في إنجازات بعد' : 'No badges yet',
+          text: rtl ? 'أول إنجاز بييجي لما تنجح بأول مساق.' : 'Your first one comes when you pass your first course.',
+          btn: rtl ? 'علّم مساق' : 'Tick a course', btnAttr: 'data-ach-goplan="' + prefix + '"' });
     var closestHtml = closest.length
       ? '<div class="ach-section-label">' + (rtl ? 'قربت عليها' : 'Almost there') + '</div>' +
         '<div class="achievement-grid ach-closest">' + closest.map(badgeCard).join('') + '</div>'
@@ -742,6 +745,12 @@
     // bug).
     // Delegated so it keeps working after every re-render of the badge grid.
     overlay.addEventListener('click', function(e){
+      var go = e.target.closest && e.target.closest('[data-ach-goplan]');
+      if(go){
+        close();
+        if(window.AAUP_DASHBOARD) window.AAUP_DASHBOARD.openStudyPlan(go.getAttribute('data-ach-goplan'));
+        return;
+      }
       var btn = e.target.closest && e.target.closest('.ab-share');
       if(!btn || !window.AAUP_CELEBRATE) return;
       e.stopPropagation();
@@ -765,7 +774,7 @@
       if(!btn || !window.__downloadCardImage) return;
       e.stopPropagation();
       window.__downloadCardImage({
-        title: '🏆 Achievements',
+        title: 'Achievements',
         subtitle: btn.getAttribute('data-ach-major') || '',
         rows: [{ label: 'Unlocked', value: btn.getAttribute('data-ach-unlocked') + ' / ' + btn.getAttribute('data-ach-total'), accent: true }],
         filename: 'achievements'

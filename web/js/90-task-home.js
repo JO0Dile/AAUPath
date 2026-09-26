@@ -294,6 +294,24 @@
     '</aside>';
   }
 
+  // Developer is hidden from students: seven taps on the version number in a
+  // row (each within 1.5s of the last) reveal it, and it stays revealed on
+  // this device. The password behind it is unchanged.
+  var DEV_KEY = 'aaup_dev_shown';
+  var verTaps = 0, verLast = 0;
+  function devShown(){ try{ return localStorage.getItem(DEV_KEY) === '1'; }catch(e){ return false; } }
+  function verTap(){
+    if(devShown()) return;
+    var now = Date.now();
+    verTaps = (now - verLast < 1500) ? verTaps + 1 : 1;
+    verLast = now;
+    if(verTaps < 7) return;
+    verTaps = 0;
+    try{ localStorage.setItem(DEV_KEY, '1'); }catch(e){}
+    if(window.__showToast) window.__showToast(L('Developer mode is on', 'وضع المطوّر شغّال'));
+    render();
+  }
+
   function render(){
     var host = document.getElementById('taskHome');
     if(!host) return;
@@ -319,6 +337,7 @@
             '<label for="hmSearch" class="hm-sr">' + esc(L('Search AAUPath', 'ابحث في AAUPath')) + '</label>' +
             '<span class="hm-search-ic" aria-hidden="true">' + ic('search', 22) + '</span>' +
             '<input id="hmSearch" type="search" autocomplete="off" enterkeyhint="search" value="' + esc(state.q) + '" placeholder="' + esc(hint()) + '">' +
+            '<button type="button" class="hm-search-cancel" data-hm-cancel>' + esc(L('Cancel', 'إلغاء')) + '</button>' +
             '<div class="hm-results" id="hmResults" role="listbox" hidden></div>' +
           '</div>' +
           '<div class="hm-try"><span>' + esc(L('Try', 'جرّب')) + '</span>' +
@@ -334,8 +353,8 @@
           '<div class="hm-also"><span class="hm-label">' + esc(L('Also here', 'كمان هون')) + '</span>' +
             EXTRAS.filter(function(f){ return !f.onlyWithPlan || id; }).map(function(f){ return '<button type="button" class="hm-pill" data-hm-go="' + f.key + '">' + ic(f.icon, 15) + esc(L(f.en, f.ar)) + '</button>'; }).join('') +
           '</div>' +
-          '<div class="hm-foot"><span class="app-version-badge">v' + esc(window.APP_VERSION || '?') + '</span>' +
-            '<button type="button" class="dev-link" data-hm-dev>' + esc(L('Developer', 'المطوّر')) + '</button></div>' +
+          '<div class="hm-foot"><button type="button" class="app-version-badge hm-ver" data-hm-ver>v' + esc(window.APP_VERSION || '?') + '</button>' +
+            (devShown() ? '<button type="button" class="dev-link" data-hm-dev>' + esc(L('Developer', 'المطوّر')) + '</button>' : '') + '</div>' +
         '</div>' +
         railHtml(id, s) +
       '</div>';
@@ -361,7 +380,7 @@
       seen[key] = true;
       out.push({ kind: L('Course', 'مساق'), title: plain(ar() && c.ar ? c.ar : c.en),
                  sub: plain((c.code ? c.code + ' \u00b7 ' : '') + c.where), go: 'c:' + c.page + '|' + c.slug });
-      return out.length >= 3;
+      return out.length >= 30;
     });
     return out;
   }
@@ -392,8 +411,16 @@
         out.push({ kind: L('Major', 'تخصص'), title: plain(planName(p)), sub: plain(collegeName(collegeKey(p), p)), go: 'm:' + id });
       }
     });
-    return out.slice(0, 8);
+    return out;
   }
+
+  // Results grouped by kind: courses first (what people search for most),
+  // then professors, majors and features. Each group shows its first few
+  // with "Show all" for the rest. On a phone the results are the whole page.
+  var GROUP_ORDER = ['c:', 'p:', 'm:', 'f:'];
+  var GROUP_NAME = { 'c:': ['Courses', 'مساقات'], 'p:': ['Professors', 'محاضرين'], 'm:': ['Majors', 'تخصصات'], 'f:': ['In the app', 'بالتطبيق'] };
+  var GROUP_CAP = 4;
+  var openGroups = {};
 
   function renderResults(){
     var box = document.getElementById('hmResults');
@@ -401,17 +428,37 @@
     if(!box || !host) return;
     var q = state.q.trim();
     host.classList.toggle('hm-has-q', !!q);
-    if(!q){ box.hidden = true; box.innerHTML = ''; return; }
+    if(!q){ box.hidden = true; box.innerHTML = ''; openGroups = {}; return; }
     var rs = results();
-    box.innerHTML = rs.map(function(r, i){
-      return '<button type="button" class="hm-res" role="option" data-hm-res="' + esc(r.go) + '">' +
-        '<span class="hm-res-kind">' + esc(r.kind) + '</span>' +
-        '<span class="hm-res-body"><b>' + esc(r.title) + '</b>' + (r.sub ? '<span>' + esc(r.sub) + '</span>' : '') + '</span></button>';
+    var groups = {};
+    rs.forEach(function(r){ var k = r.go.slice(0, 2); (groups[k] = groups[k] || []).push(r); });
+    box.innerHTML = GROUP_ORDER.filter(function(k){ return groups[k]; }).map(function(k){
+      var list = groups[k], all = openGroups[k] || list.length <= GROUP_CAP + 1;
+      var shown = all ? list : list.slice(0, GROUP_CAP);
+      return '<div class="hm-group" role="group" aria-label="' + esc(L(GROUP_NAME[k][0], GROUP_NAME[k][1])) + '">' +
+        '<div class="hm-group-h">' + esc(L(GROUP_NAME[k][0], GROUP_NAME[k][1])) + ' <span>' + list.length + '</span></div>' +
+        shown.map(function(r){
+          return '<button type="button" class="hm-res" role="option" data-hm-res="' + esc(r.go) + '">' +
+            '<span class="hm-res-body"><b>' + esc(r.title) + '</b>' + (r.sub ? '<span>' + esc(r.sub) + '</span>' : '') + '</span></button>';
+        }).join('') +
+        (all ? '' : '<button type="button" class="hm-res-more" data-hm-more="' + k + '">' +
+          esc(L('Show all ' + list.length, 'اعرض الكل (' + list.length + ')')) + '</button>') +
+        '</div>';
     }).join('') +
       '<button type="button" class="hm-res hm-res-ask" data-hm-res="ask">' + ic('chatdots', 17) +
         esc(rs.length ? L('Ask AAUPath: “' + q + '”', 'اسأل AAUPath: «' + q + '»')
                       : L('Nothing matches that. Ask AAUPath instead', 'ما في نتيجة. اسأل AAUPath بدالها')) + '</button>';
     box.hidden = false;
+  }
+
+  function isPhone(){ return !!(window.matchMedia && window.matchMedia('(max-width: 899px)').matches); }
+  function clearSearch(){
+    var had = history.state && history.state.hmSearch;
+    state.q = '';
+    var input = document.getElementById('hmSearch');
+    if(input) input.value = '';
+    renderResults();
+    if(had){ try{ history.back(); }catch(e){} }
   }
 
   function runResult(code){
@@ -607,18 +654,31 @@
       else if(t.closest('[data-hm-lang]')){ if(window.AAUP_LANG) window.AAUP_LANG.toggle(); }
       else if(t.closest('[data-hm-settings]')){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); }
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
+      else if(t.closest('[data-hm-ver]')) verTap();
+      else if((b = t.closest('[data-hm-more]'))){ openGroups[b.getAttribute('data-hm-more')] = true; renderResults(); }
+      else if(t.closest('[data-hm-cancel]')) clearSearch();
     });
     host.addEventListener('input', function(e){
-      if(e.target && e.target.id === 'hmSearch'){ state.q = e.target.value; renderResults(); }
+      if(e.target && e.target.id === 'hmSearch'){
+        var was = !!state.q.trim();
+        state.q = e.target.value;
+        // On a phone the results are a page of their own, so the phone's
+        // Back button should close them rather than leave the app.
+        if(!was && state.q.trim() && isPhone()){
+          try{ history.pushState({ hmSearch: 1 }, ''); }catch(err){}
+        }
+        renderResults();
+      }
+    });
+    window.addEventListener('popstate', function(){
+      if(state.q && visible()){ state.q = ''; var i = document.getElementById('hmSearch'); if(i) i.value = ''; renderResults(); }
     });
     host.addEventListener('keydown', function(e){
       if(e.target && e.target.id === 'hmSearch' && e.key === 'Enter'){
         var first = host.querySelector('[data-hm-res]');
         if(first){ e.preventDefault(); first.click(); }
       }
-      if(e.target && e.target.id === 'hmSearch' && e.key === 'Escape' && state.q){
-        state.q = ''; e.target.value = ''; renderResults();
-      }
+      if(e.target && e.target.id === 'hmSearch' && e.key === 'Escape' && state.q) clearSearch();
     });
     // Tapping anywhere else closes an open results list on a wide screen,
     // where it floats over the cards.

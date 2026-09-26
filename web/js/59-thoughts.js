@@ -423,7 +423,10 @@
       '<div class="th-list" id="thList">' +
         (list.length
           ? list.map(function(t){ return thoughtHTML(t, rtl); }).join('')
-          : '<p class="ncp-empty">' + (rtl ? 'لا أفكار بعد — كن أول واحد.' : 'Nothing here yet — be the first.') + '</p>') +
+          : window.__emptyState({ icon: 'speech',
+              title: rtl ? 'ما في إشي هون بعد' : 'Nothing here yet',
+              text: rtl ? 'ما حدا كتب عن هالفصل لسا. كون أول واحد، بدون اسم.' : 'No one has written here yet. Be the first; it is anonymous.',
+              btn: rtl ? 'اكتب إشي' : 'Write something', btnAttr: 'data-th-write' })) +
       '</div>' +
       (endpoint() ? '' : '<p class="form-note th-localnote">' + (rtl
         ? 'الوضع المحلي: أفكارك محفوظة على جهازك فقط، لأن خادم الأفكار غير مُهيّأ بعد.'
@@ -453,6 +456,8 @@
     var count = document.getElementById('thCount');
     var error = document.getElementById('thError');
     if(!input || !send) return;
+    var writeBtn = document.querySelector('[data-th-write]');
+    if(writeBtn) writeBtn.addEventListener('click', function(){ input.focus(); });
 
     // Starts at one row (a chat input, not a form textarea) and grows only
     // as far as an actual multi-line thought needs — capped so one very
@@ -612,7 +617,7 @@
       '<div class="form-field"><input type="url" id="thUrlInput" spellcheck="false" dir="ltr" ' +
         'placeholder="https://your-worker.workers.dev" value="' + esc(saved) + '"></div>' +
       '<button type="button" class="home-btn" id="thUrlSave" style="align-self:flex-start;">' +
-        (r ? '💾 حفظ وفحص' : '💾 Save & test') + '</button>' +
+        (r ? 'حفظ وفحص' : 'Save & test') + '</button>' +
       '</div>' +
       '<p class="form-note" id="thUrlMsg" style="margin-top:4px;">' +
       (live

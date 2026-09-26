@@ -897,7 +897,7 @@
           var result = window.AAUP_ACCOUNTS.deleteAccount(acct);
           if(!result.ok){ msg.innerHTML = '<p class="dev-error-msg">' + result.error + '</p>'; return; }
           renderSettingsBody(body);
-          if(window.__showToast){ window.__showToast(r ? '🗑 تم حذف الحساب.' : '🗑 Account deleted.'); }
+          if(window.__showToast){ window.__showToast(r ? 'تم حذف الحساب.' : 'Account deleted.'); }
         }, r);
       });
     });

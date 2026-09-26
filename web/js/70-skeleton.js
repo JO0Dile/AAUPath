@@ -13,7 +13,7 @@
 
   var TIPS_EN = [
     'Tip: tap any course card to see its full description and prerequisites.',
-    'Tip: the 🛠 button in the corner runs a health check on the app.',
+    'Tip: the round button in the corner runs a health check on the app.',
     '"Show only what I can take" hides everything you cannot register for yet.',
     'Your theme — and now your own colors — live in Settings.',
     'Degree Audit shows exactly how many hours are left in each category.',
@@ -25,7 +25,7 @@
   ];
   var TIPS_AR = [
     'نصيحة: اضغط على أي مساق لترى وصفه الكامل والمتطلبات السابقة.',
-    'نصيحة: زر 🛠 بالزاوية يفحص صحة التطبيق.',
+    'نصيحة: الزر الدائري بالزاوية يفحص صحة التطبيق.',
     '"أظهر ما يمكنني أخذه فقط" يخفي كل شي ما بتقدر تسجله لسه.',
     'شكل التطبيق — وألوانك الخاصة كمان — موجودين بالإعدادات.',
     'تدقيق الخطة يوريك بالضبط كم ساعة باقيلك بكل قسم.',
@@ -54,7 +54,7 @@
   function block(kind, count, rtl){
     var html = '<div class="skel-wrap" role="status" aria-live="polite">';
     for(var i = 0; i < count; i++){ html += shapeHTML(kind); }
-    html += '<p class="skel-tip">💡 ' + tip(rtl) + '</p></div>';
+    html += '<p class="skel-tip">' + tip(rtl) + '</p></div>';
     return html;
   }
 

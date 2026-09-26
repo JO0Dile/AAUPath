@@ -426,17 +426,6 @@
         : '') +
       '</div>';
 
-    var removed = window.AAUP_REMOVED && window.AAUP_REMOVED.isRemoved(prefix, slug);
-    var removeHtml = '<div class="modal-row-block modal-remove-block">' +
-      '<button type="button" class="course-remove-btn' + (removed ? ' is-restore' : '') + '" id="courseRemoveBtn">' +
-        (removed
-          ? (rtl ? '↩︎ إعادة المساق إلى خطتي' : '↩︎ Restore to my plan')
-          : (rtl ? '🗑 إزالة المساق من خطتي' : '🗑 Remove from my plan')) +
-      '</button>' +
-      '<p class="ex-note">' + (removed
-        ? (rtl ? 'هذا المساق مُزال حاليًا ولا يُحتسب ضمن متطلباتك.' : "This course is currently removed and isn't counted toward your requirements.")
-        : (rtl ? 'أزِله إن كنت قد تجاوزته أو لم تأخذه (مثل الإنجليزية المتوسطة) — لن يُحتسب ضمن متطلباتك.' : "Remove it if you tested out of it or never took it (e.g. Intermediate English) — it won't count toward your requirements.")) +
-      '</p></div>';
 
     // Pooled from every other student's own planning status for this course
     // (workers/ratings-worker.js) — already fetched in the background when
@@ -445,7 +434,7 @@
     var liveEntry = (window.AAUP_COMMUNITY ? window.AAUP_COMMUNITY.loadCommunity() : {})[slug];
     var inProgressCount = liveEntry ? (liveEntry.inProgressCount || 0) : 0;
     var whoElseHtml = inProgressCount
-      ? '<p class="who-else-note">👥 ' + (rtl
+      ? '<p class="who-else-note">' + (rtl
           ? (inProgressCount === 1 ? 'طالب واحد آخذ هذا المساق حاليًا هالفصل.' : inProgressCount + ' طلاب آخذين هذا المساق حاليًا هالفصل.')
           : (inProgressCount === 1 ? '1 other student has this in progress this semester.' : inProgressCount + ' other students have this in progress this semester.')) +
         '</p>'
@@ -471,7 +460,6 @@
       gradeHtml +
       optHtml +
       '</div>' +
-      removeHtml +
       '</div>';
   }
 
@@ -809,21 +797,6 @@
       });
     }
 
-    var removeBtn = container.querySelector('#courseRemoveBtn');
-    if(removeBtn && window.AAUP_REMOVED){
-      removeBtn.addEventListener('click', function(){
-        var slugForRemove = container.getAttribute('data-slug') || slug;
-        var currentlyRemoved = window.AAUP_REMOVED.isRemoved(prefix, slugForRemove);
-        window.AAUP_REMOVED.setRemoved(prefix, slugForRemove, !currentlyRemoved);
-        // Close the popup — the card it described is now hidden (or back).
-        var ov = container.closest('.modal-overlay');
-        if(ov){ ov.classList.remove('open'); }
-        else {
-          var openOv = document.querySelector('.modal-overlay.open, #impCourseModalOverlay.open');
-          if(openOv){ openOv.classList.remove('open'); }
-        }
-      });
-    }
   }
 
   window.__renderCourseModalExtras = render;

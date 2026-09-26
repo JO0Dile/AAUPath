@@ -21,7 +21,7 @@
     }
     return rtl ? 'مرتبط — علامة واحدة للمساقين' : 'Connected — same grade for both';
   }
-  function glyphFor(mode){ return mode === 'independent' ? '⛓️‍💥' : '🔗'; }
+  function glyphFor(mode){ return window.AAUP_ICONS.preview(mode === 'independent' ? 'shuffle' : 'link', 14); }
 
   function injectButtons(prefix){
     var page = document.getElementById('page-' + prefix);
@@ -47,7 +47,7 @@
       function refresh(){
         var mode = effectiveMode(prefix, baseSlug, group);
         applyMode(group, mode);
-        btn.textContent = glyphFor(mode);
+        btn.innerHTML = glyphFor(mode);
         btn.title = labelFor(mode, rtl);
       }
       refresh();
@@ -59,7 +59,7 @@
         overrides[window.AAUP_GPA.pairOverrideKey(prefix, baseSlug)] = next;
         window.AAUP_GPA.savePairModeOverrides(overrides);
         refresh();
-        if(window.__showToast){ window.__showToast((glyphFor(next)) + ' ' + labelFor(next, rtl)); }
+        if(window.__showToast){ window.__showToast(labelFor(next, rtl)); }
         if(window.__refreshPlanUI){ window.__refreshPlanUI(prefix); }
       });
       // Placed between the two course cards, matching where the (previously

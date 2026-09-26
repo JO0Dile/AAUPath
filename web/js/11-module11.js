@@ -463,9 +463,9 @@
       if(!el) return;
       var rtl = isRtl(prefix);
       if(info && info.name){
-        el.textContent = (rtl ? 'أهلاً، ' : 'Welcome, ') + info.name + ' 👋';
+        el.textContent = (rtl ? 'أهلاً، ' : 'Welcome, ') + info.name + ' ';
       } else {
-        el.textContent = rtl ? 'أهلاً بك! 👋' : 'Welcome! 👋';
+        el.textContent = rtl ? 'أهلاً بك! ' : 'Welcome! ';
       }
     });
   }

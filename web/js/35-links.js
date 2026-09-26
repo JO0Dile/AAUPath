@@ -57,26 +57,26 @@
     var rtl = isRtl(prefix);
     var info = infoFor(prefix);
     if(!from || !to){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'اختر المساقين أولًا.' : 'Pick both courses first.')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'اختر المساقين أولًا.' : 'Pick both courses first.')); }
       return;
     }
     if(!info[from] || !info[to]){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'مساق غير معروف.' : 'Unknown course.')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'مساق غير معروف.' : 'Unknown course.')); }
       return;
     }
     if(from === to){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'لا يمكن ربط المساق بنفسه.' : 'A course can’t be its own prerequisite.')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'لا يمكن ربط المساق بنفسه.' : 'A course can’t be its own prerequisite.')); }
       return;
     }
     var existing = (window.__PLAN_DATA[prefix] || {}).prereqs || [];
     var k = window.__prereqPairKey(from, to);
     if(existing.some(function(p){ return window.__prereqPairKey(p[0], p[1]) === k; })){
-      if(window.__showToast){ window.__showToast('🚫 ' + (rtl ? 'هذا الخط موجود بالفعل.' : 'That line already exists.')); }
+      if(window.__showToast){ window.__showToast((rtl ? 'هذا الخط موجود بالفعل.' : 'That line already exists.')); }
       return;
     }
     if(wouldCycle(prefix, from, to)){
       if(window.__showToast){
-        window.__showToast('🚫 ' + (rtl
+        window.__showToast((rtl
           ? 'هذا الربط يُنشئ حلقة مغلقة — سيجعل المساقين مستحيلي التسجيل.'
           : 'That link would create a loop — both courses could never become available.'));
       }
@@ -90,7 +90,7 @@
     else { e.added.push([from, to]); }
     saveEditsFor(prefix, e);
     afterChange(prefix);
-    if(window.__showToast){ window.__showToast(rtl ? '✅ تمت إضافة الخط.' : '✅ Line added.'); }
+    if(window.__showToast){ window.__showToast(rtl ? 'تمت إضافة الخط.' : 'Line added.'); }
   }
 
   function removeLine(prefix, from, to){
@@ -103,7 +103,7 @@
     else if(e.removed.indexOf(k) === -1){ e.removed.push(k); }
     saveEditsFor(prefix, e);
     afterChange(prefix);
-    if(window.__showToast){ window.__showToast(rtl ? '🗑 تمت إزالة الخط.' : '🗑 Line removed.'); }
+    if(window.__showToast){ window.__showToast(rtl ? 'تمت إزالة الخط.' : 'Line removed.'); }
   }
 
   function resetAll(prefix){
@@ -116,7 +116,7 @@
       delete all[prefix];
       window.__savePrereqEdits(all);
       afterChange(prefix);
-      if(window.__showToast){ window.__showToast(rtl ? '↩ تمت الإعادة إلى الخطة الرسمية.' : '↩ Reset to the official plan.'); }
+      if(window.__showToast){ window.__showToast(rtl ? 'تمت الإعادة إلى الخطة الرسمية.' : 'Reset to the official plan.'); }
     };
     if(window.__showConfirmDialog){ window.__showConfirmDialog(msg, doIt, rtl); }
     else { doIt(); }
@@ -159,12 +159,12 @@
         '<span class="line-arrow" aria-hidden="true">→</span>' +
         '<label>' + (rtl ? 'المساق الذي يحتاجه' : 'Course that needs it') +
           '<select id="lineToSelect"><option value="">' + (rtl ? '— اختر —' : '— pick —') + '</option>' + opts + '</select></label>' +
-        '<button type="button" class="home-btn" id="lineAddBtn">➕ ' + (rtl ? 'إضافة خط' : 'Add line') + '</button>' +
+        '<button type="button" class="home-btn" id="lineAddBtn">' + (rtl ? 'إضافة خط' : 'Add line') + '</button>' +
       '</div>' +
       '<div class="line-list-head">' +
         '<span>' + (rtl ? 'الخطوط الحالية' : 'Current lines') + ' (' + lines.length + ')</span>' +
         ((e.added.length || e.removed.length)
-          ? '<button type="button" class="home-btn line-reset-btn" id="lineResetBtn">↩ ' + (rtl ? 'إعادة للرسمي' : 'Reset to official') + '</button>'
+          ? '<button type="button" class="home-btn line-reset-btn" id="lineResetBtn">' + (rtl ? 'إعادة للرسمي' : 'Reset to official') + '</button>'
           : '') +
       '</div>' +
       '<div class="line-list">' +

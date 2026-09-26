@@ -9,7 +9,6 @@
     window.AAUP_STORAGE.setJSON(key, obj);
   }
 
-  var WORKLOAD_ICON = { Easy: '🙂', Medium: '⚖️', Hard: '⚡' };
 
   // Generic pool slots like "uni-elective-2", "free-elective-1",
   // "dept-elective-3", "spec-elective-1" stand in for whatever specific
@@ -42,9 +41,9 @@
       else if(r.workload === 'Hard') el.classList.add('workload-hard');
 
       var badgeHtml = '';
-      if(r.workload){ badgeHtml += '<span class="meta-badge">' + (WORKLOAD_ICON[r.workload] || '') + ' ' + r.workload + '</span>'; }
-      if(r.difficulty){ badgeHtml += '<span class="meta-badge">⭐' + r.difficulty + '</span>'; }
-      if(notes[pid] && notes[pid].trim()){ badgeHtml += '<span class="meta-badge" title="Has a personal note">📝</span>'; }
+      if(r.workload){ badgeHtml += '<span class="meta-badge">' + window.AAUP_ICONS.preview('bolt', 11) + r.workload + '</span>'; }
+      if(r.difficulty){ badgeHtml += '<span class="meta-badge">' + window.AAUP_ICONS.preview('star', 11) + r.difficulty + '</span>'; }
+      if(notes[pid] && notes[pid].trim()){ badgeHtml += '<span class="meta-badge" title="Has a personal note">' + window.AAUP_ICONS.preview('pen', 11) + '</span>'; }
 
       var badgeRow = el.querySelector('.course-meta-badges');
       if(badgeHtml){

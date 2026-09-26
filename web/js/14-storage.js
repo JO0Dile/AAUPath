@@ -182,6 +182,19 @@
     return !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
   }
   window.__showToast = showToast;
+
+  // One empty screen, everywhere: what is missing, why, and one button that
+  // fixes it. btnAttr is the data-attribute the owning module listens for.
+  window.__emptyState = function(o){
+    var esc = window.__escapeHtml || function(x){ return String(x); };
+    var icon = o.icon && window.AAUP_ICONS ? window.AAUP_ICONS.preview(o.icon, 22) : '';
+    return '<div class="empty-state">' +
+      (icon ? '<div class="es-icon">' + icon + '</div>' : '') +
+      '<b class="es-title">' + esc(o.title) + '</b>' +
+      (o.text ? '<p class="es-text">' + esc(o.text) + '</p>' : '') +
+      (o.btn ? '<button type="button" class="es-btn" ' + (o.btnAttr || '') + '>' + esc(o.btn) + '</button>' : '') +
+      '</div>';
+  };
   window.__showUnlockToast = showUnlockToast;
   window.__anyVisiblePageIsRtl = anyVisiblePageIsRtl;
 

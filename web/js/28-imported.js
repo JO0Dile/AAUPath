@@ -356,7 +356,7 @@
   function removeYear(planId, yearId){
     withPlan(planId, function(p, plans){
       if(yearCourseCount(p, yearId) > 0){
-        if(window.__showToast){ window.__showToast('🚫 Year not empty — move its courses first'); }
+        if(window.__showToast){ window.__showToast('Year not empty — move its courses first'); }
         return;
       }
       p.structure.years = p.structure.years.filter(function(y){ return y.id !== yearId; });
@@ -376,7 +376,7 @@
   function removeSummer(planId, yearId){
     withPlan(planId, function(p, plans){
       if(yearCourseCount(p, yearId, 's3') > 0){
-        if(window.__showToast){ window.__showToast('🚫 Summer not empty — move its courses first'); }
+        if(window.__showToast){ window.__showToast('Summer not empty — move its courses first'); }
         return;
       }
       var y = p.structure.years.filter(function(yy){ return yy.id === yearId; })[0];
@@ -425,7 +425,7 @@
     var progress = window.__getProgress ? window.__getProgress() : {};
     delete progress[planId + '-c-' + slug];
     persistProgress();
-    if(window.__showToast){ window.__showToast('🗑 Removed "' + name + '".'); }
+    if(window.__showToast){ window.__showToast('Removed "' + name + '".'); }
     render(planId);
   }
 
@@ -553,7 +553,7 @@
     var plansNow = loadImportedPlans();
     var p = plansNow[planId];
     if((p.courses || []).some(function(c){ return c.id === id; })){
-      if(window.__showToast){ window.__showToast('🚫 A course with that ID already exists in this plan.'); }
+      if(window.__showToast){ window.__showToast('A course with that ID already exists in this plan.'); }
       return;
     }
     p.courses.push({ id: id, name: nameEn, ar: nameAr, creditHours: credits, category: category, yearId: yearId, semester: semester });
@@ -569,7 +569,7 @@
     saveImportedPlans(plansNow);
     runAutoLink(planId, id);
     if(overlay){ overlay.classList.remove('open'); }
-    if(window.__showToast){ window.__showToast('✅ Added "' + nameEn + '"'); }
+    if(window.__showToast){ window.__showToast('Added "' + nameEn + '"'); }
     render(planId);
   }
 
@@ -680,7 +680,7 @@
       saveImportedPlans(plansNow);
       runAutoLink(planId, newId);
       overlay.classList.remove('open');
-      if(window.__showToast){ window.__showToast('✅ Saved changes to "' + nameEn + '"'); }
+      if(window.__showToast){ window.__showToast('Saved changes to "' + nameEn + '"'); }
       render(planId);
     });
   }
@@ -1335,6 +1335,42 @@
   // __bindCourseModalExtras rather than re-implemented, so any future change
   // to that popup (like the elective picker) applies to every plan type at
   // once instead of needing to be built twice.
+  // GPA of one finished year, from the grades given to its courses. Null when
+  // none of them has a grade yet — then the folded line leaves GPA out.
+  function yearGpaOf(planId, courses){
+    var G = window.AAUP_GPA;
+    if(!G || !G.loadGrades || !G.GRADE_POINTS) return null;
+    var grades = G.loadGrades();
+    var points = 0, credits = 0;
+    courses.forEach(function(c){
+      var pid = G.primaryId ? G.primaryId(planId, c.id) : fullId(planId, c.id);
+      var g = grades[pid];
+      if(!G.isRealGrade || !G.isRealGrade(g) || G.GRADE_POINTS[g] == null) return;
+      var cr = parseFloat(c.creditHours) || 0;
+      points += G.GRADE_POINTS[g] * cr; credits += cr;
+    });
+    return credits ? points / credits : null;
+  }
+
+  var VIEW_KEY = 'aaup_plan_view';
+  function planView(){ try{ return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'cards'; }catch(e){ return 'cards'; } }
+  function applyPlanView(v){
+    document.documentElement.setAttribute('data-plan-view', v);
+    document.querySelectorAll('[data-plan-view]').forEach(function(b){
+      if(b !== document.documentElement) b.setAttribute('aria-pressed', String(b.getAttribute('data-plan-view') === v));
+    });
+  }
+  applyPlanView(planView());
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('button[data-plan-view]');
+    if(!b) return;
+    var v = b.getAttribute('data-plan-view');
+    try{ localStorage.setItem(VIEW_KEY, v); }catch(err){}
+    applyPlanView(v);
+    // The prerequisite arrows are drawn from where the cards sit, which just moved.
+    if(currentOpenPlanId) drawConnectors(currentOpenPlanId);
+  });
+
   function openCourseModal(planId, slug){
     var plan = loadImportedPlans()[planId];
     var course = plan && (plan.courses || []).filter(function(c){ return c.id === slug; })[0];
@@ -1406,12 +1442,6 @@
   function closeCourseModal(){
     var overlay = document.getElementById('impCourseModalOverlay');
     if(overlay){ overlay.classList.remove('open'); }
-    // 53 · Hold-to-trace is taught once someone has looked at a course and
-    // come back out — the tip is about the plan, and a coach mark cannot be
-    // read while a dialog is covering it anyway (js/32-tutorial.js).
-    if(window.AAUP_TUTORIAL && window.AAUP_TUTORIAL.moment){
-      window.AAUP_TUTORIAL.moment('courseClose');
-    }
   }
 
   // One-time wiring for the single shared overlay — backdrop click, Escape,
@@ -1908,6 +1938,11 @@
       // box used to sit above it and scroll away with the header.
       '<div class="progress-widget"><div class="pw-track"><div class="pw-fill" style="width:' + pct + '%;"></div></div>' +
       '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span>' +
+      // Cards or List: List puts each course on one line (tick, name, hours)
+      // so a whole year fits on a phone screen. Remembered per device.
+      (editing ? '' : '<div class="pw-view" role="group" aria-label="' + (rtl ? 'طريقة العرض' : 'View') + '">' +
+        '<button type="button" data-plan-view="cards" aria-pressed="' + (planView() === 'cards') + '">' + (rtl ? 'بطاقات' : 'Cards') + '</button>' +
+        '<button type="button" data-plan-view="list" aria-pressed="' + (planView() === 'list') + '">' + (rtl ? 'قائمة' : 'List') + '</button></div>') +
       '<button type="button" class="pw-search-btn" data-pw-search="' + id + '" aria-expanded="false" aria-controls="' + id + '-courseSearchWrap" aria-label="' + (rtl ? 'ابحث عن مساق' : 'Search a course') + '">' +
         window.AAUP_ICONS.preview('search', 16) + '</button>' +
       '<div class="course-search-wrap pw-search" id="' + id + '-courseSearchWrap" hidden><div class="search-box" id="' + id + '-courseSearchBox">' +
@@ -1950,13 +1985,19 @@
       var yearDone = yearCourses.filter(function(c){ return isDone(id, c.id); }).length;
       var yearHours = yearCourses.reduce(function(a, c){ return a + (parseFloat(c.creditHours) || 0); }, 0);
       var bodyId = id + '-yearbody-' + i;
-      html += '<div class="imp-year-block" data-year-index="' + i + '">' +
+      var yearFinished = yearCourses.length > 0 && yearDone === yearCourses.length;
+      var yearGpa = yearFinished ? yearGpaOf(id, yearCourses) : null;
+      html += '<div class="imp-year-block' + (yearFinished ? ' is-finished' : '') + '" data-year-index="' + i + '">' +
         '<div class="imp-year-header">' +
         '<button type="button" class="imp-year-toggle" aria-expanded="false" aria-controls="' + bodyId + '">' +
           '<span class="iy-chev" aria-hidden="true">' + window.AAUP_ICONS.preview('chevronRight', 15) + '</span>' +
           '<h3>' + (rtl ? 'السنة ' + (i + 1) : 'Year ' + (i + 1)) + '</h3>' +
-          yearRingHtml(yearDone, yearCourses.length, rtl) +
-          '<span class="iy-hours">' + yearHours + 'H</span>' +
+          (yearFinished
+            // A finished year reads as history: done, its hours, its GPA.
+            ? '<span class="iy-done">' + window.AAUP_ICONS.preview('check', 14) + '<span>' + (rtl ? 'خلصت' : 'done') +
+                ' · ' + yearHours + 'H' + (yearGpa != null ? ' · ' + (rtl ? 'المعدل ' : 'GPA ') + yearGpa.toFixed(2) : '') + '</span></span>'
+            : yearRingHtml(yearDone, yearCourses.length, rtl) +
+              '<span class="iy-hours">' + yearHours + 'H</span>') +
         '</button>';
       if(editing){
         html += '<div class="imp-year-actions">' +
@@ -2323,12 +2364,12 @@
         var communityBadge = '';
         if(entry){
           var avgD = entry.difficultyVotes ? (entry.totalDifficulty / entry.difficultyVotes).toFixed(1) : null;
-          if(avgD){ communityBadge += '<span class="meta-badge">⭐' + avgD + '</span>'; }
+          if(avgD){ communityBadge += '<span class="meta-badge">' + window.AAUP_ICONS.preview('star', 11) + avgD + '</span>'; }
         }
         html += '<div class="imp-course-card' + (done ? ' completed' : '') + (locked ? ' locked' : '') + '" data-imp-course="' + c.id + '">' +
           '<div class="imp-name">' + c.name + (done ? ' ✓' : '') + '</div>' +
           '<div class="imp-cr">' + c.creditHours + 'H \u00b7 ' + (c.category || '') + '</div>' +
-          (locked ? '<div class="imp-lock-note">🔒 Requires: ' + reqNames.join(', ') + '</div>' : '') +
+          (locked ? '<div class="imp-lock-note">' + window.AAUP_ICONS.preview('lock', 11) + ' Requires: ' + reqNames.join(', ') + '</div>' : '') +
           (communityBadge ? '<div class="course-meta-badges" style="position:static;margin-top:6px;">' + communityBadge + '</div>' : '') +
           '</div>';
       });
@@ -2456,7 +2497,7 @@
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    if(window.__showToast){ window.__showToast('📤 Exported — the file is in your downloads'); }
+    if(window.__showToast){ window.__showToast('Exported — the file is in your downloads'); }
   }
 
   function confirmDelete(id){
@@ -2483,7 +2524,7 @@
       delete overrides[id];
       window.AAUP_STORAGE.setJSON('aaup_semesterOverrides', overrides);
     }
-    if(window.__showToast){ window.__showToast('🗑 Plan deleted.'); }
+    if(window.__showToast){ window.__showToast('Plan deleted.'); }
     close();
   }
 
@@ -2780,7 +2821,7 @@
           saveImportedPlans(plansNow);
           runAutoLink(currentPlanId, course.slug);
           overlay.classList.remove('open');
-          if(window.__showToast){ window.__showToast('✅ Added "' + course.name + '" to this plan'); }
+          if(window.__showToast){ window.__showToast('Added "' + course.name + '" to this plan'); }
           render(currentPlanId);
         });
       }

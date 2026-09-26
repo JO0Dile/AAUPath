@@ -305,7 +305,7 @@
         button.disabled = false;
         button.textContent = pick(L.apply);
         card.querySelector('.fix-card-body').appendChild(
-          node('div', 'fix-result-note', '⚠️ ' + (e && e.message ? e.message : String(e)))
+          node('div', 'fix-result-note', (e && e.message ? e.message : String(e)))
         );
       });
   }
@@ -396,7 +396,7 @@
 
     if (state.scanned) {
       if (!state.findings.length) {
-        body.appendChild(node('p', 'fix-clean', '✅ ' + pick(L.clean)));
+        body.appendChild(node('p', 'fix-clean', pick(L.clean)));
       } else {
         var counts = { critical: 0, warning: 0, info: 0 };
         state.findings.forEach(function (f) { counts[f.severity]++; });
@@ -411,7 +411,7 @@
     }
 
     if (state.errors.length) {
-      body.appendChild(node('p', 'fix-empty', '⚠️ ' + state.errors.length + ' ' + pick(L.analyzerFailed) + ': ' + state.errors.join('; ')));
+      body.appendChild(node('p', 'fix-empty', state.errors.length + ' ' + pick(L.analyzerFailed) + ': ' + state.errors.join('; ')));
     }
   }
 

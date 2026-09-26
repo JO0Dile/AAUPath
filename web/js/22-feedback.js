@@ -48,7 +48,7 @@
     var body = JSON.stringify(payload, null, 2);
     var mailto = 'mailto:' + FEEDBACK_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     window.location.href = mailto;
-    if(window.__showToast) window.__showToast('📧 Email opened \u2014 hit send');
+    if(window.__showToast) window.__showToast('Email opened \u2014 hit send');
   }
 
   window.AAUP_FEEDBACK = { send: send, buildFeedback: buildFeedback };
