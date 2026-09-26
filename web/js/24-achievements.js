@@ -523,7 +523,7 @@
           if(window.__showActionToast){
             window.__showActionToast((rtl ? 'إنجاز: ' : 'Achievement: ') + name, rtl ? 'شوف الباقي' : 'See the rest', function(){
               open(prefix);
-            });
+            }, { kind: 'award' });
           } else if(window.__showToast){
             window.__showToast((rtl ? 'إنجاز جديد: ' : 'Achievement unlocked: ') + name);
           }

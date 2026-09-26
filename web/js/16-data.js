@@ -116,16 +116,20 @@
     reader.readAsText(file);
   }
 
+  // The erase itself, with no question asked — Settings asks its own
+  // (type RESET) before calling this.
+  function resetAllNow(){
+    relevantKeys().forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+    if(window.__showToast) window.__showToast('Everything cleared — reloading…');
+    setTimeout(function(){ location.reload(); }, 700);
+  }
+
   function confirmResetAll(){
     var rtl = window.__anyVisiblePageIsRtl && window.__anyVisiblePageIsRtl();
     var msg = rtl
       ? 'هل أنت متأكد أنك تريد مسح كل التقدم والبيانات المحفوظة (جميع الخطط، ملفك الشخصي، الملاحظات، التقييمات)؟ لا يمكن التراجع عن هذا.'
       : 'Are you sure you want to erase ALL progress and saved data (every plan, your profile, notes, ratings)? This cannot be undone.';
-    var doer = function(){
-      relevantKeys().forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-      if(window.__showToast) window.__showToast('Everything cleared — reloading…');
-      setTimeout(function(){ location.reload(); }, 700);
-    };
+    var doer = resetAllNow;
     if(window.__showConfirmDialog){ window.__showConfirmDialog(msg, doer, rtl); }
     else if(window.confirm(msg)){ doer(); }
   }
@@ -145,6 +149,7 @@
     exportData: exportData,
     triggerImport: triggerImport,
     handleImportFile: handleImportFile,
-    confirmResetAll: confirmResetAll
+    confirmResetAll: confirmResetAll,
+    resetAllNow: resetAllNow
   };
 })();

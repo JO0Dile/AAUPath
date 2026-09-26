@@ -117,11 +117,11 @@
           text: { en: 'Open Settings first.', ar: 'افتح الإعدادات أولًا.' },
           waitFor: function () { return !!document.querySelector('#devModalOverlay.open'); } },
         { target: q('#setExportBtn'),
-          text: { en: 'Export Progress saves a file with everything you have checked off. Keep it somewhere safe — it is the only copy besides this browser.',
-                  ar: '«تصدير التقدّم» يحفظ ملفًا بكل ما أنجزته. احتفظ به في مكان آمن — فهو النسخة الوحيدة غير هذا المتصفح.' } },
+          text: { en: 'Save a backup writes a file with everything you have checked off. Keep it somewhere safe — it is the only copy besides this browser.',
+                  ar: '«احفظ نسخة» يحفظ ملفًا بكل ما أنجزته. احتفظ به في مكان آمن — فهو النسخة الوحيدة غير هذا المتصفح.' } },
         { target: q('#setImportBtn'),
-          text: { en: 'And Import Progress restores it later, on any device.',
-                  ar: 'و«استيراد التقدّم» يستعيده لاحقًا على أي جهاز.' } }
+          text: { en: 'And Restore from file brings it back later, on any device.',
+                  ar: 'و«استرجع من ملف» يستعيده لاحقًا على أي جهاز.' } }
       ]
     },
     markCourse: {
@@ -587,11 +587,11 @@
               ar: ['تصدير', 'استيراد', 'نسخة احتياطية', 'استعادة', 'حفظ', 'جهاز اخر', 'تصدير تقدمي', 'حفظ تقدمي'] },
       title: { en: 'Backup, export and import', ar: 'النسخ الاحتياطي والتصدير والاستيراد' },
       body: {
-        en: ['Settings → Export Progress writes a file containing everything you have saved.',
-             'Settings → Import Progress reads it back — that is how you move to a new phone.',
+        en: ['Settings → My data → Backup → Save a backup writes a file containing everything you have saved.',
+             'Restore from file, in the same box, reads it back — that is how you move to a new phone.',
              'Your data lives only in this browser, so this file is the only backup that exists.'],
-        ar: ['الإعدادات ← «تصدير التقدّم» يكتب ملفًا يحوي كل ما حفظته.',
-             'الإعدادات ← «استيراد التقدّم» يعيد قراءته — وهكذا تنتقل إلى هاتف جديد.',
+        ar: ['الإعدادات ← بياناتي ← نسخة احتياطية ← «احفظ نسخة» يكتب ملفًا يحوي كل ما حفظته.',
+             'و«استرجع من ملف» بنفس المربع يعيد قراءته — وهكذا تنتقل إلى هاتف جديد.',
              'بياناتك موجودة في هذا المتصفح فقط، لذا هذا الملف هو النسخة الاحتياطية الوحيدة.']
       },
       guide: 'backup'
@@ -603,10 +603,10 @@
               ar: ['مسح', 'حذف الكل', 'تصفير', 'البدء من جديد', 'مسح تقدمي'] },
       title: { en: 'Resetting your data', ar: 'مسح بياناتك' },
       body: {
-        en: ['Settings → Reset All Data clears progress, grades, notes, and your own plans on this device.',
+        en: ['Settings → My data → Danger zone → Reset all data clears progress, grades, notes, and your own plans on this device. It asks you to type RESET first.',
              'It cannot be undone, so export a backup first.',
              'To clear just one plan’s progress, use that plan’s own reset instead of this.'],
-        ar: ['الإعدادات ← «مسح كل البيانات» يمسح التقدّم والعلامات والملاحظات وخططك على هذا الجهاز.',
+        ar: ['الإعدادات ← بياناتي ← منطقة الخطر ← «مسح كل البيانات» يمسح التقدّم والعلامات والملاحظات وخططك على هذا الجهاز. بيطلب منك تكتب RESET أولًا.',
              'لا يمكن التراجع عنه، فصدّر نسخة احتياطية أولًا.',
              'لمسح تقدّم خطة واحدة فقط، استخدم زر التصفير الخاص بتلك الخطة.']
       }

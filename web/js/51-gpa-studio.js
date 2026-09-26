@@ -53,6 +53,11 @@
       clearGrade: 'No grade — clear this one',
       pick: 'Set grade', change: 'Change', changed: 'changed',
       noGrade: 'no grade yet',
+      gradeBtn: 'Grade', pickFor: function(n){ return n + ': pick a grade'; },
+      semGpa: 'GPA', ofGraded: function(a, b){ return a + ' of ' + b + ' graded'; },
+      notStarted: 'not started', later: 'Later semesters', courses: function(n){ return n + (n === 1 ? ' course' : ' courses'); },
+      gradedHoursShort: function(n){ return n + ' graded hours'; },
+      clearShort: 'Clear',
       faNote: 'FA is an absence fail and counts as an F. W is a withdrawal and is not counted at all.'
     },
     ar: {
@@ -73,6 +78,11 @@
       clearGrade: 'بلا علامة — امسح هاي',
       pick: 'ضع العلامة', change: 'غيّر', changed: 'تغيّرت',
       noGrade: 'بلا علامة بعد',
+      gradeBtn: 'علامة', pickFor: function(n){ return n + ': اختر العلامة'; },
+      semGpa: 'المعدل', ofGraded: function(a, b){ return a + ' من ' + b + ' عليها علامة'; },
+      notStarted: 'ما بلّش', later: 'الفصول الجاية', courses: function(n){ return n + ' مساق'; },
+      gradedHoursShort: function(n){ return n + ' ساعة عليها علامة'; },
+      clearShort: 'امسح',
       faNote: 'FA رسوب بسبب الغياب وبتحتسب زي F. أما W فهي انسحاب وما بتتحسب أبدًا.'
     }
   };
@@ -91,6 +101,33 @@
       .replace(/Year\s+(\d+)/i, 'Y$1')
       .replace(/First Semester/i, 'S1')
       .replace(/Second Semester/i, 'S2');
+  }
+
+  // "Y1 · S1" → "Year 1 · First semester" for the group headers. Anything
+  // that does not match (a pinned card's own wording) is shown as it is.
+  function termLabel(term, rtl){
+    var m = /^Y(\d+) · (S1|S2|Summer)$/.exec(term || '');
+    if(!m) return term || '';
+    var sem = { S1: ['First semester', 'الفصل الأول'], S2: ['Second semester', 'الفصل الثاني'], Summer: ['Summer', 'الصيفي'] }[m[2]];
+    return rtl ? ('سنة ' + m[1] + ' · ' + sem[1]) : ('Year ' + m[1] + ' · ' + sem[0]);
+  }
+
+  // Semesters with nothing finished in them yet, in plan order, with how
+  // many courses each holds — shown folded under the graded ones so the
+  // list says where the rest of the degree is without listing it.
+  function unstartedTerms(prefix, startedTerms){
+    var page = document.getElementById('page-' + prefix);
+    if(!page) return [];
+    var out = [];
+    Array.prototype.slice.call(page.querySelectorAll('.course-row[id]')).forEach(function(row){
+      var m = /-y(\d+)-s(\d+)$/.exec(row.id);
+      if(!m) return;
+      var term = 'Y' + m[1] + ' · ' + (m[2] === '3' ? 'Summer' : 'S' + m[2]);
+      if(startedTerms[term]) return;
+      var n = row.querySelectorAll('.course[id]:not(.course-removed)').length;
+      if(n) out.push({ term: term, count: n });
+    });
+    return out;
   }
 
   function gradedRows(prefix){
@@ -153,18 +190,10 @@
   // question with no way to answer it. Module-level, and cleared only when
   // the screen is opened fresh rather than re-rendered by an edit.
   var changed = Object.create(null);
-  function clearChanged(){ changed = Object.create(null); }
-
-  function pointsCell(row, t){
-    if(row.excluded) return '<span class="gs-excluded">' + t.excluded + '</span>';
-    // No grade yet is not the same as a grade that earns nothing, and
-    // "Not counted" on an empty row read as a verdict on the course.
-    if(row.grade == null || row.grade === '') return '<span class="gs-excluded">\u2014</span>';
-    // `in` here matched inherited names like "constructor", which then
-    // multiplied credit hours by a function and printed NaN into the table.
-    if(!window.AAUP_GPA.isRealGrade(row.grade)) return '<span class="gs-excluded">' + t.none + '</span>';
-    return (window.AAUP_GPA.GRADE_POINTS[row.grade] * row.cr).toFixed(2);
-  }
+  function clearChanged(){ changed = Object.create(null); openNext = null; }
+  // After a grade is picked the screen rebuilds; this is the course whose
+  // keypad should be open when it comes back — the next one without a grade.
+  var openNext = null;
 
   function tableHTML(prefix, rtl){
     var t = T[rtl ? 'ar' : 'en'];
@@ -207,7 +236,7 @@
           return one(g, window.AAUP_GPA.gradeShort(g), window.AAUP_GPA.gradeLabel(g),
                      window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(g) ? 'is-fail' : '');
         }).join('') +
-        one('', '\u2014', t.clearGrade, 'gs-grade-none') +
+        one('', t.clearShort, t.clearGrade, 'gs-grade-none') +
       '</div>';
     };
     // ONE COURSE OPEN AT A TIME.
@@ -227,7 +256,7 @@
     // The grade stays readable in the closed row, so the whole record can
     // still be scanned without opening anything — which is what a screen
     // called "Your grades" is mostly for.
-    var body = rows.map(function(r){
+    var rowHtml = function(r){
       var name = rtl && r.nameAr ? r.nameAr : r.name;
       var has = r.grade != null && r.grade !== '';
       return '<div class="gs-row' + (r.excluded ? ' gs-row-excluded' : '') + '" data-gs-row="' + esc(r.pid) + '">' +
@@ -235,7 +264,7 @@
           ' aria-expanded="false" aria-controls="gsp-' + esc(r.pid) + '">' +
           '<span class="gs-head-main">' +
             '<span class="gs-head-name">' + name + '</span>' +
-            '<span class="gs-code">' + esc(r.code) + ' · ' + esc(r.term) + ' · ' + r.cr + esc(t.ch) + '</span>' +
+            '<span class="gs-code">' + r.cr + 'H' + (r.excluded ? ' · ' + t.excluded : '') + '</span>' +
           '</span>' +
           '<span class="gs-head-right">' +
             // What you changed on this visit, so a run of edits can be
@@ -244,16 +273,55 @@
             (has
               ? '<span class="gs-head-grade' + (window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(r.grade) ? ' is-fail' : '') + '">' +
                   esc(window.AAUP_GPA.gradeShort(r.grade)) + '</span>'
-              : '<span class="gs-head-set">' + esc(t.pick) + '</span>') +
-            '<span class="gs-head-pts">' + pointsCell(r, t) + '</span>' +
+              : '<span class="gs-head-set">' + esc(t.gradeBtn) + '</span>') +
           '</span>' +
         '</button>' +
-        '<div class="gs-panel" id="gsp-' + esc(r.pid) + '" hidden>' + chipsFor(r.pid, r.grade) + '</div>' +
+        '<div class="gs-panel" id="gsp-' + esc(r.pid) + '" hidden>' +
+          '<div class="gs-panel-lbl">' + esc(t.pickFor(name)) + '</div>' +
+          chipsFor(r.pid, r.grade) + '</div>' +
+      '</div>';
+    };
+    // BY SEMESTER. One flat list of every finished course read as a chore;
+    // grouped, each semester is a small job with its own GPA at the top,
+    // and the rest of the degree sits folded underneath.
+    var groups = [], byTerm = {};
+    rows.forEach(function(r){
+      if(!byTerm[r.term]){ byTerm[r.term] = { term: r.term, rows: [] }; groups.push(byTerm[r.term]); }
+      byTerm[r.term].rows.push(r);
+    });
+    var body = groups.map(function(g){
+      var cr = 0, pts = 0, graded = 0;
+      g.rows.forEach(function(r){
+        if(r.grade != null && r.grade !== '') graded++;
+        if(!r.excluded && window.AAUP_GPA.isRealGrade(r.grade)){ cr += r.cr; pts += window.AAUP_GPA.GRADE_POINTS[r.grade] * r.cr; }
+      });
+      var gpa = cr > 0 ? (pts / cr).toFixed(2) : '\u2014';
+      return '<div class="gs-sem">' +
+        '<div class="gs-sem-h"><span class="gs-sem-name">' + esc(termLabel(g.term, rtl)) + '</span>' +
+          '<span class="gs-sem-meta">' + esc(t.semGpa) + ' <b>' + gpa + '</b> · ' + esc(t.ofGraded(graded, g.rows.length)) + '</span></div>' +
+        g.rows.map(rowHtml).join('') +
       '</div>';
     }).join('');
+    var later = unstartedTerms(prefix, byTerm);
+    if(later.length){
+      body += '<div class="gs-sem gs-sem-later"><div class="gs-sem-h"><span class="gs-sem-name">' + esc(termLabel(later[0].term, rtl)) + '</span>' +
+        '<span class="gs-sem-meta">' + esc(t.notStarted) + '</span></div></div>';
+      var rest = later.slice(1).reduce(function(n, x){ return n + x.count; }, 0);
+      if(rest){
+        body += '<div class="gs-sem gs-sem-later"><div class="gs-sem-h"><span class="gs-sem-name">' + esc(t.later) + '</span>' +
+          '<span class="gs-sem-meta">' + esc(t.courses(rest)) + '</span></div></div>';
+      }
+    }
+    // On a phone the dial is a swipe away, so the number it shows sits on
+    // top of the list too (hidden by CSS once the two columns fit side by side).
+    var cum = window.AAUP_GPA.gpaFor(prefix, null);
+    var standing = window.AAUP_GPA.standingFor(cum.gpa);
+    var summary = cum.gpa == null ? '' :
+      '<div class="gs-summary"><div><b>' + cum.gpa.toFixed(2) + '</b><span>' + esc(t.cumulative) + ' GPA</span></div>' +
+        '<div class="gs-summary-r"><b>' + (rtl ? standing.ar : standing.label) + '</b><span>' + esc(t.gradedHoursShort(cum.credits || 0)) + '</span></div></div>';
     return '<div class="gs-block">' +
       '<div class="gs-lbl">' + t.title + '</div>' +
-      '<p class="gs-hint">' + t.hint + '</p>' +
+      summary +
       '<div class="gs-list">' + body + '</div>' +
       // Said once, under the list, instead of inside every FA and W chip on
       // every course.
@@ -447,6 +515,16 @@
         if(val && grades[pid] !== val){ grades[pid] = val; } else { delete grades[pid]; }
         window.AAUP_GPA.saveGrades(grades);
         changed[pid] = true;
+        // Straight on to the next course still waiting for a grade, so a
+        // semester is one tap per course rather than two.
+        openNext = null;
+        if(grades[pid]){
+          var heads = Array.prototype.slice.call(document.querySelectorAll('[data-gs-toggle]'));
+          var at = heads.findIndex(function(h){ return h.getAttribute('data-gs-toggle') === pid; });
+          for(var i = at + 1; i < heads.length; i++){
+            if(heads[i].querySelector('.gs-head-set')){ openNext = heads[i].getAttribute('data-gs-toggle'); break; }
+          }
+        }
         // Rebuilds the whole modal from the same open() the Dashboard link
         // already calls, so the summary cards, the semester panel, the audit
         // table and this table all recompute from the one save — there is no
@@ -454,6 +532,11 @@
         if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
       });
     });
+    if(openNext){
+      var nextHead = document.querySelector('[data-gs-toggle="' + (window.CSS && window.CSS.escape ? window.CSS.escape(openNext) : openNext) + '"]');
+      openNext = null;
+      if(nextHead) nextHead.click();
+    }
     document.querySelectorAll('[data-gs-goplan]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var pid = btn.getAttribute('data-gs-goplan');

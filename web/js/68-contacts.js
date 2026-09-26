@@ -48,7 +48,12 @@
   }
 
   var TX = {
-    title: { en: 'Contacts', ar: 'جهات الاتصال' },
+    title: { en: 'Find a Professor', ar: 'ابحث عن محاضر' },
+    titleOffices: { en: 'University contacts', ar: 'جهات اتصال الجامعة' },
+    copyEmail: { en: 'Copy email', ar: 'انسخ الإيميل' },
+    sendEmail: { en: 'Email', ar: 'راسل' },
+    mineNote: { en: 'Green: a course you still have to take.', ar: 'الأخضر: مساق لسا لازم تاخذه.' },
+    emailOnly: { en: 'Email only: phone numbers aren’t listed here.', ar: 'إيميل بس: أرقام الهواتف مش منشورة هون.' },
     lead: { en: 'Instructors and university offices, straight from the app — no forwarding, no lookup somewhere else.',
             ar: 'المحاضرون ومكاتب الجامعة، مباشرة من التطبيق — بلا تحويل ولا بحث بمكان ثاني.' },
     search: { en: 'Search a name, course, or office…', ar: 'ابحث عن اسم، مساق، أو مكتب…' },
@@ -69,37 +74,70 @@
     return hay.indexOf(q) !== -1;
   }
 
+  // Courses this student still has to take, by normalised name, so the
+  // professors who teach them stand out. Built once per render from the
+  // selected plan; empty when no plan is picked yet.
+  var mine = {};
+  function normName(n){ return String(n || '').toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ').trim(); }
+  function buildMine(prefix){
+    mine = {};
+    var info = prefix && window.__PLAN_DATA && window.__PLAN_DATA[prefix] ? (window.__PLAN_DATA[prefix].courseInfo || {}) : {};
+    var progress = window.__getProgress ? window.__getProgress() : {};
+    Object.keys(info).forEach(function(slug){
+      var id = window.AAUP_GPA && window.AAUP_GPA.primaryId ? window.AAUP_GPA.primaryId(prefix, slug) : (prefix + '-c-' + slug);
+      if(!progress[id]) mine[normName(info[slug].name)] = true;
+    });
+  }
+
+  function initials(name){
+    var parts = String(name || '').replace(/^(dr|prof|mr|ms|mrs|eng)\.?\s+/i, '').split(/\s+/).filter(Boolean);
+    return ((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '');
+  }
+
+  // One line per person: who, what they teach, and the two things you came
+  // to do (copy the address, or write to them). The old card spent a whole
+  // box on each, with the address as a link and "Copy" as a second button
+  // under it.
   function cardHtml(c, data, rtl){
     var cat = data.categories[c.category] || {};
     var catLabel = rtl ? cat.ar : cat.en;
-    var subtitle = c.courses && c.courses.length
-      ? c.courses.map(esc).join(' · ')
-      : esc(c.role || catLabel || '');
+    var isPerson = c.category === 'instructor';
+    var avatar = isPerson ? esc(initials(c.name)).toUpperCase() : (catIcon(cat, 20) || window.AAUP_ICONS.preview('person', 20));
+    var sub = c.courses && c.courses.length
+      ? '<span class="ct-courses">' + c.courses.map(function(n){
+          return '<span class="ct-course' + (mine[normName(n)] ? ' ct-course-mine' : '') + '">' + esc(n) + '</span>';
+        }).join('') + '</span>'
+      : '<span class="ct-sub">' + esc(c.role || catLabel || '') + '</span>';
     return '<div class="ct-card">' +
-      '<div class="ct-card-top">' +
-        '<span class="ct-avatar">' + (catIcon(cat, 17) || window.AAUP_ICONS.preview('person', 17)) + '</span>' +
-        '<div class="ct-card-main">' +
-          '<span class="ct-name">' + esc(c.name) + '</span>' +
-          '<span class="ct-sub">' + subtitle + '</span>' +
-        '</div>' +
+      '<span class="ct-avatar' + (isPerson ? ' ct-avatar-initials' : '') + '">' + avatar + '</span>' +
+      '<div class="ct-card-main">' +
+        '<span class="ct-name">' + esc(c.name) + '</span>' + sub +
+        (c.email ? '<span class="ct-email-text" dir="ltr">' + esc(c.email) + '</span>' : '<span class="ct-noemail">' + t('noEmail', rtl) + '</span>') +
       '</div>' +
       (c.email
-        ? '<div class="ct-email-row">' +
-            '<a class="ct-email" href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>' +
-            '<button type="button" class="ct-copy" data-ct-copy="' + esc(c.email) + '">' + t('copy', rtl) + '</button>' +
+        ? '<div class="ct-acts">' +
+            '<button type="button" class="ct-icbtn" data-ct-copy="' + esc(c.email) + '" title="' + t('copyEmail', rtl) + '" aria-label="' + t('copyEmail', rtl) + ': ' + esc(c.name) + '">' + window.AAUP_ICONS.preview('copy', 20) + '</button>' +
+            '<a class="ct-icbtn ct-icbtn-pri" href="mailto:' + esc(c.email) + '" title="' + t('sendEmail', rtl) + '" aria-label="' + t('sendEmail', rtl) + ': ' + esc(c.name) + '">' + window.AAUP_ICONS.preview('mail', 20) + '</a>' +
           '</div>'
-        : '<div class="ct-noemail">' + t('noEmail', rtl) + '</div>') +
+        : '') +
       '</div>';
   }
 
   function chipsHtml(data, rtl){
+    // Instructors first — it is what this screen is named for — then All,
+    // then the offices in the order contacts.json declares them.
     var order = Object.keys(data.categories);
-    var chips = '<button type="button" class="ct-chip' + (activeCat === 'all' ? ' ct-chip-on' : '') +
-      '" data-ct-cat="all">' + t('all', rtl) + '</button>';
-    order.forEach(function(key){
+    var first = order.indexOf('instructor') !== -1 ? ['instructor'] : [];
+    var chip = function(key){
       var cat = data.categories[key];
-      chips += '<button type="button" class="ct-chip' + (activeCat === key ? ' ct-chip-on' : '') +
-        '" data-ct-cat="' + esc(key) + '">' + catIcon(cat, 13) + esc(rtl ? cat.ar : cat.en) + '</button>';
+      return '<button type="button" class="ct-chip' + (activeCat === key ? ' ct-chip-on' : '') +
+        '" data-ct-cat="' + esc(key) + '">' + esc(rtl ? cat.ar : cat.en) + '</button>';
+    };
+    var chips = first.map(chip).join('') +
+      '<button type="button" class="ct-chip' + (activeCat === 'all' ? ' ct-chip-on' : '') +
+      '" data-ct-cat="all">' + t('all', rtl) + '</button>';
+    order.filter(function(k){ return first.indexOf(k) === -1; }).forEach(function(key){
+      chips += chip(key);
     });
     return chips;
   }
@@ -150,11 +188,14 @@
     if(!body) return;
     var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
     body.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+    buildMine(prefix);
+    // A full page, not a pop-up: the directory is something you read down,
+    // and it was squeezed into a 420px card with the list starting half-way
+    // down the first screen.
     body.innerHTML =
       (window.__backBarHTML ? window.__backBarHTML('', 'contactsOverlay', rtl) : '') +
-      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('people', 20) + t('title', rtl) + '</h2>' +
-      '<p class="form-note" style="margin-top:0;">' + t('lead', rtl) + '</p>' +
-      '<p class="ct-privacy">' + window.AAUP_ICONS.preview('lock', 14) + ' ' + t('noPhones', rtl) + '</p>' +
+      '<div class="ct-head"><span class="ct-head-ic">' + window.AAUP_ICONS.preview(activeCat === 'instructor' ? 'cap' : 'people', 26) + '</span>' +
+        '<h2 class="ct-title" id="ctTitle">' + t(activeCat === 'instructor' || activeCat === 'all' ? 'title' : 'titleOffices', rtl) + '</h2></div>' +
       '<div class="ct-loading">' + (window.__skeletonHTML ? window.__skeletonHTML('card', 5, rtl) : (rtl ? 'جارٍ التحميل…' : 'Loading…')) + '</div>';
 
     load().then(function(data){
@@ -165,9 +206,12 @@
       var loading = body.querySelector('.ct-loading');
       if(loading) loading.remove();
       body.insertAdjacentHTML('beforeend',
-        '<input type="search" id="ctSearch" class="ct-search" placeholder="' + t('search', rtl) + '" value="' + esc(search) + '">' +
+        '<label class="ct-search-wrap"><span class="ct-search-ic" aria-hidden="true">' + window.AAUP_ICONS.preview('search', 22) + '</span>' +
+          '<input type="search" id="ctSearch" class="ct-search" aria-label="' + t('search', rtl) + '" placeholder="' + t('search', rtl) + '" value="' + esc(search) + '"></label>' +
         '<div class="ct-chips" id="ctChips">' + chipsHtml(data, rtl) + '</div>' +
-        '<div id="ctList">' + listHtml(data, rtl) + '</div>');
+        '<div id="ctList">' + listHtml(data, rtl) + '</div>' +
+        '<p class="ct-foot">' + window.AAUP_ICONS.preview('lock', 16) + '<span>' + t('emailOnly', rtl) +
+          (Object.keys(mine).length ? ' ' + t('mineNote', rtl) : '') + '</span></p>');
       bind(prefix, data, rtl);
     });
   }
@@ -185,7 +229,12 @@
       btn.addEventListener('click', function(){
         var email = btn.getAttribute('data-ct-copy');
         var rtl = document.getElementById('contactsBody').getAttribute('dir') === 'rtl';
-        var ok = function(){ btn.textContent = t('copied', rtl); setTimeout(function(){ btn.textContent = t('copy', rtl); }, 1500); };
+        var ok = function(){
+          btn.innerHTML = window.AAUP_ICONS.preview('check', 20);
+          btn.classList.add('is-done');
+          if(window.__showToast) window.__showToast(t('copied', rtl));
+          setTimeout(function(){ btn.innerHTML = window.AAUP_ICONS.preview('copy', 20); btn.classList.remove('is-done'); }, 1500);
+        };
         if(navigator.clipboard && navigator.clipboard.writeText){
           navigator.clipboard.writeText(email).then(ok, function(){});
         }
@@ -209,6 +258,8 @@
         activeCat = btn.getAttribute('data-ct-cat');
         chips.querySelectorAll('.ct-chip').forEach(function(c){ c.classList.remove('ct-chip-on'); });
         btn.classList.add('ct-chip-on');
+        var title = document.getElementById('ctTitle');
+        if(title) title.textContent = t(activeCat === 'instructor' || activeCat === 'all' ? 'title' : 'titleOffices', rtl);
         refreshList(data, rtl);
       });
     }

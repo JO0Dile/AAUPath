@@ -572,15 +572,14 @@
   ];
   var activeSettingsTab = 'mydata';
 
-  function accountTabHtml(r, current, others){
-    return (window.AAUP_CLOUD ? window.AAUP_CLOUD.sectionHtml(r) : '') +
-      '<h3 class="mh" style="margin:18px 0 6px;">' + window.AAUP_ICONS.preview('person', 18) + (r ? 'ملفات هذا الجهاز' : 'Device Profiles') + '</h3>' +
-      // A row that needs a paragraph under it is usually a badly named row.
-      // The distinction worth keeping — these never leave the device — fits
-      // in the line itself.
+  // "Device Profiles" beside "Cloud Sync" read as two names for the same
+  // thing. What it is for is a shared laptop: each person gets their own
+  // plan and grades, and none of it leaves the device.
+  function peopleHtml(r, current, others){
+    return '<h3 class="mh set-grp-h">' + window.AAUP_ICONS.preview('person', 18) + (r ? 'الأشخاص على هذا الجهاز' : 'People on this device') + '</h3>' +
       '<p class="form-note" style="margin-top:0;">' + (r
-        ? 'تبقى على هذا الجهاز ولا تُزامَن.'
-        : 'Stay on this device. Never synced.') + '</p>' +
+        ? 'جهاز مشترك؟ كل شخص إله خطته وعلاماته. ولا إشي بيطلع من الجهاز.'
+        : 'Sharing a laptop? Each person gets their own plan and grades. Nothing leaves this device.') + '</p>' +
       '<p style="font-size:12.5px;">' + (r ? 'الحساب الحالي: ' : 'Current account: ') + '<b>' + window.__escapeHtml(current) + '</b></p>' +
       (others.length
         ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
@@ -659,13 +658,35 @@
       '</div>' + engRow;
   }
 
-  function dataTabHtml(r, devUnlocked){
-    return '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;">' +
-      '<button type="button" class="home-btn" id="setExportBtn">' + window.AAUP_ICONS.preview('upload', 14) + (r ? 'تصدير التقدّم' : 'Export Progress') + '</button>' +
-      '<button type="button" class="home-btn" id="setImportBtn">' + window.AAUP_ICONS.preview('download', 14) + (r ? 'استيراد التقدّم' : 'Import Progress') + '</button>' +
-      '<button type="button" class="home-btn" id="setResetBtn">' + window.AAUP_ICONS.preview('trash', 14) + (r ? 'مسح كل البيانات' : 'Reset All Data') + '</button>' +
+  // Save and restore sit together, with the automatic restore points
+  // (js/84-autobackup.js) inside the same box — they are all the same
+  // question: how do I get my data back.
+  function backupHtml(r){
+    return '<h3 class="mh set-grp-h">' + window.AAUP_ICONS.preview('save', 18) + (r ? 'نسخة احتياطية' : 'Backup') + '</h3>' +
+      '<p class="form-note" style="margin-top:0;">' + (r
+        ? 'احفظ كل إشي بملف، أو رجّع ملف محفوظ.'
+        : 'Save everything to a file, or bring a saved file back.') + '</p>' +
+      '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:6px;">' +
+      '<button type="button" class="home-btn" id="setExportBtn">' + window.AAUP_ICONS.preview('upload', 14) + (r ? 'احفظ نسخة' : 'Save a backup') + '</button>' +
+      '<button type="button" class="home-btn" id="setImportBtn">' + window.AAUP_ICONS.preview('download', 14) + (r ? 'استرجع من ملف' : 'Restore from file') + '</button>' +
       '</div>' +
-      (window.APP_PLANS_FEED_URL ? (
+      (window.AAUP_AUTOBACKUP ? window.AAUP_AUTOBACKUP.sectionHtml(r) : '');
+  }
+
+  // Last, alone, and red — it used to sit in the same row as Export and
+  // Import, styled the same, one mis-tap from wiping everything. The button
+  // opens a box that asks for the word RESET before anything is erased.
+  function dangerHtml(r){
+    return '<h3 class="mh set-grp-h">' + window.AAUP_ICONS.preview('warning', 18) + (r ? 'منطقة الخطر' : 'Danger zone') + '</h3>' +
+      '<p class="form-note" style="margin-top:0;">' + (r
+        ? 'بيمسح كل خطة وعلامة وملاحظة على هذا الجهاز. ما في تراجع.'
+        : 'Deletes every plan, grade and note on this device. It can’t be undone.') + '</p>' +
+      '<div id="setResetArea"><button type="button" class="home-btn set-danger-btn" id="setResetBtn">' +
+        window.AAUP_ICONS.preview('trash', 14) + (r ? 'مسح كل البيانات…' : 'Reset all data…') + '</button></div>';
+  }
+
+  function dataTabHtml(r, devUnlocked){
+    return (window.APP_PLANS_FEED_URL ? (
         '<h3 class="mh" style="margin:18px 0 6px;">' + window.AAUP_ICONS.preview('globe', 18) + (r ? 'الخطط عبر الإنترنت' : 'Online Plans') + '</h3>' +
         '<p class="form-note" style="margin-top:0;">' + (r ? 'الخطط الرسمية الجديدة والمحدَّثة. تعديلاتك ما بتنمسح.' : 'New and updated official plans. Your own edits are never overwritten.') + '</p>' +
         '<div class="form-actions" style="justify-content:flex-start;">' +
@@ -731,8 +752,13 @@
       : activeSettingsTab === 'help' ? helpTabHtml(r)
       // Both halves of the old Account and Data tabs, in one scroll: where
       // your progress lives online, then the copies of it on this device.
-      : (accountTabHtml(r, current, others) + dataTabHtml(r, devUnlocked) +
-         (window.AAUP_AUTOBACKUP ? window.AAUP_AUTOBACKUP.sectionHtml(r) : ''));
+      // Grouped by what you came to do: sync, backup, the people who share
+      // this device, the rest, and — last, on its own — erase everything.
+      : ('<div class="set-grp">' + (window.AAUP_CLOUD ? window.AAUP_CLOUD.sectionHtml(r) : '') + '</div>' +
+         '<div class="set-grp">' + backupHtml(r) + '</div>' +
+         '<div class="set-grp">' + peopleHtml(r, current, others) + '</div>' +
+         dataTabHtml(r, devUnlocked) +
+         '<div class="set-grp set-grp-danger">' + dangerHtml(r) + '</div>');
 
     body.innerHTML =
       '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('gear', 20) + (r ? 'الإعدادات' : 'Settings') + '</h2>' +
@@ -808,14 +834,25 @@
     }
     if(document.getElementById('setResetBtn')){
       document.getElementById('setResetBtn').addEventListener('click', function(){
-        document.getElementById('devModalOverlay').classList.remove('open');
-        if(window.AAUP_DATA) window.AAUP_DATA.confirmResetAll();
+        var area = document.getElementById('setResetArea');
+        if(!area || !window.AAUP_DATA) return;
+        area.innerHTML =
+          '<label class="set-danger-lbl" for="setResetWord">' + (r ? 'اكتب RESET للتأكيد' : 'Type RESET to confirm') + '</label>' +
+          '<div class="set-danger-row"><input type="text" id="setResetWord" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="ltr">' +
+          '<button type="button" class="home-btn set-danger-btn" id="setResetGo" disabled>' + (r ? 'امسح كل إشي' : 'Erase everything') + '</button>' +
+          '<button type="button" class="home-btn" id="setResetCancel">' + (r ? 'إلغاء' : 'Cancel') + '</button></div>';
+        var word = document.getElementById('setResetWord');
+        var go = document.getElementById('setResetGo');
+        word.focus();
+        word.addEventListener('input', function(){ go.disabled = word.value.trim().toUpperCase() !== 'RESET'; });
+        go.addEventListener('click', function(){ if(!go.disabled) window.AAUP_DATA.resetAllNow(); });
+        document.getElementById('setResetCancel').addEventListener('click', function(){ renderSettingsBody(body); });
       });
     }
     if(document.getElementById('setSyncBtn')){
       document.getElementById('setSyncBtn').addEventListener('click', function(){
         var btn = document.getElementById('setSyncBtn');
-        btn.disabled = true; btn.textContent = '🔄 Checking…';
+        btn.disabled = true; btn.textContent = r ? 'جارٍ التحقق…' : 'Checking…';
         window.AAUP_SYNC.checkForUpdates(true).then(function(){
           renderSettingsBody(body);
         });

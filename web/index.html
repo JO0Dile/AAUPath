@@ -284,26 +284,22 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
   </div>
 </div>
 
-<div class="toast-msg" id="globalToast"></div>
+<!-- Every message the app shows goes through this one box and one queue
+     (js/14-storage.js): messages that arrive together merge into it, later
+     ones wait their turn, so they never stack on top of each other. -->
+<div class="notice" id="globalNotice" role="status" aria-live="polite">
+  <span class="notice-ic" id="globalNoticeIcon" aria-hidden="true"></span>
+  <span class="notice-body">
+    <span class="notice-title" id="globalNoticeTitle"></span>
+    <span class="notice-sub" id="globalNoticeSub" hidden></span>
+    <span class="notice-extras" id="globalNoticeExtras" hidden></span>
+  </span>
+  <button type="button" class="notice-btn" id="globalNoticeBtn" hidden></button>
+</div>
 <!-- Spoken by screen readers when ticking a course changes what is open to
      the student. Visually hidden: the same news is already on screen in the
      cards themselves. -->
 <div id="a11yAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-<div class="toast-action" id="globalActionToast" style="display:none;">
-  <span class="ta-text" id="globalActionToastText"></span>
-  <button type="button" class="ta-btn" id="globalActionToastBtn"></button>
-</div>
-
-<!-- The visible half of "say it out loud" (js/14-storage.js's
-     showUnlockToast) — a screen reader already hears this on every tick
-     that opens something new; this is the same news, on screen. -->
-<div class="unlock-toast" id="globalUnlockToast" role="status" aria-live="polite">
-  <span class="ut-icon" data-app-icon="tick" data-app-icon-size="15" aria-hidden="true"></span>
-  <span class="ut-body">
-    <span class="ut-title" id="globalUnlockToastTitle"></span>
-    <span class="ut-sub" id="globalUnlockToastSub"></span>
-  </span>
-</div>
 
 <!-- One coach mark at a time (js/32-tutorial.js). This used to carry a step
      counter and a Skip/Next pair, because it used to run multi-step guided
@@ -351,8 +347,8 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
 </div>
 
 <!-- Contacts — instructors and offices, read-only (js/68-contacts.js) -->
-<div class="modal-overlay" id="contactsOverlay">
-  <div class="modal-card">
+<div class="modal-overlay ct-overlay" id="contactsOverlay">
+  <div class="modal-card ct-page">
     <button class="modal-close" id="contactsClose" aria-label="Close" data-ar-label="إغلاق"><span data-app-icon="close" data-app-icon-size="15" aria-hidden="true"></span></button>
     <div class="modal-body" id="contactsBody"></div>
   </div>

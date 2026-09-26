@@ -266,12 +266,12 @@
   // ---------- Settings: a one-line status + a button that opens the popup ----------
   function sectionHtml(r){
     if(!isConfigured()){
-      return '<h3 style="margin-bottom:6px;">' + ICONMARK(17) + ' ' + (r ? 'المزامنة السحابية' : 'Cloud Sync') + '</h3>' +
+      return '<h3 style="margin-bottom:6px;">' + ICONMARK(17) + ' ' + (r ? 'المزامنة بين أجهزتك' : 'Sync across devices') + '</h3>' +
         '<p class="form-note" style="margin-top:0;">' + (r
           ? 'المزامنة السحابية غير مُفعّلة لهذا التطبيق بعد. بياناتك تبقى على هذا الجهاز كما هي.'
           : 'Cloud Sync isn’t set up for this app yet. Your data stays on this device exactly as it always has.') + '</p>';
     }
-    var head = '<h3 style="margin-bottom:6px;">' + ICONMARK(17) + ' ' + (r ? 'المزامنة السحابية' : 'Cloud Sync') + '</h3>';
+    var head = '<h3 style="margin-bottom:6px;">' + ICONMARK(17) + ' ' + (r ? 'المزامنة بين أجهزتك' : 'Sync across devices') + '</h3>';
 
     // Signed in used to read exactly like signed out: the same heading, a
     // dim grey line of text, the same button. Nothing said the thing a
@@ -375,7 +375,7 @@
     var syncBtn = root.querySelector('#cloudSyncNowBtn');
     if(syncBtn){
       syncBtn.addEventListener('click', function(){
-        syncBtn.disabled = true; syncBtn.textContent = '🔄 ' + (rtl ? 'جارٍ...' : 'Syncing…');
+        syncBtn.disabled = true; syncBtn.textContent = (rtl ? 'جارٍ...' : 'Syncing…');
         push(getLastSyncedAt()).then(function(r){
           if(r.ok){ render(); return; }
           if(r.data && r.data.conflict){
@@ -387,7 +387,7 @@
             return;
           }
           showMsg(root, (r.data && r.data.error) || 'Sync failed.', true);
-          syncBtn.disabled = false; syncBtn.textContent = '🔄 ' + (rtl ? 'مزامنة الآن' : 'Sync now');
+          syncBtn.disabled = false; syncBtn.textContent = (rtl ? 'مزامنة الآن' : 'Sync now');
         });
       });
     }
