@@ -1231,7 +1231,7 @@
         window.__escapeHtml(rtl ? 'الفصل مقترح' : 'term suggested') + '</span>');
     }
     if(!done && !avail){
-      metaParts.push('<span class="cm-status cm-locked">' + lockHtml + '</span>');
+      metaParts.push('<span class="cm-status cm-locked">' + window.AAUP_ICONS.preview('lock', 11) + '<span class="cm-locked-tx">' + lockHtml + '</span></span>');
     }
     // 52 · The English placement is no longer a gate in front of the app; it
     // is asked on the three courses it actually decides. This chip is what

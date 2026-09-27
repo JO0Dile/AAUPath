@@ -1236,7 +1236,7 @@
     font-size:13.5px;color:var(--text-dim);white-space:nowrap;
     font-variant-numeric:tabular-nums;
   }
-  .pw-num b{color:var(--text);font-weight:800;font-size:13.5px;}
+  .pw-num b{color:var(--text);font-weight:800;font-size:13.5px;direction:ltr;unicode-bidi:isolate;}
 
   /* A folded year hides its body outright rather than height-animating it:
      the connector SVG is redrawn against the new layout on every toggle
@@ -7575,19 +7575,26 @@ body:has(.course-qa-backdrop) .fix-launcher{display:none;}
    in first. The accent rail runs the height of the semester so it is
    findable while scrolling past, not just at its heading. */
 .imp-semester-block.sem-now{
-  border-inline-start:3px solid var(--accent);
-  padding-inline-start:13px;
+  position:relative;
+  padding:10px 12px 12px 16px;
   margin-inline-start:-16px;
-  border-radius:0 10px 10px 0;
-  background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 62%);
+  border-radius:16px;
+  background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 11%, transparent), color-mix(in srgb, var(--accent) 3%, transparent) 70%);
 }
+/* The rail is a rounded bar inside the block, clear of its top and bottom,
+   rather than a border that ran square into the block's corner. */
+.imp-semester-block.sem-now::before{
+  content:''; position:absolute; inset-inline-start:5px; top:12px; bottom:12px;
+  width:4px; border-radius:99px; background:var(--accent);
+}
+html[dir="rtl"] .imp-semester-block.sem-now{padding:10px 16px 12px 12px;}
 [dir="rtl"] .imp-semester-block.sem-now,
 .rtl-mode .imp-semester-block.sem-now{
-  background:linear-gradient(270deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 62%);
-  border-radius:10px 0 0 10px;
+  background:linear-gradient(270deg, color-mix(in srgb, var(--accent) 11%, transparent), color-mix(in srgb, var(--accent) 3%, transparent) 70%);
 }
 /* In Edit Mode it is one card in a row, so it lines up with its neighbours. */
 .editing .imp-semester-block.sem-now{margin-inline-start:0; border-radius:10px;}
+.editing .imp-semester-block.sem-now::before{display:none;}
 .now-tag{
   display:flex; align-items:center; gap:8px;
   margin:0 0 8px;
@@ -8663,3 +8670,67 @@ html[dir="rtl"] .lib-shelf .lib-shelf-head{padding:14px 12px 14px 14px;}
   background:color-mix(in srgb, var(--text) 6%, transparent); color:var(--text);
 }
 .lib-shelf.lib-shelf-open .lib-shelf-body{padding-top:8px;}
+
+/* Locked cards: faded, with what they wait for in a small lock chip (idea 8).
+   Full strength again on hover or focus, so reading one is never a squint. */
+.sheet-plan:not(.editing) .course:not(.available):not(.completed){opacity:.55; filter:saturate(.45); transition:opacity .15s ease, filter .15s ease;}
+.sheet-plan:not(.editing) .course:not(.available):not(.completed):is(:hover, :focus-visible){opacity:1; filter:none;}
+.course-meta .cm-status.cm-locked{
+  display:inline-flex; align-items:center; gap:4px; max-width:100%;
+  font-style:normal; font-weight:700; color:var(--text-dim);
+  background:color-mix(in srgb, var(--text) 8%, transparent); border-radius:999px; padding:1px 8px 1px 6px;
+}
+html[dir="rtl"] .course-meta .cm-status.cm-locked{padding:1px 6px 1px 8px;}
+.sheet-plan .course-meta:has(.cm-locked){flex-wrap:wrap; row-gap:5px;}
+.sheet-plan .course-meta .cm-status.cm-locked{flex:0 0 100%; box-sizing:border-box; order:5;}
+.sheet-plan .course-meta .cm-sep:has(+ .cm-locked){display:none;}
+.course-meta .cm-locked .app-icon-svg{flex:none; color:inherit;}
+.cm-locked-tx{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* Year jump bar (js/91-year-jump.js). */
+.yj{
+  position:fixed; inset-inline-end:6px; top:50%; transform:translateY(-50%); z-index:940;
+  display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px;
+  border-radius:999px; background:color-mix(in srgb, var(--panel) 90%, transparent);
+  border:1px solid var(--line); box-shadow:0 8px 24px rgba(0,0,0,.4);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  opacity:0; pointer-events:none; transition:opacity .2s ease; touch-action:none;
+}
+.yj.show{opacity:1; pointer-events:auto;}
+.yj-lbl{font-size:9px; font-weight:800; color:var(--text-dim); padding:0 0 2px;}
+.yj-n{
+  width:30px; height:30px; border-radius:50%; border:0; background:none; cursor:pointer;
+  font:inherit; font-size:11.5px; font-weight:900; color:var(--text-dim); font-variant-numeric:tabular-nums;
+}
+.yj-n.done{color:var(--unlock);}
+.yj-n.on{background:var(--accent); color:var(--on-accent);}
+.yj-bubble{
+  position:fixed; inset-inline-end:52px; z-index:941; pointer-events:none;
+  background:var(--accent); color:var(--on-accent); font-weight:900; font-size:15px;
+  padding:8px 14px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.yj-bubble[hidden]{display:none;}
+@media (min-width:721px){ .yj{inset-inline-end:14px;} .yj-bubble{inset-inline-end:62px;} }
+@media (prefers-reduced-motion:reduce){ .yj{transition:none;} }
+
+/* Story image (js/92-story-card.js). */
+#storyCardOverlay .modal-card.sc-card{max-width:760px;}
+.sc-grid{display:grid; grid-template-columns:minmax(0,260px) minmax(0,1fr); gap:22px; align-items:start;}
+.sc-canvas{display:block; width:100%; height:auto; aspect-ratio:9/16; border-radius:18px; box-shadow:0 18px 40px rgba(0,0,0,.45);}
+.sc-side{display:flex; flex-direction:column;}
+.sc-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--line); font-size:13.5px; font-weight:700;}
+.sc-row:first-child{border-top:0;}
+.sc-sw{width:44px; height:26px; flex:none; border-radius:99px; border:0; background:var(--line); position:relative; cursor:pointer;}
+.sc-sw::after{content:''; position:absolute; top:3px; inset-inline-start:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:inset-inline-start .15s ease;}
+.sc-sw.on{background:var(--accent);}
+.sc-sw.on::after{inset-inline-start:21px;}
+.sc-sw:focus-visible, .sc-dot:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.sc-dots{display:flex; gap:8px;}
+.sc-dot{width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0;}
+.sc-dot.on{border-color:#fff; box-shadow:0 0 0 2px var(--accent);}
+.sc-go{display:flex; gap:10px; margin:14px 0 6px;}
+.sc-go .home-btn{flex:1;}
+@media (max-width:720px){
+  .sc-grid{grid-template-columns:minmax(0,1fr);}
+  .sc-canvas{max-width:230px; margin:0 auto;}
+}
