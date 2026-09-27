@@ -56,6 +56,7 @@
       credits: 'Hours', unlocksN: 'Unlocks', status: 'Status', needsN: 'Needs', none: 'None',
       year: function(n){ return 'Year ' + n; }, sem: { s1: 'First semester', s2: 'Second semester', s3: 'Summer' },
       viewTree: 'Show in course tree',
+      pin: 'Pin to Home', unpin: 'Unpin from Home',
       more: 'More actions',
       remove: 'Remove from my plan…',
       restore: 'Restore to my plan',
@@ -84,6 +85,7 @@
       credits: 'الساعات', unlocksN: 'يفتح', status: 'الحالة', needsN: 'يحتاج', none: 'ولا شي',
       year: function(n){ return 'سنة ' + n; }, sem: { s1: 'الفصل الأول', s2: 'الفصل الثاني', s3: 'الصيفي' },
       viewTree: 'اعرضه في شجرة المساقات',
+      pin: 'ثبّته بالرئيسية', unpin: 'شيله من الرئيسية',
       more: 'خيارات أكثر',
       remove: 'أزِله من خطتي…',
       restore: 'رجّعه لخطتي',
@@ -347,6 +349,10 @@
       '</button>' +
       '<div class="cd-menu" id="cdMenu" role="menu" hidden>' +
         '<button type="button" role="menuitem" data-cd-view-tree="' + esc(pid) + '">' + ic('map') + '<span>' + esc(t.viewTree) + '</span></button>' +
+        (window.AAUP_PINS
+          ? '<button type="button" role="menuitem" data-cd-pin="' + (window.AAUP_PINS.has(prefix, slug) ? '0' : '1') + '">' + ic('planpin') + '<span class="cd-menu-lab">' +
+            esc(window.AAUP_PINS.has(prefix, slug) ? t.unpin : t.pin) + '</span></button>'
+          : '') +
         (window.AAUP_REMOVED
           ? (removed
             ? '<button type="button" role="menuitem" data-cd-remove="0">' + ic('undo') + '<span>' + esc(t.restore) + '</span></button>'
@@ -392,6 +398,20 @@
       var setOpen = function(open){ menu.hidden = !open; moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false'); };
       moreBtn.addEventListener('click', function(e){ e.stopPropagation(); setOpen(menu.hidden); });
       container.addEventListener('click', function(e){ if(!menu.hidden && !e.target.closest('.cd-more')) setOpen(false); });
+      var pinBtn = menu.querySelector('[data-cd-pin]');
+      if(pinBtn){
+        pinBtn.addEventListener('click', function(){
+          setOpen(false);
+          var on = pinBtn.getAttribute('data-cd-pin') === '1';
+          window.AAUP_PINS.set(prefix, slug, on);
+          var rtl2 = window.__isRtl ? window.__isRtl(prefix) : false;
+          var t2 = L[rtl2 ? 'ar' : 'en'];
+          pinBtn.setAttribute('data-cd-pin', on ? '0' : '1');
+          var lab = pinBtn.querySelector('.cd-menu-lab');
+          if(lab) lab.textContent = on ? t2.unpin : t2.pin;
+          if(window.__showToast) window.__showToast(on ? (rtl2 ? 'انثبّت بالرئيسية' : 'Pinned to Home') : (rtl2 ? 'انشال من الرئيسية' : 'Unpinned'));
+        });
+      }
       var rmBtn = menu.querySelector('[data-cd-remove]');
       if(rmBtn){
         rmBtn.addEventListener('click', function(){

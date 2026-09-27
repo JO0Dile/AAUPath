@@ -345,6 +345,27 @@
     }
     return null;
   }
+  // Pinned courses (idea 10): the ones a student chose from a course's ⋯
+  // menu, at the top of Home, one tap from the course window.
+  function pinnedHtml(id){
+    var P = window.AAUP_PINS, p = id && plans()[id];
+    if(!P || !p) return '';
+    var byId = {};
+    (p.courses || []).forEach(function(c){ byId[c.id] = c; });
+    var list = P.list(id).map(function(sl){ return byId[sl]; }).filter(Boolean);
+    if(!list.length) return '';
+    var progress = window.__getProgress ? window.__getProgress() : {};
+    return '<section class="hm-sem hm-pins" aria-label="' + esc(L('Pinned', 'مثبّتة')) + '">' +
+      '<div class="hm-sem-h"><b>' + esc(L('Pinned', 'مثبّتة')) + '</b><span>' + list.length + '</span></div>' +
+      list.map(function(c){
+        var done = !!progress[id + '-c-' + c.id];
+        var nm = plain(ar() && c.ar ? c.ar : c.name);
+        return '<button type="button" class="hm-sem-row hm-pin-row' + (done ? ' is-done' : '') + '" data-hm-pin="' + esc(c.id) + '">' +
+          '<span class="hm-sem-name">' + esc(nm) + '<small>' + (parseFloat(c.creditHours) || 0) + 'H' + (done ? ' · ' + esc(L('passed', 'منجز')) : '') + '</small></span>' +
+          '<span class="hm-pin-go app-icon-dir" aria-hidden="true">' + ic('chevronRight', 16) + '</span></button>';
+      }).join('') +
+      '</section>';
+  }
   function thisSemesterHtml(id){
     var ts = thisSemester(id);
     if(!ts || !ts.list.length) return '';
@@ -404,6 +425,7 @@
       '<div class="hm-body">' +
         '<div class="hm-main">' +
           '<div class="home-install-row" id="homeInstallRow" hidden></div>' +
+          pinnedHtml(id) +
           thisSemesterHtml(id) +
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
           '<div class="hm-grid">' + FEATURES.map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
@@ -742,6 +764,10 @@
       else if(t.closest('[data-hm-settings]')){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); }
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
       else if(t.closest('[data-hm-ver]')) verTap();
+      else if((b = t.closest('[data-hm-pin]'))){
+        var pidPlan = selected();
+        if(pidPlan && window.AAUP_IMPORTED){ ensurePlan(pidPlan); window.AAUP_IMPORTED.openCourseModal(pidPlan, b.getAttribute('data-hm-pin')); }
+      }
       else if((b = t.closest('[data-hm-tick]'))){
         var tid = selected();
         if(tid && window.AAUP_IMPORTED){ ensurePlan(tid); window.AAUP_IMPORTED.toggle(tid, b.getAttribute('data-hm-tick')); render(); }

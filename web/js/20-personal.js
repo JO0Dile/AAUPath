@@ -43,7 +43,17 @@
       var badgeHtml = '';
       if(r.workload){ badgeHtml += '<span class="meta-badge">' + window.AAUP_ICONS.preview('bolt', 11) + r.workload + '</span>'; }
       if(r.difficulty){ badgeHtml += '<span class="meta-badge">' + window.AAUP_ICONS.preview('star', 11) + r.difficulty + '</span>'; }
-      if(notes[pid] && notes[pid].trim()){ badgeHtml += '<span class="meta-badge" title="Has a personal note">' + window.AAUP_ICONS.preview('pen', 11) + '</span>'; }
+      // A note shows as the same small dot the plan draws on every render
+      // (js/28-imported.js noteDotHtml), kept in step here while typing.
+      var hasNote = !!(notes[pid] && String(notes[pid]).trim());
+      var dot = el.querySelector('.card-note-dot');
+      if(hasNote && !dot){
+        dot = document.createElement('span');
+        dot.className = 'card-note-dot';
+        dot.setAttribute('role', 'img');
+        dot.setAttribute('aria-label', 'You wrote a note');
+        el.appendChild(dot);
+      } else if(!hasNote && dot){ dot.remove(); }
 
       var badgeRow = el.querySelector('.course-meta-badges');
       if(badgeHtml){

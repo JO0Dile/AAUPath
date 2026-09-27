@@ -695,8 +695,36 @@
   // Save and restore sit together, with the automatic restore points
   // (js/84-autobackup.js) inside the same box — they are all the same
   // question: how do I get my data back.
+  // One line saying whether this student's data exists anywhere but this
+  // phone (idea 22): synced to their Google account, or saved to a file and
+  // when. The copies js/84-autobackup.js keeps live inside the app, so they
+  // do not count here — they go with the phone. Amber after 30 days, or
+  // when it has never been saved anywhere.
+  function backupStatusHtml(r){
+    var C = window.AAUP_CLOUD;
+    var dayMs = 86400000;
+    var agoTx = function(ms){
+      var d = Math.floor((Date.now() - ms) / dayMs);
+      if(d <= 0) return r ? 'اليوم' : 'today';
+      if(d === 1) return r ? 'إمبارح' : 'yesterday';
+      return r ? ('قبل ' + d + ' يوم') : (d + ' days ago');
+    };
+    if(C && C.isSignedIn && C.isSignedIn()){
+      return '<p class="bk-status is-ok">' + (r ? 'متزامن مع حسابك على Google — بينتقل معك لأي جهاز.' : 'Synced with your Google account — it moves with you to any device.') + '</p>';
+    }
+    var last = 0;
+    try{ last = Date.parse(localStorage.getItem('aaup_lastExport') || '') || 0; }catch(e){}
+    if(!last){
+      return '<p class="bk-status is-warn">' + (r ? 'ما انحفظ ولا مرة برّا هالجهاز. إذا ضاع الجهاز، بيضيع معه.' : 'Never saved outside this phone. If the phone is lost, so is this.') + '</p>';
+    }
+    var old = Date.now() - last > 30 * dayMs;
+    return '<p class="bk-status ' + (old ? 'is-warn' : 'is-ok') + '">' +
+      (r ? 'آخر نسخة بملف: ' : 'Last saved to a file: ') + '<b>' + agoTx(last) + '</b>' +
+      (old ? (r ? ' — احفظ نسخة جديدة.' : ' — save a new one.') : '') + '</p>';
+  }
   function backupHtml(r){
     return '<h3 class="mh set-grp-h">' + window.AAUP_ICONS.preview('save', 18) + (r ? 'نسخة احتياطية' : 'Backup') + '</h3>' +
+      backupStatusHtml(r) +
       '<p class="form-note" style="margin-top:0;">' + (r
         ? 'احفظ كل إشي بملف، أو رجّع ملف محفوظ.'
         : 'Save everything to a file, or bring a saved file back.') + '</p>' +
@@ -869,7 +897,11 @@
       });
     }
     if(document.getElementById('setExportBtn')){
-      document.getElementById('setExportBtn').addEventListener('click', function(){ if(window.AAUP_DATA) window.AAUP_DATA.exportData(); });
+      document.getElementById('setExportBtn').addEventListener('click', function(){
+        if(window.AAUP_DATA) window.AAUP_DATA.exportData();
+        var st = document.querySelector('.bk-status');
+        if(st){ var r2 = document.documentElement.dir === 'rtl'; st.outerHTML = backupStatusHtml(r2); }
+      });
     }
     if(document.getElementById('setImportBtn')){
       document.getElementById('setImportBtn').addEventListener('click', function(){ if(window.AAUP_DATA) window.AAUP_DATA.triggerImport(); });
