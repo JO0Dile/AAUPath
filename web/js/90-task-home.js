@@ -181,6 +181,126 @@
       words: ['achiev', 'badge', 'إنجاز', 'شار'],
       run: function(id){ window.AAUP_ACHIEVEMENTS.open(id); } }
   ];
+  // ---- Arrange Home (idea 18) ------------------------------------------------
+  // The student's own order for the cards, and the ones they hid. Hidden
+  // cards still turn up in search, so nothing becomes unreachable.
+  var ARRANGE_KEY = 'aaup_homeArrange';
+  function arrangeCfg(){
+    var c = window.AAUP_STORAGE ? window.AAUP_STORAGE.getJSON(ARRANGE_KEY, {}) : {};
+    return { order: Array.isArray(c && c.order) ? c.order : [], hidden: Array.isArray(c && c.hidden) ? c.hidden : [] };
+  }
+  function saveArrange(c){ if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(ARRANGE_KEY, c); }
+  function orderedFeatures(){
+    var order = arrangeCfg().order, byKey = {};
+    FEATURES.forEach(function(f){ byKey[f.key] = f; });
+    var out = [];
+    order.forEach(function(k){ if(byKey[k]){ out.push(byKey[k]); delete byKey[k]; } });
+    FEATURES.forEach(function(f){ if(byKey[f.key]) out.push(f); });   // new cards join at the end
+    return out;
+  }
+  function arrangedFeatures(){
+    var hidden = arrangeCfg().hidden;
+    return orderedFeatures().filter(function(f){ return hidden.indexOf(f.key) < 0; });
+  }
+
+  function arrangeRowsHtml(){
+    var hidden = arrangeCfg().hidden;
+    var list = orderedFeatures();
+    var shown = list.filter(function(f){ return hidden.indexOf(f.key) < 0; });
+    var off = list.filter(function(f){ return hidden.indexOf(f.key) >= 0; });
+    var row = function(f, isHidden, i, n){
+      return '<div class="arr-row' + (isHidden ? ' is-hidden' : '') + '" data-arr-key="' + f.key + '">' +
+        (isHidden ? '' : '<span class="arr-handle" aria-hidden="true">' + ic('menu', 16) + '</span>') +
+        '<span class="arr-ic">' + ic(f.icon, 16) + '</span>' +
+        '<span class="arr-name">' + esc(L(f.en, f.ar)) + '</span>' +
+        (isHidden ? '' :
+          '<button type="button" class="arr-mv" data-arr-up="' + f.key + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + esc(L('Move up', 'لفوق')) + '">↑</button>' +
+          '<button type="button" class="arr-mv" data-arr-down="' + f.key + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + esc(L('Move down', 'لتحت')) + '">↓</button>') +
+        '<button type="button" class="arr-hide" data-arr-toggle="' + f.key + '">' + esc(isHidden ? L('Show', 'أظهر') : L('Hide', 'أخفِ')) + '</button>' +
+        '</div>';
+    };
+    return '<div class="arr-list" id="arrShown">' + shown.map(function(f, i){ return row(f, false, i, shown.length); }).join('') + '</div>' +
+      (off.length ? '<div class="arr-sub">' + esc(L('Hidden · still found by search', 'مخفية · بتلاقيها بالبحث')) + '</div>' +
+        '<div class="arr-list">' + off.map(function(f){ return row(f, true); }).join('') + '</div>' : '');
+  }
+  function arrangeOverlay(){
+    var el = document.getElementById('hmArrangeOverlay');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'hmArrangeOverlay';
+    el.className = 'modal-overlay';
+    el.innerHTML = '<div class="modal-card arr-card" role="dialog" aria-modal="true" aria-labelledby="arrTitle"><div class="modal-body" id="arrBody"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', function(e){
+      var t = e.target, b, c = arrangeCfg();
+      if(t === el || t.closest('[data-arr-done]')){ el.classList.remove('open'); render(); return; }
+      if(t.closest('[data-arr-reset]')){ saveArrange({ order: [], hidden: [] }); renderArrange(); return; }
+      var keys = orderedFeatures().filter(function(f){ return c.hidden.indexOf(f.key) < 0; }).map(function(f){ return f.key; });
+      if((b = t.closest('[data-arr-up]')) || (b = t.closest('[data-arr-down]'))){
+        var k = b.getAttribute('data-arr-up') || b.getAttribute('data-arr-down');
+        var i = keys.indexOf(k), j = b.hasAttribute('data-arr-up') ? i - 1 : i + 1;
+        if(i < 0 || j < 0 || j >= keys.length) return;
+        keys.splice(j, 0, keys.splice(i, 1)[0]);
+        c.order = keys.concat(c.hidden);
+        saveArrange(c); renderArrange();
+        return;
+      }
+      if((b = t.closest('[data-arr-toggle]'))){
+        var key = b.getAttribute('data-arr-toggle');
+        if(c.hidden.indexOf(key) >= 0) c.hidden = c.hidden.filter(function(x){ return x !== key; });
+        else c.hidden.push(key);
+        c.order = orderedFeatures().map(function(f){ return f.key; });
+        saveArrange(c); renderArrange();
+      }
+    });
+    // Drag by the handle: the row follows the finger and the others make
+    // room; the order is saved when it is let go.
+    var drag = null;
+    el.addEventListener('pointerdown', function(e){
+      var h = e.target.closest && e.target.closest('.arr-handle');
+      if(!h) return;
+      var rowEl = h.closest('.arr-row');
+      drag = { row: rowEl, list: rowEl.parentNode };
+      rowEl.classList.add('is-drag');
+      try{ h.setPointerCapture(e.pointerId); }catch(err){}
+      e.preventDefault();
+    });
+    el.addEventListener('pointermove', function(e){
+      if(!drag) return;
+      var rows = Array.prototype.filter.call(drag.list.children, function(r){ return r !== drag.row; });
+      var before = null;
+      for(var i = 0; i < rows.length; i++){
+        var r = rows[i].getBoundingClientRect();
+        if(e.clientY < r.top + r.height / 2){ before = rows[i]; break; }
+      }
+      if(before) drag.list.insertBefore(drag.row, before); else drag.list.appendChild(drag.row);
+    });
+    var end = function(){
+      if(!drag) return;
+      drag.row.classList.remove('is-drag');
+      var c = arrangeCfg();
+      c.order = Array.prototype.map.call(drag.list.children, function(r){ return r.getAttribute('data-arr-key'); }).concat(c.hidden);
+      saveArrange(c);
+      drag = null;
+      renderArrange();
+    };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && el.classList.contains('open')){ el.classList.remove('open'); render(); } });
+    return el;
+  }
+  function renderArrange(){
+    var body = document.getElementById('arrBody');
+    if(!body) return;
+    body.innerHTML =
+      '<div class="arr-head"><h2 class="mh" id="arrTitle" style="margin:0;">' + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</h2>' +
+      '<button type="button" class="home-btn btn-pri btn-sm" data-arr-done>' + esc(L('Done', 'تم')) + '</button></div>' +
+      '<p class="form-note" style="margin-top:0;">' + esc(L('Drag by the handle, or use the arrows. Hide what you never use.', 'اسحب من المقبض أو استعمل الأسهم. أخفِ اللي ما بتستعمله.')) + '</p>' +
+      arrangeRowsHtml() +
+      '<div class="form-actions" style="justify-content:flex-start;margin-top:10px;"><button type="button" class="home-btn btn-quiet btn-sm" data-arr-reset>' + esc(L('Back to the usual order', 'رجّع الترتيب الأصلي')) + '</button></div>';
+  }
+  function openArrange(){ arrangeOverlay().classList.add('open'); renderArrange(); }
+
   var EXTRAS = [
     // The one place to switch major: here, beside it. Only offered once a
     // major is chosen — before that, Choose a Plan is the same question.
@@ -386,6 +506,7 @@
             (done ? ic('check', 14) + '<span>' + esc(L('passed', 'منجز')) + '</span>' : '<span class="hm-sem-circle"></span>') +
           '</button></div>';
       }).join('') +
+      (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.promptHtml(id) : '') +
       '</section>';
   }
 
@@ -425,10 +546,13 @@
       '<div class="hm-body">' +
         '<div class="hm-main">' +
           '<div class="home-install-row" id="homeInstallRow" hidden></div>' +
+          (window.AAUP_DATES ? window.AAUP_DATES.homeHtml(id) : '') +
+          (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.todayHtml(id) : '') +
           pinnedHtml(id) +
           thisSemesterHtml(id) +
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
-          '<div class="hm-grid">' + FEATURES.map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
+          '<div class="hm-grid">' + arrangedFeatures().map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
+          '<button type="button" class="hm-arrange-link" data-hm-arrange>' + ic('menu', 14) + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</button>' +
           '<div class="hm-also"><span class="hm-label">' + esc(L('Also here', 'كمان هون')) + '</span>' +
             EXTRAS.filter(function(f){ return !f.onlyWithPlan || id; }).map(function(f){ return '<button type="button" class="hm-pill" data-hm-go="' + f.key + '">' + ic(f.icon, 15) + esc(L(f.en, f.ar)) + '</button>'; }).join('') +
           '</div>' +
@@ -764,6 +888,7 @@
       else if(t.closest('[data-hm-settings]')){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); }
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
       else if(t.closest('[data-hm-ver]')) verTap();
+      else if(t.closest('[data-hm-arrange]')){ openArrange(); }
       else if((b = t.closest('[data-hm-pin]'))){
         var pidPlan = selected();
         if(pidPlan && window.AAUP_IMPORTED){ ensurePlan(pidPlan); window.AAUP_IMPORTED.openCourseModal(pidPlan, b.getAttribute('data-hm-pin')); }

@@ -476,7 +476,28 @@ function validUniversity(u) {
       iconKey: str(c.iconKey, 40),
       imageUrl: str(c.imageUrl, 300),
     })),
+    // Dates students see counting down on Home (add/drop, midterms, finals…).
+    // Only well-formed rows survive; the list is capped.
+    ...(Array.isArray(u.dates) ? { dates: validDates(u.dates) } : {}),
+    // Switchboard numbers the About screen reads. The editor does not manage
+    // them, so they are passed through as they are (handlePutUniversity keeps
+    // the stored ones when a save does not send any).
+    ...(u.contacts && typeof u.contacts === 'object' && !Array.isArray(u.contacts) ? { contacts: u.contacts } : {}),
   };
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+function validDates(list) {
+  return list
+    .filter((d) => d && DATE_RE.test(String(d.date || '')) && str(d.en).trim())
+    .slice(0, 40)
+    .map((d) => ({
+      en: str(d.en, 80),
+      ar: str(d.ar, 80),
+      date: String(d.date),
+      ...(DATE_RE.test(String(d.end || '')) ? { end: String(d.end) } : {}),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function validMajor(m) {
@@ -811,6 +832,16 @@ async function handlePutUniversity(request, env, slug) {
   const existing = await ghGet(env, path);
   const conflict = staleBase(body, existing, env, request);
   if (conflict) return conflict;
+  // Fields the editor does not send are kept from the stored file, so a save
+  // cannot quietly drop them: the switchboard numbers, and the dates list
+  // when the save came from an editor that predates it.
+  try {
+    const stored = existing && existing.text ? JSON.parse(existing.text) : null;
+    if (stored) {
+      if (clean.contacts === undefined && stored.contacts) clean.contacts = stored.contacts;
+      if (clean.dates === undefined && Array.isArray(stored.dates)) clean.dates = stored.dates;
+    }
+  } catch { /* an unreadable stored file just means nothing to keep */ }
   const newSha = await ghPut(env, path, jsonBytes(clean), `admin: update ${slug} university info`, existing.sha);
 
   // The index carries the tile-level fields, so it has to move with the file

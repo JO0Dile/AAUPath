@@ -159,6 +159,14 @@
   }
   function say(key, lang, extra) { return reply([pick(KB.say[key], lang)], extra); }
 
+  // Buttons that do what the answer talks about (idea 30): open the course,
+  // plan the semester, open Grades. They only open screens; anything that
+  // changes the student's data still goes through a confirm.
+  function openCourseAction(prefix, slug, lang) {
+    return { label: lang === 'ar' ? 'افتح ' + courseName(prefix, slug, lang) : 'Open ' + courseName(prefix, slug, lang),
+             run: function () { if (window.AAUP_IMPORTED) window.AAUP_IMPORTED.openCourseModal(prefix, slug); } };
+  }
+
   // ---------------------------------------------------------------
   // GUARDS
   // ---------------------------------------------------------------
@@ -268,7 +276,7 @@
     lines.unshift(lang === 'ar'
       ? name + ' يحتاج ' + needs.length + ' متطلبًا سابقًا:'
       : name + ' needs ' + needs.length + ' prerequisite' + (needs.length > 1 ? 's' : '') + ':');
-    return reply(lines);
+    return reply(lines, { actions: [openCourseAction(prefix, slug, lang)] });
   }
 
   function answerWhyLocked(prefix, slug, lang) {
@@ -296,7 +304,7 @@
     lines.unshift(lang === 'ar'
       ? name + ' مقفل لأن هذه المتطلبات لم تكتمل بعد:'
       : name + ' is locked because these are not completed yet:');
-    return reply(lines);
+    return reply(lines, { actions: [openCourseAction(prefix, slug, lang)] });
   }
 
   function answerUnlocks(prefix, slug, lang) {
@@ -311,7 +319,7 @@
     lines.unshift(lang === 'ar'
       ? name + ' يفتح ' + unlocks.length + ' مساقًا:'
       : name + ' unlocks ' + unlocks.length + ' course' + (unlocks.length > 1 ? 's' : '') + ':');
-    return reply(lines);
+    return reply(lines, { actions: [openCourseAction(prefix, slug, lang)] });
   }
 
   function answerCourse(prefix, slug, lang) {
@@ -337,7 +345,7 @@
       lines.push((lang === 'ar' ? 'يفتح: ' : 'Unlocks: ') +
         unlocks.map(function (s) { return courseName(prefix, s, lang); }).join(sep));
     }
-    return reply(lines, { title: name });
+    return reply(lines, { title: name, actions: [openCourseAction(prefix, slug, lang)] });
   }
 
   function answerAvailable(prefix, lang) {
@@ -368,7 +376,9 @@
     if (els.length > 12) {
       lines.push(lang === 'ar' ? '…و' + (els.length - 12) + ' غيرها.' : '…and ' + (els.length - 12) + ' more.');
     }
-    return reply(lines, { guide: 'nextSemester' });
+    return reply(lines, { guide: 'nextSemester', actions: window.AAUP_ADVISOR ? [{
+      label: lang === 'ar' ? 'خطّط الفصل كامل' : 'Plan the whole semester', primary: true,
+      run: function () { window.AAUP_ADVISOR.open(prefix); } }] : null });
   }
 
   function answerProgress(prefix, lang) {
@@ -397,9 +407,15 @@
         ? 'لم تُدخل أي علامات بعد، فلا يوجد معدّل لعرضه.'
         : 'No grades entered yet, so there is no GPA to show.');
     }
-    return reply(lines, { title: lang === 'ar' ? 'تقدّمك' : 'Your progress', guide: 'audit' });
+    return reply(lines, { title: lang === 'ar' ? 'تقدّمك' : 'Your progress', guide: 'audit', actions: window.AAUP_DASHBOARD ? [{
+      label: lang === 'ar' ? 'افتح تقدّمي الدراسي' : 'Open Degree Progress',
+      run: function () { window.AAUP_DASHBOARD.open(prefix); } }] : null });
   }
 
+  function gradesAction(prefix, lang) {
+    return window.AAUP_AUDIT ? [{ label: lang === 'ar' ? 'افتح العلامات' : 'Open Grades',
+      run: function () { window.AAUP_AUDIT.open(prefix); } }] : null;
+  }
   function answerGpa(prefix, lang) {
     var gpa = window.AAUP_GPA ? window.AAUP_GPA.gpaFor(prefix, null) : null;
     if (!gpa || gpa.gpa == null) {
@@ -410,14 +426,14 @@
         lang === 'ar'
           ? 'افتح أي مساق وأدخل علامتك، وسيُحسب المعدّل فورًا.'
           : 'Open any course, enter your grade, and it calculates immediately.'
-      ], { guide: 'gpa' });
+      ], { guide: 'gpa', actions: gradesAction(prefix, lang) });
     }
     return reply([
       (lang === 'ar' ? 'معدّلك التراكمي الحالي: ' : 'Your current GPA is ') + gpa.gpa,
       lang === 'ar'
         ? 'محسوب من المساقات التي أدخلت لها علامات فقط، بوزن ساعاتها المعتمدة.'
         : 'Calculated from graded courses only, weighted by their credit hours.'
-    ], { guide: 'gpa' });
+    ], { guide: 'gpa', actions: gradesAction(prefix, lang) });
   }
 
   function answerPassMark(prefix, lang) {
