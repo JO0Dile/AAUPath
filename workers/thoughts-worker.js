@@ -169,6 +169,33 @@ async function addThought(env, body, cors, request) {
   }
   await env.THOUGHTS.put(rateKey, String(Date.now()), { expirationTtl: 60 });
 
+  // SPAM. The device id above is made up by the client, so a script can
+  // invent a new one for every post. Three more limits the client cannot
+  // choose its way around:
+  //   - per network address: 20 posts in 10 minutes. Generous on purpose —
+  //     a whole campus can share one address. The address itself is never
+  //     stored: only a salted hash, as a counter that expires in 10 minutes.
+  //   - per device per day: 15.
+  //   - the same words twice: a post identical to one already on the wall
+  //     from the last day is refused.
+  const ip = request.headers.get('CF-Connecting-IP') || '';
+  if (ip) {
+    const ipKey = `ip:${await sha256((env.ADMIN_SECRET || 'aaupath') + ip)}`;
+    const n = Number(await env.THOUGHTS.get(ipKey)) || 0;
+    if (n >= 20) return json({ error: 'too many', final: true }, 429, cors);
+    await env.THOUGHTS.put(ipKey, String(n + 1), { expirationTtl: 600 });
+  }
+  const dayKey = `day:${by}:${new Date().toISOString().slice(0, 10)}`;
+  const today = Number(await env.THOUGHTS.get(dayKey)) || 0;
+  if (today >= 15) return json({ error: 'daily limit', final: true }, 429, cors);
+  await env.THOUGHTS.put(dayKey, String(today + 1), { expirationTtl: 60 * 60 * 26 });
+  const norm = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+  const wall0 = await readWall(env, plan);
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  if (wall0.some((t) => (t.at || 0) > dayAgo && norm(t.text || '') === norm(text))) {
+    return json({ error: 'duplicate', final: true }, 409, cors);
+  }
+
   const item = {
     id: safeId(body.id || '') || `${by}-${Date.now().toString(36)}`,
     text,
@@ -452,4 +479,9 @@ function firstBadWord(text) {
     unclear = hit.raw;
   }
   return unclear;
+}
+
+async function sha256(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
 }

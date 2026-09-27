@@ -29,7 +29,10 @@
     'A': 4.00, 'A-': 3.67, 'B+': 3.33, 'B': 3.00, 'B-': 2.67,
     'C+': 2.33, 'C': 2.00, 'C-': 1.67, 'D+': 1.33, 'D': 1.00, 'F': 0.35, 'FA': 0.35
   };
-  var GRADE_ORDER = ['A','A-','B+','B','B-','C+','C','C-','D+','D','F','FA','W'];
+  // TR (transferred, idea 8): a course taken at another university or
+  // elsewhere and credited here. It is passed, so its hours count, but it
+  // has no points, so like W it never enters the GPA.
+  var GRADE_ORDER = ['A','A-','B+','B','B-','C+','C','C-','D+','D','F','FA','W','TR'];
   // `g in GRADE_POINTS` walked the prototype chain, so a stored grade of
   // "constructor", "toString", "valueOf", "__proto__", "hasOwnProperty" (or any
   // other inherited name) passed the guard and then multiplied a credit-hour
@@ -151,6 +154,7 @@
   function gradeLabel(g){
     if(g === 'W') return 'W — Withdrawn (not counted)';
     if(g === 'FA') return 'FA — Absence fail (counts as F)';
+    if(g === 'TR') return 'TR — Transferred (hours count, not in the GPA)';
     return g;
   }
   // The short form, for anywhere the grade is a CHIP. gradeLabel's sentence

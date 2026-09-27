@@ -438,7 +438,8 @@
     // question of the same hours, so it is not drawn twice.
     body.innerHTML = head +
       (window.AAUP_GPA_STUDIO ? window.AAUP_GPA_STUDIO.layout(prefix, rtl) : renderGpaDashboard(prefix, rtl)) +
-      (anyGrades ? gpaStoryHtml(prefix, rtl) + gradeCountsHtml(prefix, rtl) + renderSemesterGpas(prefix, rtl) : '');
+      (anyGrades ? gpaStoryHtml(prefix, rtl) + gradeCountsHtml(prefix, rtl) + renderSemesterGpas(prefix, rtl) : '') +
+      (window.AAUP_TRANSCRIPT ? window.AAUP_TRANSCRIPT.buttonHtml(prefix, rtl) : '');
     overlay.classList.add('open');
     bindModes(prefix);
     markScrollable(body);
