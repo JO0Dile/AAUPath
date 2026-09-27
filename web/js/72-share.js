@@ -230,7 +230,7 @@
         // than a fourteenth destination in the menu.
         '<div class="share-actions">' +
           // A tall progress picture for stories (js/92-story-card.js).
-          (window.AAUP_STORY ? '<button type="button" class="home-btn" id="shareStoryBtn">' + window.AAUP_ICONS.preview('camera', 14) + t('story', rtl) + '</button>' : '') +
+          (window.AAUP_STORY_CARD ? '<button type="button" class="home-btn" id="shareStoryBtn">' + window.AAUP_ICONS.preview('camera', 14) + t('story', rtl) + '</button>' : '') +
           (navigator.share ? '<button type="button" class="home-btn share-native-btn" id="shareNativeBtn">' + window.AAUP_ICONS.preview('send', 14) + t('shareVia', rtl) + '</button>' : '') +
           (window.AAUP_OVERVIEW ? '<button type="button" class="home-btn" id="sharePrintBtn">' + window.AAUP_ICONS.preview('printer', 14) + t('print', rtl) + '</button>' : '') +
           (window.AAUP_CALENDAR ? '<button type="button" class="home-btn" id="shareIcsBtn">' + window.AAUP_ICONS.preview('calendar', 14) + t('calendar', rtl) + '</button>' : '') +
@@ -255,7 +255,7 @@
 
       var storyBtn = document.getElementById('shareStoryBtn');
       if(storyBtn){
-        storyBtn.addEventListener('click', function(){ window.AAUP_STORY.open(prefix); });
+        storyBtn.addEventListener('click', function(){ window.AAUP_STORY_CARD.open(prefix); });
       }
 
       var progressBtn = document.getElementById('shareProgressBtn');

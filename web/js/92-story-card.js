@@ -213,5 +213,5 @@
     el.classList.add('open');
   }
 
-  window.AAUP_STORY = { open: open, facts: facts };
+  window.AAUP_STORY_CARD = { open: open, facts: facts };
 })();
