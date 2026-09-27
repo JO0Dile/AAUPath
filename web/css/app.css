@@ -4402,6 +4402,21 @@
      gesture explains itself the first time it is tried by accident. */
   .course.swipe-pass{box-shadow:-6px 0 0 0 var(--unlock);}
   .course.swipe-undo{box-shadow:6px 0 0 0 var(--prereq);}
+  .course.swipe-plan{box-shadow:6px 0 0 0 var(--accent);}
+  html[dir="rtl"] .course.swipe-pass{box-shadow:6px 0 0 0 var(--unlock);}
+  html[dir="rtl"] .course.swipe-undo{box-shadow:-6px 0 0 0 var(--prereq);}
+  html[dir="rtl"] .course.swipe-plan{box-shadow:-6px 0 0 0 var(--accent);}
+  /* What letting go will do, over the card while it is being swiped. */
+  .course.course[data-swipe-label]{z-index:6;}
+  .course.course[data-swipe-label]::before{
+    content:attr(data-swipe-label); position:absolute; inset:0; z-index:4; border-radius:inherit;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:900; color:#fff; pointer-events:none;
+    background:color-mix(in srgb, var(--text-dim) 55%, transparent); opacity:.0; transition:opacity .1s ease;
+  }
+  .course.course.swipe-pass[data-swipe-label]::before{background:color-mix(in srgb, var(--unlock) 82%, transparent); opacity:1;}
+  .course.course.swipe-undo[data-swipe-label]::before{background:color-mix(in srgb, var(--prereq) 82%, transparent); opacity:1;}
+  .course.course.swipe-plan[data-swipe-label]::before{background:color-mix(in srgb, var(--accent) 85%, transparent); opacity:1;}
 
   /* Reading-size picker (Settings -> Preferences), same shape as the theme
      swatches beside it so the two read as one set of appearance controls. */
@@ -5431,15 +5446,6 @@
   }
   .way-head{font-size:13.5px; font-weight:700; margin-bottom:4px;}
   .way-note{font-size:11.5px; color:var(--text-dim); margin:0 0 11px; line-height:1.55;}
-  .way-chips{display:flex; flex-wrap:wrap; gap:6px;}
-  .way-chip{
-    appearance:none; cursor:pointer; font:inherit;
-    font-size:11.5px; font-weight:700; padding:7px 12px; border-radius:999px;
-    border:1px solid var(--line); background:transparent; color:var(--text);
-    transition:.12s;
-  }
-  .way-chip:hover{border-color:var(--accent); background:var(--search-bg);}
-  .way-chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
   /* 5 · GRADE CHIPS INSTEAD OF A NATIVE SELECT.
      On Android a <select> throws a full-screen list over the app to pick one
@@ -6340,8 +6346,9 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
 .imp-semester-title{
   position:sticky; top:var(--sticky-top, 0px); z-index:3;
   padding:6px 0 7px; margin-bottom:6px;
-  background:linear-gradient(to bottom,
-    var(--bg) 68%, color-mix(in srgb, var(--bg) 0%, transparent));
+  /* The year card's own colour, so a pinned title reads as part of it. */
+  background:var(--panel);
+  box-shadow:0 6px 8px -6px rgba(0,0,0,.35);
 }
 
 /* 1 · THE LOAD IS A VERDICT, NOT A NUMBER.
@@ -8441,7 +8448,8 @@ details.way-card > .way-head::-webkit-details-marker{display:none;}
 }
 details.way-card[open] > .way-head .way-pick{visibility:hidden;}
 details.way-card > .way-note{margin:0 15px 11px;}
-details.way-card > .way-chips{margin:0 15px 14px;}
+details.way-card > .way-range, details.way-card > .way-scale, details.way-card > .way-sum{margin-inline:15px; width:auto;}
+details.way-card > .way-go{margin:0 15px 14px; width:calc(100% - 30px);}
 @media (max-width:720px){
   .sheet-plan > header{
     display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center;
@@ -8772,3 +8780,34 @@ html[dir="rtl"] .course-meta .cm-status.cm-locked{padding:1px 6px 1px 8px;}
 .set-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding:12px 0; border-top:1px solid var(--line);}
 .set-switch-row b{display:block; font-size:13.5px;}
 .set-switch-row .form-note{margin:2px 0 0;}
+
+/* Grade chips inside the message after a tick (js/14-storage.js choices). */
+.notice-choices{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:8px;}
+.notice-choices-label{flex-basis:100%; font-size:11.5px; font-weight:700; color:var(--text-dim);}
+.notice-choice{
+  min-width:40px; padding:6px 9px; border-radius:9px; border:1px solid var(--line);
+  background:var(--panel); color:var(--text); font:inherit; font-size:13.5px; font-weight:800; cursor:pointer;
+}
+.notice-choice:hover, .notice-choice:focus-visible{border-color:var(--accent); color:var(--accent); outline:none;}
+
+/* "Where are you now?" as a slider (js/28-imported.js whereAreYouHtml). */
+.way-range{
+  -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:99px; margin:14px 0 4px;
+  background:linear-gradient(to right, var(--accent) var(--fill, 12%), var(--line) var(--fill, 12%)); cursor:pointer;
+}
+html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var(--fill, 12%), var(--line) var(--fill, 12%));}
+.way-range::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:26px; height:26px; border-radius:50%; background:#fff; border:3px solid var(--accent); box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.way-range::-moz-range-thumb{width:22px; height:22px; border-radius:50%; background:#fff; border:3px solid var(--accent);}
+.way-range:focus-visible{outline:2px solid var(--accent); outline-offset:4px;}
+.way-scale{display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; color:var(--text-dim);}
+.way-sum{display:flex; flex-direction:column; align-items:center; gap:2px; margin:14px 0 12px; padding:10px; border-radius:12px; background:color-mix(in srgb, var(--text) 5%, transparent); text-align:center;}
+.way-sum b{font-size:15px;}
+.way-sum span{font-size:11.5px; color:var(--text-dim);}
+.way-go{display:flex; width:100%;}
+
+/* Pull-up course window on phones (js/95-sheet-drag.js). */
+@media (max-width:720px){
+  #impCourseModalOverlay .modal-card.cd-card.sheet-half{height:58dvh; max-height:58dvh;}
+  #impCourseModalOverlay .modal-card.cd-card.sheet-full{height:92dvh; max-height:92dvh;}
+  #impCourseModalOverlay .modal-card.cd-card{transition:height .22s cubic-bezier(.2,.8,.2,1), max-height .22s cubic-bezier(.2,.8,.2,1), transform .2s ease;}
+}

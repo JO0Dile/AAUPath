@@ -42,6 +42,30 @@
     return true;
   }
 
+  // Planned is a status, not a tick: it rides in the same store the course
+  // window's Status buttons use, and the message offers Undo.
+  function plan(card){
+    var p = planAndSlug(card);
+    if(!p || !window.AAUP_GPA || !window.AAUP_GPA.loadStatuses) return;
+    var pid = window.AAUP_GPA.primaryId ? window.AAUP_GPA.primaryId(p.prefix, p.slug) : card.id;
+    var st = window.AAUP_GPA.loadStatuses();
+    var before = st[pid];
+    st[pid] = 'planned';
+    window.AAUP_GPA.saveStatuses(st);
+    if(window.__buzz) window.__buzz('tick');
+    var name = (card.querySelector('.name') || {}).textContent || '';
+    if(window.__showUnlockToast){
+      window.__showUnlockToast(name + ': ' + (ar() ? 'مخطط' : 'planned'), '', {
+        undoLabel: ar() ? 'تراجع' : 'Undo',
+        undo: function(){
+          var s2 = window.AAUP_GPA.loadStatuses();
+          if(before) s2[pid] = before; else delete s2[pid];
+          window.AAUP_GPA.saveStatuses(s2);
+        }
+      });
+    }
+  }
+
   // ---------------------------------------------------------------- keyboard
   document.addEventListener('keydown', function(e){
     var card = e.target && e.target.classList && e.target.classList.contains('course') ? e.target : null;
@@ -72,23 +96,36 @@
     startY = e.touches[0].clientY;
   }, { passive: true });
 
+  // "Forward" is to the right in English and to the left in Arabic: the
+  // swipe that marks a course passed follows the reading direction.
+  function fwd(){ return document.documentElement.dir === 'rtl' ? -1 : 1; }
+  function ar(){ return document.documentElement.dir === 'rtl'; }
+
   document.addEventListener('touchmove', function(e){
     if(!tracking || e.touches.length !== 1) return;
-    var dx = e.touches[0].clientX - startX;
+    var dx = (e.touches[0].clientX - startX) * fwd();
     var dy = Math.abs(e.touches[0].clientY - startY);
     if(dy > SWIPE_MAX_OFF){ clear(); return; }   // they're scrolling, not swiping
     // Follow the finger a little so the gesture is discoverable — capped, so
     // the card never leaves its slot in the grid.
-    var shown = Math.max(-70, Math.min(70, dx));
+    var shown = Math.max(-70, Math.min(70, dx)) * fwd();
     tracking.style.transform = 'translateX(' + shown + 'px)';
-    tracking.classList.toggle('swipe-pass', dx >= SWIPE_MIN);
-    tracking.classList.toggle('swipe-undo', dx <= -SWIPE_MIN);
+    var done = tracking.classList.contains('completed');
+    // The label says what letting go will do: forward passes it, back
+    // un-passes a passed course or plans one that is not passed yet.
+    tracking.setAttribute('data-swipe-label', dx > 0
+      ? (ar() ? '✓ منجز' : '✓ Passed')
+      : (done ? (ar() ? 'غير منجز' : 'Not passed') : (ar() ? 'مخطط' : 'Planned')));
+    tracking.classList.toggle('swipe-pass', dx >= SWIPE_MIN && !done);
+    tracking.classList.toggle('swipe-undo', dx <= -SWIPE_MIN && done);
+    tracking.classList.toggle('swipe-plan', dx <= -SWIPE_MIN && !done);
   }, { passive: true });
 
   function clear(){
     if(tracking){
       tracking.style.transform = '';
-      tracking.classList.remove('swipe-pass', 'swipe-undo');
+      tracking.classList.remove('swipe-pass', 'swipe-undo', 'swipe-plan');
+      tracking.removeAttribute('data-swipe-label');
     }
     tracking = null;
   }
@@ -96,15 +133,22 @@
   document.addEventListener('touchend', function(e){
     if(!tracking) return;
     var card = tracking;
-    var dx = (e.changedTouches[0] ? e.changedTouches[0].clientX : startX) - startX;
+    var dx = ((e.changedTouches[0] ? e.changedTouches[0].clientX : startX) - startX) * fwd();
     var dy = Math.abs((e.changedTouches[0] ? e.changedTouches[0].clientY : startY) - startY);
     clear();
     if(dy > SWIPE_MAX_OFF || Math.abs(dx) < SWIPE_MIN) return;
     var done = card.classList.contains('completed');
-    // Right marks passed, left marks not passed. Swiping the way it already
-    // is does nothing rather than flipping it back, so a stray swipe across a
-    // finished row can't quietly un-finish it.
-    if((dx > 0 && done) || (dx < 0 && !done)) return;
+    // Forward marks passed; back un-passes a passed course, or marks one that
+    // is not passed yet as planned (idea 1). Forward on a passed course does
+    // nothing, so a stray swipe across a finished row changes nothing.
+    if(dx > 0 && done) return;
+    if(dx < 0 && !done){
+      var swallowP = function(ev){ ev.stopPropagation(); ev.preventDefault(); };
+      card.addEventListener('click', swallowP, { capture: true, once: true });
+      setTimeout(function(){ card.removeEventListener('click', swallowP, true); }, 400);
+      plan(card);
+      return;
+    }
     // A swipe was a deliberate action, not a tap — stop the click that the
     // browser synthesizes from opening the course details on top of it.
     var swallow = function(ev){ ev.stopPropagation(); ev.preventDefault(); };
