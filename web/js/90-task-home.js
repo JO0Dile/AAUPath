@@ -39,6 +39,15 @@
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'");
   }
   function norm(v){ return window.AAUP_SEARCH ? window.AAUP_SEARCH.normalize(v) : String(v == null ? '' : v).toLowerCase(); }
+  // "ai" finds Artificial Intelligence, any word order, Arabic "ال" (js/03-search.js).
+  function smart(q, text){ return !!(window.AAUP_SEARCH && window.AAUP_SEARCH.smartMatch && window.AAUP_SEARCH.smartMatch(q, text)); }
+  // One test for every kind of result. A short query (3 letters or fewer)
+  // only counts at the start of a word or as initials, so "cs" is Computer
+  // Science and not the end of "Mathematics".
+  function found(q, text){
+    if(q.length <= 3) return smart(q, text);
+    return norm(text).indexOf(q) >= 0 || smart(q, text);
+  }
   function ic(k, n){ return window.AAUP_ICONS ? window.AAUP_ICONS.preview(k, n || 22) : ''; }
   function toast(msg){ if(window.__showToast) window.__showToast(msg); }
 
@@ -180,7 +189,9 @@
     { key: 'share', icon: 'send', needs: true, en: 'Share my plan', ar: 'شارك خطتي',
       run: function(id){ window.AAUP_SHARE.open(id); } },
     { key: 'about', icon: 'help', needs: false, en: 'About', ar: 'عن التطبيق',
-      run: function(){ window.AAUP_ABOUT.open(); } }
+      run: function(){ window.AAUP_ABOUT.open(); } },
+    { key: 'whatsnew', icon: 'news', needs: false, en: "What's new", ar: 'الجديد',
+      run: function(){ if(window.AAUP_WHATS_NEW) window.AAUP_WHATS_NEW.open(); } }
   ];
   // Found by search, never drawn as a card. University Contacts opened the
   // same screen as Find a Professor, just on a different tab, so the home
@@ -373,8 +384,7 @@
     var seen = {}, out = [];
     var S = window.AAUP_SEARCH;
     S.allCourses().some(function(c){
-      var hay = norm(c.en + ' ' + c.ar + ' ' + c.code);
-      if(hay.indexOf(q) < 0 && !(q.length >= 4 && S.fuzzyContains(q, norm(c.en)))) return false;
+      if(!found(q, c.en + ' ' + c.ar + ' ' + c.code) && !(q.length >= 4 && S.fuzzyContains(q, norm(c.en)))) return false;
       var key = norm(c.en) + '|' + c.code;
       if(seen[key]) return false;
       seen[key] = true;
@@ -390,14 +400,14 @@
     if(!q) return [];
     var out = [];
     everything().forEach(function(f){
-      var hay = norm(f.en + ' ' + f.ar);
-      var hit = hay.indexOf(q) >= 0 || (f.words || []).some(function(w){ w = norm(w); return q.indexOf(w) >= 0 || w.indexOf(q) === 0; });
+      var hit = found(q, f.en + ' ' + f.ar) || (f.words || []).some(function(w){ w = norm(w); return q.indexOf(w) >= 0 || w.indexOf(q) === 0; });
       if(hit) out.push({ kind: L('Feature', 'ميزة'), title: L(f.en, f.ar), sub: f.dEn ? L(f.dEn, f.dAr) : '', go: 'f:' + f.key });
     });
     if(contacts && contacts !== 'error' && contacts.contacts){
       contacts.contacts.forEach(function(c){
         if(c.category !== 'instructor') return;
-        if(norm(c.name + ' ' + (c.courses || []).join(' ')).indexOf(q) >= 0){
+        var chay = c.name + ' ' + (c.courses || []).join(' ');
+        if(found(q, chay)){
           out.push({ kind: L('Professor', 'محاضر'), title: c.name, sub: (c.courses || []).join(' \u00b7 '), go: 'p:' + c.name });
         }
       });
@@ -407,7 +417,7 @@
     Object.keys(all).forEach(function(id){
       var p = all[id];
       if(!p || !p.majorName) return;
-      if(norm(planNameBoth(p)).indexOf(q) >= 0){
+      if(found(q, planNameBoth(p))){
         out.push({ kind: L('Major', 'تخصص'), title: plain(planName(p)), sub: plain(collegeName(collegeKey(p), p)), go: 'm:' + id });
       }
     });
@@ -428,7 +438,21 @@
     if(!box || !host) return;
     var q = state.q.trim();
     host.classList.toggle('hm-has-q', !!q);
-    if(!q){ box.hidden = true; box.innerHTML = ''; openGroups = {}; return; }
+    if(!q){
+      openGroups = {};
+      // An empty box that has focus shows what you searched before.
+      var rec = recent();
+      if(document.activeElement && document.activeElement.id === 'hmSearch' && rec.length){
+        box.innerHTML = '<div class="hm-group"><div class="hm-group-h">' + esc(L('Recent', 'بحثت عنه مؤخرًا')) + '</div>' +
+          rec.map(function(r){
+            return '<div class="hm-recent"><button type="button" class="hm-res" data-hm-q="' + esc(r) + '">' + ic('clock', 16) +
+              '<span class="hm-res-body"><b>' + esc(r) + '</b></span></button>' +
+              '<button type="button" class="hm-recent-x" data-hm-forget="' + esc(r) + '" aria-label="' + esc(L('Remove', 'احذف')) + '">' + ic('close', 14) + '</button></div>';
+          }).join('') + '</div>';
+        box.hidden = false;
+      } else { box.hidden = true; box.innerHTML = ''; }
+      return;
+    }
     var rs = results();
     var groups = {};
     rs.forEach(function(r){ var k = r.go.slice(0, 2); (groups[k] = groups[k] || []).push(r); });
@@ -461,7 +485,22 @@
     if(had){ try{ history.back(); }catch(e){} }
   }
 
+  // The last few things searched for, newest first, remembered on this device.
+  var RECENT_KEY = 'aaup_recent_search';
+  function recent(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').slice(0, 6); }catch(e){ return []; } }
+  function remember(q){
+    q = String(q || '').trim();
+    if(q.length < 2) return;
+    var list = recent().filter(function(x){ return x.toLowerCase() !== q.toLowerCase(); });
+    list.unshift(q);
+    try{ localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 6))); }catch(e){}
+  }
+  function forget(q){
+    try{ localStorage.setItem(RECENT_KEY, JSON.stringify(recent().filter(function(x){ return x !== q; }))); }catch(e){}
+  }
+
   function runResult(code){
+    remember(state.q);
     if(code === 'ask'){
       var q = state.q.trim();
       if(window.AAUP_ASSISTANT_UI){ window.AAUP_ASSISTANT_UI.open(); if(q) window.AAUP_ASSISTANT_UI.send(q); }
@@ -534,10 +573,12 @@
       return window.__catalogueStatus === 'failed'
         ? '<p class="hm-none">' + esc(L('Could not load the list of majors. Check your connection.', 'ما قدرنا نحمّل قائمة التخصصات. تأكد من الاتصال.')) + '</p>' +
           '<button type="button" class="hm-pill" data-hm-retry>' + esc(L('Try again', 'حاول مرة ثانية')) + '</button>'
-        : '<p class="hm-none">' + esc(L('Loading the list of majors\u2026', 'عم نحمّل قائمة التخصصات\u2026')) + '</p>';
+        // Grey rows in the shape of the list that is coming, not a line of text.
+        : (window.__skeletonHTML ? window.__skeletonHTML('line', 6, ar()) :
+           '<p class="hm-none">' + esc(L('Loading the list of majors\u2026', 'عم نحمّل قائمة التخصصات\u2026')) + '</p>');
     }
     if(q){
-      var hits = Object.keys(all).filter(function(id){ return all[id] && all[id].majorName && norm(planNameBoth(all[id])).indexOf(q) >= 0; });
+      var hits = Object.keys(all).filter(function(id){ return all[id] && all[id].majorName && found(q, planNameBoth(all[id])); });
       hits.sort(function(a, b){ return planName(all[a]).localeCompare(planName(all[b]), ar() ? 'ar' : 'en'); });
       return hits.length ? hits.map(function(id){ return majorRow(id, all[id], true); }).join('')
         : '<p class="hm-none">' + esc(L('No major matches that.', 'ما في تخصص بهالاسم.')) + '</p>';
@@ -655,6 +696,7 @@
       else if(t.closest('[data-hm-settings]')){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); }
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
       else if(t.closest('[data-hm-ver]')) verTap();
+      else if((b = t.closest('[data-hm-forget]'))){ forget(b.getAttribute('data-hm-forget')); var si = document.getElementById('hmSearch'); if(si) si.focus(); renderResults(); }
       else if((b = t.closest('[data-hm-more]'))){ openGroups[b.getAttribute('data-hm-more')] = true; renderResults(); }
       else if(t.closest('[data-hm-cancel]')) clearSearch();
     });
@@ -691,7 +733,16 @@
       }
     });
     host.addEventListener('focusin', function(e){
-      if(e.target && e.target.id === 'hmSearch' && state.q) renderResults();
+      if(e.target && e.target.id === 'hmSearch') renderResults();
+    });
+    // Recent searches close again when the box loses focus to anything
+    // outside the list.
+    host.addEventListener('focusout', function(e){
+      if(!e.target || e.target.id !== 'hmSearch' || state.q.trim()) return;
+      setTimeout(function(){
+        var box = document.getElementById('hmResults'), a = document.activeElement;
+        if(box && !state.q.trim() && !(a && (a.id === 'hmSearch' || box.contains(a)))){ box.hidden = true; box.innerHTML = ''; }
+      }, 180);
     });
   }
 

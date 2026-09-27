@@ -89,7 +89,10 @@
     // one did. One row now, and it asks where. Same pattern as the plan
     // chooser above, and for the same reason.
     { key: 'send', icon: 'download', label: 'Send this plan', ar: 'إرسال هذه الخطة', group: 'plan', planOnly: true,
-      action: function(prefix){ openSendChooser(prefix); } }
+      action: function(prefix){ openSendChooser(prefix); } },
+    // Next to Settings on both the laptop and the phone (js/94-whats-new.js).
+    { key: 'whatsnew', icon: 'news', label: "What's new", ar: 'الجديد', group: 'account', bottom: true,
+      action: function(){ if(window.AAUP_WHATS_NEW) window.AAUP_WHATS_NEW.open(); } }
   ];
   var GROUP_LABELS = { plan: 'Plan', community: 'Community', account: 'Account' };
   var GROUP_LABELS_AR = { plan: 'الخطة', community: 'المجتمع', account: 'الحساب' };
@@ -333,7 +336,7 @@
     var advExpanded = advancedExpanded(activeKey);
 
     html += '<div class="sb-flat-list">';
-    html += itemsFor(prefix).filter(function(i){ return !i.advanced; }).map(itemHtml).join('');
+    html += itemsFor(prefix).filter(function(i){ return !i.advanced && !i.bottom; }).map(itemHtml).join('');
     html += '<div class="sb-spacer"></div>';
     html += '<div class="sb-switch">';
     if(advItems.length){
@@ -344,6 +347,7 @@
     // "Change plan" used to sit here as well as on the dashboard and in the
     // Course Library. Switching major lives in one place now: the home
     // screen (js/90-task-home.js), next to the major it switches.
+    html += itemsFor(prefix).filter(function(i){ return i.bottom; }).map(itemHtml).join('');
     html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button></div>';
     html += '</div>';
     html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey) + '</div>';
@@ -629,8 +633,10 @@
         var active = t.id === current;
         return '<button type="button" class="theme-swatch' + (active ? ' theme-swatch-active' : '') +
           '" data-theme-swatch="' + t.id + '" style="--sw-bg:' + t.bg + ';--sw-accent:' + t.accent + ';" aria-pressed="' + active + '">' +
-          '<span class="theme-swatch-preview"></span>' +
-          '<span class="theme-swatch-label"><span>' + t.icon + ' ' + (r ? t.ar : t.en) + '</span><span class="theme-swatch-check">' + window.AAUP_ICONS.preview('check', 14) + '</span></span>' +
+          // A tiny version of the plan in this theme: its header, two cards
+          // and one open card in the accent, so you see what you will get.
+          '<span class="theme-swatch-preview" aria-hidden="true"><i class="tsp-bar"></i><i class="tsp-card"></i><i class="tsp-card"></i><i class="tsp-card tsp-on"></i></span>' +
+          '<span class="theme-swatch-label"><span>' + (r ? t.ar : t.en) + '</span><span class="theme-swatch-check">' + window.AAUP_ICONS.preview('check', 14) + '</span></span>' +
           '</button>';
       }).join('') +
       '</div>' +
@@ -674,7 +680,13 @@
         '<button type="button" class="home-btn" id="setEnglishBtn">' + window.AAUP_ICONS.preview('pen', 14) +
           (r ? 'تغيير' : 'Change') + '</button></div>'
       : '';
-    return themePickerHtml(r) + sizePickerHtml(r) +
+    var buzzOn = (function(){ try{ return localStorage.getItem('aaup_haptics') !== 'off'; }catch(e){ return true; } })();
+    var buzzRow = navigator.vibrate
+      ? '<div class="set-switch-row"><span><b>' + (r ? 'اهتزاز خفيف' : 'Small vibration') + '</b>' +
+          '<span class="form-note">' + (r ? 'لما تعلّم مساق أو تخلّص فصل.' : 'When you tick a course or finish a semester.') + '</span></span>' +
+          '<button type="button" class="sc-sw' + (buzzOn ? ' on' : '') + '" role="switch" aria-checked="' + buzzOn + '" id="setBuzzBtn" aria-label="' + (r ? 'اهتزاز خفيف' : 'Small vibration') + '"></button></div>'
+      : '';
+    return themePickerHtml(r) + sizePickerHtml(r) + buzzRow +
       '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;margin-top:14px;">' +
       (selectedPlan ? '<button type="button" class="home-btn" id="setLangBtn">' + window.AAUP_ICONS.preview('globe', 14) + (isRtlNow ? 'English' : 'العربية') + '</button>' : '') +
       '</div>' + engRow;
@@ -817,6 +829,14 @@
     if(window.AAUP_CONTRIBUTE && window.AAUP_CONTRIBUTE.bindSettingsSection){
       window.AAUP_CONTRIBUTE.bindSettingsSection(body);
     }
+    var buzzBtn = body.querySelector('#setBuzzBtn');
+    if(buzzBtn) buzzBtn.addEventListener('click', function(){
+      var on = buzzBtn.getAttribute('aria-checked') !== 'true';
+      try{ localStorage.setItem('aaup_haptics', on ? 'on' : 'off'); }catch(e){}
+      buzzBtn.classList.toggle('on', on);
+      buzzBtn.setAttribute('aria-checked', String(on));
+      if(on && window.__buzz) window.__buzz('tick');
+    });
     body.querySelectorAll('[data-theme-swatch]').forEach(function(el){
       el.addEventListener('click', function(){
         if(window.AAUP_THEME) window.AAUP_THEME.setTheme(el.getAttribute('data-theme-swatch'));

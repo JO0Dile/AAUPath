@@ -3963,9 +3963,14 @@
   .theme-swatch:hover{transform:translateY(-1px); border-color:var(--accent);}
   .theme-swatch-active{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);}
   .theme-swatch-preview{
-    height:34px; border-radius:8px; border:1px solid rgba(0,0,0,.15);
-    background:linear-gradient(135deg, var(--sw-bg) 0%, var(--sw-bg) 52%, var(--sw-accent) 52%, var(--sw-accent) 100%);
+    display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:6px;
+    height:auto; border-radius:8px; border:1px solid rgba(0,0,0,.15);
+    background:var(--sw-bg);
   }
+  .theme-swatch-preview i{display:block; border-radius:4px;}
+  .theme-swatch-preview .tsp-bar{grid-column:1 / -1; height:7px; width:55%; background:var(--sw-accent);}
+  .theme-swatch-preview .tsp-card{height:18px; background:color-mix(in srgb, var(--sw-bg) 82%, #fff); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--sw-accent) 22%, transparent);}
+  .theme-swatch-preview .tsp-card.tsp-on{box-shadow:inset 0 0 0 1.5px var(--sw-accent);}
   .theme-swatch-label{
     display:flex; align-items:center; gap:6px;
     font-size:11.5px; font-weight:700; color:var(--text);
@@ -8734,3 +8739,36 @@ html[dir="rtl"] .course-meta .cm-status.cm-locked{padding:1px 6px 1px 8px;}
   .sc-grid{grid-template-columns:minmax(0,1fr);}
   .sc-canvas{max-width:230px; margin:0 auto;}
 }
+
+/* Recent searches on Home (js/90-task-home.js recent()). */
+.hm-recent{display:flex; align-items:center; border-bottom:1px solid var(--line);}
+.hm-recent .hm-res{border-bottom:0; flex:1; min-width:0; min-height:48px;}
+.hm-recent .hm-res .app-icon-svg{color:var(--text-dim); flex:none;}
+.hm-recent-x{flex:none; width:44px; height:44px; border:0; background:none; color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+.hm-recent-x:hover{color:var(--text);}
+
+/* Offline pill (js/93-offline.js). */
+.offline-pill{
+  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:50%; transform:translate(-50%, -140%);
+  z-index:1500; display:flex; align-items:center; gap:8px; white-space:nowrap;
+  padding:7px 14px; border-radius:999px; font-size:13.5px; font-weight:700;
+  background:var(--header-bg); color:var(--text); border:1px solid color-mix(in srgb, var(--unlock) 50%, var(--line));
+  box-shadow:0 8px 24px rgba(0,0,0,.35); transition:transform .25s ease; pointer-events:none;
+}
+.offline-pill.show{transform:translate(-50%, 0);}
+.offline-dot{width:8px; height:8px; border-radius:50%; background:var(--unlock);}
+@media (prefers-reduced-motion:reduce){ .offline-pill{transition:none;} }
+
+/* What's new (js/94-whats-new.js). */
+#whatsNewOverlay .modal-card.wn2-card{max-width:560px;}
+.wn2-entry{padding:12px 0; border-top:1px solid var(--line);}
+.wn2-entry:first-of-type{border-top:0;}
+.wn2-head{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.wn2-head span{font-size:11.5px; color:var(--text-dim);}
+.wn2-entry ul{margin:6px 0 0; padding-inline-start:18px; font-size:13.5px; line-height:1.6;}
+.wn2-empty{color:var(--text-dim); font-size:13.5px; margin:8px 0 4px;}
+
+/* A labelled on/off row in Settings (vibration). The switch itself is .sc-sw. */
+.set-switch-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:18px; padding:12px 0; border-top:1px solid var(--line);}
+.set-switch-row b{display:block; font-size:13.5px;}
+.set-switch-row .form-note{margin:2px 0 0;}
