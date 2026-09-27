@@ -741,31 +741,48 @@
     var container = svg && svg.parentNode; // the .years wrapper
     var data = window.__PLAN_DATA[planId];
     if(!svg || !container || !data) return;
+    // Watch first: a plan rendered while hidden stops just below, and it is
+    // exactly the one whose size is about to change when it is shown.
+    watchLayout(planId, container);
     // Batch reads, then writes — same layout-thrash fix the built-in majors
     // use. Feed plans can be the biggest (Pharmacy is 86 cards), so this is
     // where it matters most.
-    var cRect = container.getBoundingClientRect();
-    // The whole plan can be off screen — the student navigated Home while a
-    // window resize was still pending, say. Every card would then measure as
-    // zero-sized and we would wipe a perfectly good set of lines that nothing
-    // redraws on the way back. Nothing to measure means nothing to do.
-    if(cRect.width <= 0 || cRect.height <= 0) return;
+    // Nothing laid out (the plan is hidden, say, because the student went
+    // Home while a redraw was pending) means nothing to measure: keep the
+    // lines we have rather than wiping them.
+    if(!container.offsetWidth || !container.offsetHeight) return;
+    var cRect = { left: 0, top: 0 };
     var w = container.scrollWidth, h = container.scrollHeight;
     var prereqs = data.prereqs || [];
     var rects = {};
-    // A course can be in the DOM but have no box on screen: it was removed
-    // from the plan (.course-removed), or it sits inside a year that is
-    // folded away by "Collapse finished years". Either way its bounding rect
-    // collapses to 0,0,0,0 rather than becoming null, and treating that as a
-    // real position drew a stray line from the top-left corner of the page to
-    // whatever it was still connected to. Measure once, then treat a
-    // zero-sized box exactly like a missing element: the edge is dropped and
-    // every edge between two courses that ARE on screen still draws.
+    // Where a card sits in the layout, relative to the .years wrapper.
+    //
+    // This used to read getBoundingClientRect(), which is where the card is
+    // painted right now. Cards animate in (the screen transitions, the
+    // filter fade, the year-fold slide), so a redraw that ran mid-animation
+    // pinned every line to where the card was passing through, and nothing
+    // redrew it once the card settled: the "lines point at the wrong course"
+    // bug. offsetLeft/offsetTop ignore transforms, so they give where the
+    // card will rest. A card with no box (removed, or in a folded year) has
+    // offsetWidth 0 and its edges are dropped, as before.
     function boxOf(id){
       var el = document.getElementById(id);
-      if(!el) return null;
-      var r = el.getBoundingClientRect();
-      return (r.width > 0 && r.height > 0) ? r : null;
+      if(!el || !el.offsetWidth || !el.offsetHeight) return null;
+      var x = 0, y = 0, n = el;
+      while(n && n !== container){
+        x += n.offsetLeft; y += n.offsetTop;
+        var op = n.offsetParent;
+        if(!op) return null;
+        // Walked past the wrapper without meeting it: it is not a
+        // positioned ancestor here, so measure the painted box instead.
+        if(!container.contains(op) && op !== container){
+          var r = el.getBoundingClientRect(), c = container.getBoundingClientRect();
+          return { left: r.left - c.left, top: r.top - c.top, width: r.width, height: r.height };
+        }
+        if(op !== container){ x -= op.scrollLeft; y -= op.scrollTop; x += op.clientLeft; y += op.clientTop; }
+        n = op;
+      }
+      return { left: x, top: y, width: el.offsetWidth, height: el.offsetHeight };
     }
     prereqs.forEach(function(pair){
       var a = planId + '-c-' + pair[0], b = planId + '-c-' + pair[1];
@@ -795,6 +812,42 @@
     svg.appendChild(frag);
 
     bindImportedHover(planId);
+  }
+
+  // Redraw whenever the plan's layout changes size: a filter hides cards, a
+  // year folds or opens, a suggestion box or the grade chips appear, the
+  // window or the side panel changes the width. Each of those moved cards
+  // without telling the lines, which then pointed at where a card used to
+  // be. One observer, re-pointed at the current plan on every draw; the
+  // redraw waits a moment so a burst of changes is drawn once.
+  var layoutObserver = null, layoutTimer = 0, layoutPlan = null, layoutWatched = [];
+  function watchLayout(planId, container){
+    var RO = window.ResizeObserver;
+    if(!RO) return;
+    if(!layoutObserver){
+      // A timer rather than a frame: frames are paused in a background tab,
+      // and a redraw waiting on one would block every later one.
+      layoutObserver = new RO(function(){
+        clearTimeout(layoutTimer);
+        layoutTimer = setTimeout(function(){
+          if(layoutPlan && layoutPlan === currentOpenPlanId) drawConnectors(layoutPlan);
+        }, 60);
+      });
+    }
+    // Observing an element reports it once straight away, so only elements
+    // not already watched are added; otherwise every draw would schedule the
+    // next one. A re-render replaces the wrapper, which starts over.
+    if(layoutPlan !== planId || layoutWatched.indexOf(container) < 0){
+      layoutObserver.disconnect();
+      layoutWatched = [];
+    }
+    layoutPlan = planId;
+    var els = [container].concat(Array.prototype.slice.call(container.querySelectorAll('.imp-year-block, .course-row')));
+    els.forEach(function(el){
+      if(layoutWatched.indexOf(el) >= 0) return;
+      layoutWatched.push(el);
+      layoutObserver.observe(el);
+    });
   }
 
   var hoverBoundPlans = {};
