@@ -8856,3 +8856,43 @@ html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var
 .gc-bar:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:8px;}
 .gc-list{margin:10px 0 0; font-size:13.5px; line-height:1.6; color:var(--text-dim);}
 .gc-list b{color:var(--text);}
+
+/* ==========================================================================
+   Laptop: the course opens in a panel on the right (idea 31), not a window
+   over the plan, so you can go from course to course while editing. The
+   plan moves over to make room; the page around the panel stays usable.
+   Close with its ✕ or Escape. Phones keep the pull-up sheet.
+   ========================================================================== */
+@media (min-width:1100px){
+  #impCourseModalOverlay{
+    background:none; pointer-events:none; padding:0;
+    justify-content:flex-end; align-items:stretch;
+  }
+  #impCourseModalOverlay .modal-card.cd-card{
+    pointer-events:auto; width:430px; max-width:430px; height:100vh; max-height:none;
+    border-radius:0; border:0; border-inline-start:1px solid var(--line);
+    box-shadow:-18px 0 40px rgba(0,0,0,.35); overflow-y:auto; margin:0;
+  }
+  html[dir="rtl"] #impCourseModalOverlay .modal-card.cd-card{box-shadow:18px 0 40px rgba(0,0,0,.35);}
+  /* One column inside the panel: it is phone-width, whatever the screen. */
+  #impCourseModalOverlay .cd-body{display:block;}
+  #impCourseModalOverlay .cd-main{border-inline-end:0;}
+  #impCourseModalOverlay .cd-side{border-top:1px solid var(--line);}
+  body:has(#impCourseModalOverlay.open) .sheet-plan{margin-inline-end:440px; transition:margin .2s ease;}
+  @media (prefers-reduced-motion:no-preference){
+    #impCourseModalOverlay.open .modal-card.cd-card{animation:scr-in .26s cubic-bezier(.2,.8,.2,1);}
+  }
+}
+
+/* Keyboard shortcuts list (js/96-shortcuts.js) */
+.kb-help{position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.5);}
+.kb-help.open{display:flex;}
+.kb-card{width:100%; max-width:380px; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:16px 18px; box-shadow:0 20px 50px rgba(0,0,0,.4);}
+.kb-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;}
+.kb-head h2{margin:0; font-size:17px;}
+.kb-list{margin:0;}
+.kb-list div{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px solid var(--line);}
+.kb-list div:first-child{border-top:0;}
+.kb-list dt{direction:ltr; unicode-bidi:isolate; white-space:nowrap;}
+.kb-list dd{margin:0; color:var(--text-dim); text-align:end;}
+.kb-list kbd{display:inline-block; min-width:26px; padding:3px 7px; border:1px solid var(--line); border-bottom-width:2px; border-radius:7px; font:700 12.5px/1.2 ui-monospace, monospace; text-align:center; background:var(--surface-bg);}
