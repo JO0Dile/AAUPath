@@ -130,8 +130,15 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item)
     }).then(function(r){
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
+      if(r.ok) return r.json();
+      // Refused for good (a duplicate, a limit, a word the server's filter
+      // caught): retrying would only be refused again, so it is not queued.
+      return r.json().catch(function(){ return {}; }).then(function(body){
+        var err = new Error('HTTP ' + r.status);
+        err.final = !!(body && body.final) || r.status === 409 || r.status === 422;
+        err.reason = body && body.error;
+        throw err;
+      });
     });
   }
 
@@ -175,14 +182,20 @@
   function flushQueue(){
     var q = loadQueue();
     if(!q.length || !endpoint() || !online()) return Promise.resolve(0);
-    var sent = 0;
+    var sent = 0, gone = {};
     return q.reduce(function(chain, item){
       return chain.then(function(){
-        return postThought(item).then(function(){ sent++; }).catch(function(){});
+        return postThought(item).then(function(){ sent++; gone[item.id] = 1; }).catch(function(err){
+          // Refused for good: drop it rather than retry it forever.
+          if(err && err.final){
+            gone[item.id] = 1;
+            saveLocal(loadLocal().filter(function(t){ return t.id !== item.id; }));
+          }
+        });
       });
     }, Promise.resolve()).then(function(){
-      // Keep only what genuinely failed.
-      saveQueue(q.slice(sent));
+      // Keep only what can still go through.
+      saveQueue(loadQueue().filter(function(t){ return !gone[t.id]; }));
       return sent;
     });
   }
@@ -255,7 +268,12 @@
     // and the thought quietly disappears with no correction on screen, which
     // is exactly what made a server-side failure look identical to nothing
     // having happened. `pending` lets the caller react once this settles.
-    var pending = postThought(item).catch(function(){
+    var pending = postThought(item).catch(function(err){
+      if(err && err.final){
+        // Take it back off this phone's list too: it is not on the wall.
+        saveLocal(loadLocal().filter(function(t){ return t.id !== item.id; }));
+        var e2 = new Error('refused'); e2.final = true; e2.reason = err.reason; throw e2;
+      }
       var q2 = loadQueue();
       q2.push(item);
       saveQueue(q2);
@@ -543,7 +561,15 @@
       // word: say so and re-render so the queued-count note picks it up
       // immediately instead of only on the next time the wall is opened.
       if(result.pending){
-        result.pending.catch(function(){
+        result.pending.catch(function(err){
+          if(err && err.final){
+            var why = err.reason === 'duplicate'
+              ? (rtl ? 'نفس الكلام منشور اليوم.' : 'The same words are already on the wall today.')
+              : (rtl ? 'وصلت الحد لليوم — جرّب بعدين.' : 'You have reached the limit for now — try again later.');
+            if(window.__showToast) window.__showToast(why);
+            render(prefix);
+            return;
+          }
           if(window.__showToast){
             window.__showToast(rtl ? 'تعذّر الإرسال — رح تُعاد المحاولة تلقائيًا.' : 'Could not send — it will retry automatically.');
           }

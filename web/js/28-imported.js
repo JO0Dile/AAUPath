@@ -1295,6 +1295,10 @@
       metaParts.push('<span class="cm-status cm-eng-ask">' +
         window.__escapeHtml(window.AAUP_ENGLISH.chipLabel(rtl)) + '</span>');
     }
+    // Transferred (idea 8): says so on the card, since it has no letter.
+    if(done && gradeNow === 'TR'){
+      metaParts.push('<span class="cm-status cm-transferred">' + window.__escapeHtml(rtl ? 'محوّل' : 'transferred') + '</span>');
+    }
     if(superseded || c.isRetake){
       var attemptTx = superseded
         ? (gr ? gr + ' · ' : '') + (rtl ? 'مستبدَل' : 'replaced')
@@ -1850,8 +1854,29 @@
         '</div>'
       : '';
 
+    // Hard semester (idea 9): hours say how much, not how hard. Students'
+    // own difficulty ratings (js/27-community.js, 1-5 stars) do. Three or
+    // more courses rated 4+ by at least two students, in a term that still
+    // has something left to take, earn a line naming them.
+    var hardOnes = [];
+    if(!editing && window.AAUP_COMMUNITY && window.AAUP_COMMUNITY.loadCommunity){
+      var comm = window.AAUP_COMMUNITY.loadCommunity() || {};
+      courses.forEach(function(c){
+        var e = comm[c.id];
+        if(!e || !e.difficultyVotes || e.difficultyVotes < 2) return;
+        if(e.totalDifficulty / e.difficultyVotes >= 4 && !isDone(planId, c.id)) hardOnes.push(c);
+      });
+    }
+    if(hardOnes.length >= 3){
+      loadNote += '<div class="imp-sem-hard">' + window.__escapeHtml(
+        (rtl ? 'الطلاب بقيّموا هدول الأصعب: ' : 'Students rate these the hardest: ') +
+        hardOnes.map(function(c){ return rtl && c.ar ? c.ar : c.name; }).join(rtl ? '، ' : ', ') +
+        (rtl ? '. فكّر تأجّل واحد منهم.' : '. Think about moving one to another semester.')) + '</div>';
+    }
+
     return '<div class="imp-semester-block' + (heavy ? ' is-heavy' : '') + '">' +
       '<div class="imp-semester-title">' + semTx +
+      (hardOnes.length >= 3 ? '<span class="imp-sem-verdict is-hard">' + window.__escapeHtml(rtl ? hardOnes.length + ' مواد صعبة' : hardOnes.length + ' hard ones') + '</span>' : '') +
       (semHours > 0 ? '<span class="imp-sem-hours">' + semHours + 'H</span>' : '') +
       (verdict ? '<span class="imp-sem-verdict ' + verdictCls + '">' +
         window.__escapeHtml(verdict) + '</span>' : '') +
@@ -2070,6 +2095,9 @@
         '<button type="button" data-plan-view="list" aria-pressed="' + (planView() === 'list') + '">' + (rtl ? 'قائمة' : 'List') + '</button></div>') +
       '<button type="button" class="pw-search-btn" data-pw-search="' + id + '" aria-expanded="false" aria-controls="' + id + '-courseSearchWrap" aria-label="' + (rtl ? 'ابحث عن مساق' : 'Search a course') + '">' +
         window.AAUP_ICONS.preview('search', 16) + '</button>' +
+      (editing || !window.AAUP_HISTORY ? '' :
+        '<button type="button" class="pw-search-btn pw-history-btn" data-pw-history="' + id + '" aria-label="' + (rtl ? 'آخر التغييرات' : 'Recent changes') + '" title="' + (rtl ? 'آخر التغييرات' : 'Recent changes') + '">' +
+        window.AAUP_ICONS.preview('clock', 16) + '</button>') +
       '<div class="course-search-wrap pw-search" id="' + id + '-courseSearchWrap" hidden><div class="search-box" id="' + id + '-courseSearchBox">' +
       '<span class="search-ic">' + window.AAUP_ICONS.preview('search', 15) + '</span>' +
       '<input type="text" id="' + id + '-courseSearchInput" class="search-input" placeholder="' + (rtl ? 'ابحث عن مساق بالاسم أو الرقم…' : 'Search a course by name or code…') + '" autocomplete="off">' +
@@ -2136,6 +2164,18 @@
       html += semesterHtml(id, p, y.id, 's1', editing, rtl, i + 1);
       html += semesterHtml(id, p, y.id, 's2', editing, rtl, i + 1);
       if(y.hasSummer){ html += semesterHtml(id, p, y.id, 's3', editing, rtl, i + 1); }
+      // A summer, without going into Edit Mode (idea 2): a thin line under
+      // any year not finished yet. An empty summer can be taken away again
+      // from the same place.
+      if(!editing && !yearFinished){
+        if(!y.hasSummer){
+          html += '<button type="button" class="imp-add-summer" onclick="AAUP_IMPORTED.addSummer(\'' + id + '\',\'' + y.id + '\')">' +
+            window.AAUP_ICONS.preview('plus', 13) + (rtl ? 'أضف فصل صيفي بعد السنة ' + (i + 1) : 'Add a summer after Year ' + (i + 1)) + '</button>';
+        } else if(yearCourseCount(p, y.id, 's3') === 0){
+          html += '<button type="button" class="imp-add-summer is-remove" onclick="AAUP_IMPORTED.removeSummer(\'' + id + '\',\'' + y.id + '\')">' +
+            window.AAUP_ICONS.preview('close', 13) + (rtl ? 'شيل الصيفي الفاضي' : 'Remove the empty summer') + '</button>';
+        }
+      }
       html += '</div></div>';
     });
 
@@ -2280,7 +2320,7 @@
       var choices = (G && !hasGrade && G.GRADE_ORDER) ? {
         label: (rtl ? 'شو جبت؟' : 'What did you get?') +
           (gpaNow !== null ? (rtl ? ' · معدلك الآن ' : ' · your GPA is ') + gpaNow.toFixed(2) : ''),
-        items: G.GRADE_ORDER.filter(function(g){ return ['FA', 'W', 'F'].indexOf(g) === -1; }).map(function(g){
+        items: G.GRADE_ORDER.filter(function(g){ return ['FA', 'W', 'F', 'TR'].indexOf(g) === -1; }).map(function(g){
           var after = gpaWith(g);
           var sub = '', trend = '';
           if(after !== null){

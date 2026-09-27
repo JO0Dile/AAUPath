@@ -8916,3 +8916,50 @@ html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var
 .bk-status{margin:0 0 8px; padding:9px 12px; border-radius:10px; font-size:13px; border:1px solid var(--line); background:var(--panel);}
 .bk-status.is-ok{border-color:color-mix(in srgb, #3fb07a 45%, var(--line));}
 .bk-status.is-warn{border-color:color-mix(in srgb, #e0a13a 60%, var(--line)); background:color-mix(in srgb, #e0a13a 8%, var(--panel));}
+.cm-status.cm-transferred{color:var(--accent);}
+/* "+ Add a summer after Year N" under an unfinished year (js/28-imported.js). */
+.imp-add-summer{display:flex; align-items:center; justify-content:center; gap:6px; width:100%; margin:10px 0 2px; padding:9px 12px; border:1px dashed color-mix(in srgb, var(--accent) 55%, var(--line)); border-radius:12px; background:none; color:var(--accent); font:inherit; font-size:12.5px; font-weight:800; cursor:pointer;}
+.imp-add-summer.is-remove{border-color:var(--line); color:var(--text-dim);}
+/* Hard semester from students' difficulty ratings (js/28-imported.js). */
+.imp-sem-verdict.is-hard{background:rgba(224,161,58,.16); color:var(--warn, #e0a13a);}
+.imp-sem-hard{margin:2px 0 8px; font-size:12px; font-weight:700; color:var(--warn, #e0a13a);}
+/* Recent changes (js/98-history.js). */
+.hist-card{max-width:460px;}
+.hist-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+.hist-list{border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+.hist-row{display:flex; align-items:center; gap:10px; padding:10px 12px; border-top:1px solid var(--line);}
+.hist-row:first-child{border-top:0;}
+.hist-tx{flex:1; min-width:0;}
+.hist-tx b{display:block; font-size:13.5px; font-weight:700;}
+.hist-tx span{display:block; font-size:11.5px; color:var(--text-dim);}
+/* Unofficial transcript (js/99-transcript.js): a light page on any theme,
+   because it is made to be printed or saved as a PDF. */
+.tr-open-row{margin:14px 0 4px;}
+.tr-card{max-width:720px; background:#eef0f5; padding:12px;}
+.tr-actions{display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px;}
+.tr-actions .btn-quiet{color:#394056;}
+.tr-sheet{background:#fff; color:#12151f; border-radius:10px; padding:24px 22px; font-size:13px;}
+.tr-head{text-align:center; border-bottom:2px solid #12151f; padding-bottom:10px; margin-bottom:14px;}
+.tr-uni{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#5b6275; font-weight:800;}
+.tr-head h2{margin:4px 0 2px; font-size:20px; color:#12151f;}
+.tr-major{font-size:13px; color:#394056;}
+.tr-sem{margin-bottom:14px; break-inside:avoid;}
+.tr-sem h3{margin:0 0 4px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#5b6275;}
+.tr-sheet table{width:100%; border-collapse:collapse;}
+.tr-sheet th, .tr-sheet td{padding:5px 6px; border-bottom:1px solid #dde1ea; text-align:start; color:#12151f;}
+.tr-sheet th{font-size:11px; color:#5b6275; font-weight:700;}
+.tr-sheet .tr-n{text-align:end; direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; white-space:nowrap;}
+.tr-sheet tfoot td{border-bottom:0; font-weight:700;}
+.tr-total{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; border-top:2px solid #12151f; padding-top:10px; font-size:14px;}
+.tr-total b{direction:ltr; unicode-bidi:isolate;}
+.tr-foot{margin:12px 0 0; font-size:11px; color:#5b6275; text-align:center;}
+.tr-empty{color:#5b6275;}
+@media print{
+  body.printing-transcript #planOverviewOverlay{display:none !important;}
+  body.printing-transcript #transcriptOverlay{display:block !important; position:static !important; background:#fff !important; padding:0 !important;}
+  body.printing-transcript #transcriptOverlay .modal-card{max-width:100% !important; box-shadow:none !important; border:0 !important; background:#fff !important; padding:0 !important; max-height:none !important; overflow:visible !important;}
+  body.printing-transcript .tr-actions{display:none !important;}
+}
+#transcriptOverlay{z-index:10060;}
+.tr-sheet .tr-code{text-align:start; color:#5b6275; font-size:11.5px;}
+.is-dragging{cursor:grabbing; user-select:none; scroll-snap-type:none !important;}
