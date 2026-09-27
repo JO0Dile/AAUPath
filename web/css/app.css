@@ -8633,7 +8633,6 @@ html[dir="rtl"]{--scr-from:-100%;}
 /* Browse Courses shelves as buttons, not boxes: each shelf head is a soft,
    rounded tile with its colour in a tinted chip, a visible progress track
    and a press state, instead of a row between two hairlines. */
-.lib-shelf + .lib-shelf{margin-top:10px;}
 .lib-shelf .lib-shelf-head{
   gap:14px; padding:14px 14px 14px 12px; margin:0;
   border:0; border-radius:18px;
@@ -8663,4 +8662,4 @@ html[dir="rtl"] .lib-shelf .lib-shelf-head{padding:14px 12px 14px 14px;}
   width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   background:color-mix(in srgb, var(--text) 6%, transparent); color:var(--text);
 }
-.lib-shelf-open .lib-shelf-body{padding-top:8px;}
+.lib-shelf.lib-shelf-open .lib-shelf-body{padding-top:8px;}
