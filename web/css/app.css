@@ -8899,3 +8899,5 @@ html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var
 .kb-list dt{direction:ltr; unicode-bidi:isolate; white-space:nowrap;}
 .kb-list dd{margin:0; color:var(--text-dim); text-align:end;}
 .kb-list kbd{display:inline-block; min-width:26px; padding:3px 7px; border:1px solid var(--line); border-bottom-width:2px; border-radius:7px; font:700 12.5px/1.2 ui-monospace, monospace; text-align:center; background:var(--surface-bg);}
+/* Posts from another major on the shared Student Thoughts wall (js/59-thoughts.js). */
+.th-major-tag{color:var(--text-dim); background:color-mix(in srgb, var(--text-dim) 14%, transparent); margin-inline-start:4px;}
