@@ -1429,7 +1429,9 @@
   }
 
   var VIEW_KEY = 'aaup_plan_view';
-  function planView(){ try{ return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'cards'; }catch(e){ return 'cards'; } }
+  function planView(){
+    try{ var v = localStorage.getItem(VIEW_KEY); return (v === 'list' || v === 'timeline') ? v : 'cards'; }catch(e){ return 'cards'; }
+  }
   function applyPlanView(v){
     document.documentElement.setAttribute('data-plan-view', v);
     document.querySelectorAll('[data-plan-view]').forEach(function(b){
@@ -2099,7 +2101,11 @@
       // one line per course, with the edit buttons at the end of the line.
       ('<div class="pw-view" role="group" aria-label="' + (rtl ? 'طريقة العرض' : 'View') + '">' +
         '<button type="button" data-plan-view="cards" aria-pressed="' + (planView() === 'cards') + '">' + (rtl ? 'بطاقات' : 'Cards') + '</button>' +
-        '<button type="button" data-plan-view="list" aria-pressed="' + (planView() === 'list') + '">' + (rtl ? 'قائمة' : 'List') + '</button></div>') +
+        '<button type="button" data-plan-view="list" aria-pressed="' + (planView() === 'list') + '">' + (rtl ? 'قائمة' : 'List') + '</button>' +
+        // Timeline (idea 29): wide screens only; below 1100px the button is
+        // hidden and the view falls back to Cards (css/app.css).
+        (editing ? '' : '<button type="button" class="pw-view-wide" data-plan-view="timeline" aria-pressed="' + (planView() === 'timeline') + '">' + (rtl ? 'خط زمني' : 'Timeline') + '</button>') +
+        '</div>') +
       '<button type="button" class="pw-search-btn" data-pw-search="' + id + '" aria-expanded="false" aria-controls="' + id + '-courseSearchWrap" aria-label="' + (rtl ? 'ابحث عن مساق' : 'Search a course') + '">' +
         window.AAUP_ICONS.preview('search', 16) + '</button>' +
       (editing || !window.AAUP_HISTORY ? '' :
