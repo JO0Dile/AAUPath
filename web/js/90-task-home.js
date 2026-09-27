@@ -323,6 +323,51 @@
     render();
   }
 
+  // "This semester" (idea 2): most visits are "did I pass this?", so the
+  // courses you are taking now sit on Home with a tick each. Taking now means
+  // courses marked In progress; with none marked, it is the first semester of
+  // the plan that still has something left in it.
+  function thisSemester(id){
+    var p = id && plans()[id];
+    if(!p || !p.structure || !Array.isArray(p.structure.years)) return null;
+    var progress = window.__getProgress ? window.__getProgress() : {};
+    var statuses = window.AAUP_GPA && window.AAUP_GPA.loadStatuses ? window.AAUP_GPA.loadStatuses() : {};
+    var real = (p.courses || []).filter(function(c){ return !(c.category === 'dept' && !c.placedByStudent) && (parseFloat(c.creditHours) || 0) > 0; });
+    var taking = real.filter(function(c){ return statuses[id + '-c-' + c.id] === 'in_progress'; });
+    if(taking.length) return { list: taking, now: true, progress: progress };
+    var terms = [];
+    p.structure.years.forEach(function(y, i){ ['s1', 's2'].concat(y.hasSummer ? ['s3'] : []).forEach(function(s){ terms.push({ y: y.id, s: s, n: i + 1 }); }); });
+    for(var i = 0; i < terms.length; i++){
+      var here = real.filter(function(c){ return c.yearId === terms[i].y && c.semester === terms[i].s; });
+      if(here.some(function(c){ return !progress[id + '-c-' + c.id]; })){
+        return { list: here, now: false, term: terms[i], progress: progress };
+      }
+    }
+    return null;
+  }
+  function thisSemesterHtml(id){
+    var ts = thisSemester(id);
+    if(!ts || !ts.list.length) return '';
+    var hours = ts.list.reduce(function(a, c){ return a + (parseFloat(c.creditHours) || 0); }, 0);
+    var semName = { s1: L('first semester', 'الفصل الأول'), s2: L('second semester', 'الفصل الثاني'), s3: L('summer', 'الصيفي') };
+    var title = ts.now ? L('Taking now', 'بآخذها هلأ')
+      : L('Year ' + ts.term.n + ' · ' + semName[ts.term.s], 'السنة ' + ts.term.n + ' · ' + semName[ts.term.s]);
+    return '<section class="hm-sem" aria-label="' + esc(L('This semester', 'هالفصل')) + '">' +
+      '<div class="hm-sem-h"><b>' + esc(L('This semester', 'هالفصل')) + '</b>' +
+        '<span>' + esc(title) + ' · ' + ts.list.length + ' · ' + hours + 'H</span></div>' +
+      ts.list.slice(0, 7).map(function(c){
+        var done = !!ts.progress[id + '-c-' + c.id];
+        var nm = plain(ar() && c.ar ? c.ar : c.name);
+        return '<div class="hm-sem-row' + (done ? ' is-done' : '') + '">' +
+          '<span class="hm-sem-name">' + esc(nm) + '<small>' + (parseFloat(c.creditHours) || 0) + 'H</small></span>' +
+          '<button type="button" class="hm-sem-tick" data-hm-tick="' + esc(c.id) + '" aria-pressed="' + done + '" aria-label="' +
+            esc((done ? L('Passed: ', 'منجز: ') : L('Mark passed: ', 'علّمه منجز: ')) + nm) + '">' +
+            (done ? ic('check', 14) + '<span>' + esc(L('passed', 'منجز')) + '</span>' : '<span class="hm-sem-circle"></span>') +
+          '</button></div>';
+      }).join('') +
+      '</section>';
+  }
+
   function render(){
     var host = document.getElementById('taskHome');
     if(!host) return;
@@ -359,6 +404,7 @@
       '<div class="hm-body">' +
         '<div class="hm-main">' +
           '<div class="home-install-row" id="homeInstallRow" hidden></div>' +
+          thisSemesterHtml(id) +
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
           '<div class="hm-grid">' + FEATURES.map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
           '<div class="hm-also"><span class="hm-label">' + esc(L('Also here', 'كمان هون')) + '</span>' +
@@ -696,6 +742,10 @@
       else if(t.closest('[data-hm-settings]')){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); }
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
       else if(t.closest('[data-hm-ver]')) verTap();
+      else if((b = t.closest('[data-hm-tick]'))){
+        var tid = selected();
+        if(tid && window.AAUP_IMPORTED){ ensurePlan(tid); window.AAUP_IMPORTED.toggle(tid, b.getAttribute('data-hm-tick')); render(); }
+      }
       else if((b = t.closest('[data-hm-forget]'))){ forget(b.getAttribute('data-hm-forget')); var si = document.getElementById('hmSearch'); if(si) si.focus(); renderResults(); }
       else if((b = t.closest('[data-hm-more]'))){ openGroups[b.getAttribute('data-hm-more')] = true; renderResults(); }
       else if(t.closest('[data-hm-cancel]')) clearSearch();
@@ -805,7 +855,7 @@
     show();
   }
 
-  window.AAUP_TASK_HOME = { show: show, render: render, openSheet: openSheet, go: go, visible: visible };
+  window.AAUP_TASK_HOME = { show: show, render: render, openSheet: openSheet, go: go, visible: visible, thisSemester: thisSemester };
   if(document.readyState === 'complete'){ init(); }
   else { window.addEventListener('load', init); }
 })();

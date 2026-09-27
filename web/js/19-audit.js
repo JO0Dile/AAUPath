@@ -438,11 +438,89 @@
     // question of the same hours, so it is not drawn twice.
     body.innerHTML = head +
       (window.AAUP_GPA_STUDIO ? window.AAUP_GPA_STUDIO.layout(prefix, rtl) : renderGpaDashboard(prefix, rtl)) +
-      (anyGrades ? renderSemesterGpas(prefix, rtl) : '');
+      (anyGrades ? gpaStoryHtml(prefix, rtl) + gradeCountsHtml(prefix, rtl) + renderSemesterGpas(prefix, rtl) : '');
     overlay.classList.add('open');
     bindModes(prefix);
     markScrollable(body);
+    bindGradeCounts(body);
     if(window.AAUP_GPA_STUDIO) window.AAUP_GPA_STUDIO.bind(prefix, rtl);
+  }
+
+  // ---- GPA over time (idea 10) ------------------------------------------
+  // One dot per semester with a grade, joined by a line, and how the
+  // cumulative GPA moved over the last semester. Drawn as SVG, no library.
+  function gpaStoryHtml(prefix, rtl){
+    var sems = window.AAUP_GPA.semesterGpas ? window.AAUP_GPA.semesterGpas(prefix) : [];
+    if(sems.length < 2) return '';
+    var pts = 0, cr = 0, cum = [];
+    sems.forEach(function(s){ pts += s.gpa * s.credits; cr += s.credits; cum.push(pts / cr); });
+    var W = 300, H = 90, pad = 12;
+    var lo = Math.max(0, Math.min.apply(null, sems.map(function(s){ return s.gpa; })) - 0.3);
+    var hi = Math.min(4, Math.max.apply(null, sems.map(function(s){ return s.gpa; })) + 0.3);
+    if(hi - lo < 0.6){ lo = Math.max(0, lo - 0.3); hi = Math.min(4, hi + 0.3); }
+    var x = function(i){ return pad + (W - pad * 2) * (sems.length === 1 ? 0.5 : i / (sems.length - 1)); };
+    var y = function(g){ return pad + (H - pad * 2) * (1 - (g - lo) / (hi - lo || 1)); };
+    var line = sems.map(function(s, i){ return (rtl ? W - x(i) : x(i)).toFixed(1) + ',' + y(s.gpa).toFixed(1); }).join(' ');
+    var dots = sems.map(function(s, i){
+      var last = i === sems.length - 1;
+      return '<circle cx="' + (rtl ? W - x(i) : x(i)).toFixed(1) + '" cy="' + y(s.gpa).toFixed(1) + '" r="' + (last ? 5 : 3.5) + '"><title>' +
+        window.__escapeHtml((rtl ? s.ar : s.label) + ': ' + s.gpa.toFixed(2)) + '</title></circle>';
+    }).join('');
+    var delta = cum[cum.length - 1] - cum[cum.length - 2];
+    var dTx = Math.abs(delta) < 0.005 ? (rtl ? 'ثابت هالفصل' : 'steady this semester')
+      : (delta > 0 ? '▲ ' : '▼ ') + Math.abs(delta).toFixed(2) + (rtl ? ' هالفصل' : ' this semester');
+    return '<div class="gs-card gpa-story">' +
+      '<div class="gpa-story-h"><span class="gs-lbl">' + (rtl ? 'معدلك مع الوقت' : 'Your GPA over time') + '</span>' +
+        '<span class="gpa-story-d ' + (delta > 0.005 ? 'up' : delta < -0.005 ? 'down' : '') + '">' + dTx + '</span></div>' +
+      '<svg class="gpa-story-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' +
+        (rtl ? 'معدل كل فصل' : 'GPA of each semester') + '"><polyline points="' + line + '"/>' + dots + '</svg>' +
+      '<div class="gpa-story-x">' + sems.map(function(s){ return '<span>' + window.__escapeHtml(String(s.label).replace(/^Year (\d+) — (Semester (\d)|Summer)$/, function(m, yy, _s, n){ return 'Y' + yy + (n ? '.' + n : '.S'); })) + '</span>'; }).join('') + '</div>' +
+      '</div>';
+  }
+
+  // ---- your grades at a glance (idea 11) --------------------------------
+  // A bar per grade you have, tall as how many courses got it. Tap a bar
+  // and the courses with that grade are listed under it.
+  function gradeCountsHtml(prefix, rtl){
+    var G = window.AAUP_GPA;
+    var grades = G.loadGrades();
+    var progress = window.__getProgress ? window.__getProgress() : {};
+    var page = document.getElementById('page-' + prefix);
+    if(!page) return '';
+    var by = {};
+    page.querySelectorAll('.course[id]:not(.course-removed)').forEach(function(el){
+      var g = grades[el.id];
+      if(!progress[el.id] || !G.isRealGrade(g)) return;
+      var nm = el.querySelector('.name');
+      (by[g] = by[g] || []).push(nm ? nm.textContent.replace(/\s*✓\s*$/, '').trim() : el.id);
+    });
+    var order = (G.GRADE_ORDER || []).filter(function(g){ return by[g]; });
+    if(order.length < 1) return '';
+    var max = Math.max.apply(null, order.map(function(g){ return by[g].length; }));
+    return '<div class="gs-card gc-card">' +
+      '<div class="gs-lbl">' + (rtl ? 'علاماتك بلمحة' : 'Your grades at a glance') + '</div>' +
+      '<div class="gc-bars" role="group">' + order.map(function(g){
+        var band = /^A/.test(g) ? 'a' : /^B/.test(g) ? 'b' : /^C/.test(g) ? 'c' : 'd';
+        return '<button type="button" class="gc-bar gc-' + band + '" data-gc="' + window.__escapeHtml(g) + '" aria-expanded="false" ' +
+          'data-gc-list="' + window.__escapeHtml(JSON.stringify(by[g])) + '">' +
+          '<span class="gc-track"><i style="height:' + Math.max(8, Math.round(by[g].length / max * 100)) + '%"></i></span>' +
+          '<b>' + window.__escapeHtml(g) + '</b><span>×' + by[g].length + '</span></button>';
+      }).join('') + '</div>' +
+      '<p class="gc-list" hidden></p></div>';
+  }
+  function bindGradeCounts(body){
+    var list = body.querySelector('.gc-list');
+    body.querySelectorAll('[data-gc]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var open = b.getAttribute('aria-expanded') === 'true';
+        body.querySelectorAll('[data-gc]').forEach(function(o){ o.setAttribute('aria-expanded', 'false'); });
+        if(open){ list.hidden = true; return; }
+        b.setAttribute('aria-expanded', 'true');
+        var names = JSON.parse(b.getAttribute('data-gc-list') || '[]');
+        list.innerHTML = '<b>' + window.__escapeHtml(b.getAttribute('data-gc')) + '</b> · ' + names.map(window.__escapeHtml).join(' · ');
+        list.hidden = false;
+      });
+    });
   }
 
   // The table has always scrolled sideways — .audit-table-wrap carries

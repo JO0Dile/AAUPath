@@ -156,7 +156,9 @@
           at: Number(t.at) || 0,
           by: String(t.by || '').slice(0, 40),
           up: Number(t.up) || 0,
-          down: Number(t.down) || 0
+          down: Number(t.down) || 0,
+          course: String(t.course || '').slice(0, 80),
+          courseName: String(t.courseName || '').slice(0, 80)
         };
       }).filter(function(t){ return t.text; });
       var cache = loadCache();
@@ -226,6 +228,9 @@
       at: now,
       by: deviceId()
     };
+    // Written from inside a course: tagged with it, so it shows on that
+    // course's page and still on the whole wall (idea 20).
+    if(courseView){ item.course = courseView.slug; item.courseName = courseView.name || ''; }
 
     var mine = loadLocal();
     mine.unshift(item);
@@ -329,6 +334,24 @@
 
   // The wall as it should be shown right now: what the server last gave us,
   // plus anything this device wrote that has not come back yet.
+  // ---- one course's thoughts ------------------------------------------------
+  // Opened from a course, the wall shows only posts about it: posts written
+  // from that course (tagged), and older posts that name it (whole name, so
+  // "Calculus I" is not "Calculus II", its Arabic name, or its number). The
+  // main wall still shows everything, with a small tag on course posts.
+  var courseView = null;   // { slug, name, ar, num } while a course's view is open
+  function reEsc(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function aboutCourse(t, c){
+    if(!c) return true;
+    if(t.course && t.course === c.slug) return true;
+    var txt = String(t.text || '');
+    var name = String(c.name || '').trim(), arName = String(c.ar || '').trim(), num = String(c.num || '').trim();
+    if(name && new RegExp('(^|[^a-z0-9])' + reEsc(name) + '(?![a-z0-9])(?!\\s+i\\b)', 'i').test(txt)) return true;
+    if(arName && txt.indexOf(arName) !== -1) return true;
+    return !!(num && num !== '-' && num.length > 4 && txt.indexOf(num) !== -1);
+  }
+  function forCourse(prefix, c){ return wallFor(prefix).filter(function(t){ return aboutCourse(t, c); }); }
+
   function wallFor(prefix){
     var cache = loadCache()[prefix];
     var remote = (cache && Array.isArray(cache.list)) ? cache.list : [];
@@ -379,6 +402,7 @@
           '<span class="th-who">' + esc(name) + '</span>' +
           '<span class="th-when">' + esc(timeAgo(t.at, rtl)) + '</span>' +
         '</div>' +
+        (t.courseName && !courseView ? '<span class="th-course-tag">' + esc(t.courseName) + '</span>' : '') +
         '<p class="th-bubble">' + esc(t.text) + '</p>' +
         (endpoint() ? '<div class="th-react">' +
           '<button type="button" class="th-react-btn' + (myReaction === 'up' ? ' active' : '') + '" data-th-react="up" data-th-id="' + esc(t.id) + '">' + window.AAUP_ICONS.preview('chevronUp', 13) + '<span>' + (t.up || 0) + '</span></button>' +
@@ -395,8 +419,9 @@
     if(!body) return;
     var rtl = isRtl(prefix);
     body.setAttribute('dir', rtl ? 'rtl' : 'ltr');
-    var list = wallFor(prefix);
+    var list = courseView ? forCourse(prefix, courseView) : wallFor(prefix);
     var queued = loadQueue().length;
+    var cName = courseView ? (rtl && courseView.ar ? courseView.ar : courseView.name) : '';
 
     body.innerHTML =
       // Every other dialog puts its title in an <h2> and passes '' to
@@ -409,10 +434,16 @@
         '<span class="th-live' + (endpoint() ? '' : ' th-live-off') + '"><i></i>' +
           (endpoint() ? (rtl ? 'مباشر' : 'Live') : (rtl ? 'محلي' : 'Local')) + '</span>' +
       '</div>' +
+      (courseView
+        ? '<div class="th-course-bar"><span>' + (rtl ? 'عن ' : 'About ') + '<b>' + esc(cName) + '</b></span>' +
+            '<button type="button" class="btn-quiet" data-th-all>' + (rtl ? 'كل الأفكار' : 'See all thoughts') + '</button></div>'
+        : '') +
       '<p class="form-note" style="margin-top:2px;">' +
-        (rtl
-          ? 'اكتب سطرًا يشوفه كل طالب في نفس التخصص. بلا شتائم — الفلتر بيرفضها فورًا.'
-          : 'Write one line every student on this plan can see. No abuse — the filter rejects it on the spot.') +
+        (courseView
+          ? (rtl ? 'اللي بتكتبه هون بينزل تحت هذا المساق، وبيظهر كمان بكل الأفكار.' : 'What you write here is filed under this course, and shows on the whole wall too.')
+          : (rtl
+            ? 'اكتب سطرًا يشوفه كل طالب في نفس التخصص. بلا شتائم — الفلتر بيرفضها فورًا.'
+            : 'Write one line every student on this plan can see. No abuse — the filter rejects it on the spot.')) +
       '</p>' +
       (queued ? '<p class="th-queued">' + (rtl
         ? ('في ' + queued + ' فكرة بانتظار الإرسال — رح تُعاد المحاولة تلقائيًا.')
@@ -439,7 +470,8 @@
         '<p class="th-error" id="thError" role="alert" hidden></p>' +
         '<div class="th-compose-row">' +
           '<textarea id="thInput" maxlength="' + MAX_LEN + '" rows="1" placeholder="' +
-            (rtl ? 'شو رأيك بهالفصل؟' : 'What is on your mind about this semester?') + '"></textarea>' +
+            (courseView ? esc((rtl ? 'شو رأيك بـ ' : 'Something about ') + cName + (rtl ? '؟' : '…'))
+              : (rtl ? 'شو رأيك بهالفصل؟' : 'What is on your mind about this semester?')) + '"></textarea>' +
           '<button type="button" class="th-send" id="thSend" aria-label="' + (rtl ? 'إرسال' : 'Send') + '">' +
             window.AAUP_ICONS.preview('send', 16) +
           '</button>' +
@@ -451,6 +483,8 @@
   }
 
   function bind(prefix, rtl){
+    var allBtn = document.querySelector('[data-th-all]');
+    if(allBtn) allBtn.addEventListener('click', function(){ courseView = null; render(prefix); });
     var input = document.getElementById('thInput');
     var send = document.getElementById('thSend');
     var count = document.getElementById('thCount');
@@ -562,9 +596,11 @@
     }, { passive: true });
   }
 
-  function open(prefix){
+  // opts.course: { slug, name, ar, num } opens that course's view.
+  function open(prefix, opts){
     var overlay = document.getElementById('thoughtsModalOverlay');
     if(!overlay) return;
+    courseView = (opts && opts.course) || null;
     render(prefix);
     overlay.classList.add('open');
     // Refresh from the wall in the background; the cached copy is already on
@@ -658,7 +694,7 @@
   window.AAUP_THOUGHTS = {
     serverUrl: endpoint, storedUrl: storedUrl, setServerUrl: setServerUrl,
     settingsSectionHtml: settingsSectionHtml, bindSettingsSection: bindSettingsSection,
-    open: open, close: close, publish: publish, wallFor: wallFor,
+    open: open, close: close, publish: publish, wallFor: wallFor, forCourse: forCourse,
     flushQueue: flushQueue, count: function(prefix){ return wallFor(prefix).length; }
   };
 })();

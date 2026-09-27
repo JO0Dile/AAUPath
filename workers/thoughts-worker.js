@@ -140,6 +140,13 @@ async function addThought(env, body, cors, request) {
     at: Date.now(),
     by,
   };
+  // A post written from inside a course carries that course, so the app can
+  // show it on the course's own page as well as on the whole wall.
+  const course = safeId(body.course || '').slice(0, 80);
+  if (course) {
+    item.course = course;
+    item.courseName = clean(String(body.courseName || '')).slice(0, 80).trim();
+  }
 
   const list = await readWall(env, plan);
   // Same id twice = a queued post being retried after it actually landed.

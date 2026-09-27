@@ -62,7 +62,9 @@
       removeAsk: function(n){ return 'Remove ' + n + ' from your plan? It won\u2019t count toward your requirements. Use it if you tested out of it or never took it.'; },
       removedMsg: function(n){ return n + ' removed from your plan'; },
       said: function(n){ return n === 1 ? '1 student wrote about this' : n + ' students wrote about this'; },
-      readAll: 'Read them'
+      readAll: 'Read them',
+      saidNone: 'Student thoughts about this course',
+      writeFirst: 'Be the first to write'
     },
     ar: {
       why: 'لماذا يمكنك أخذ هذا المساق الآن',
@@ -88,7 +90,9 @@
       removeAsk: function(n){ return 'تشيل ' + n + ' من خطتك؟ ما رح ينحسب من متطلباتك. استعمل هذا إذا تجاوزته بامتحان أو ما أخذته.'; },
       removedMsg: function(n){ return 'انشال ' + n + ' من خطتك'; },
       said: function(n){ return n === 1 ? 'طالب واحد كتب عن هذا المساق' : n + ' طلاب كتبوا عن هذا المساق'; },
-      readAll: 'اقرأها'
+      readAll: 'اقرأها',
+      saidNone: 'أفكار الطلاب عن هذا المساق',
+      writeFirst: 'كون أول واحد يكتب'
     }
   };
 
@@ -244,24 +248,24 @@
   // wall (js/59-thoughts.js, already cached on this device): posts that name
   // the course, its Arabic name or its number. Nothing when none do, and
   // nothing is fetched just for this.
-  function reEsc(x){ return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
   function saidHTML(prefix, slug, rtl, t, info){
     if(!window.AAUP_THOUGHTS || !window.AAUP_THOUGHTS.wallFor) return '';
     var name = String(info.name || '').trim();
     var arName = String(info.ar || '').trim();
     var num = String(info.num || '').trim();
     if(!name && !arName) return '';
-    // Whole name only, and "Calculus I" must not match "Calculus II".
-    var enRe = name ? new RegExp('(^|[^a-z0-9])' + reEsc(name) + '(?![a-z0-9])(?!\\s+i\\b)', 'i') : null;
-    var hits = window.AAUP_THOUGHTS.wallFor(prefix).filter(function(p){
-      var txt = String(p.text || '');
-      return (enRe && enRe.test(txt)) || (arName && txt.indexOf(arName) !== -1) ||
-        (num && num !== '-' && num.length > 4 && txt.indexOf(num) !== -1);
-    });
-    if(!hits.length) return '';
+    // The same rule the course's own Thoughts page uses (js/59-thoughts.js):
+    // posts written from this course, or naming it.
+    var course = { slug: slug, name: name, ar: arName, num: num };
+    var hits = window.AAUP_THOUGHTS.forCourse ? window.AAUP_THOUGHTS.forCourse(prefix, course) : [];
+    var open = '<button type="button" class="cd-said' + (hits.length ? '' : ' cd-said-empty') + '" data-cd-said="' + esc(prefix) + '" data-cd-said-course="' + esc(JSON.stringify(course)) + '">';
+    // Always offered, so the first post about a course can be written from it.
+    if(!hits.length){
+      return open + '<span class="cd-said-top"><b>' + esc(t.saidNone) + '</b><span>' + esc(t.writeFirst) + ' ›</span></span></button>';
+    }
     var quote = String(hits[0].text || '');
     if(quote.length > 110) quote = quote.slice(0, 107) + '…';
-    return '<button type="button" class="cd-said" data-cd-said="' + esc(prefix) + '">' +
+    return open +
       '<span class="cd-said-top"><b>' + esc(t.said(hits.length)) + '</b><span>' + esc(t.readAll) + ' ›</span></span>' +
       '<span class="cd-said-quote">“' + esc(quote) + '”</span></button>';
   }
@@ -421,7 +425,11 @@
     if(saidBtn){
       // Opens on top of the course, so going back lands on the course again.
       saidBtn.addEventListener('click', function(){
-        if(window.AAUP_THOUGHTS) window.AAUP_THOUGHTS.open(saidBtn.getAttribute('data-cd-said'));
+        if(window.AAUP_THOUGHTS){
+          var c = null;
+          try{ c = JSON.parse(saidBtn.getAttribute('data-cd-said-course') || 'null'); }catch(e){}
+          window.AAUP_THOUGHTS.open(saidBtn.getAttribute('data-cd-said'), c ? { course: c } : null);
+        }
       });
     }
     var viewTreeBtn = container.querySelector('[data-cd-view-tree]');
