@@ -153,6 +153,7 @@
     ['assets',        '🖼 Assets'],
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
+    ['accounts',      '👤 Student accounts'],
     ['settings',      '⚙️ Settings']
   ];
 
@@ -1329,6 +1330,88 @@
     });
   }
 
+  // ---------- Student accounts (cloud/cloudflare-worker.js) ----------
+  //
+  // For a student who forgot their password and has no recovery code and no
+  // signed-in phone: find the account, give it a temporary password, tell
+  // them. Needs the cloud Worker's own ADMIN_SECRET, typed once per session.
+  function cloudUrl(){ return (window.APP_CLOUD_URL || '').replace(/\/+$/, ''); }
+  var CLOUD_SECRET_KEY = 'aaup_cloudAdminSecret';
+  function cloudSecret(){ try{ return sessionStorage.getItem(CLOUD_SECRET_KEY) || ''; }catch(e){ return ''; } }
+  function setCloudSecret(v){ try{ if(v) sessionStorage.setItem(CLOUD_SECRET_KEY, v); else sessionStorage.removeItem(CLOUD_SECRET_KEY); }catch(e){} }
+  function cloudCall(path, opts){
+    opts = opts || {};
+    return fetch(cloudUrl() + path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Secret': cloudSecret() },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function(r){
+      if(r.status === 403){ setCloudSecret(''); throw new Error('That secret was not accepted — enter it again.'); }
+      return r.json().catch(function(){ return {}; }).then(function(d){
+        if(!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        return d;
+      });
+    });
+  }
+  function sectionAccounts(){
+    var head = '<h2>👤 Student accounts</h2>';
+    if(!cloudUrl()) return head + '<div class="admin-note">APP_CLOUD_URL is not set, so there are no accounts.</div>';
+    if(!cloudSecret()){
+      return head +
+        '<div class="admin-note">For a student who forgot their password, has no recovery code, and is not signed in on any phone. ' +
+        'Find their account and give it a temporary password; they sign in with it and change it in Cloud Sync. ' +
+        'This needs the cloud Worker\'s <code>ADMIN_SECRET</code> (a different secret from the thoughts Worker\'s). It is kept in this tab only.</div>' +
+        '<div class="form-field"><label for="acctSecretInput">ADMIN_SECRET</label><input type="password" id="acctSecretInput" autocomplete="off" spellcheck="false"></div>' +
+        '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="acctUnlock">Unlock</button></div>';
+    }
+    var list = state.acctResults;
+    return head +
+      '<div class="admin-note">Make sure it is really them before resetting: ask them to message you from the email on the account, for example. A reset signs the account out everywhere.</div>' +
+      '<div class="form-field"><label for="acctQuery">Email or username</label><input type="search" id="acctQuery" value="' + esc(state.acctQuery || '') + '" autocomplete="off" spellcheck="false" placeholder="at least 3 characters"></div>' +
+      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="acctFind">Find</button> <button type="button" class="home-btn admin-mini" id="acctForget">Forget secret</button></div>' +
+      (state.acctTemp ? '<div class="admin-note" style="border-color:var(--accent);"><strong>Temporary password for ' + esc(state.acctTemp.who) + ':</strong> ' +
+        '<code style="font-size:16px;user-select:all;">' + esc(state.acctTemp.pw) + '</code><br>Send it to them. They sign in with it, then Cloud Sync → Change password.</div>' : '') +
+      (list == null ? '' : (list.length
+        ? list.map(function(u){
+            return '<div class="admin-note" data-acct-id="' + esc(u.id) + '"><strong>' + esc(u.email) + '</strong>' +
+              (u.username ? ' · @' + esc(u.username) : '') + (u.google ? ' · Google' : '') +
+              '<br><span style="opacity:.7;">since ' + esc(new Date(u.createdAt).toLocaleDateString()) + '</span>' +
+              '<div class="form-actions"><button type="button" class="home-btn admin-danger" data-acct-reset="' + esc(u.id) + '" data-acct-who="' + esc(u.email) + '">Give a temporary password</button></div></div>';
+          }).join('')
+        : '<p class="ex-note">No account matches that.</p>'));
+  }
+  function bindAccounts(main){
+    var unlock = document.getElementById('acctUnlock');
+    if(unlock){
+      var input = document.getElementById('acctSecretInput');
+      var accept = function(){ var v = input ? input.value.trim() : ''; if(!v) return; setCloudSecret(v); render(); };
+      unlock.addEventListener('click', accept);
+      if(input) input.addEventListener('keydown', function(e){ if(e.key === 'Enter') accept(); });
+      return;
+    }
+    on('acctForget', 'click', function(){ setCloudSecret(''); state.acctResults = null; state.acctTemp = null; render(); });
+    var find = function(){
+      var q = (document.getElementById('acctQuery') || {}).value || '';
+      state.acctQuery = q.trim();
+      state.acctTemp = null;
+      cloudCall('/api/admin/users?q=' + encodeURIComponent(state.acctQuery))
+        .then(function(d){ state.acctResults = d.users || []; render(); })
+        .catch(function(e){ toast(e.message); render(); });
+    };
+    on('acctFind', 'click', find);
+    var qEl = document.getElementById('acctQuery');
+    if(qEl) qEl.addEventListener('keydown', function(e){ if(e.key === 'Enter') find(); });
+    main.querySelectorAll('[data-acct-reset]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var who = btn.getAttribute('data-acct-who');
+        if(!confirm('Give ' + who + ' a temporary password? Their current password stops working and every device is signed out.')) return;
+        cloudCall('/api/admin/reset', { method: 'POST', body: { id: btn.getAttribute('data-acct-reset') } })
+          .then(function(d){ state.acctTemp = { who: who, pw: d.tempPassword }; render(); })
+          .catch(function(e){ toast('Could not reset it: ' + e.message); render(); });
+      });
+    });
+  }
+
   function sectionSettings(){
     return '<h2>Settings</h2>' +
       '<div class="admin-note"><strong>Signed in as</strong> ' + esc(state.username) + '.<br>' +
@@ -1376,6 +1459,7 @@
       main.innerHTML = sectionContributions();
       if(!state.contribLoading && !state.contribItems) loadContributions();
     }
+    else if(s === 'accounts') main.innerHTML = sectionAccounts();
     else if(s === 'thoughts'){
       main.innerHTML = sectionThoughts();
       if(!state.thoughtsLoading && !state.thoughtItems) loadThoughts();
@@ -1394,6 +1478,7 @@
     bindIconPickers();
     if(state.section === 'contributions') bindContributions(main);
     if(state.section === 'thoughts') bindThoughts(main);
+    if(state.section === 'accounts') bindAccounts(main);
 
     main.querySelectorAll('[data-edit-uni]').forEach(function(b){
       b.addEventListener('click', function(){

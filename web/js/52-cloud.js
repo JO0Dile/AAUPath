@@ -111,6 +111,9 @@
     return request('/api/signup', { method: 'POST', body: { email: email, username: username || undefined, password: password } }).then(function(r){
       if(!r.ok) return r;
       setToken(r.data.token); setEmailCache(r.data.email); setUsernameCache(r.data.username);
+      // Shown once, and kept only until the student says they saved it — so
+      // a reload (or closing the app) before then shows it again.
+      if(r.data.recoveryCode) setPendingRecovery(r.data.recoveryCode);
       // A brand-new account has nothing to conflict with — push straight away
       // so this device's data is the starting point.
       return push(null).then(function(){ return r; });
@@ -136,6 +139,36 @@
     return request('/api/password/change', { method: 'POST', body: { currentPassword: current, newPassword: next } })
       .then(function(r){ if(r.ok){ setToken(r.data.token); } return r; });
   }
+  // ---------- account recovery ----------
+  var PENDING_RECOVERY_KEY = 'aaup_pendingRecoveryCode';
+  function setPendingRecovery(code){ try{ if(code) sessionStorage.setItem(PENDING_RECOVERY_KEY, code); else sessionStorage.removeItem(PENDING_RECOVERY_KEY); }catch(e){} }
+  function getPendingRecovery(){ try{ return sessionStorage.getItem(PENDING_RECOVERY_KEY) || ''; }catch(e){ return ''; } }
+  // Forgot password, with the recovery code: sets a new password and signs
+  // this device in. The server spends the code and hands back a new one.
+  function useRecovery(identifier, code, newPassword){
+    return request('/api/recovery/use', { method: 'POST', body: { identifier: identifier, code: code, newPassword: newPassword } }).then(function(r){
+      if(!r.ok) return r;
+      setToken(r.data.token); setEmailCache(r.data.email); setUsernameCache(r.data.username);
+      if(r.data.recoveryCode) setPendingRecovery(r.data.recoveryCode);
+      return r;
+    });
+  }
+  // A new password from this signed-in device, without the old one.
+  function setPasswordSignedIn(next){
+    return request('/api/password/set', { method: 'POST', body: { newPassword: next } })
+      .then(function(r){ if(r.ok){ setToken(r.data.token); } return r; });
+  }
+  function newRecoveryCode(){
+    return request('/api/recovery/new', { method: 'POST', body: {} });
+  }
+  function googleSignIn(credential){
+    return request('/api/google', { method: 'POST', body: { credential: credential } }).then(function(r){
+      if(!r.ok) return r;
+      setToken(r.data.token); setEmailCache(r.data.email); setUsernameCache(r.data.username);
+      return r;
+    });
+  }
+
   function setUsername(username){
     return request('/api/username', { method: 'POST', body: { username: username } }).then(function(r){
       if(r.ok){ setUsernameCache(r.data.username); }
@@ -323,11 +356,13 @@
         '<button type="button" class="home-btn" id="cloudSyncNowBtn">' + ICONBTN('refresh') + (r ? 'مزامنة الآن' : 'Sync now') + '</button>' +
         '<button type="button" class="home-btn" id="cloudUsernameBtn">' + ICONBTN('person') + (r ? 'اسم المستخدم' : 'Username') + '</button>' +
         '<button type="button" class="home-btn" id="cloudChangePwBtn">' + ICONBTN('keys') + (r ? 'تغيير كلمة المرور' : 'Change password') + '</button>' +
+        '<button type="button" class="home-btn" id="cloudRecoveryBtn">' + ICONBTN('lock') + (r ? 'رمز الاسترجاع' : 'Recovery code') + '</button>' +
         '<button type="button" class="home-btn" id="cloudSignOutBtn">' + ICONBTN('undo') + (r ? 'تسجيل الخروج' : 'Sign out') + '</button>' +
         '</div>' +
         '<p class="form-note" id="cloudSyncStatus" style="margin-top:4px;">' + lastSyncLabel(r) + '</p>' +
         '<div id="cloudUsernameForm" style="display:none;margin-top:8px;"></div>' +
         '<div id="cloudChangePwForm" style="display:none;margin-top:8px;"></div>' +
+        '<div id="cloudRecoveryBox" style="display:none;margin-top:8px;"></div>' +
         '<p class="form-note" style="margin-top:14px;"><button type="button" id="cloudDeleteAcctBtn" style="background:none;border:none;color:var(--danger, #ff6b6b);font-size:11.5px;cursor:pointer;padding:0;">' +
           ICONBTN('trash') + (r ? 'حذف الحساب السحابي نهائيًا' : 'Permanently delete cloud account') + '</button></p>' +
         '<div id="cloudMsg"></div>';
@@ -344,6 +379,20 @@
       '<button type="button" class="home-btn btn-pri" id="cloudSignInBtn">' + ICONBTN('unlock') + (r ? 'تسجيل الدخول' : 'Sign in') + '</button>' +
       '<button type="button" class="home-btn" id="cloudToggleSignUpBtn">' + ICONBTN('plus') + (r ? 'إنشاء حساب' : 'Sign up') + '</button>' +
       '</div>' +
+      '<p class="form-note" style="margin:6px 0 0;"><button type="button" class="cloud-link" id="cloudForgotBtn">' + (r ? 'نسيت كلمة المرور؟' : 'Forgot password?') + '</button></p>' +
+      '<div id="cloudForgotBox" style="display:none;margin-top:10px;">' +
+        '<p class="form-note" style="margin-top:0;">' + (r
+          ? 'اكتب إيميلك أو اسم المستخدم، ورمز الاسترجاع اللي ظهرلك لما عملت الحساب، وكلمة مرور جديدة.'
+          : 'Type your email or username, the recovery code you were shown when you made the account, and a new password.') + '</p>' +
+        '<div class="form-field"><input type="text" id="cloudForgotId" placeholder="' + (r ? 'الإيميل أو اسم المستخدم' : 'Email or username') + '" autocomplete="username"></div>' +
+        '<div class="form-field"><input type="text" id="cloudForgotCode" placeholder="' + (r ? 'رمز الاسترجاع (XXXX-XXXX-XXXX)' : 'Recovery code (XXXX-XXXX-XXXX)') + '" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>' +
+        '<div class="form-field"><input type="password" id="cloudForgotNew" placeholder="' + (r ? 'كلمة مرور جديدة' : 'New password') + '" autocomplete="new-password"></div>' +
+        '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn btn-pri" id="cloudForgotSubmit">' + ICONBTN('keys') + (r ? 'غيّر كلمة المرور' : 'Set new password') + '</button></div>' +
+        '<p class="form-note">' + (r
+          ? 'ما عندك الرمز؟ إذا لسا مسجّل دخول على جهاز ثاني، غيّرها من هناك (تغيير كلمة المرور ← نسيت كلمتك الحالية؟). غير هيك، تواصل مع فريق AAUPath ليعطوك كلمة مرور مؤقتة.'
+          : 'No code? If you are still signed in on another phone, change it there (Change password → "Forgot your current password?"). Otherwise, contact the AAUPath team for a temporary password.') + '</p>' +
+      '</div>' +
+      (window.APP_GOOGLE_CLIENT_ID ? '<div class="cloud-or"><span>' + (r ? 'أو' : 'or') + '</span></div><div id="cloudGoogleBtn" class="cloud-google"></div>' : '') +
       '<div id="cloudSignUpBox" style="display:none;margin-top:10px;">' +
       '<p class="form-note" style="margin-top:0;">' + (r
         ? 'أنشئ حسابًا بنفس الإيميل أعلاه — اسم مستخدم اختياري لتسجيل دخول أسهل من الإيميل.'
@@ -442,16 +491,27 @@
         box.style.display = 'block';
         box.innerHTML =
           '<div class="form-field-row" style="flex-wrap:wrap;">' +
-          '<div class="form-field"><input type="password" id="cloudPwCurrent" placeholder="' + (rtl ? 'كلمة المرور الحالية' : 'Current password') + '" autocomplete="current-password"></div>' +
+          '<div class="form-field" id="cloudPwCurrentWrap"><input type="password" id="cloudPwCurrent" placeholder="' + (rtl ? 'كلمة المرور الحالية' : 'Current password') + '" autocomplete="current-password"></div>' +
           '<div class="form-field"><input type="password" id="cloudPwNew" placeholder="' + (rtl ? 'كلمة المرور الجديدة' : 'New password') + '" autocomplete="new-password"></div>' +
           '</div>' +
+          '<p class="form-note" style="margin:0 0 6px;"><button type="button" class="cloud-link" id="cloudPwForgot">' + (rtl ? 'نسيت كلمتك الحالية؟' : 'Forgot your current password?') + '</button></p>' +
           '<div class="form-actions" style="justify-content:flex-start;">' +
           '<button type="button" class="home-btn btn-pri" id="cloudPwSubmit">' + (rtl ? 'تحديث' : 'Update') + '</button>' +
           '</div>';
+        // This phone is signed in, which is proof enough: the new password
+        // can be set without the old one. Other devices are signed out.
+        var withoutCurrent = false;
+        box.querySelector('#cloudPwForgot').addEventListener('click', function(){
+          withoutCurrent = true;
+          box.querySelector('#cloudPwCurrentWrap').style.display = 'none';
+          this.parentNode.textContent = rtl
+            ? 'بما إنك مسجّل دخول على هالجهاز، بتقدر تحط كلمة جديدة بدون القديمة. أي جهاز ثاني رح يطلع من الحساب.'
+            : 'You are signed in on this phone, so you can set a new one without the old one. Any other device will be signed out.';
+        });
         box.querySelector('#cloudPwSubmit').addEventListener('click', function(){
           var cur = box.querySelector('#cloudPwCurrent').value;
           var next = box.querySelector('#cloudPwNew').value;
-          changePassword(cur, next).then(function(r){
+          (withoutCurrent ? setPasswordSignedIn(next) : changePassword(cur, next)).then(function(r){
             if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not change password.', true); return; }
             box.style.display = 'none'; box.innerHTML = '';
             showMsg(root, rtl ? 'تم تحديث كلمة المرور.' : 'Password updated.', false);
@@ -459,6 +519,54 @@
         });
       });
     }
+    var recBtn = root.querySelector('#cloudRecoveryBtn');
+    if(recBtn){
+      recBtn.addEventListener('click', function(){
+        var box = root.querySelector('#cloudRecoveryBox');
+        if(!box) return;
+        if(box.style.display !== 'none'){ box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = 'block';
+        box.innerHTML = '<p class="form-note" style="margin-top:0;">' + (rtl
+            ? 'رمز الاسترجاع بيرجّعك لحسابك إذا نسيت كلمة المرور. عمل رمز جديد بيلغي القديم.'
+            : 'A recovery code gets you back in if you forget your password. Making a new one cancels the old one.') + '</p>' +
+          '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn btn-pri" id="cloudRecNew">' + (rtl ? 'اعمل رمز جديد' : 'Make a new code') + '</button></div>';
+        box.querySelector('#cloudRecNew').addEventListener('click', function(){
+          newRecoveryCode().then(function(r){
+            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not make a code.', true); return; }
+            box.innerHTML = codePanelHtml(r.data.recoveryCode, rtl);
+            bindCodePanel(box, rtl, function(){ box.style.display = 'none'; box.innerHTML = ''; });
+          });
+        });
+      });
+    }
+    var forgotBtn = root.querySelector('#cloudForgotBtn');
+    if(forgotBtn){
+      forgotBtn.addEventListener('click', function(){
+        var box = root.querySelector('#cloudForgotBox');
+        if(!box) return;
+        var show = box.style.display === 'none';
+        box.style.display = show ? 'block' : 'none';
+        var idNow = (root.querySelector('#cloudIdentifier') || {}).value || '';
+        var idField = root.querySelector('#cloudForgotId');
+        if(show && idField && !idField.value) idField.value = idNow.trim();
+      });
+      var forgotSubmit = root.querySelector('#cloudForgotSubmit');
+      if(forgotSubmit) forgotSubmit.addEventListener('click', function(){
+        var ident = root.querySelector('#cloudForgotId').value.trim();
+        var code = root.querySelector('#cloudForgotCode').value.trim();
+        var next = root.querySelector('#cloudForgotNew').value;
+        forgotSubmit.disabled = true;
+        useRecovery(ident, code, next).then(function(r){
+          forgotSubmit.disabled = false;
+          if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not reset the password.', true); return; }
+          startAutoSync();
+          // The used code is spent: the new one is shown before anything else.
+          showPendingRecovery({ reload: true });
+        });
+      });
+    }
+    var gHost = root.querySelector('#cloudGoogleBtn');
+    if(gHost) mountGoogle(gHost, rtl, root);
     var signInBtn = root.querySelector('#cloudSignInBtn');
     var toggleSignUpBtn = root.querySelector('#cloudToggleSignUpBtn');
     if(toggleSignUpBtn){
@@ -495,10 +603,97 @@
           signUpBtn.disabled = false;
           if(!r.ok){ showMsg(root, r.data.error || 'Sign up failed.', true); return; }
           startAutoSync();
-          location.reload();
+          // The recovery code first; the reload waits for "I saved it".
+          if(getPendingRecovery()) showPendingRecovery({ reload: true });
+          else location.reload();
         });
       });
     }
+  }
+
+  // The recovery code, shown once: big, copyable, and a plain sentence on
+  // why it matters.
+  function codePanelHtml(code, rtl){
+    return '<div class="rec-panel">' +
+      '<b class="rec-title">' + (rtl ? 'رمز الاسترجاع تبعك' : 'Your recovery code') + '</b>' +
+      '<div class="rec-code" dir="ltr">' + window.__escapeHtml(code) + '</div>' +
+      '<p class="form-note">' + (rtl
+        ? 'احفظه بمكان آمن (سكرين شوت بتزبط). هو الطريقة الوحيدة ترجع لحسابك إذا نسيت كلمة المرور وما كنت مسجّل دخول بأي جهاز. ما رح يظهر مرة ثانية.'
+        : 'Keep it somewhere safe (a screenshot works). It is the only way back in if you forget your password and are not signed in anywhere. It will not be shown again.') + '</p>' +
+      '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;">' +
+        '<button type="button" class="home-btn" data-rec-copy>' + ICONBTN('copy') + (rtl ? 'نسخ' : 'Copy') + '</button>' +
+        '<button type="button" class="home-btn btn-pri" data-rec-done>' + (rtl ? 'حفظته' : 'I saved it') + '</button>' +
+      '</div></div>';
+  }
+  function bindCodePanel(host, rtl, onDone){
+    var copyBtn = host.querySelector('[data-rec-copy]');
+    var code = (host.querySelector('.rec-code') || {}).textContent || '';
+    if(copyBtn) copyBtn.addEventListener('click', function(){
+      try{ navigator.clipboard.writeText(code); }catch(e){}
+      if(window.__showToast) window.__showToast(rtl ? 'انسخ' : 'Copied');
+    });
+    var doneBtn = host.querySelector('[data-rec-done]');
+    if(doneBtn) doneBtn.addEventListener('click', function(){ setPendingRecovery(''); if(onDone) onDone(); });
+  }
+  // Opens Cloud Sync on the recovery code waiting to be seen (after a sign-
+  // up, or after a code was used). reload: whether to reload afterwards,
+  // as the sign-up path always has.
+  function showPendingRecovery(opts){
+    var code = getPendingRecovery();
+    if(!code) return false;
+    var overlay = document.getElementById('cloudModalOverlay');
+    var body = document.getElementById('cloudModalBody');
+    if(!overlay || !body) return false;
+    var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    body.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+    body.innerHTML = '<h2 style="margin-top:0;">' + ICONMARK(20) + ' ' + (rtl ? 'المزامنة السحابية' : 'Cloud Sync') + '</h2>' + codePanelHtml(code, rtl);
+    overlay.classList.add('open');
+    bindCodePanel(body, rtl, function(){
+      if(opts && opts.reload){ location.reload(); return; }
+      render();
+    });
+    return true;
+  }
+
+  // Sign in with Google: Google's own button (Identity Services), loaded
+  // only when APP_GOOGLE_CLIENT_ID is set and only when this form is shown.
+  var gsiLoading = null;
+  function loadGsi(){
+    if(window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+    if(gsiLoading) return gsiLoading;
+    gsiLoading = new Promise(function(resolve, reject){
+      var sc = document.createElement('script');
+      sc.src = 'https://accounts.google.com/gsi/client';
+      sc.async = true;
+      sc.onload = resolve;
+      sc.onerror = function(){ gsiLoading = null; reject(new Error('could not load Google sign-in')); };
+      document.head.appendChild(sc);
+    });
+    return gsiLoading;
+  }
+  function mountGoogle(host, rtl, root){
+    loadGsi().then(function(){
+      window.google.accounts.id.initialize({
+        client_id: window.APP_GOOGLE_CLIENT_ID,
+        callback: function(resp){
+          googleSignIn(resp && resp.credential).then(function(r){
+            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Google sign-in failed.', true); return; }
+            reconcileAfterSignIn(rtl, function(res){
+              startAutoSync();
+              if(res.reload){ location.reload(); return; }
+              render();
+              if(window.__showToast){ window.__showToast(rtl ? 'تم تسجيل الدخول.' : 'Signed in.'); }
+            });
+          });
+        }
+      });
+      window.google.accounts.id.renderButton(host, {
+        theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with',
+        locale: rtl ? 'ar' : 'en', width: Math.min(320, host.clientWidth || 320)
+      });
+    }).catch(function(){
+      host.innerHTML = '<p class="form-note">' + (rtl ? 'تسجيل الدخول بجوجل مش متاح هلأ.' : 'Sign in with Google is not available right now.') + '</p>';
+    });
   }
 
   function render(){
@@ -544,6 +739,11 @@
     // resolution logic — reconcileAfterSignIn is the one place a genuine
     // "two real copies of data" choice has to be made, and it's worth
     // reusing rather than re-deciding differently in a second place.
-    signIn: signIn, signUp: signUp, reconcileAfterSignIn: reconcileAfterSignIn, startAutoSync: startAutoSync
+    signIn: signIn, signUp: signUp, reconcileAfterSignIn: reconcileAfterSignIn, startAutoSync: startAutoSync,
+    showPendingRecovery: showPendingRecovery
   };
+  // A recovery code the student has not confirmed saving yet (the app was
+  // reloaded or closed first) is shown again.
+  if(document.readyState === 'complete'){ setTimeout(function(){ showPendingRecovery(); }, 1200); }
+  else { window.addEventListener('load', function(){ setTimeout(function(){ showPendingRecovery(); }, 1200); }); }
 })();

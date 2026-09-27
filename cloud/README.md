@@ -84,15 +84,42 @@ Then try signing up for a real account in the app's Settings → Cloud Sync.
 
 ## What is deliberately NOT in this v1
 
-**Password reset.** Recovering a forgotten password requires sending an
-email, which needs its own free-tier provider (e.g. Resend) wired into this
-Worker — a real but separate piece of setup, left for later rather than
-blocking sign-up on it. Today, a student who forgets their password has to
-sign up again with a new email; nothing about their old account is
-recoverable, and the Sign In form's "forgot password" link says so plainly
-rather than pretending to work. If this bothers you before an email
-provider is wired up, `DELETE /api/account` at least lets a student clear
-the old one out.
+**Password reset by email.** Still not here: it needs an email provider
+(e.g. Resend) and a domain to send from. Instead there are three ways back
+into an account that need neither:
+
+- **Recovery code.** Shown once at sign-up (and re-issued any time from a
+  signed-in device). "Forgot password?" on the sign-in form takes the email
+  or username, the code, and a new password. Only an HMAC of the code is
+  stored; using it spends it and shows a new one.
+- **A device that is still signed in** can set a new password without the
+  old one (Change password → "Forgot your current password?"). Every other
+  device is signed out.
+- **The maintainer** can find the account in the Developer panel's "Student
+  accounts" section and give it a temporary password. This needs the
+  Worker's `ADMIN_SECRET`; without it those routes answer 403.
+
+## Sign in with Google (optional)
+
+1. In Google Cloud Console, create a project, then **APIs & Services →
+   OAuth consent screen**: External, app name "AAUPath", your email as
+   support contact, and only the default scopes (email, profile, openid).
+   Press **Publish app** so it is "In production". With only those basic
+   scopes Google does not require a review, and students do not see the
+   "Google hasn't verified this app" screen. That screen appears when an app
+   asks for sensitive scopes, or is still in Testing mode for someone who is
+   not a listed test user.
+2. **Credentials → Create credentials → OAuth client ID → Web application.**
+   Under *Authorized JavaScript origins* add `https://jo0dile.github.io`
+   (and any other address the app is served from).
+3. Copy the client id (`….apps.googleusercontent.com`) into
+   `APP_GOOGLE_CLIENT_ID` in `web/js/01-catalogue.js` **and** into this
+   Worker as the `GOOGLE_CLIENT_ID` variable. The button appears only when
+   the app has it.
+
+The Worker checks Google's ID token with Google's `tokeninfo` endpoint,
+requires the token to be issued for this client id with a verified email,
+and links it to the account with the same email, or makes a new one.
 
 **Rate limiting beyond the login delay.** Every login attempt costs a fixed
 400ms (same trick as the admin Worker), which blunts scripted guessing but

@@ -300,6 +300,8 @@
         if(window.AAUP_STUDENT && window.AAUP_STUDENT.markSeen){ window.AAUP_STUDENT.markSeen(); }
         window.AAUP_CLOUD.startAutoSync();
         finish(true);             // a brand-new account has nothing to reconcile
+        // Its recovery code, once the wizard has closed.
+        if(window.AAUP_CLOUD.showPendingRecovery) setTimeout(function(){ window.AAUP_CLOUD.showPendingRecovery(); }, 400);
       });
       return;
     }

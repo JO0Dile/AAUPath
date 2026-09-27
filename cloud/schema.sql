@@ -30,8 +30,15 @@ CREATE TABLE IF NOT EXISTS users (
   -- changing the password invalidates every OTHER signed-in device's token
   -- at once without needing a server-side session store to revoke from.
   token_version INTEGER NOT NULL DEFAULT 1,
-  created_at    INTEGER NOT NULL
+  created_at    INTEGER NOT NULL,
+  -- Account recovery (added later; the Worker adds both columns to an older
+  -- database by itself on its first request, so nothing needs running):
+  -- an HMAC of the student's current recovery code, and their Google
+  -- account id once they have used Sign in with Google.
+  recovery_hash TEXT,
+  google_sub    TEXT
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google ON users(google_sub);
 
 CREATE TABLE IF NOT EXISTS sync_state (
   user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
