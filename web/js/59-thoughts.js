@@ -459,8 +459,8 @@
         (courseView
           ? (rtl ? 'اللي بتكتبه هون بينزل تحت هذا المساق، وبيظهر كمان بكل الأفكار.' : 'What you write here is filed under this course, and shows on the whole wall too.')
           : (rtl
-            ? 'اكتب سطرًا يشوفه كل طالب في نفس التخصص. بلا شتائم — الفلتر بيرفضها فورًا.'
-            : 'Write one line every student on this plan can see. No abuse — the filter rejects it on the spot.')) +
+            ? 'اكتب سطرًا يشوفه كل طلاب الجامعة، من كل التخصصات. بلا شتائم — الفلتر بيرفضها فورًا.'
+            : 'Write one line every student at the university can see, from every major. No abuse — the filter rejects it on the spot.')) +
       '</p>' +
       (queued ? '<p class="th-queued">' + (rtl
         ? ('في ' + queued + ' فكرة بانتظار الإرسال — رح تُعاد المحاولة تلقائيًا.')

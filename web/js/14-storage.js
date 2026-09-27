@@ -107,8 +107,15 @@
       current.choices.items.forEach(function(c){
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = 'notice-choice';
+        b.className = 'notice-choice' + (c.sub ? ' has-sub' : '');
         b.textContent = c.text;
+        // Optional second line (the GPA this grade would give).
+        if(c.sub){
+          var sm = document.createElement('small');
+          sm.className = 'notice-choice-sub' + (c.trend ? ' is-' + c.trend : '');
+          sm.textContent = c.sub + (c.trend === 'up' ? ' ▲' : (c.trend === 'down' ? ' ▼' : ''));
+          b.appendChild(sm);
+        }
         b.addEventListener('click', function(){ hide(); try{ c.fn(); }catch(err){} });
         row.appendChild(b);
       });

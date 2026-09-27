@@ -8901,3 +8901,18 @@ html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var
 .kb-list kbd{display:inline-block; min-width:26px; padding:3px 7px; border:1px solid var(--line); border-bottom-width:2px; border-radius:7px; font:700 12.5px/1.2 ui-monospace, monospace; text-align:center; background:var(--surface-bg);}
 /* Posts from another major on the shared Student Thoughts wall (js/59-thoughts.js). */
 .th-major-tag{color:var(--text-dim); background:color-mix(in srgb, var(--text-dim) 14%, transparent); margin-inline-start:4px;}
+/* Grade chips that also say what the GPA becomes (js/28-imported.js). */
+.notice-choice.has-sub{display:inline-flex; flex-direction:column; align-items:center; line-height:1.15; padding:5px 8px;}
+.notice-choice-sub{font-size:10.5px; font-weight:700; color:var(--text-dim); direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums;}
+.notice-choice-sub.is-up{color:var(--good, #3fb07a);}
+.notice-choice-sub.is-down{color:var(--bad, #e2596b);}
+/* "You wrote a note on this course" (js/28-imported.js noteDotHtml). */
+.course .card-note-dot{position:absolute; inset-inline-end:10px; bottom:10px; width:8px; height:8px; border-radius:50%; background:var(--warn, #e0a13a); box-shadow:0 0 0 2px var(--panel);}
+/* Pinned courses on Home (js/90-task-home.js pinnedHtml). */
+.hm-pin-row{width:100%; background:none; border:0; border-top:1px solid var(--line); font:inherit; color:inherit; text-align:start; cursor:pointer;}
+.hm-pin-go{color:var(--text-dim); display:inline-flex;}
+.hm-pins + .hm-sem{margin-top:12px;}
+/* Settings: where this student's data is saved besides this phone (js/37-sidebar.js). */
+.bk-status{margin:0 0 8px; padding:9px 12px; border-radius:10px; font-size:13px; border:1px solid var(--line); background:var(--panel);}
+.bk-status.is-ok{border-color:color-mix(in srgb, #3fb07a 45%, var(--line));}
+.bk-status.is-warn{border-color:color-mix(in srgb, #e0a13a 60%, var(--line)); background:color-mix(in srgb, #e0a13a 8%, var(--panel));}

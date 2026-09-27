@@ -517,7 +517,21 @@
         // dashboard tile (js/36-dashboard.js) is gone. The menu row stays:
         // a toast is only a door while it is on screen, and the badges have
         // to be reachable the rest of the time.
-        newly.forEach(function(a){
+        // Several at once (ticking a whole year can earn five) are ONE
+        // message with the count and the first two names, not a stack of
+        // five that sits over the plan (idea 21).
+        if(newly.length > 1 && window.__showActionToast){
+          var names = newly.map(function(a){ var tt = resolveTitle(a, gender); return rtl ? tt.ar : tt.en; });
+          var n = names.length, rest = n - 2;
+          var head = rtl
+            ? (n === 2 ? 'إنجازين جداد' : (n + (n <= 10 ? ' إنجازات جديدة' : ' إنجاز جديد')))
+            : (n + ' new achievements');
+          var which = names.slice(0, 2).join(rtl ? '، ' : ', ') +
+            (rest > 0 ? (rtl ? ' و' + rest + ' كمان' : ' and ' + rest + ' more') : '');
+          window.__showActionToast(head + ': ' + which, rtl ? 'شوفهم' : 'See them', function(){
+            open(prefix);
+          }, { kind: 'award' });
+        } else newly.forEach(function(a){
           var t = resolveTitle(a, gender);
           var name = rtl ? t.ar : t.en;
           if(window.__showActionToast){

@@ -1325,7 +1325,21 @@
       '<div class="name">' + displayName + '</div>' +
       (otherName ? '<div class="name-alt">' + bidi(otherName) + '</div>' : '') +
       '<div class="course-meta">' + meta + '</div>' +
+      noteDotHtml(planId, c.id, rtl) +
       '</div>';
+  }
+
+  // A small dot on a card you wrote a personal note on (idea 12). The note
+  // itself is in the course window; the dot only says "you wrote something
+  // here". A lecture and its lab share one note, kept on the primary half.
+  function noteDotHtml(planId, slug, rtl){
+    var P = window.AAUP_PERSONAL, G = window.AAUP_GPA;
+    if(!P || !P.loadNotes) return '';
+    var notes = P.loadNotes() || {};
+    var pid = (G && G.primaryId) ? G.primaryId(planId, slug) : fullId(planId, slug);
+    var n = notes[pid];
+    if(!n || !String(n).trim()) return '';
+    return '<span class="card-note-dot" role="img" aria-label="' + (rtl ? 'فيه ملاحظة إلك' : 'You wrote a note') + '" title="' + (rtl ? 'فيه ملاحظة إلك' : 'You wrote a note') + '"></span>';
   }
 
   function openGradePrompt(planId, slug){
@@ -2255,10 +2269,28 @@
       // window opened afterwards (idea 4). Only while it has no grade yet.
       var G = window.AAUP_GPA, pid = fullId(planId, slug);
       var hasGrade = G && G.loadGrades && G.isRealGrade && G.isRealGrade(G.loadGrades()[pid]);
+      // Each chip also shows what the cumulative GPA becomes with that grade
+      // (idea 13), worked out by the same gpaFor the Grades screen uses.
+      var gpaNow = (G && G.gpaFor) ? G.gpaFor(planId).gpa : null;
+      var gpaWith = function(g){
+        if(!G || !G.gpaFor) return null;
+        var sc = { replace: {} }; sc.replace[pid] = g;
+        return G.gpaFor(planId, null, sc).gpa;
+      };
       var choices = (G && !hasGrade && G.GRADE_ORDER) ? {
-        label: rtl ? 'شو جبت؟' : 'What did you get?',
+        label: (rtl ? 'شو جبت؟' : 'What did you get?') +
+          (gpaNow !== null ? (rtl ? ' · معدلك الآن ' : ' · your GPA is ') + gpaNow.toFixed(2) : ''),
         items: G.GRADE_ORDER.filter(function(g){ return ['FA', 'W', 'F'].indexOf(g) === -1; }).map(function(g){
-          return { text: g, fn: function(){
+          var after = gpaWith(g);
+          var sub = '', trend = '';
+          if(after !== null){
+            sub = after.toFixed(2);
+            if(gpaNow !== null){
+              var d = Math.round((after - gpaNow) * 100);
+              trend = d > 0 ? 'up' : (d < 0 ? 'down' : '');
+            }
+          }
+          return { text: g, sub: sub, trend: trend, fn: function(){
             var m = G.loadGrades(); m[pid] = g; G.saveGrades(m);
             render(planId);
             if(window.__showToast) window.__showToast((rtl ? 'انحفظت العلامة: ' : 'Grade saved: ') + g);

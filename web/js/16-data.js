@@ -38,6 +38,8 @@
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    // Read by Settings' "last backup" line (js/37-sidebar.js backupStatusHtml).
+    try{ localStorage.setItem('aaup_lastExport', new Date().toISOString()); }catch(e){}
     if(window.__showToast) window.__showToast('Progress exported!');
   }
 
