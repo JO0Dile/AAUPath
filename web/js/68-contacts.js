@@ -89,6 +89,19 @@
     });
   }
 
+  // The courses you are taking now (the same list Home shows under "This
+  // semester"), by normalised name, so their professors come first (idea 19).
+  var nowCourses = {};
+  function buildNow(prefix){
+    nowCourses = {};
+    var ts = prefix && window.AAUP_TASK_HOME && window.AAUP_TASK_HOME.thisSemester ? window.AAUP_TASK_HOME.thisSemester(prefix) : null;
+    (ts ? ts.list : []).forEach(function(c){
+      if(ts.progress[prefix + '-c-' + c.id]) return;
+      nowCourses[normName(c.name)] = true;
+    });
+  }
+  function teachesNow(c){ return (c.courses || []).some(function(n){ return nowCourses[normName(n)]; }); }
+
   function initials(name){
     var parts = String(name || '').replace(/^(dr|prof|mr|ms|mrs|eng)\.?\s+/i, '').split(/\s+/).filter(Boolean);
     return ((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '');
@@ -158,6 +171,21 @@
     if(!rows.length){
       return '<p class="ct-empty">' + t('empty', rtl) + '</p>';
     }
+    // With no search typed, the professors of your courses this semester lead
+    // the list in their own section, and are not repeated below it.
+    var nowHtml = '';
+    if(!q && (activeCat === 'instructor' || activeCat === 'all')){
+      var now = rows.filter(function(c){ return c.category === 'instructor' && teachesNow(c); });
+      if(now.length){
+        nowHtml = '<section class="ct-group ct-group-now">' +
+          '<div class="ct-group-head"><span class="ct-group-label">' + window.AAUP_ICONS.preview('calendar', 14) +
+            esc(rtl ? 'مساقاتك هالفصل' : 'Your courses this semester') + '</span>' +
+            '<span class="ct-group-count">' + now.length + '</span></div>' +
+          '<div class="ct-grid">' + now.map(function(c){ return cardHtml(c, data, rtl); }).join('') + '</div></section>';
+        rows = rows.filter(function(c){ return now.indexOf(c) === -1; });
+        if(!rows.length) return nowHtml;
+      }
+    }
     var byCat = {};
     rows.forEach(function(c){ (byCat[c.category] = byCat[c.category] || []).push(c); });
     var order = Object.keys(data.categories || {}).filter(function(k){ return byCat[k]; });
@@ -168,9 +196,13 @@
     // One section is the flat grid this replaced with a redundant header on
     // top — which is exactly what filtering to a single chip produces.
     if(order.length === 1){
-      return '<div class="ct-grid">' + rows.map(function(c){ return cardHtml(c, data, rtl); }).join('') + '</div>';
+      return nowHtml + (nowHtml
+        ? '<section class="ct-group"><div class="ct-group-head"><span class="ct-group-label">' + esc(rtl ? 'الكل' : 'Everyone') + '</span>' +
+            '<span class="ct-group-count">' + rows.length + '</span></div>'
+        : '') +
+        '<div class="ct-grid">' + rows.map(function(c){ return cardHtml(c, data, rtl); }).join('') + '</div>' + (nowHtml ? '</section>' : '');
     }
-    return order.map(function(key){
+    return nowHtml + order.map(function(key){
       var cat = (data.categories || {})[key] || {};
       var label = rtl ? (cat.ar || key) : (cat.en || key);
       return '<section class="ct-group">' +
@@ -189,6 +221,7 @@
     var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
     body.setAttribute('dir', rtl ? 'rtl' : 'ltr');
     buildMine(prefix);
+    buildNow(prefix);
     // A full page, not a pop-up: the directory is something you read down,
     // and it was squeezed into a 420px card with the list starting half-way
     // down the first screen.
