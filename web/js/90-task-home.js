@@ -386,6 +386,7 @@
             (done ? ic('check', 14) + '<span>' + esc(L('passed', 'منجز')) + '</span>' : '<span class="hm-sem-circle"></span>') +
           '</button></div>';
       }).join('') +
+      (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.promptHtml(id) : '') +
       '</section>';
   }
 
@@ -425,6 +426,8 @@
       '<div class="hm-body">' +
         '<div class="hm-main">' +
           '<div class="home-install-row" id="homeInstallRow" hidden></div>' +
+          (window.AAUP_DATES ? window.AAUP_DATES.homeHtml(id) : '') +
+          (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.todayHtml(id) : '') +
           pinnedHtml(id) +
           thisSemesterHtml(id) +
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +

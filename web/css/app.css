@@ -9010,3 +9010,46 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .cloud-or{display:flex; align-items:center; gap:10px; margin:14px 0 10px; color:var(--text-dim); font-size:12px;}
 .cloud-or::before, .cloud-or::after{content:""; flex:1; border-top:1px solid var(--line);}
 .cloud-google{min-height:44px;}
+/* Dates that matter on Home (js/101-dates.js). */
+.hm-dates{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;}
+.hm-date{display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:start; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:10px 12px; font:inherit; color:inherit; cursor:pointer; min-width:0;}
+.hm-date-what{font-size:12px; color:var(--text-dim); font-weight:600; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hm-date-n{font-size:18px; font-weight:900;}
+.hm-date.is-soon{border-color:color-mix(in srgb, #e0a13a 60%, var(--line));}
+.hm-date.is-soon .hm-date-n{color:#e0a13a;}
+.hm-dates-empty{display:flex; align-items:center; gap:8px; width:100%; margin-bottom:12px; padding:10px 12px; border:1px dashed var(--line); border-radius:14px; background:none; color:var(--text-dim); font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.dates-card{max-width:460px;}
+.dates-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;}
+.dates-list{border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+.dates-row{display:flex; align-items:center; gap:10px; padding:10px 12px; border-top:1px solid var(--line);}
+.dates-row:first-child{border-top:0;}
+.dates-tx{flex:1; min-width:0;}
+.dates-tx b{display:block; font-size:13.5px;}
+.dates-tx span{display:block; font-size:11.5px; color:var(--text-dim);}
+.dates-n{font-size:14px; white-space:nowrap;}
+.dates-row.is-soon .dates-n{color:#e0a13a;}
+.dates-del{width:28px; height:28px; border-radius:50%; border:1px solid var(--line); background:none; color:var(--text-dim); font-size:16px; cursor:pointer;}
+.dates-add{margin-top:14px; padding-top:12px; border-top:1px solid var(--line);}
+/* Class times and Today on Home (js/102-timetable.js). */
+.hm-today{margin-bottom:12px;}
+.hm-today-pill{font-size:11.5px; font-weight:800; color:#3fb07a; background:rgba(63,176,122,.14); border-radius:999px; padding:2px 9px;}
+.hm-today-pill.is-now{color:#e0a13a; background:rgba(224,161,58,.14);}
+.hm-today-time{font-size:13px; direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums;}
+.hm-today-row.is-now .hm-sem-name{color:#e0a13a;}
+.hm-tt-prompt{display:flex; align-items:center; gap:8px; width:100%; margin-top:6px; padding:9px 0 2px; border:0; border-top:1px solid var(--line); background:none; color:var(--accent); font:inherit; font-size:12.5px; font-weight:700; text-align:start; cursor:pointer;}
+.cal-tt-btn{margin:4px 0 12px;}
+.tt-card{max-width:520px;}
+.tt-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;}
+.tt-course{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px;}
+.tt-course-h{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.tt-course-h b{font-size:13.5px; min-width:0;}
+.tt-meet{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; font-size:12.5px; color:var(--text-dim);}
+.tt-meet span{direction:ltr; unicode-bidi:plaintext;}
+.tt-form{margin-top:8px;}
+.tt-days{display:flex; flex-wrap:wrap; gap:6px;}
+.tt-day{border:1px solid var(--line); border-radius:999px; background:none; color:var(--text-dim); font:inherit; font-size:12px; font-weight:800; padding:6px 11px; cursor:pointer;}
+.tt-day[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
+.tt-times{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;}
+.tt-times label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--text-dim); font-weight:700;}
+.tt-times input{font:inherit; font-size:13.5px; padding:7px 8px; border:1px solid var(--line); border-radius:9px; background:var(--surface-bg); color:var(--text);}
+.tt-times .tt-room input{width:90px;}

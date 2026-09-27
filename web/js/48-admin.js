@@ -484,10 +484,26 @@
       markPreview('au') +
       '<label class="admin-check"><input type="checkbox" id="auPublished"' + (pub ? ' checked' : '') + '> Published (visible to students)</label>' +
       '<h4>Faculties</h4><div id="auColleges">' + collegeRows(full.colleges || []) + '</div>' +
+      '<h4>Important dates</h4>' +
+      '<p class="admin-hint">Shown on every student\'s Home, counting down: add/drop, midterms, finals, registration… ' +
+      'Past dates drop off by themselves. A student can add their own dates beside these.</p>' +
+      '<div id="auDates">' + dateRows(full.dates || []) + '</div>' +
       '<div class="form-actions">' +
+        '<button type="button" class="home-btn admin-mini" id="auAddDate">+ Add a date</button>' +
         '<button type="button" class="home-btn admin-mini" id="auAddCollege">+ Add faculty</button>' +
         '<button type="button" class="home-btn admin-primary" id="auSave" data-slug="' + esc(u.slug) + '">Save university</button>' +
       '</div><div id="adminMsg"></div></div>';
+  }
+
+  function dateRows(list){
+    return list.map(function(d){
+      return '<div class="form-field-row admin-date-row" data-date-row>' +
+        '<div class="form-field"><label>What (English)</label><input type="text" class="ad-en" value="' + esc(d.en || '') + '" placeholder="Add / drop ends"></div>' +
+        '<div class="form-field"><label>What (Arabic)</label><input type="text" class="ad-ar" dir="rtl" value="' + esc(d.ar || '') + '" placeholder="آخر يوم سحب وإضافة"></div>' +
+        '<div class="form-field"><label>Date</label><input type="date" class="ad-date" value="' + esc(d.date || '') + '"></div>' +
+        '<button type="button" class="home-btn admin-mini" data-del-date title="Remove this date">✕</button>' +
+        '</div>';
+    }).join('');
   }
 
   // Three fields, one mark. Which one a student actually sees was invisible
@@ -1669,7 +1685,29 @@
       if(last) last.focus();
     });
     bindCollegeDeletes();
+    var bindDateDeletes = function(){
+      document.querySelectorAll('[data-del-date]').forEach(function(b){
+        if(b.__bound) return; b.__bound = true;
+        b.addEventListener('click', function(){ var row = b.closest('[data-date-row]'); if(row) row.remove(); });
+      });
+    };
+    bindDateDeletes();
+    on('auAddDate', 'click', function(){
+      var host = document.getElementById('auDates');
+      if(!host) return;
+      host.insertAdjacentHTML('beforeend', dateRows([{ en: '', ar: '', date: '' }]));
+      bindDateDeletes();
+      var rows = host.querySelectorAll('[data-date-row]');
+      var last = rows[rows.length - 1];
+      if(last) last.querySelector('.ad-en').focus();
+    });
     on('auSave', 'click', function(){
+      var dates = [];
+      document.querySelectorAll('[data-date-row]').forEach(function(r){
+        var en = r.querySelector('.ad-en').value.trim(), date = r.querySelector('.ad-date').value;
+        if(!en || !date) return;
+        dates.push({ en: en, ar: r.querySelector('.ad-ar').value.trim(), date: date });
+      });
       var colleges = [];
       document.querySelectorAll('[data-college-row]').forEach(function(r){
         var s = r.querySelector('.ac-slug').value.trim();
@@ -1682,7 +1720,7 @@
         university: {
           slug: slug, name: val('auName'), nameAr: val('auNameAr'), shortName: val('auShort'),
           icon: val('auIcon'), iconKey: val('auIconKey'), website: val('auWebsite'),
-          description: val('auDesc'), logoUrl: val('auLogo'), colleges: colleges
+          description: val('auDesc'), logoUrl: val('auLogo'), colleges: colleges, dates: dates
         },
         published: document.getElementById('auPublished').checked,
         baseSha: state.uniSha || ''

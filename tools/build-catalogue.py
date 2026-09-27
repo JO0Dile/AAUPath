@@ -197,6 +197,9 @@ def main():
             # deliberately refuses to ship — so they travel with the record
             # and the About screen reads them from here rather than hardcoding.
             'contacts': uni.get('contacts') or {},
+            # Dates the Home screen counts down to (add/drop, midterms,
+            # finals…), set from the Developer panel's university editor.
+            'dates': uni.get('dates') or [],
             'electivePool': rules.get('universityElectives') or [],
         }
 

@@ -174,6 +174,10 @@
       '<div class="cal-head"><span class="cal-head-ic">' + window.AAUP_ICONS.preview('calendar', 18) + '</span>' +
         '<h2 class="cal-title">' + esc(t('title', rtl)) + '</h2></div>' +
       '<p class="cal-sub">' + esc(t('sub', rtl)) + '</p>' +
+      // The weekly times live in their own window (js/102-timetable.js);
+      // this is the obvious place to look for them.
+      (window.AAUP_TIMETABLE ? '<button type="button" class="home-btn cal-tt-btn" data-tt-open>' + window.AAUP_ICONS.preview('clock', 15) +
+        esc(rtl ? 'أوقات محاضراتك الأسبوعية' : 'Your weekly class times') + '</button>' : '') +
       '<div class="form-field"><label for="icsSem">' + esc(t('which', rtl)) + '</label>' +
         '<select id="icsSem">' + sems.map(function(s){
           return '<option value="' + esc(s.key) + '">' + esc(s.label) + ' · ' + s.courses.length + ' ' + esc(t('courses', rtl)) +
