@@ -93,7 +93,28 @@
       if(x.action){ el.addEventListener('click', function(){ hide(); try{ x.action.fn(); }catch(err){} }); }
       e.extras.appendChild(el);
     });
-    e.extras.hidden = !current.extras.length;
+    // Choices: a row of chips under the message ("What did you get?" with the
+    // grades). A tap runs that choice and closes the message.
+    if(current.choices && current.choices.items && current.choices.items.length){
+      var row = document.createElement('div');
+      row.className = 'notice-choices';
+      if(current.choices.label){
+        var lab = document.createElement('span');
+        lab.className = 'notice-choices-label';
+        lab.textContent = current.choices.label;
+        row.appendChild(lab);
+      }
+      current.choices.items.forEach(function(c){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'notice-choice';
+        b.textContent = c.text;
+        b.addEventListener('click', function(){ hide(); try{ c.fn(); }catch(err){} });
+        row.appendChild(b);
+      });
+      e.extras.appendChild(row);
+    }
+    e.extras.hidden = !current.extras.length && !current.choices;
     if(current.action){
       e.btn.hidden = false;
       e.btn.textContent = current.action.label;
@@ -104,6 +125,7 @@
   function arm(){
     if(hideTimer) clearTimeout(hideTimer);
     var ms = current.ms || (current.action ? 6000 : 3200);
+    if(current.choices) ms = Math.max(ms, 9000);
     hideTimer = setTimeout(hide, ms + current.extras.length * 1500);
   }
   function hide(){
@@ -124,6 +146,13 @@
     if(!n || !n.title) return;
     // The same words twice in a row (a double tap) are one message.
     if(current && current.title === n.title && current.sub === n.sub){ arm(); return; }
+    // A message you answer (grade chips) is never folded into another one
+    // or left waiting behind it: it takes the box now.
+    if(n.choices && current){
+      if(hideTimer){ clearTimeout(hideTimer); hideTimer = null; }
+      show(n);
+      return;
+    }
     if(current && Date.now() - current.shownAt < MERGE_MS){
       current.extras.push({ text: n.sub ? n.title + ' — ' + n.sub : n.title, kind: n.kind, action: n.action });
       paint();
@@ -153,6 +182,7 @@
   function showUnlockToast(title, subtitle, opts){
     notify({ title: title, sub: subtitle || '', kind: 'ok',
              action: opts && opts.undo ? { label: opts.undoLabel || 'Undo', fn: opts.undo } : null,
+             choices: (opts && opts.choices) || null,
              ms: opts && opts.undo ? 5000 : 0 });
   }
   // A message with one tappable action ("Moved — Undo", "Achievement — See

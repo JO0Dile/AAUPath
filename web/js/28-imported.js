@@ -1371,6 +1371,23 @@
     if(currentOpenPlanId) drawConnectors(currentOpenPlanId);
   });
 
+  // Semester titles stay pinned while their semester scrolls (idea 7). They
+  // pin just under the hours bar, which is itself pinned, so its height is
+  // measured and handed to the CSS; it changes when the search box opens.
+  var stickyObserver = null;
+  function syncStickyTop(id){
+    var page = document.getElementById('page-' + id);
+    var bar = page && page.querySelector('.progress-widget');
+    if(!page || !bar) return;
+    var apply = function(){ page.style.setProperty('--sticky-top', Math.round(bar.getBoundingClientRect().height) + 'px'); };
+    apply();
+    if(window.ResizeObserver){
+      if(stickyObserver) stickyObserver.disconnect();
+      stickyObserver = new window.ResizeObserver(apply);
+      stickyObserver.observe(bar);
+    }
+  }
+
   function openCourseModal(planId, slug){
     var plan = loadImportedPlans()[planId];
     var course = plan && (plan.courses || []).filter(function(c){ return c.id === slug; })[0];
@@ -1676,22 +1693,60 @@
     if(!real.length || real.some(function(c){ return isDone(planId, c.id); })) return '';
     var terms = planTerms(plan);
     if(terms.length < 2) return '';
-    var chips = terms.map(function(t, i){
-      var lab = (rtl ? 'س' + t.yearNum : 'Y' + t.yearNum) + ' · ' +
-        (rtl ? SEMESTER_LABEL_AR[t.sem] : SEMESTER_LABEL[t.sem]).replace(/ Semester$/, '');
-      return '<button type="button" class="way-chip" data-way="' + i +
-        '" data-plan="' + window.__escapeHtml(planId) + '">' + window.__escapeHtml(lab) + '</button>';
-    }).join('');
-    // One line until it is opened: the eight semester buttons used to fill
-    // most of a phone screen above Year 1.
+    // A slider, not a row of eight semester buttons (idea 3): drag to the
+    // semester you are in and it says, before anything changes, how many
+    // courses and hours that ticks. For each position the running totals of
+    // everything scheduled before it ride on the slider as data.
+    var rank = {};
+    terms.forEach(function(t, i){ rank[t.yearId + '|' + t.sem] = i; });
+    var per = terms.map(function(){ return { n: 0, h: 0 }; });
+    real.forEach(function(c){
+      var r = rank[c.yearId + '|' + c.semester];
+      if(r === undefined) return;
+      per[r].n++; per[r].h += parseFloat(c.creditHours) || 0;
+    });
+    var cumN = [], cumH = [], accN = 0, accH = 0;
+    terms.forEach(function(t, i){ cumN.push(accN); cumH.push(Math.round(accH)); accN += per[i].n; accH += per[i].h; });
+    var labels = terms.map(function(t){
+      return (rtl ? 'السنة ' + t.yearNum : 'Year ' + t.yearNum) + ' · ' + (rtl ? SEMESTER_LABEL_AR[t.sem] : SEMESTER_LABEL[t.sem]);
+    });
+    var start = Math.min(2, terms.length - 1);
+    var esc = window.__escapeHtml;
+    // One line until it is opened.
     return '<details class="way-card">' +
-      '<summary class="way-head"><span>' + window.__escapeHtml(rtl ? 'وين أنت الآن؟' : 'Where are you now?') + '</span>' +
-        '<span class="way-pick">' + window.__escapeHtml(rtl ? 'اختر فصلك' : 'Pick your semester') + '</span></summary>' +
-      '<p class="way-note">' + window.__escapeHtml(rtl
-        ? 'اختر فصلك الحالي وسنحدّد كل ما قبله كمنجز — عدّل أي مساق لم تأخذه.'
-        : 'Pick the semester you are in and everything before it is marked done — fix any you have not taken.') +
-      '</p><div class="way-chips">' + chips + '</div></details>';
+      '<summary class="way-head"><span>' + esc(rtl ? 'وين أنت الآن؟' : 'Where are you now?') + '</span>' +
+        '<span class="way-pick">' + esc(rtl ? 'اختر فصلك' : 'Pick your semester') + '</span></summary>' +
+      '<p class="way-note">' + esc(rtl
+        ? 'كل اللي قبل فصلك بيتعلّم كمنجز — عدّل أي مساق ما أخذته.'
+        : 'Everything before the semester you are in gets ticked as passed. Untick any you have not taken.') + '</p>' +
+      '<input type="range" class="way-range" min="1" max="' + (terms.length - 1) + '" step="1" value="' + start + '" ' +
+        'data-way-range data-plan="' + esc(planId) + '" data-labels="' + esc(JSON.stringify(labels)) + '" ' +
+        'data-n="' + esc(JSON.stringify(cumN)) + '" data-h="' + esc(JSON.stringify(cumH)) + '" aria-label="' + esc(rtl ? 'فصلك الحالي' : 'The semester you are in') + '">' +
+      '<div class="way-scale" aria-hidden="true">' + terms.filter(function(t){ return t.sem === 's1'; }).map(function(t){
+        return '<span>' + t.yearNum + '</span>'; }).join('') + '</div>' +
+      '<div class="way-sum"><b class="way-sum-where">' + esc((rtl ? 'أنا بـ ' : "I'm in ") + labels[start]) + '</b>' +
+        '<span class="way-sum-count">' + esc(wayCount(cumN[start], cumH[start], rtl)) + '</span></div>' +
+      '<button type="button" class="home-btn btn-pri way-go" data-way="' + start + '" data-plan="' + esc(planId) + '">' +
+        esc(wayButton(cumN[start], rtl)) + '</button>' +
+      '</details>';
   }
+  function wayCount(n, h, rtl){
+    return rtl ? n + ' مساق قبله · ' + h + ' ساعة' : n + ' courses before it · ' + h + ' hours';
+  }
+  function wayButton(n, rtl){ return rtl ? 'علّم ' + n + ' مساق كمنجز' : 'Tick ' + n + ' courses'; }
+  document.addEventListener('input', function(e){
+    var r = e.target;
+    if(!r || !r.hasAttribute || !r.hasAttribute('data-way-range')) return;
+    var i = parseInt(r.value, 10), rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var labels = JSON.parse(r.getAttribute('data-labels')), n = JSON.parse(r.getAttribute('data-n')), h = JSON.parse(r.getAttribute('data-h'));
+    var card = r.closest('.way-card');
+    card.querySelector('.way-sum-where').textContent = (rtl ? 'أنا بـ ' : "I'm in ") + labels[i];
+    card.querySelector('.way-sum-count').textContent = wayCount(n[i], h[i], rtl);
+    var go = card.querySelector('.way-go');
+    go.setAttribute('data-way', String(i));
+    go.textContent = wayButton(n[i], rtl);
+    r.style.setProperty('--fill', ((i - 1) / Math.max(1, (parseInt(r.max, 10) - 1)) * 100) + '%');
+  });
 
   function semesterHtml(planId, plan, yearId, semester, editing, rtl, yearNum){
     var pairs = pairContinuations(planId);
@@ -2034,6 +2089,7 @@
     html += '</div></div>';
     host.innerHTML = html;
     drawConnectors(id);
+    syncStickyTop(id);
     initSearch(id);
 
     if(window.AAUP_PLAN_EDITOR){ window.AAUP_PLAN_EDITOR.bindDraggable(id); }
@@ -2142,9 +2198,24 @@
         ? (rtl ? 'صار متاح لك: ' : 'You can now take ') + opened.slice(0, 3).join(', ') +
           (opened.length > 3 ? (rtl ? ' وغيرها' : ' and more') : '')
         : '';
+      // "What did you get?" right here, so a grade does not need the course
+      // window opened afterwards (idea 4). Only while it has no grade yet.
+      var G = window.AAUP_GPA, pid = fullId(planId, slug);
+      var hasGrade = G && G.loadGrades && G.isRealGrade && G.isRealGrade(G.loadGrades()[pid]);
+      var choices = (G && !hasGrade && G.GRADE_ORDER) ? {
+        label: rtl ? 'شو جبت؟' : 'What did you get?',
+        items: G.GRADE_ORDER.filter(function(g){ return ['FA', 'W', 'F'].indexOf(g) === -1; }).map(function(g){
+          return { text: g, fn: function(){
+            var m = G.loadGrades(); m[pid] = g; G.saveGrades(m);
+            render(planId);
+            if(window.__showToast) window.__showToast((rtl ? 'انحفظت العلامة: ' : 'Grade saved: ') + g);
+          } };
+        })
+      } : null;
       window.__showUnlockToast(title, subtitle, {
         undoLabel: rtl ? 'تراجع' : 'Undo',
-        undo: function(){ if(isDone(planId, slug)) toggle(planId, slug); }
+        undo: function(){ if(isDone(planId, slug)) toggle(planId, slug); },
+        choices: choices
       });
     }
   }
