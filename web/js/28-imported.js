@@ -2095,7 +2095,9 @@
       '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span>' +
       // Cards or List: List puts each course on one line (tick, name, hours)
       // so a whole year fits on a phone screen. Remembered per device.
-      (editing ? '' : '<div class="pw-view" role="group" aria-label="' + (rtl ? 'طريقة العرض' : 'View') + '">' +
+      // Offered in Edit Mode too: there List stacks each semester full width,
+      // one line per course, with the edit buttons at the end of the line.
+      ('<div class="pw-view" role="group" aria-label="' + (rtl ? 'طريقة العرض' : 'View') + '">' +
         '<button type="button" data-plan-view="cards" aria-pressed="' + (planView() === 'cards') + '">' + (rtl ? 'بطاقات' : 'Cards') + '</button>' +
         '<button type="button" data-plan-view="list" aria-pressed="' + (planView() === 'list') + '">' + (rtl ? 'قائمة' : 'List') + '</button></div>') +
       '<button type="button" class="pw-search-btn" data-pw-search="' + id + '" aria-expanded="false" aria-controls="' + id + '-courseSearchWrap" aria-label="' + (rtl ? 'ابحث عن مساق' : 'Search a course') + '">' +

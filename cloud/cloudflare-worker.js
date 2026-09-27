@@ -43,8 +43,26 @@
 //                                     forge student sign-in tokens.
 //        ALLOWED_ORIGIN   (Variable)  https://jo0dile.github.io
 //   5. Put the Worker URL in APP_CLOUD_URL in web/js/01-catalogue.js.
-//   See cloud/README.md for the full walkthrough, including why password
-//   reset is not part of this v1.
+//   6. Optional — account recovery from the Developer panel:
+//        ADMIN_SECRET     (Secret)    a long random string, typed into the
+//                                     Developer panel's "Student accounts"
+//                                     section. Without it those routes are off.
+//   7. Optional — Sign in with Google:
+//        GOOGLE_CLIENT_ID (Variable)  the OAuth "Web application" client id
+//                                     from Google Cloud; the same value goes
+//                                     in APP_GOOGLE_CLIENT_ID in 01-catalogue.js.
+//   See cloud/README.md for the full walkthrough.
+//
+// ACCOUNT RECOVERY (no email service needed):
+//   - A recovery code is issued at sign-up and can be re-issued from a
+//     signed-in device. Only an HMAC of it is stored. Using it sets a new
+//     password and issues a new code; the old one is spent.
+//   - A signed-in device can set a new password without the old one: the
+//     session already proves who it is. Every other device is signed out.
+//   - The maintainer can look an account up and give it a temporary
+//     password (ADMIN_SECRET), for a student with neither.
+//   - Sign in with Google verifies Google's ID token and links to the
+//     account with the same verified email, or makes a new one.
 // ---------------------------------------------------------------------------
 
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days — "stay signed in", not a work session
@@ -98,7 +116,7 @@ function corsHeaders(env, request) {
   return {
     'Access-Control-Allow-Origin': request ? resolveOrigin(request, env) : (allowedOrigins(env)[0] || '*'),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Secret',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
@@ -258,6 +276,67 @@ async function requireUser(request, env) {
 }
 
 // ---------------------------------------------------------------------------
+// account recovery helpers
+// ---------------------------------------------------------------------------
+
+// Columns added after v1. CREATE TABLE IF NOT EXISTS never adds a column to
+// a table that already exists, so a database made before them is brought up
+// to date here, once per Worker instance; "duplicate column" and "already
+// exists" errors just mean it was done before.
+let migrated = false;
+async function migrate(env) {
+  if (migrated || !env.DB) return;
+  for (const stmt of [
+    'ALTER TABLE users ADD COLUMN recovery_hash TEXT',
+    'ALTER TABLE users ADD COLUMN google_sub TEXT',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google ON users(google_sub)',
+  ]) {
+    try { await env.DB.prepare(stmt).run(); } catch { /* already there */ }
+  }
+  migrated = true;
+}
+
+// 12 characters from an alphabet without look-alikes (no 0/O, 1/I/L), shown
+// as XXXX-XXXX-XXXX: about 59 bits, far past guessing through a login delay.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function newRecoveryCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  let out = '';
+  for (let i = 0; i < 12; i++) {
+    out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length];
+    if (i === 3 || i === 7) out += '-';
+  }
+  return out;
+}
+function normalizeCode(raw) {
+  return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+// An HMAC keyed with SESSION_SECRET, not PBKDF2: the code is random and
+// long, so a slow hash adds nothing but CPU time, and a leaked table without
+// the secret still cannot be checked against guesses.
+async function recoveryHash(code, env) {
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey('recovery:' + env.SESSION_SECRET), enc.encode(normalizeCode(code)));
+  return b64url(sig);
+}
+async function issueRecovery(userId, env) {
+  const code = newRecoveryCode();
+  await env.DB.prepare('UPDATE users SET recovery_hash = ? WHERE id = ?').bind(await recoveryHash(code, env), userId).run();
+  return code;
+}
+// Readable temporary passwords for the maintainer to read out: 10
+// characters from the same alphabet, lower case.
+function tempPassword() {
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  let out = '';
+  for (let i = 0; i < 10; i++) out += CODE_ALPHABET[bytes[i] % CODE_ALPHABET.length].toLowerCase();
+  return out;
+}
+function isAdmin(request, env) {
+  const got = request.headers.get('X-Admin-Secret') || '';
+  return !!env.ADMIN_SECRET && got.length > 0 && timingSafeEqual(got, env.ADMIN_SECRET);
+}
+
+// ---------------------------------------------------------------------------
 // routes
 // ---------------------------------------------------------------------------
 
@@ -302,8 +381,9 @@ async function handleSignup(request, env) {
   const createdAt = Date.now();
   await env.DB.prepare('INSERT INTO users (id, email, username, password_hash, token_version, created_at) VALUES (?, ?, ?, ?, 1, ?)')
     .bind(id, email, username, passwordHash, createdAt).run();
+  const recoveryCode = await issueRecovery(id, env);
 
-  return json({ ok: true, token: await issueToken(id, 1, env), email, username, createdAt }, 200, env, request);
+  return json({ ok: true, token: await issueToken(id, 1, env), email, username, createdAt, recoveryCode }, 200, env, request);
 }
 
 async function handleLogin(request, env) {
@@ -336,7 +416,125 @@ async function handleLogin(request, env) {
 }
 
 async function handleMe(env, request, user) {
-  return json({ ok: true, email: user.email, username: user.username, createdAt: user.created_at }, 200, env, request);
+  const extra = await env.DB.prepare('SELECT recovery_hash, google_sub FROM users WHERE id = ?').bind(user.id).first();
+  return json({
+    ok: true, email: user.email, username: user.username, createdAt: user.created_at,
+    hasRecoveryCode: !!(extra && extra.recovery_hash), hasGoogle: !!(extra && extra.google_sub),
+  }, 200, env, request);
+}
+
+// A new recovery code for a signed-in account; the old one stops working.
+async function handleNewRecovery(env, request, user) {
+  return json({ ok: true, recoveryCode: await issueRecovery(user.id, env) }, 200, env, request);
+}
+
+// Forgot password, with the recovery code. Answers the same way whether the
+// account or the code was wrong, after the same delay as a login.
+async function handleUseRecovery(request, env) {
+  await sleep(LOGIN_DELAY_MS);
+  if (!env.SESSION_SECRET) return json({ error: 'cloud sync is not configured on the server' }, 500, env, request);
+  const body = await readJson(request, 4096);
+  const identifier = String(body.identifier || '').trim();
+  const next = String(body.newPassword || '');
+  if (next.length < MIN_PASSWORD_LEN) {
+    return json({ error: `new password must be at least ${MIN_PASSWORD_LEN} characters` }, 400, env, request);
+  }
+  if (next.length > MAX_PASSWORD_LEN) return json({ error: 'new password is too long' }, 400, env, request);
+  const looksLikeEmail = EMAIL_RE.test(identifier);
+  const row = await env.DB.prepare(`SELECT id, email, username, token_version, created_at, recovery_hash FROM users WHERE ${looksLikeEmail ? 'email' : 'username'} = ?`)
+    .bind(looksLikeEmail ? normalizeEmail(identifier) : identifier).first();
+  const given = await recoveryHash(body.code, env);
+  if (!row || !row.recovery_hash || !timingSafeEqual(given, row.recovery_hash)) {
+    return json({ error: 'that email/username and recovery code do not match' }, 401, env, request);
+  }
+  const newVersion = (row.token_version || 1) + 1;
+  await env.DB.prepare('UPDATE users SET password_hash = ?, token_version = ? WHERE id = ?')
+    .bind(await hashPassword(next), newVersion, row.id).run();
+  const recoveryCode = await issueRecovery(row.id, env);   // the used one is spent
+  return json({
+    ok: true, token: await issueToken(row.id, newVersion, env),
+    email: row.email, username: row.username, createdAt: row.created_at, recoveryCode,
+  }, 200, env, request);
+}
+
+// A new password from a device that is still signed in, without the old
+// one. The session is the proof; every other device is signed out.
+async function handleSetPassword(request, env, user) {
+  const body = await readJson(request, 4096);
+  const next = String(body.newPassword || '');
+  if (next.length < MIN_PASSWORD_LEN) {
+    return json({ error: `new password must be at least ${MIN_PASSWORD_LEN} characters` }, 400, env, request);
+  }
+  if (next.length > MAX_PASSWORD_LEN) return json({ error: 'new password is too long' }, 400, env, request);
+  const newVersion = (user.token_version || 1) + 1;
+  await env.DB.prepare('UPDATE users SET password_hash = ?, token_version = ? WHERE id = ?')
+    .bind(await hashPassword(next), newVersion, user.id).run();
+  return json({ ok: true, token: await issueToken(user.id, newVersion, env) }, 200, env, request);
+}
+
+// Developer panel: find an account by part of its email or username.
+async function handleAdminFind(request, env, url) {
+  const q = String(url.searchParams.get('q') || '').trim().toLowerCase();
+  if (q.length < 3) return json({ error: 'type at least 3 characters' }, 400, env, request);
+  const like = '%' + q.replace(/[%_]/g, '') + '%';
+  const res = await env.DB.prepare('SELECT id, email, username, created_at, google_sub FROM users WHERE lower(email) LIKE ? OR lower(username) LIKE ? ORDER BY created_at DESC LIMIT 20')
+    .bind(like, like).all();
+  const users = (res.results || []).map((r) => ({ id: r.id, email: r.email, username: r.username, createdAt: r.created_at, google: !!r.google_sub }));
+  return json({ ok: true, users }, 200, env, request);
+}
+
+// Developer panel: a temporary password for one account. Signs out every
+// device; the student signs in with it and changes it.
+async function handleAdminReset(request, env) {
+  const body = await readJson(request, 4096);
+  const id = String(body.id || '');
+  const row = await env.DB.prepare('SELECT id, token_version FROM users WHERE id = ?').bind(id).first();
+  if (!row) return json({ error: 'no such account' }, 404, env, request);
+  const temp = tempPassword();
+  await env.DB.prepare('UPDATE users SET password_hash = ?, token_version = ? WHERE id = ?')
+    .bind(await hashPassword(temp), (row.token_version || 1) + 1, id).run();
+  return json({ ok: true, tempPassword: temp }, 200, env, request);
+}
+
+// Sign in with Google. Google's own tokeninfo endpoint checks the ID
+// token's signature and expiry; this checks it was issued for THIS app and
+// that the email is verified, then finds the account by Google id, or by
+// the same verified email (and links it), or makes a new one.
+async function handleGoogle(request, env) {
+  if (!env.SESSION_SECRET) return json({ error: 'cloud sync is not configured on the server' }, 500, env, request);
+  if (!env.GOOGLE_CLIENT_ID) return json({ error: 'Sign in with Google is not set up on the server' }, 501, env, request);
+  const body = await readJson(request, 8192);
+  const credential = String(body.credential || '');
+  if (!credential) return json({ error: 'missing Google credential' }, 400, env, request);
+  const res = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential));
+  if (!res.ok) return json({ error: 'Google did not accept that sign-in — try again' }, 401, env, request);
+  const info = await res.json();
+  const issuerOk = info.iss === 'accounts.google.com' || info.iss === 'https://accounts.google.com';
+  if (info.aud !== env.GOOGLE_CLIENT_ID || !issuerOk || String(info.email_verified) !== 'true' || !info.sub || !info.email) {
+    return json({ error: 'that Google sign-in is not valid for this app' }, 401, env, request);
+  }
+  const email = normalizeEmail(info.email);
+  let row = await env.DB.prepare('SELECT id, email, username, token_version, created_at FROM users WHERE google_sub = ?').bind(info.sub).first();
+  let isNew = false;
+  if (!row) {
+    row = await env.DB.prepare('SELECT id, email, username, token_version, created_at FROM users WHERE email = ?').bind(email).first();
+    if (row) {
+      await env.DB.prepare('UPDATE users SET google_sub = ? WHERE id = ?').bind(info.sub, row.id).run();
+    } else {
+      const id = crypto.randomUUID();
+      const createdAt = Date.now();
+      // No password yet ('google' never verifies as one); the student can
+      // set one later from a signed-in device if they want both ways in.
+      await env.DB.prepare('INSERT INTO users (id, email, username, password_hash, token_version, created_at, google_sub) VALUES (?, ?, NULL, ?, 1, ?, ?)')
+        .bind(id, email, 'google', createdAt, info.sub).run();
+      row = { id, email, username: null, token_version: 1, created_at: createdAt };
+      isNew = true;
+    }
+  }
+  return json({
+    ok: true, isNew, token: await issueToken(row.id, row.token_version, env),
+    email: row.email, username: row.username, createdAt: row.created_at,
+  }, 200, env, request);
 }
 
 async function handleSetUsername(request, env, user) {
@@ -442,8 +640,20 @@ export default {
     // escapes as Cloudflare's HTML error page with no CORS header — which the
     // browser then reports as a CORS block instead of the real error.
     try {
+      await migrate(env);
       if (path === '/api/signup' && request.method === 'POST') return await handleSignup(request, env);
       if (path === '/api/login' && request.method === 'POST') return await handleLogin(request, env);
+      if (path === '/api/recovery/use' && request.method === 'POST') return await handleUseRecovery(request, env);
+      if (path === '/api/google' && request.method === 'POST') return await handleGoogle(request, env);
+
+      // The maintainer's routes: the Developer panel's ADMIN_SECRET, not a
+      // student session. Off entirely while ADMIN_SECRET is unset.
+      if (path.startsWith('/api/admin/')) {
+        if (!isAdmin(request, env)) return json({ error: 'forbidden' }, 403, env, request);
+        if (path === '/api/admin/users' && request.method === 'GET') return await handleAdminFind(request, env, url);
+        if (path === '/api/admin/reset' && request.method === 'POST') return await handleAdminReset(request, env);
+        return json({ error: 'not found' }, 404, env, request);
+      }
 
       // Everything past this line requires a valid, live session.
       const gate = await requireUser(request, env);
@@ -453,6 +663,8 @@ export default {
       if (path === '/api/me' && request.method === 'GET') return await handleMe(env, request, user);
       if (path === '/api/username' && request.method === 'POST') return await handleSetUsername(request, env, user);
       if (path === '/api/password/change' && request.method === 'POST') return await handleChangePassword(request, env, user);
+      if (path === '/api/password/set' && request.method === 'POST') return await handleSetPassword(request, env, user);
+      if (path === '/api/recovery/new' && request.method === 'POST') return await handleNewRecovery(env, request, user);
       if (path === '/api/account' && request.method === 'DELETE') return await handleDeleteAccount(env, request, user);
       if (path === '/api/sync' && request.method === 'GET') return await handleGetSync(env, request, user);
       if (path === '/api/sync' && request.method === 'POST') return await handlePostSync(request, env, user);
