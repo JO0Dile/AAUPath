@@ -138,7 +138,9 @@
   function fetchWall(prefix){
     var url = endpoint();
     if(!url) return Promise.resolve(null);
-    return fetch(url.replace(/\/$/, '') + '/thoughts?plan=' + encodeURIComponent(prefix), {
+    // all=1: one wall for every major. A Worker that has not been redeployed
+    // since ignores it and answers with this major's wall, as before.
+    return fetch(url.replace(/\/$/, '') + '/thoughts?all=1&plan=' + encodeURIComponent(prefix), {
       method: 'GET'
     }).then(function(r){
       if(!r.ok) throw new Error('HTTP ' + r.status);
@@ -148,9 +150,10 @@
       // Everything from the wire is a stranger's text. It is length-capped and
       // typed here, then escaped at render (thoughtHTML) like every other
       // thought — one escape, in one place, for both sources.
-      list = list.slice(0, 200).map(function(t){
+      list = list.slice(0, 400).map(function(t){
         return {
           id: String(t.id || '').slice(0, 60),
+          plan: String(t.plan || prefix).slice(0, 60),
           text: String(t.text || '').slice(0, MAX_LEN),
           name: String(t.name || '').slice(0, 40),
           at: Number(t.at) || 0,
@@ -357,9 +360,9 @@
     var remote = (cache && Array.isArray(cache.list)) ? cache.list : [];
     var seen = Object.create(null);
     remote.forEach(function(t){ seen[t.id] = true; });
-    var mine = loadLocal().filter(function(t){
-      return t.plan === prefix && !seen[t.id];
-    });
+    // One wall for everyone: your own posts show whichever major you wrote
+    // them from.
+    var mine = loadLocal().filter(function(t){ return !seen[t.id]; });
     return mine.concat(remote).sort(function(a, b){ return (b.at || 0) - (a.at || 0); });
   }
 
@@ -388,6 +391,18 @@
     return (first + second).toUpperCase();
   }
 
+  // Which major a post came from, in the reader's language, for the small
+  // tag on posts from a major other than the one open now.
+  var currentPrefix = null;
+  function majorName(plan){
+    var plans = (window.AAUP_IMPORTED && window.AAUP_IMPORTED.loadImportedPlans) ? window.AAUP_IMPORTED.loadImportedPlans() : {};
+    var p = plans[plan];
+    if(!p || !p.majorName) return '';
+    var ar = window.AAUP_LANG && window.AAUP_LANG.isAr();
+    var np = window.AAUP_IMPORTED.nameParts;
+    var raw = ar ? (p.majorName.ar || p.majorName.en) : p.majorName.en;
+    return (np ? np(raw).big : raw) || '';
+  }
   function thoughtHTML(t, rtl){
     var isMine = t.by === deviceId();
     var name = t.name || (rtl ? 'طالب' : 'A student');
@@ -403,6 +418,7 @@
           '<span class="th-when">' + esc(timeAgo(t.at, rtl)) + '</span>' +
         '</div>' +
         (t.courseName && !courseView ? '<span class="th-course-tag">' + esc(t.courseName) + '</span>' : '') +
+        (t.plan && t.plan !== currentPrefix && majorName(t.plan) ? '<span class="th-course-tag th-major-tag">' + esc(majorName(t.plan)) + '</span>' : '') +
         '<p class="th-bubble">' + esc(t.text) + '</p>' +
         (endpoint() ? '<div class="th-react">' +
           '<button type="button" class="th-react-btn' + (myReaction === 'up' ? ' active' : '') + '" data-th-react="up" data-th-id="' + esc(t.id) + '">' + window.AAUP_ICONS.preview('chevronUp', 13) + '<span>' + (t.up || 0) + '</span></button>' +
@@ -415,6 +431,7 @@
   }
 
   function render(prefix, refreshFailed){
+    currentPrefix = prefix;
     var body = document.getElementById('thoughtsModalBody');
     if(!body) return;
     var rtl = isRtl(prefix);

@@ -23,6 +23,10 @@
 //   2. Paste this file into a new Worker and deploy it.
 //   3. Put the Worker's URL in APP_THOUGHTS_URL (web/js/01-catalogue.js).
 //   4. Optional: set ALLOWED_ORIGIN to your site so no other page can post.
+//   5. Optional: set ADMIN_SECRET (a Worker secret, not a var) to a long
+//      random string. The Developer panel's Student Thoughts section sends it
+//      to list every wall and delete any post. Without it, only a post's own
+//      device can delete it.
 //
 // The app filters language before it ever calls this (web/js/58-wordfilter.js),
 // but a Worker must never trust its client — anyone can curl this URL — so
@@ -41,7 +45,7 @@ export default {
     const cors = {
       'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Secret',
       'Access-Control-Max-Age': '86400',
     };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
@@ -49,12 +53,44 @@ export default {
 
     const url = new URL(request.url);
     const path = url.pathname.replace(/\/+$/, '');
+    const isAdmin = !!env.ADMIN_SECRET && request.headers.get('X-Admin-Secret') === env.ADMIN_SECRET;
 
     try {
+      // Every wall at once, newest first, for the Developer panel. Admin only:
+      // it includes the device ids, which nobody else ever gets.
+      if (request.method === 'GET' && path.endsWith('/thoughts/all')) {
+        if (!isAdmin) return json({ error: 'forbidden' }, 403, cors);
+        const planKeys = await env.THOUGHTS.list({ prefix: 'wall:' });
+        const all = [];
+        for (const k of planKeys.keys) {
+          const plan = k.name.slice('wall:'.length);
+          (await readWall(env, plan)).forEach((t) => all.push({ ...t, plan, voters: undefined }));
+        }
+        all.sort((a, b) => (b.at || 0) - (a.at || 0));
+        return json({ thoughts: all }, 200, cors);
+      }
+
       if (request.method === 'GET' && path.endsWith('/thoughts')) {
         const plan = safeId(url.searchParams.get('plan') || '');
-        if (!plan) return json({ error: 'plan is required' }, 400, cors);
-        const list = await readWall(env, plan);
+        // One wall for the whole university: ?all=1 merges every major's
+        // list, newest first. Posts are still stored per major (so each one
+        // keeps which major it came from, shown as a tag in the app), but
+        // everybody reads all of them.
+        const all = url.searchParams.get('all') === '1';
+        if (!plan && !all) return json({ error: 'plan is required' }, 400, cors);
+        let list;
+        if (all) {
+          list = [];
+          const planKeys = await env.THOUGHTS.list({ prefix: 'wall:' });
+          for (const k of planKeys.keys) {
+            const p = k.name.slice('wall:'.length);
+            (await readWall(env, p)).forEach((t) => list.push({ ...t, plan: t.plan || p }));
+          }
+          list.sort((a, b) => (b.at || 0) - (a.at || 0));
+          list = list.slice(0, 400);
+        } else {
+          list = await readWall(env, plan);
+        }
         // `voters` is which device id cast which reaction — that is exactly
         // the kind of anonymous-but-linkable record this Worker promises not
         // to keep around for anyone but the owner. Every reader gets the
@@ -79,7 +115,7 @@ export default {
       if (request.method === 'DELETE' && path.includes('/thoughts/')) {
         const id = decodeURIComponent(path.split('/thoughts/')[1] || '');
         const body = await request.json().catch(() => ({}));
-        return await deleteThought(env, id, String(body.by || ''), cors);
+        return await deleteThought(env, id, String(body.by || ''), cors, isAdmin);
       }
     } catch (err) {
       return json({ error: 'server error' }, 500, cors);
@@ -186,8 +222,8 @@ async function reactToThought(env, id, body, cors) {
   return json({ ok: true, up: countReactions(item, 'up'), down: countReactions(item, 'down'), mine: item.voters[by] || null }, 200, cors);
 }
 
-async function deleteThought(env, id, by, cors) {
-  if (!id || !by) return json({ error: 'id and by are required' }, 400, cors);
+async function deleteThought(env, id, by, cors, isAdmin) {
+  if (!id || (!by && !isAdmin)) return json({ error: 'id and by are required' }, 400, cors);
   // The device id is the only claim of ownership there is. It is not a
   // password and is not treated as one — it lets a student remove their own
   // post from their own phone, and nothing more.
@@ -195,7 +231,8 @@ async function deleteThought(env, id, by, cors) {
   for (const k of planKeys.keys) {
     const plan = k.name.slice('wall:'.length);
     const list = await readWall(env, plan);
-    const next = list.filter((t) => !(t.id === id && t.by === by));
+    // The maintainer can remove any post; everyone else only their own.
+    const next = list.filter((t) => !(t.id === id && (isAdmin || t.by === by)));
     if (next.length !== list.length) {
       await writeWall(env, plan, next);
       return json({ ok: true }, 200, cors);

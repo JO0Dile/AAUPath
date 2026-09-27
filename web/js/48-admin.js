@@ -152,6 +152,7 @@
     ['schedule',      '🗓 Study Plan'],
     ['assets',        '🖼 Assets'],
     ['contributions', '📮 Contributions'],
+    ['thoughts',      '💬 Student Thoughts'],
     ['settings',      '⚙️ Settings']
   ];
 
@@ -1211,6 +1212,123 @@
     });
   }
 
+  // ---------- Student Thoughts (js/59-thoughts.js / workers/thoughts-worker.js) ----------
+  //
+  // Every major's wall in one list, newest first, with Delete on each post.
+  // Posts go live the moment they are sent (no approval step); this is where
+  // the maintainer finds one and takes it down. The thoughts Worker has its
+  // own ADMIN_SECRET, typed here once per session like the Contributions one
+  // and never shipped with the app.
+  function thoughtsUrl(){
+    var stored = '';
+    try{ stored = localStorage.getItem('aaup_thoughtsUrl') || ''; }catch(e){}
+    return (stored || window.APP_THOUGHTS_URL || '').replace(/\/+$/, '');
+  }
+  var THOUGHTS_SECRET_KEY = 'aaup_thoughtsSecret';
+  function thoughtsSecret(){
+    try{ return sessionStorage.getItem(THOUGHTS_SECRET_KEY) || ''; }catch(e){ return ''; }
+  }
+  function setThoughtsSecret(v){
+    try{
+      if(v) sessionStorage.setItem(THOUGHTS_SECRET_KEY, v);
+      else sessionStorage.removeItem(THOUGHTS_SECRET_KEY);
+    }catch(e){}
+  }
+  function thoughtsHeaders(){
+    return { 'Content-Type': 'application/json', 'X-Admin-Secret': thoughtsSecret() };
+  }
+  function thoughtsRes(r){
+    if(r.status === 401 || r.status === 403){
+      setThoughtsSecret('');
+      state.thoughtItems = null;
+      throw new Error('That secret was not accepted — enter it again.');
+    }
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  function loadThoughts(){
+    if(!thoughtsUrl() || !thoughtsSecret()) return;
+    state.thoughtsLoading = true;
+    fetch(thoughtsUrl() + '/thoughts/all', { headers: thoughtsHeaders() })
+      .then(thoughtsRes)
+      .then(function(data){ state.thoughtItems = (data && Array.isArray(data.thoughts)) ? data.thoughts : []; })
+      .catch(function(e){
+        if(thoughtsSecret()) state.thoughtItems = [];
+        toast(e && e.message ? e.message : 'Could not load thoughts.');
+      })
+      .then(function(){ state.thoughtsLoading = false; render(); });
+  }
+  function majorLabel(prefix){
+    var plans = (window.AAUP_IMPORTED && window.AAUP_IMPORTED.loadImportedPlans) ? window.AAUP_IMPORTED.loadImportedPlans() : {};
+    var p = plans[prefix];
+    var np = window.AAUP_IMPORTED && window.AAUP_IMPORTED.nameParts;
+    var en = p && p.majorName && p.majorName.en;
+    return (en && (np ? np(en).big : en)) || prefix;
+  }
+  function sectionThoughts(){
+    var head = '<h2>💬 Student Thoughts</h2>';
+    if(!thoughtsUrl()){
+      return head + '<div class="admin-note">APP_THOUGHTS_URL is not set in web/js/01-catalogue.js, so thoughts only live on each student\'s own phone.</div>';
+    }
+    if(!thoughtsSecret()){
+      return head +
+        '<div class="admin-note">Thoughts go live as soon as a student sends them. This list shows <strong>every major\'s wall</strong> ' +
+        'in one place, newest first, so you can find a post and delete it. It needs the thoughts Worker\'s ' +
+        '<code>ADMIN_SECRET</code> (set it under the Worker\'s Settings → Variables and Secrets). It is typed once per session and kept in this tab only.</div>' +
+        '<div class="form-field"><label for="thoughtsSecretInput">ADMIN_SECRET</label>' +
+        '<input type="password" id="thoughtsSecretInput" autocomplete="off" spellcheck="false"></div>' +
+        '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="thoughtsUnlock">Unlock</button></div>';
+    }
+    if(state.thoughtsLoading || !state.thoughtItems) return head + '<p class="ex-note">Loading…</p>';
+    var tools = '<div class="form-actions"><button type="button" class="home-btn" id="thoughtsReload">🔄 Refresh</button> ' +
+      '<button type="button" class="home-btn admin-mini" id="thoughtsForget">Forget secret</button></div>';
+    if(!state.thoughtItems.length) return head + tools + '<p class="ex-note">No thoughts on any wall yet.</p>';
+    return head + tools +
+      '<p class="ex-note">' + state.thoughtItems.length + ' thought' + (state.thoughtItems.length === 1 ? '' : 's') + ' across every major.</p>' +
+      state.thoughtItems.map(function(t){
+        return '<div class="admin-note" data-thought-id="' + esc(t.id) + '">' +
+          '<div>' + esc(t.text) + '</div>' +
+          '<span style="opacity:.7;">' + esc(majorLabel(t.plan)) +
+            (t.courseName ? ' · ' + esc(t.courseName) : '') +
+            ' · ' + esc(t.name || 'Anonymous') +
+            ' · ' + esc(new Date(t.at).toLocaleString()) +
+            (t.up || t.down ? ' · ▲' + esc(t.up || 0) + ' ▼' + esc(t.down || 0) : '') + '</span>' +
+          '<div class="form-actions"><button type="button" class="home-btn admin-danger" data-thought-del="' + esc(t.id) + '">🗑 Delete</button></div>' +
+          '</div>';
+      }).join('');
+  }
+  function bindThoughts(main){
+    var unlock = document.getElementById('thoughtsUnlock');
+    if(unlock){
+      var input = document.getElementById('thoughtsSecretInput');
+      var accept = function(){
+        var v = input ? input.value.trim() : '';
+        if(!v) return;
+        setThoughtsSecret(v);
+        state.thoughtItems = null;
+        render();
+      };
+      unlock.addEventListener('click', accept);
+      if(input) input.addEventListener('keydown', function(e){ if(e.key === 'Enter') accept(); });
+    }
+    on('thoughtsForget', 'click', function(){ setThoughtsSecret(''); state.thoughtItems = null; render(); });
+    on('thoughtsReload', 'click', loadThoughts);
+    main.querySelectorAll('[data-thought-del]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-thought-del');
+        if(!confirm('Delete this thought for everyone? This cannot be undone.')) return;
+        fetch(thoughtsUrl() + '/thoughts/' + encodeURIComponent(id), {
+          method: 'DELETE', headers: thoughtsHeaders(), body: JSON.stringify({})
+        }).then(thoughtsRes)
+          .then(function(){ toast('Deleted.'); return loadThoughts(); })
+          .catch(function(e){
+            toast('Could not delete it: ' + e.message);
+            if(!thoughtsSecret()) render();
+          });
+      });
+    });
+  }
+
   function sectionSettings(){
     return '<h2>Settings</h2>' +
       '<div class="admin-note"><strong>Signed in as</strong> ' + esc(state.username) + '.<br>' +
@@ -1258,6 +1376,10 @@
       main.innerHTML = sectionContributions();
       if(!state.contribLoading && !state.contribItems) loadContributions();
     }
+    else if(s === 'thoughts'){
+      main.innerHTML = sectionThoughts();
+      if(!state.thoughtsLoading && !state.thoughtItems) loadThoughts();
+    }
     else main.innerHTML = sectionSettings();
     bindMain();
   }
@@ -1271,6 +1393,7 @@
     var main = document.getElementById('adminMain');
     bindIconPickers();
     if(state.section === 'contributions') bindContributions(main);
+    if(state.section === 'thoughts') bindThoughts(main);
 
     main.querySelectorAll('[data-edit-uni]').forEach(function(b){
       b.addEventListener('click', function(){
