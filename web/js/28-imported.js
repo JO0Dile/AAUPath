@@ -556,7 +556,8 @@
       if(window.__showToast){ window.__showToast('A course with that ID already exists in this plan.'); }
       return;
     }
-    p.courses.push({ id: id, name: nameEn, ar: nameAr, creditHours: credits, category: category, yearId: yearId, semester: semester });
+    p.courses.push({ id: id, name: nameEn, ar: nameAr, creditHours: credits, category: category, yearId: yearId, semester: semester,
+      keepInSemester: !(parseFloat(credits) || 0) || undefined });
     p.wasEdited = true;
     p.prerequisites = p.prerequisites || [];
     // Only draw a direct arrow from whichever selected prereqs are NOT
@@ -647,6 +648,10 @@
 
       var idChanged = newId !== slug;
       target.name = nameEn; target.ar = nameAr; target.creditHours = credits; target.category = category;
+      // A course the student edited stays in its semester even at 0 hours:
+      // they put it there. Only the plan's own zero-hour requirements
+      // (Community Service…) are gathered into "Also required".
+      if(!(parseFloat(credits) || 0) && target.yearId) target.keepInSemester = true;
 
       // Renaming the id means every reference to the OLD id has to move
       // to the new one, or prerequisite pairs and progress would point at
@@ -1648,7 +1653,7 @@
   // still find it, and js/12-removed.js still hides it if the student's
   // English placement took it out of their plan.
   function isZeroHour(c){
-    return !!c && !isPoolElective(c) && (parseFloat(c.creditHours) || 0) === 0;
+    return !!c && !c.keepInSemester && !isPoolElective(c) && (parseFloat(c.creditHours) || 0) === 0;
   }
 
   // Where the plan itself put a course, in words. Used by the pinned block,
