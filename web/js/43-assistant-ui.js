@@ -155,6 +155,27 @@
       b.appendChild(actions);
     }
 
+    // Buttons that do what the answer describes: open the course, plan the
+    // semester… They open screens only (edits use r.confirm above). The
+    // assistant closes so the screen it opened is what the student sees.
+    if (r.actions && r.actions.length) {
+      var aa = document.createElement('div');
+      aa.className = 'asst-actions';
+      r.actions.forEach(function (a) {
+        if (!a || !a.label || typeof a.run !== 'function') return;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'asst-act' + (a.primary ? ' asst-act-primary' : '');
+        btn.textContent = a.label;
+        btn.addEventListener('click', function () {
+          close();
+          try { a.run(); } catch (e) { /* the answer above still stands */ }
+        });
+        aa.appendChild(btn);
+      });
+      if (aa.children.length) b.appendChild(aa);
+    }
+
     // A walkthrough is available for this answer.
     if (r.guide && KB.guides[r.guide]) {
       var ga = document.createElement('div');
