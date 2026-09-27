@@ -9069,3 +9069,53 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .arr-mv:disabled{opacity:.3; cursor:default;}
 .arr-hide{border:1px solid var(--line); border-radius:8px; background:none; color:var(--text-dim); font:inherit; font-size:12px; font-weight:800; padding:6px 10px; cursor:pointer;}
 .arr-sub{margin:14px 0 6px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+
+/* Timeline view (idea 29): on wide screens, every semester is a column,
+   left to right, so the whole degree reads like a timeline. Folded years
+   open, the zero-hour and elective boxes step aside, and the plan scrolls
+   sideways (the chip-row mouse wheel in js/100-hscroll.js scrolls it too). */
+.pw-view-wide{display:none;}
+@media (min-width:1100px){
+  .pw-view .pw-view-wide{display:inline-block;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .years{
+    flex-direction:row; align-items:flex-start; gap:12px; overflow-x:auto; padding-bottom:10px;
+  }
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-year-block{flex:none; margin:0;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-pinned-block,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-elective-block,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-add-summer,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .ynx,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-sem-bulk{display:none;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-year-block.year-collapsed > .imp-year-body,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-year-body{display:flex; flex-direction:row; gap:10px; align-items:flex-start;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-semester-block{width:214px; flex:none; margin:0;}
+  html[data-plan-view="timeline"] .yj{display:none;}
+  /* Pinning a title to the top of the screen belongs to a page that scrolls
+     down; this one scrolls sideways. And "Where are you now?" is asked in
+     Cards and List rather than squeezed into the row as a column. */
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-semester-title{position:static; flex-wrap:wrap; row-gap:4px;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .years > .way-card{display:none;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-semester-block .course-row{flex-direction:column; flex-wrap:nowrap; gap:6px;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .course{flex:none; width:100%; max-width:none; min-width:0; min-height:0;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .course .name-alt,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .course .req-code{display:none;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .cp-pair{padding-inline-end:16px;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .cp-pair-label{display:none;}
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-sem-heavy,
+  html[data-plan-view="timeline"] .sheet-plan:not(.editing) .imp-sem-hard{white-space:normal;}
+}
+/* Hover preview and right-click menu on course cards (js/103-laptop.js). */
+.crs-tip{position:fixed; z-index:9500; max-width:280px; padding:10px 12px; border-radius:12px; background:var(--panel); border:1px solid var(--line); box-shadow:0 12px 30px rgba(0,0,0,.4); font-size:12.5px; line-height:1.5; pointer-events:none;}
+.crs-tip b{display:block; font-size:13.5px; margin-bottom:3px;}
+.crs-tip span{display:block; color:var(--text-dim);}
+.crs-tip .crs-tip-meta{margin-top:4px; color:var(--text); font-weight:700;}
+.crs-menu{position:fixed; z-index:9600; min-width:200px; max-width:260px; padding:5px; border-radius:12px; background:var(--panel); border:1px solid var(--line); box-shadow:0 14px 34px rgba(0,0,0,.45);}
+.crs-menu-h{padding:6px 10px 7px; font-size:12px; font-weight:800; color:var(--text-dim); border-bottom:1px solid var(--line); margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.crs-menu button{display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px; border:0; border-radius:8px; background:none; color:var(--text); font:inherit; font-size:13px; text-align:start; cursor:pointer;}
+.crs-menu button:hover, .crs-menu button:focus-visible{background:color-mix(in srgb, var(--accent) 14%, transparent); outline:none;}
+.crs-menu button.is-on{color:var(--accent); font-weight:800;}
+.crs-menu button:disabled{opacity:.4; cursor:default;}
+.crs-dot, .crs-dot-off{width:7px; height:7px; border-radius:50%; flex:none;}
+.crs-dot{background:var(--accent);}
+.crs-menu-sep{height:1px; background:var(--line); margin:4px 0;}
+.crs-menu-sub{max-height:220px; overflow-y:auto; border-top:1px solid var(--line); margin-top:4px; padding-top:4px;}
