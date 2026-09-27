@@ -167,7 +167,7 @@
     if(!list || !btn) return;
     var r = root.getAttribute('dir') === 'rtl';
     var load = function(){
-      list.innerHTML = '<p class="form-note">' + (r ? 'جارٍ التحميل…' : 'Loading…') + '</p>';
+      list.innerHTML = window.__skeletonHTML ? window.__skeletonHTML('line', 3, r) : '<p class="form-note">' + (r ? 'جارٍ التحميل…' : 'Loading…') + '</p>';
       fetchMine().then(function(items){
         list.innerHTML = items.length
           ? items.map(function(c){ return contribRowHtml(c, r); }).join('')

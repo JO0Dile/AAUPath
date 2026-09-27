@@ -184,7 +184,7 @@
     body.innerHTML =
       (window.__backBarHTML ? window.__backBarHTML('', 'shareOverlay', rtl) : '') +
       '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('link', 20) + t('title', rtl) + '</h2>' +
-      '<p class="share-loading">' + t('building', rtl) + '</p>';
+      (window.__skeletonHTML ? window.__skeletonHTML('card', 2, rtl) : '<p class="share-loading">' + t('building', rtl) + '</p>');
 
     buildLink(prefix).then(function(res){
       var qrCanvasId = 'shareQrCanvas';

@@ -183,6 +183,17 @@
   }
   window.__showToast = showToast;
 
+  // A small buzz on the taps that matter, where the phone supports it:
+  // 'tick' (a course passed), 'unlock' (it opened others), 'big' (a whole
+  // semester done). Off from Settings -> Preferences (aaup_haptics = 'off').
+  var BUZZ = { tick: 12, unlock: [12, 50, 12], big: [20, 60, 20, 60, 40] };
+  window.__buzz = function(kind){
+    try{
+      if(localStorage.getItem('aaup_haptics') === 'off') return;
+      if(navigator.vibrate) navigator.vibrate(BUZZ[kind] || 10);
+    }catch(e){}
+  };
+
   // One empty screen, everywhere: what is missing, why, and one button that
   // fixes it. btnAttr is the data-attribute the owning module listens for.
   window.__emptyState = function(o){

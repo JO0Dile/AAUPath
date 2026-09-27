@@ -2135,6 +2135,7 @@
     // wrong card with a thumb. What it opened up rides underneath, and an
     // achievement it earned joins the same message (js/14-storage.js) rather
     // than arriving as a second one on top.
+    if(done && window.__buzz) window.__buzz(opened.length ? 'unlock' : 'tick');
     if(done && window.__showUnlockToast){
       var title = name + ': ' + (rtl ? 'مُنجز' : 'passed');
       var subtitle = opened.length

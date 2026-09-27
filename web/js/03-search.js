@@ -66,6 +66,58 @@
     return false;
   }
 
+  // ---- smart match -----------------------------------------------------
+  // Plans and courses are written both ways: "AI and Robotics" on one,
+  // "Artificial Intelligence and Robotics" on another, so a search for "ai"
+  // found half of them. smartMatch() says yes when every word of the query
+  // is found in the text in any of these ways:
+  //   - as written (after normalize(): case, Arabic alef/ya/diacritics);
+  //   - with spaces ignored ("cybersecurity" finds "Cyber Security");
+  //   - as the initials of words in a row ("ai" = Artificial Intelligence,
+  //     "cs" = Computer Science, "ds" = Data Science), ignoring small words;
+  //   - in Arabic, with the "ال" at the start of a word and ة/ه ignored.
+  // Words can come in any order, so "robotics ai" still finds it.
+  var STOP = { and: 1, of: 1, the: 1, 'for': 1, 'in': 1, to: 1, '&': 1, a: 1, an: 1, 'و': 1 };
+  function arFold(w){ return w.replace(/\u0629/g, '\u0647').replace(/^(\u0648)?\u0627\u0644(?=..)/, '$1'); }
+  // Numbers and roman numerals ("Calculus II") are not words an
+  // abbreviation is made of, so "ai" never matches "Linear Algebra I".
+  function initials(words){ return words.filter(function(w){ return w && !STOP[w] && !/^([0-9]+|i{1,3}|iv|v|vi{0,3})$/.test(w); }).map(function(w){ return w.charAt(0); }).join(' '); }
+  function prepare(text){
+    var n = normalize(text).replace(/[^a-z0-9\u0600-\u06ff\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+    var words = n.split(' ');
+    var folded = words.map(arFold);
+    return { n: n, flat: n.replace(/\s+/g, ''), folded: folded.join(' '), inits: initials(words) };
+  }
+  // Short words only count at the start of a word, so "cs" is not found
+  // inside "robotics"; longer ones can be anywhere, as before.
+  function atWordStart(hay, w){ return (' ' + hay).indexOf(' ' + w) !== -1; }
+  function wordHits(w, t){
+    if(w.length <= 3){
+      if(atWordStart(t.n, w) || atWordStart(t.folded, arFold(w))) return true;
+    } else if(t.n.indexOf(w) !== -1 || t.folded.indexOf(arFold(w)) !== -1){
+      return true;
+    }
+    // Initials of words in a row: "ai", "cs", "ds".
+    if(/^[a-z]{2,5}$/.test(w) && (' ' + t.inits.replace(/ /g, '')).indexOf(w) !== -1 &&
+       t.inits.split(' ').join('').indexOf(w) !== -1){
+      var ini = t.inits.split(' ');
+      for(var i = 0; i + w.length <= ini.length; i++){
+        if(ini.slice(i, i + w.length).join('') === w) return true;
+      }
+    }
+    return false;
+  }
+  function smartMatch(q, text){
+    q = normalize(q).replace(/[^a-z0-9\u0600-\u06ff\s]+/g, ' ').trim();
+    if(!q || !text) return false;
+    var t = typeof text === 'string' ? prepare(text) : text;
+    // Spaces ignored ("cybersecurity" = "Cyber Security"), for long queries
+    // only: a short one would be found across word boundaries by accident.
+    var qf = q.replace(/\s+/g, '');
+    if(qf.length >= 6 && t.flat.indexOf(qf) !== -1) return true;
+    return q.split(/\s+/).filter(function(w){ return w && !STOP[w]; }).every(function(w){ return wordHits(w, t); });
+  }
+
   // ---- why did this match? ------------------------------------------
   // A result used to be a name, an Arabic name and a code with nothing
   // saying which of the three the query actually hit — so searching a course
@@ -188,6 +240,10 @@
                normalize(item.ar).indexOf(q) !== -1 ||
                (item.code && item.code.toLowerCase().indexOf(q) !== -1);
       });
+      // Abbreviations, any word order, Arabic "ال" — see smartMatch().
+      if(!currentResults.length){
+        currentResults = all.filter(function(item){ return smartMatch(q, item.en) || smartMatch(q, item.ar); });
+      }
       // Nothing matched exactly — try a typo-tolerant pass before giving up.
       if(!currentResults.length){
         currentResults = all.filter(function(item){
@@ -339,7 +395,7 @@
       setTimeout(land, 50);
     })();
   }
-  window.AAUP_SEARCH = { allCourses: allPlanCourses, openCourse: openCourseInPlan, normalize: normalize, fuzzyContains: fuzzyContains };
+  window.AAUP_SEARCH = { allCourses: allPlanCourses, openCourse: openCourseInPlan, normalize: normalize, fuzzyContains: fuzzyContains, smartMatch: smartMatch };
 
   /* ---------------- per-plan course search ---------------- */
   function buildCourseIndex(prefix){

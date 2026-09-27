@@ -291,6 +291,7 @@
   // open. Same wait-until-clear pattern AAUP_TUTORIAL uses for the same
   // reason: don't fight another modal for the top of the stack.
   function celebrateSemester(prefix, row){
+    if(window.__buzz) window.__buzz('big');
     if(!window.AAUP_STORY || prefersReducedMotion){ confettiBurst(row); return; }
     var tries = 0;
     (function attempt(){
