@@ -76,6 +76,7 @@
       }
       var dash = document.getElementById('dashboard');
       dash.style.display = 'block';
+      try{ localStorage.setItem('aaup_myplan_tab', 'progress'); }catch(e){}
       setSelected(prefix);
       render(prefix);
       if(window.AAUP_SIDEBAR){ window.AAUP_SIDEBAR.show(prefix, 'dashboard'); }
@@ -95,6 +96,7 @@
 
   function openStudyPlan(prefix){
     document.getElementById('dashboard').style.display = 'none';
+    try{ localStorage.setItem('aaup_myplan_tab', 'courses'); }catch(e){}
     if(isImportedPlan(prefix)){ window.AAUP_IMPORTED.open(prefix); }
     else if(window.showPage){ window.showPage(prefix); }
     // A built-in plan's cards carry their availability classes from the
@@ -217,8 +219,10 @@
 
     var host = document.getElementById('dashboard');
     var html = '<div class="dash-header">' +
-      '<div class="dash-title"><span class="dash-icon">' + window.AAUP_ICONS.markup(info, { size: 24 }) + '</span><div><h1>' + info.name + '</h1><p>' + (rtl ? 'لوحة التحكم' : 'Dashboard') + '</p></div></div>' +
+      '<div class="dash-title"><span class="dash-icon">' + window.AAUP_ICONS.markup(info, { size: 24 }) + '</span><div><h1>' + info.name + '</h1></div></div>' +
       '</div>' +
+      // My Plan's Progress tab: this screen. Courses is the plan itself.
+      (window.AAUP_SIDEBAR && window.AAUP_SIDEBAR.myPlanTabsHtml ? window.AAUP_SIDEBAR.myPlanTabsHtml(prefix, 'progress') : '') +
       '<div class="dash-flow">' +
         summaryHtml +
         // 29 · The judgement, right after the numbers that produced it.

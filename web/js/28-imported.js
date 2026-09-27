@@ -500,7 +500,7 @@
       '<div class="form-field"><label>' + (rtl ? 'المتطلبات السابقة (اختياري)' : 'Prerequisites (optional)') + '</label>' +
       '<div style="max-height:140px;overflow-y:auto;background:var(--search-bg);border:1px solid var(--line);border-radius:8px;padding:8px;">' + courseOptions + '</div></div>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="ncqCancel">' + (rtl ? 'إلغاء' : 'Cancel') + '</button>' +
-      '<button type="button" class="home-btn" id="ncqCreate" style="border-color:var(--accent);color:var(--text);">' + (rtl ? 'إضافة المساق' : 'Add Course') + '</button></div>' +
+      '<button type="button" class="home-btn btn-pri" id="ncqCreate">' + (rtl ? 'إضافة المساق' : 'Add Course') + '</button></div>' +
       '<div id="ncqMsg"></div>';
     overlay.classList.add('open');
 
@@ -614,7 +614,7 @@
       '<div style="max-height:140px;overflow-y:auto;background:var(--search-bg);border:1px solid var(--line);border-radius:8px;padding:8px;">' + courseOptions + '</div></div>' +
       '<p class="form-note">' + (rtl ? 'تغيير الاسم أو المعرّف أو الساعات أو الفئة قد يعني أن هذا المساق لن يرتبط تلقائيًا بالمساقات المطابقة في الخطط الأخرى كما كان \u2014 سيُعاد فحصه وفق التفاصيل الجديدة.' : 'Changing the name, ID, credit hours, or category means this may no longer automatically link to matching courses in other plans the way it used to \u2014 it\u2019ll be re-checked against whatever the new details actually match.') + '</p>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="ecqCancel">' + (rtl ? 'إلغاء' : 'Cancel') + '</button>' +
-      '<button type="button" class="home-btn" id="ecqSave" style="border-color:var(--accent);color:var(--text);">' + (rtl ? 'حفظ التغييرات' : 'Save Changes') + '</button></div>' +
+      '<button type="button" class="home-btn btn-pri" id="ecqSave">' + (rtl ? 'حفظ التغييرات' : 'Save Changes') + '</button></div>' +
       '<div id="ecqMsg"></div>';
     overlay.classList.add('open');
 
@@ -1900,7 +1900,7 @@
       // it is an unsent draft: hiding it in a menu is how a student loses
       // work they thought they had submitted.
       (p.contributing && window.AAUP_CONTRIBUTE
-        ? '<div class="header-actions"><button type="button" class="home-btn" onclick="AAUP_CONTRIBUTE.submit(\'' + id + '\')" style="border-color:var(--accent);color:var(--text);" title="Send what you have added so far — the maintainer can reply here in the app">' + window.AAUP_ICONS.preview('send', 14) + 'Submit contribution</button></div>'
+        ? '<div class="header-actions"><button type="button" class="home-btn btn-pri" onclick="AAUP_CONTRIBUTE.submit(\'' + id + '\')" title="Send what you have added so far — the maintainer can reply here in the app">' + window.AAUP_ICONS.preview('send', 14) + 'Submit contribution</button></div>'
         : '') +
       // The way out of Edit Mode used to be a button in the header, which
       // scrolled away with it — a student three years down the plan had to
@@ -1916,6 +1916,9 @@
           '</div>'
         : '') +
       '</header>' +
+      // My Plan's two big buttons: Courses (this page) and Progress.
+      (!editing && window.AAUP_SIDEBAR && window.AAUP_SIDEBAR.myPlanTabsHtml
+        ? '<div class="mp-tabs-wrap">' + window.AAUP_SIDEBAR.myPlanTabsHtml(id, 'courses') + '</div>' : '') +
       // The colour key stays in the page (js/19-audit.js reads its bucket
       // names off it) but is not shown: every card now writes its bucket out,
       // and the filter chips in the hours bar carry the same colours.
@@ -2476,7 +2479,7 @@
       '</p>' +
       '<p class="form-note">Plans like yours are exactly how majors that aren\u2019t covered yet get covered \u2014 someone who lived that plan writes it down once, and nobody after them has to be lost.</p>' +
       '<div class="form-actions">' +
-      (issueUrl ? '<button type="button" class="home-btn" id="submitOpenIssue" style="border-color:var(--accent);color:var(--text);">\ud83d\udc19 Open submission issue</button>' : '') +
+      (issueUrl ? '<button type="button" class="home-btn btn-pri" id="submitOpenIssue">\ud83d\udc19 Open submission issue</button>' : '') +
       '<button type="button" class="home-btn" id="submitClose">Close</button></div>';
     overlay.classList.add('open');
     document.getElementById('submitClose').addEventListener('click', function(){ overlay.classList.remove('open'); });
@@ -2799,7 +2802,7 @@
           : '<div class="form-field"><label for="libTargetSem">Add to which semester?</label><select id="libTargetSem">' + yearOptions + '</select></div>' +
             '<p class="form-note">Same name, ID, category, and credit hours as the original — prerequisites aren\u2019t copied, since they depend on what already exists in this plan.</p>' +
             '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">← Back</button>' +
-            '<button type="button" class="home-btn" id="libTargetConfirm" style="border-color:var(--accent);color:var(--text);">Add to Plan</button></div>') + '</div>';
+            '<button type="button" class="home-btn btn-pri" id="libTargetConfirm">Add to Plan</button></div>') + '</div>';
       overlay.classList.add('open');
 
       document.getElementById('libTargetBack').addEventListener('click', function(){ showBrowse(course.prefix); });

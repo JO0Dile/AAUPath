@@ -209,7 +209,7 @@
       '</div>' +
       '<div class="tc-actions">' +
         '<button type="button" class="home-btn" id="tcUndo">' + t('undo', r) + '</button>' +
-        '<button type="button" class="home-btn" id="tcDone" style="border-color:var(--accent);">' + t('done', r) + '</button>' +
+        '<button type="button" class="home-btn btn-pri" id="tcDone">' + t('done', r) + '</button>' +
       '</div>' +
       '</div>';
   }

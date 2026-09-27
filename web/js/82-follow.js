@@ -157,7 +157,7 @@
       '<div class="form-field"><input type="text" id="flName" maxlength="40" value="' + esc(me.name || '') + '" placeholder="' + esc(t('you', rtl)) + '"></div>' +
       '<p class="form-note">' + esc(t('nameHint', rtl)) + '</p>' +
       '<div class="form-actions">' +
-        '<button type="button" class="home-btn" id="flGo" style="border-color:var(--accent);color:var(--text);">' +
+        '<button type="button" class="home-btn btn-pri" id="flGo">' +
           window.AAUP_ICONS.preview('link', 14) + esc(t('build', rtl)) + '</button>' +
         '<button type="button" class="home-btn" id="flCancel">' + esc(t('cancel', rtl)) + '</button>' +
       '</div>' +

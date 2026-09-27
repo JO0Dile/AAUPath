@@ -71,7 +71,7 @@ GROUPS = {
         '28-imported.js', '36-dashboard.js', '49-course-detail.js', '50-whats-next.js',
         '51-gpa-studio.js', '54-prereq-graph.js', '57-card-input.js',
         '62-change-plan.js', '63-whatif.js', '64-milestones.js',
-        '66-graduation.js', '67-gpa-target.js', '69-phone-header.js', '72-share.js',
+        '66-graduation.js', '69-phone-header.js', '72-share.js',
         '74-course-gestures.js', '75-about.js', '76-course-pairs.js', '77-english-level.js',
         '78-you-are-here.js', '79-plan-filter.js', '81-calendar.js', '82-follow.js',
         '84-autobackup.js', '85-carry.js', '86-prereq-report.js',

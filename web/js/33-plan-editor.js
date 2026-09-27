@@ -452,7 +452,7 @@
       '<div class="form-field"><label for="npBioEn">Bio (English) · نبذة بالإنجليزية</label><textarea id="npBioEn" class="notes-textarea" rows="2" maxlength="220" placeholder="A short description shown on the home page card"></textarea></div>' +
       '<div class="form-field"><label for="npBioAr">Bio (Arabic) · نبذة بالعربية</label><textarea id="npBioAr" class="notes-textarea" rows="2" maxlength="220"></textarea></div>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="npCancel">Cancel · إلغاء</button>' +
-      '<button type="button" class="home-btn" id="npCreate" style="border-color:var(--accent);color:var(--text);">Create · إنشاء</button></div>' +
+      '<button type="button" class="home-btn btn-pri" id="npCreate">Create · إنشاء</button></div>' +
       '<div id="npMsg"></div>' +
       '<p class="form-note">This creates the plan with one empty Year 1 — add courses and more years from inside it once created. · يُنشئ الخطة بسنة أولى فارغة — أضف المساقات والسنوات من داخلها بعد الإنشاء.</p>';
     overlay.classList.add('open');
