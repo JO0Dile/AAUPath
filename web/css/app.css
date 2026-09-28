@@ -9044,8 +9044,16 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .tt-course-h{display:flex; align-items:center; justify-content:space-between; gap:10px;}
 .tt-course-h b{font-size:13.5px; min-width:0;}
 .tt-meet{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; font-size:12.5px; color:var(--text-dim);}
-.tt-meet span{direction:ltr; unicode-bidi:plaintext;}
 .tt-form{margin-top:8px;}
+.tt-more{margin-top:10px;}
+.tt-pick{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px;}
+.tt-pick-l{display:block; font-weight:700; font-size:13px; margin-bottom:6px;}
+.tt-pick input{width:100%; font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface-bg); color:var(--text);}
+.tt-pick-list{max-height:280px; overflow-y:auto; margin-top:6px; display:flex; flex-direction:column; gap:2px;}
+.tt-pick-row{display:flex; align-items:baseline; justify-content:space-between; gap:10px; width:100%; padding:9px 8px; border:0; border-radius:8px; background:none; color:var(--text); font:inherit; font-size:13.5px; text-align:start; cursor:pointer;}
+.tt-pick-row:hover, .tt-pick-row:focus-visible{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.tt-pick-row small{flex:none; font-size:11.5px; color:var(--text-dim); direction:ltr; unicode-bidi:isolate;}
+.tt-pick-row.is-own{color:var(--accent); font-weight:700;}
 .tt-days{display:flex; flex-wrap:wrap; gap:6px;}
 .tt-day{border:1px solid var(--line); border-radius:999px; background:none; color:var(--text-dim); font:inherit; font-size:12px; font-weight:800; padding:6px 11px; cursor:pointer;}
 .tt-day[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--on-accent);}
@@ -9119,3 +9127,18 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .crs-dot{background:var(--accent);}
 .crs-menu-sep{height:1px; background:var(--line); margin:4px 0;}
 .crs-menu-sub{max-height:220px; overflow-y:auto; border-top:1px solid var(--line); margin-top:4px; padding-top:4px;}
+/* Your week grid, clashes (js/104-week.js). */
+.wk-panel{border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin:6px 0 10px;}
+.wk-panel-h{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+.wk{display:grid; grid-template-columns:20px repeat(6, 1fr); gap:4px; font-size:10px;}
+.wk-times{display:grid; grid-template-rows:18px repeat(var(--wk-rows), 34px); color:var(--text-dim); text-align:end;}
+
+.wk-day > b{display:block; height:18px; text-align:center; font-size:10.5px; color:var(--text-dim);}
+.wk-col{position:relative; height:calc(var(--wk-rows) * 34px); background:repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 34px); border-radius:6px;}
+.wk-blk{position:absolute; overflow:hidden; border-radius:6px; padding:3px 4px; background:color-mix(in srgb, var(--accent) 30%, var(--panel)); color:var(--text); font-weight:700; line-height:1.2; font-size:9.5px;}
+.wk-nm{display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;}
+.wk-blk small{display:block; font-weight:600; color:var(--text-dim); direction:ltr; unicode-bidi:isolate;}
+.wk-blk.is-clash{background:rgba(226,89,107,.38); outline:1px solid rgba(226,89,107,.8);}
+.wk-clash{margin-top:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(226,89,107,.6); background:rgba(226,89,107,.08);}
+.wk-clash b{display:block; color:#e2596b; font-size:13px;}
+.wk-clash span{display:block; font-size:12px; color:var(--text-dim);}
