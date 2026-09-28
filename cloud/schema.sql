@@ -11,11 +11,9 @@
 --   npx wrangler d1 execute studyplan-cloud --remote --file=cloud/schema.sql
 -- (drop --remote for a local dev database).
 --
--- Already have a database from before `username` existed? CREATE TABLE IF
--- NOT EXISTS won't add a column to a table that's already there — run this
--- once instead (safe to paste into the D1 Console, same as this file):
---   ALTER TABLE users ADD COLUMN username TEXT;
---   CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+-- Already have a database from before `username` existed? Nothing to run:
+-- the Worker adds `username` (and the recovery columns below) to an older
+-- `users` table by itself on its first request.
 
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,

@@ -292,6 +292,10 @@ let migrated = false;
 async function migrate(env) {
   if (migrated || !env.DB) return;
   for (const stmt of [
+    // username came after v1 too; a database made before it has no such
+    // column, and every sign-in and sync then fails on "no such column".
+    'ALTER TABLE users ADD COLUMN username TEXT',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)',
     'ALTER TABLE users ADD COLUMN recovery_hash TEXT',
     'ALTER TABLE users ADD COLUMN google_sub TEXT',
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google ON users(google_sub)',
