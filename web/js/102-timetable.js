@@ -265,6 +265,9 @@
     var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
     if(!days.length){ err.textContent = L('Pick at least one day.', 'اختار يوم واحد على الأقل.'); err.hidden = false; return false; }
     if(!s || !en || mins(en) <= mins(s)){ err.textContent = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.'); err.hidden = false; return false; }
+    // A class before 6 in the morning is almost always 12:15 PM entered as AM
+    // on a phone's 12-hour clock.
+    if(mins(s) < 6 * 60){ err.textContent = L('That is ' + s + ' at night. Did you mean PM? (e.g. 12:15 PM)', 'هاد ' + s + ' بالليل. قصدك بعد الظهر؟ (مثلًا 12:15 م)'); err.hidden = false; return false; }
     var map = forPlan(openFor), key = form.getAttribute('data-tt-form');
     (map[key] = map[key] || []).push({ d: days, s: s, e: en, r: r });
     savePlan(openFor, map);
@@ -283,5 +286,5 @@
     if(b) open();
   });
 
-  window.AAUP_TIMETABLE = { open: open, todayHtml: todayHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny };
+  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny };
 })();

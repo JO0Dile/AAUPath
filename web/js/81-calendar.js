@@ -3,12 +3,13 @@
 //
 // One file, and the phone already has somewhere to put it.
 //
-// What this deliberately does NOT do: invent class times. The catalogue this
-// app is built from publishes courses, hours and prerequisites — it does not
-// publish when anything meets, and the university only issues that at
-// registration. So the file carries what is actually known: the semester as a
-// dated block, with its course list inside it. The sheet says so in one line
-// rather than exporting empty 09:00 slots that would look like real times.
+// The file holds the student's own class times (js/102-timetable.js): each
+// class on its days, at its times, with its room, repeating every week from
+// the first day to the last. Nothing else — it used to add the semester as
+// one all-day block running for months, which covered every day of the
+// calendar and said nothing useful. With no class times entered for that
+// semester there is nothing worth putting in a calendar, so the sheet asks
+// for the times first instead of exporting a file.
 //
 // The dates come from the student, because the app does not know those either
 // — no term calendar ships with it, and guessing "Fall starts in September"
@@ -23,8 +24,8 @@
 
   var TX = {
     title:   { en: 'Add a semester to your calendar', ar: 'أضف فصلًا إلى تقويمك' },
-    sub:     { en: 'Download one file, open it, and the semester’s courses appear in your calendar.',
-               ar: 'نزّل ملف واحد وافتحه، وبتطلع مساقات الفصل على تقويمك.' },
+    sub:     { en: 'Download one file, open it, and your classes appear in your calendar every week.',
+               ar: 'نزّل ملف واحد وافتحه، وبتطلع محاضراتك على تقويمك كل أسبوع.' },
     usual:   { en: 'These are the usual dates for that semester. Change them if yours are different.',
                ar: 'هاي التواريخ المعتادة لهذا الفصل. غيّرها إذا فصلك مختلف.' },
     courses: { en: 'courses', ar: 'مساقات' },
@@ -32,8 +33,9 @@
     which:   { en: 'Which semester', ar: 'أي فصل' },
     from:    { en: 'First day', ar: 'أول يوم' },
     to:      { en: 'Last day', ar: 'آخر يوم' },
-    note:    { en: 'AAUPath doesn’t know your class times. The university gives those out at registration. Add the times in your calendar once you have them.',
-               ar: 'التطبيق ما بيعرف أوقات محاضراتك، الجامعة بتطلعها وقت التسجيل. ضيف الأوقات بتقويمك لما توصلك.' },
+    noTimes: { en: 'Add your class times first. Each class then goes into your calendar on its days and times, every week until the last day.',
+               ar: 'ضيف أوقات محاضراتك أول. بعدها كل محاضرة بتنحط بتقويمك بأيامها وساعاتها، كل أسبوع لآخر يوم.' },
+    addTimes:{ en: 'Add class times', ar: 'ضيف أوقات المحاضرات' },
     go:      { en: 'Download calendar file', ar: 'نزّل ملف التقويم' },
     cancel:  { en: 'Cancel', ar: 'إلغاء' },
     needDates:{ en: 'Pick both dates first.', ar: 'اختر التاريخين الأول.' },
@@ -87,40 +89,66 @@
       .replace(/\r?\n/g, '\\n');
   }
   function ymd(dateStr){ return String(dateStr || '').replace(/-/g, ''); }
-  function dayAfter(dateStr){
-    var d = new Date(dateStr + 'T00:00:00Z');
-    d.setUTCDate(d.getUTCDate() + 1);
-    return d.toISOString().slice(0, 10).replace(/-/g, '');
-  }
   function stamp(){
     return new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   }
 
-  function buildIcs(prefix, sem, from, to, rtl){
-    var p = planFor(prefix) || {};
-    var planName = (p.majorName && p.majorName.en && (p.majorName.en.big || p.majorName.en)) || prefix;
-    var lines = (sem.courses || []).map(function(c){
-      var nm = (rtl && c.ar) ? c.ar : (c.name || c.id);
-      var num = c.courseNumber && c.courseNumber !== '-' ? c.courseNumber + ' · ' : '';
-      return '• ' + nm + ' (' + num + (parseFloat(c.creditHours) || 0) + 'H)';
+  // The weekly meetings that belong in this semester's file: the times kept
+  // for its own courses, plus the other classes the student added (picked
+  // or typed) when this is the semester they are in now.
+  var BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  function meetingsFor(prefix, sem){
+    var T = window.AAUP_TIMETABLE;
+    if(!T || !T.forPlan) return [];
+    var map = T.forPlan(prefix), out = [], seen = {};
+    var list = (sem.courses || []).slice();
+    var own = {};
+    list.forEach(function(c){ own[c.id] = 1; });
+    var now = T.courses ? T.courses(prefix) : [];
+    var isCurrent = now.some(function(c){ return own[c.id]; });
+    if(isCurrent) now.forEach(function(c){ if(!own[c.id]) list.push(c); });
+    list.forEach(function(c){
+      if(seen[c.id]) return;
+      seen[c.id] = 1;
+      (map[c.id] || []).forEach(function(m){ if(m && m.d && m.d.length && m.s && m.e) out.push({ c: c, m: m }); });
     });
-    var summary = planName + ' · ' + sem.label + ' (' + sem.courses.length + ' courses · ' + sem.hours + 'H)';
-    var body = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//AAUPath//Study plan//EN',
-      'CALSCALE:GREGORIAN',
-      'BEGIN:VEVENT',
-      'UID:' + prefix + '-' + sem.key.replace('|', '-') + '-' + Date.now() + '@aaupath',
-      'DTSTAMP:' + stamp(),
-      'DTSTART;VALUE=DATE:' + ymd(from),
-      'DTEND;VALUE=DATE:' + dayAfter(to),      // DTEND is exclusive for all-day events
-      'SUMMARY:' + icsText(summary),
-      'DESCRIPTION:' + icsText(lines.join('\n') + '\n\n' + t('note', rtl)),
-      'TRANSP:TRANSPARENT',
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ];
+    return out;
+  }
+  function hhmmss(t){ var p = String(t).split(':'); return (p[0].length < 2 ? '0' : '') + p[0] + p[1] + '00'; }
+  // The first date on or after `from` that falls on one of these weekdays.
+  function firstOn(from, days){
+    var d = new Date(from + 'T00:00:00Z');
+    for(var i = 0; i < 7; i++){
+      if(days.indexOf(d.getUTCDay()) >= 0) return d.toISOString().slice(0, 10).replace(/-/g, '');
+      d.setUTCDate(d.getUTCDate() + 1);
+    }
+    return ymd(from);
+  }
+
+  function buildIcs(prefix, sem, from, to, rtl){
+    var events = [];
+    meetingsFor(prefix, sem).forEach(function(x, i){
+      var c = x.c, m = x.m;
+      var nm = (rtl && c.ar) ? c.ar : (c.name || c.id);
+      var num = c.courseNumber && c.courseNumber !== '-' ? c.courseNumber : '';
+      var day = firstOn(from, m.d);
+      // Floating local times (no time zone): 08:00 means 08:00 wherever the
+      // phone is, which is what a class timetable means.
+      events.push(
+        'BEGIN:VEVENT',
+        'UID:' + prefix + '-' + sem.key.replace('|', '-') + '-' + i + '-' + Date.now() + '@aaupath',
+        'DTSTAMP:' + stamp(),
+        'DTSTART:' + day + 'T' + hhmmss(m.s),
+        'DTEND:' + day + 'T' + hhmmss(m.e),
+        'RRULE:FREQ=WEEKLY;BYDAY=' + m.d.map(function(d){ return BYDAY[d]; }).join(',') + ';UNTIL=' + ymd(to) + 'T235959',
+        'SUMMARY:' + icsText(nm),
+        (m.r ? 'LOCATION:' + icsText(m.r) : ''),
+        (num ? 'DESCRIPTION:' + icsText(num + ' · ' + (parseFloat(c.creditHours) || 0) + 'H') : ''),
+        'END:VEVENT'
+      );
+    });
+    var body = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AAUPath//Class times//EN', 'CALSCALE:GREGORIAN']
+      .concat(events.filter(Boolean), ['END:VCALENDAR']);
     return body.map(fold).join('\r\n') + '\r\n';
   }
 
@@ -190,7 +218,7 @@
           '<input type="date" id="icsTo"></div>' +
       '</div>' +
       '<p class="cal-usual" id="icsUsual" hidden>' + esc(t('usual', rtl)) + '</p>' +
-      '<div class="cal-note">' + window.AAUP_ICONS.preview('help', 15) + '<span>' + esc(t('note', rtl)) + '</span></div>' +
+      '<div class="cal-note" id="icsNote">' + window.AAUP_ICONS.preview('help', 15) + '<span id="icsNoteTx"></span></div>' +
       '<div class="cal-actions">' +
         '<button type="button" class="cal-btn" id="icsCancel">' + esc(t('cancel', rtl)) + '</button>' +
         '<button type="button" class="cal-btn cal-btn-primary" id="icsGo">' +
@@ -203,6 +231,10 @@
     // their dates alone.
     var fromEl = document.getElementById('icsFrom'), toEl = document.getElementById('icsTo');
     var semEl = document.getElementById('icsSem'), usualEl = document.getElementById('icsUsual');
+    // Start on the semester the student is in now, not always Year 1.
+    var nowIds = (window.AAUP_TIMETABLE && window.AAUP_TIMETABLE.courses ? window.AAUP_TIMETABLE.courses(prefix) : []).map(function(c){ return c.id; });
+    var nowSem = sems.filter(function(x){ return x.courses.some(function(c){ return nowIds.indexOf(c.id) >= 0; }); })[0];
+    if(nowSem) semEl.value = nowSem.key;
     var touched = false;
     function fillUsual(){
       if(touched) return;
@@ -212,13 +244,49 @@
       usualEl.hidden = !d;
     }
     [fromEl, toEl].forEach(function(el){ el.addEventListener('input', function(){ touched = true; usualEl.hidden = true; }); });
-    semEl.addEventListener('change', fillUsual);
+    // How many weekly classes the file would carry; with none, the main
+    // button opens the class times instead of saving an empty file.
+    var goEl = document.getElementById('icsGo'), noteTx = document.getElementById('icsNoteTx');
+    var goLabel = goEl.innerHTML;
+    function current(){ return sems.filter(function(s){ return s.key === semEl.value; })[0]; }
+    function refreshNote(){
+      var sem = current(), n = sem ? meetingsFor(prefix, sem).length : 0;
+      goEl.setAttribute('data-need-times', n ? '0' : '1');
+      if(n){
+        var names = {};
+        meetingsFor(prefix, sem).forEach(function(x){ names[x.c.id] = 1; });
+        var k = Object.keys(names).length;
+        noteTx.textContent = rtl
+          ? k + ' مساقات بأوقاتها وقاعاتها، بتتكرر كل أسبوع لآخر يوم.'
+          : k + ' course' + (k === 1 ? '' : 's') + ' with their times and rooms, repeating every week until the last day.';
+        goEl.innerHTML = goLabel;
+      } else {
+        noteTx.textContent = t('noTimes', rtl);
+        goEl.innerHTML = window.AAUP_ICONS.preview('clock', 15) + esc(t('addTimes', rtl));
+      }
+    }
+    semEl.addEventListener('change', function(){ fillUsual(); refreshNote(); });
     fillUsual();
+    refreshNote();
 
     document.getElementById('icsCancel').addEventListener('click', function(){
       overlay.classList.remove('open');
     });
     document.getElementById('icsGo').addEventListener('click', function(){
+      if(goEl.getAttribute('data-need-times') === '1'){
+        // On top of this sheet, not instead of it: closing a window and
+        // opening another in the same tap lets the back-button handling
+        // (js/60-backbar.js) close the new one too. Back here, the note and
+        // button update to the times just added.
+        if(!window.AAUP_TIMETABLE) return;
+        window.AAUP_TIMETABLE.open(prefix);
+        var tt = document.getElementById('ttOverlay');
+        if(tt) new MutationObserver(function(l, o){
+          if(tt.classList.contains('open')) return;
+          o.disconnect(); refreshNote();
+        }).observe(tt, { attributes: true, attributeFilter: ['class'] });
+        return;
+      }
       var key = document.getElementById('icsSem').value;
       var from = document.getElementById('icsFrom').value;
       var to = document.getElementById('icsTo').value;
