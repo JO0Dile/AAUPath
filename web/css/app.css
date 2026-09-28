@@ -7823,6 +7823,8 @@ html[dir="rtl"] .imp-semester-block.sem-now{padding:10px 16px 12px 12px;}
 .hm-label{font-size:11.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
 .hm-label-desk{display:none;}
 .hm-grid{display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px;}
+/* An odd card left over at the end takes the whole row instead of half. */
+.hm-grid > :last-child:nth-child(odd){grid-column:1 / -1;}
 .hm-card{
   min-width:0; min-height:104px; padding:12px; box-sizing:border-box;
   display:flex; flex-direction:column; align-items:flex-start; gap:6px; text-align:start;
@@ -7895,6 +7897,7 @@ html[dir="rtl"] .imp-semester-block.sem-now{padding:10px 16px 12px 12px;}
   .hm-main{flex:1;}
   .hm-label-desk{display:block;}
   .hm-grid{grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px;}
+  .hm-grid > :last-child:nth-child(odd){grid-column:auto;}
   .hm-card{min-height:128px; padding:16px; border-radius:16px; gap:8px;}
   .hm-card-ic{width:42px; height:42px; border-radius:12px;}
   .hm-card-title{font-size:15px; font-weight:800;}
