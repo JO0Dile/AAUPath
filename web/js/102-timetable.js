@@ -11,6 +11,12 @@
 // Cloud Sync):
 //   aaup_timetable = { [planId]: { [courseSlug]: [ { d:[0..6], s:'10:00', e:'11:15', r:'B-203' } ] } }
 // Days are Date.getDay() numbers: 0 Sunday … 6 Saturday.
+//
+// Beyond this semester's courses, a student can add any other class: one
+// picked from the major's full course list (keyed by its slug), or one they
+// type themselves, like an elective from another college (keyed 'x:' + the
+// name). Those show wherever this semester's do, and go away with their last
+// time.
 // ==========================
 (function(){
   'use strict';
@@ -34,9 +40,27 @@
   function hasAny(planId){ var m = forPlan(planId); return Object.keys(m).some(function(k){ return Array.isArray(m[k]) && m[k].length; }); }
 
   function mins(hhmm){ var p = String(hhmm || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
+  function planCourses(planId){
+    var p = window.AAUP_IMPORTED && window.AAUP_IMPORTED.loadImportedPlans ? (window.AAUP_IMPORTED.loadImportedPlans() || {})[planId] : null;
+    return (p && Array.isArray(p.courses)) ? p.courses : [];
+  }
+  function extraCourse(planId, key){
+    if(key.indexOf('x:') === 0) return { id: key, name: key.slice(2), ar: '' };
+    return planCourses(planId).filter(function(c){ return c.id === key; })[0] || null;
+  }
+  // This semester's courses, then every other class the student added.
   function courses(planId){
     var ts = window.AAUP_TASK_HOME && window.AAUP_TASK_HOME.thisSemester ? window.AAUP_TASK_HOME.thisSemester(planId) : null;
-    return ts ? ts.list : [];
+    var list = ts ? ts.list.slice() : [], seen = {};
+    list.forEach(function(c){ seen[c.id] = 1; });
+    var keys = Object.keys(forPlan(planId));
+    if(planId === openFor && picked) keys.push(picked);
+    keys.forEach(function(k){
+      if(seen[k]) return;
+      var c = extraCourse(planId, k);
+      if(c){ seen[k] = 1; list.push(c); }
+    });
+    return list;
   }
   function courseName(c){ return ar() && c.ar ? c.ar : c.name; }
 
@@ -82,6 +106,7 @@
 
   // ---- the window -----------------------------------------------------------
   var openFor = null, editing = null;   // editing: course slug with its add form open
+  var adding = false, picked = null;   // the "Add another class" picker, and the class it picked
   function overlayEl(){
     var el = document.getElementById('ttOverlay');
     if(el) return el;
@@ -91,6 +116,12 @@
     el.innerHTML = '<div class="modal-card tt-card" role="dialog" aria-modal="true" aria-labelledby="ttTitle"><div class="modal-body" id="ttBody"></div></div>';
     document.body.appendChild(el);
     el.addEventListener('click', onClick);
+    el.addEventListener('input', function(e){ if(e.target.id === 'ttPick') fillPicks(); });
+    el.addEventListener('keydown', function(e){
+      if(e.target.id !== 'ttPick' || e.key !== 'Enter') return;
+      var first = document.querySelector('#ttPickList [data-tt-pick]') || document.querySelector('#ttPickList [data-tt-own]');
+      if(first){ e.preventDefault(); first.click(); }
+    });
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && el.classList.contains('open')) close(); });
     return el;
   }
@@ -100,9 +131,10 @@
     if(window.AAUP_TASK_HOME && window.AAUP_TASK_HOME.visible && window.AAUP_TASK_HOME.visible()) window.AAUP_TASK_HOME.render();
   }
   function dayLabel(d){ return ar() ? DAY_AR[d] : DAY_EN[d]; }
-  function meetingTx(x){
-    return (x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ') +
-      ' · ' + x.s + '–' + x.e + (x.r ? ' · ' + x.r : '');
+  // Days in the reading direction; the time range and room always left to right.
+  function meetingHtml(x){
+    return esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
+      ' · <bdi dir="ltr">' + esc(x.s + '–' + x.e) + '</bdi>' + (x.r ? ' · <bdi dir="ltr">' + esc(x.r) + '</bdi>' : '');
   }
   function render(){
     var body = document.getElementById('ttBody');
@@ -112,20 +144,60 @@
       '<div class="tt-head"><h2 class="mh" id="ttTitle" style="margin:0;">' + ic('clock', 20) + esc(L('Your class times', 'أوقات محاضراتك')) + '</h2>' +
       '<button type="button" class="home-btn btn-quiet btn-sm" data-tt-close>' + esc(L('Done', 'تم')) + '</button></div>' +
       '<p class="form-note" style="margin-top:0;">' + esc(L('From your registration. Home shows today\'s classes from these.', 'من تسجيلك. الرئيسية بتعرض محاضرات اليوم منها.')) + '</p>' +
+      (window.AAUP_WEEK ? window.AAUP_WEEK.panelHtml(openFor) : '') +
       (list.length ? list.map(function(c){
         var rows = m[c.id] || [];
         return '<div class="tt-course">' +
           '<div class="tt-course-h"><b>' + esc(courseName(c)) + '</b>' +
             (editing === c.id ? '' : '<button type="button" class="cloud-link" data-tt-add="' + esc(c.id) + '">+ ' + esc(L('Add a time', 'ضيف وقت')) + '</button>') + '</div>' +
           rows.map(function(x, i){
-            return '<div class="tt-meet"><span>' + esc(meetingTx(x)) + '</span>' +
+            return '<div class="tt-meet"><span>' + meetingHtml(x) + '</span>' +
               '<button type="button" class="dates-del" data-tt-del="' + esc(c.id) + '" data-tt-i="' + i + '" aria-label="' + esc(L('Remove', 'احذف')) + '">×</button></div>';
           }).join('') +
           (editing === c.id ? formHtml(c.id) : '') +
           '</div>';
-      }).join('') : '<p class="form-note">' + esc(L('No courses for this semester yet.', 'ما في مساقات لهالفصل بعد.')) + '</p>');
+      }).join('') : '<p class="form-note">' + esc(L('No courses for this semester yet.', 'ما في مساقات لهالفصل بعد.')) + '</p>') +
+      (adding ? pickerHtml() : editing ? '' : '<button type="button" class="home-btn btn-quiet btn-sm tt-more" data-tt-more>+ ' + esc(L('Add another class', 'ضيف محاضرة ثانية')) + '</button>');
+    var pick = document.getElementById('ttPick');
+    if(pick){ pick.focus(); fillPicks(); return; }
     var first = body.querySelector('.tt-form input[type="time"]');
     if(first) first.focus();
+  }
+
+  // ---- adding another class ---------------------------------------------------
+  function pickerHtml(){
+    return '<div class="tt-pick">' +
+      '<label class="tt-pick-l" for="ttPick">' + esc(L('Pick a course or type its name', 'اختار مساق أو اكتب اسمه')) + '</label>' +
+      '<input type="search" id="ttPick" maxlength="60" autocomplete="off" placeholder="' + esc(L('e.g. Leadership', 'مثلًا: القيادة')) + '">' +
+      '<div class="tt-pick-list" id="ttPickList" role="listbox"></div>' +
+      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn btn-quiet btn-sm" data-tt-cancel>' + esc(L('Cancel', 'إلغاء')) + '</button></div>' +
+      '</div>';
+  }
+  function norm(t){ return String(t || '').toLowerCase().replace(/[\u064B-\u0652]/g, '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim(); }
+  function fillPicks(){
+    var box = document.getElementById('ttPickList'), q = norm(document.getElementById('ttPick').value);
+    if(!box) return;
+    var shown = {};
+    courses(openFor).forEach(function(c){ shown[c.id] = 1; });
+    var raw = document.getElementById('ttPick').value.trim();
+    var list = planCourses(openFor).filter(function(c){
+      if(shown[c.id]) return false;
+      if(!q) return true;
+      return norm(c.name).indexOf(q) >= 0 || norm(c.ar).indexOf(q) >= 0 || norm(c.num || c.courseNumber).indexOf(q) >= 0;
+    }).sort(function(a, b){ return courseName(a).localeCompare(courseName(b), ar() ? 'ar' : 'en'); });
+    var exact = list.some(function(c){ return norm(c.name) === q || norm(c.ar) === q; });
+    box.innerHTML =
+      (raw && !exact ? '<button type="button" class="tt-pick-row is-own" data-tt-own>' + esc(L('Add “' + raw + '”', 'ضيف “' + raw + '”')) + '<small>' + esc(L('not in your plan', 'مش بخطتك')) + '</small></button>' : '') +
+      list.map(function(c){
+        var code = c.num || c.courseNumber || '';
+        return '<button type="button" class="tt-pick-row" role="option" data-tt-pick="' + esc(c.id) + '">' + esc(courseName(c)) +
+          '<small>' + esc((code ? code + ' · ' : '') + (parseFloat(c.creditHours) || 0) + L('H', ' س')) + '</small></button>';
+      }).join('') +
+      (!raw && !list.length ? '<p class="form-note">' + esc(L('Type the course name.', 'اكتب اسم المساق.')) + '</p>' : '');
+  }
+  function startTimes(key){
+    picked = key; adding = false; editing = key;
+    render();
   }
   function formHtml(slug){
     return '<div class="tt-form" data-tt-form="' + esc(slug) + '">' +
@@ -148,7 +220,14 @@
     var t = e.target, b;
     if(t === el || t.closest('[data-tt-close]')){ close(); return; }
     if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); render(); return; }
-    if(t.closest('[data-tt-cancel]')){ editing = null; render(); return; }
+    if(t.closest('[data-tt-cancel]')){ editing = null; adding = false; picked = null; render(); return; }
+    if(t.closest('[data-tt-more]')){ adding = true; editing = null; render(); return; }
+    if((b = t.closest('[data-tt-pick]'))){ startTimes(b.getAttribute('data-tt-pick')); return; }
+    if(t.closest('[data-tt-own]')){
+      var nm = document.getElementById('ttPick').value.trim().replace(/\s+/g, ' ').slice(0, 60);
+      if(nm) startTimes('x:' + nm);
+      return;
+    }
     if((b = t.closest('[data-tt-day]'))){ b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); return; }
     if((b = t.closest('[data-tt-del]'))){
       var m = forPlan(openFor), slug = b.getAttribute('data-tt-del'), i = +b.getAttribute('data-tt-i');
@@ -166,13 +245,13 @@
       var map = forPlan(openFor), key = b.getAttribute('data-tt-save');
       (map[key] = map[key] || []).push({ d: days, s: s, e: en, r: r });
       savePlan(openFor, map);
-      editing = null; render();
+      editing = null; picked = null; render();
     }
   }
   function open(planId){
     openFor = planId || (window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected && window.AAUP_DASHBOARD.getSelected());
     if(!openFor) return;
-    editing = null;
+    editing = null; adding = false; picked = null;
     overlayEl().classList.add('open');
     render();
   }
