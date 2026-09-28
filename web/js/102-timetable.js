@@ -96,12 +96,15 @@
       }).join('') +
       '</section>';
   }
-  // For the This semester card: one quiet line that leads here, only while
-  // no times have been added.
+  // For the This semester card: one quiet line that leads here. It stays
+  // once times are added (it used to vanish, taking the way back with it)
+  // and then reads as the way to see or change them.
   function promptHtml(planId){
-    if(!planId || hasAny(planId) || !courses(planId).length) return '';
+    if(!planId || !courses(planId).length) return '';
     return '<button type="button" class="hm-tt-prompt" data-tt-open>' + ic('clock', 14) +
-      esc(L('Add your class times to see today\'s classes here', 'ضيف أوقات محاضراتك لتشوف محاضرات اليوم هون')) + '</button>';
+      (hasAny(planId)
+        ? esc(L('My class times · Edit', 'أوقات محاضراتي · تعديل'))
+        : esc(L('Add your class times to see today\'s classes here', 'ضيف أوقات محاضراتك لتشوف محاضرات اليوم هون'))) + '</button>';
   }
 
   // ---- the window -----------------------------------------------------------
@@ -116,6 +119,13 @@
     el.innerHTML = '<div class="modal-card tt-card" role="dialog" aria-modal="true" aria-labelledby="ttTitle"><div class="modal-body" id="ttBody"></div></div>';
     document.body.appendChild(el);
     el.addEventListener('click', onClick);
+    // The phone's back arrow and back button close windows by taking the
+    // class off directly; a time still being typed is saved then too.
+    new MutationObserver(function(){
+      if(el.classList.contains('open')) return;
+      var form = el.querySelector('.tt-form');
+      if(form && form.querySelector('[data-tt-day][aria-pressed="true"]') && saveForm(form)) render();
+    }).observe(el, { attributes: true, attributeFilter: ['class'] });
     el.addEventListener('input', function(e){ if(e.target.id === 'ttPick') fillPicks(); });
     el.addEventListener('keydown', function(e){
       if(e.target.id !== 'ttPick' || e.key !== 'Enter') return;
@@ -125,7 +135,15 @@
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && el.classList.contains('open')) close(); });
     return el;
   }
+  // "Done" with a time half-entered used to close and drop it, which read as
+  // the times vanishing. Now a form with a day picked is saved on the way
+  // out; one with a problem stays open and says what to fix.
   function close(){
+    var form = document.querySelector('#ttOverlay .tt-form');
+    if(form && form.querySelector('[data-tt-day][aria-pressed="true"]')){
+      if(!saveForm(form)) return;
+      render();   // the saved form leaves the page, so closing can't save it twice
+    }
     var el = document.getElementById('ttOverlay');
     if(el) el.classList.remove('open');
     if(window.AAUP_TASK_HOME && window.AAUP_TASK_HOME.visible && window.AAUP_TASK_HOME.visible()) window.AAUP_TASK_HOME.render();
@@ -142,7 +160,7 @@
     var list = courses(openFor), m = forPlan(openFor);
     body.innerHTML =
       '<div class="tt-head"><h2 class="mh" id="ttTitle" style="margin:0;">' + ic('clock', 20) + esc(L('Your class times', 'أوقات محاضراتك')) + '</h2>' +
-      '<button type="button" class="home-btn btn-quiet btn-sm" data-tt-close>' + esc(L('Done', 'تم')) + '</button></div>' +
+      '<button type="button" class="home-btn btn-quiet btn-sm" id="ttClose" data-tt-close>' + esc(L('Done', 'تم')) + '</button></div>' +
       '<p class="form-note" style="margin-top:0;">' + esc(L('From your registration. Home shows today\'s classes from these.', 'من تسجيلك. الرئيسية بتعرض محاضرات اليوم منها.')) + '</p>' +
       (window.AAUP_WEEK ? window.AAUP_WEEK.panelHtml(openFor) : '') +
       (list.length ? list.map(function(c){
@@ -237,16 +255,21 @@
       return;
     }
     if((b = t.closest('[data-tt-save]'))){
-      var form = b.closest('.tt-form'), err = form.querySelector('.tt-err');
-      var days = Array.prototype.map.call(form.querySelectorAll('[data-tt-day][aria-pressed="true"]'), function(x){ return +x.getAttribute('data-tt-day'); });
-      var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
-      if(!days.length){ err.textContent = L('Pick at least one day.', 'اختار يوم واحد على الأقل.'); err.hidden = false; return; }
-      if(!s || !en || mins(en) <= mins(s)){ err.textContent = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.'); err.hidden = false; return; }
-      var map = forPlan(openFor), key = b.getAttribute('data-tt-save');
-      (map[key] = map[key] || []).push({ d: days, s: s, e: en, r: r });
-      savePlan(openFor, map);
-      editing = null; picked = null; render();
+      if(saveForm(b.closest('.tt-form'))) render();
     }
+  }
+  // Saves the open add-a-time form; false (with the reason shown) if it can't.
+  function saveForm(form){
+    var err = form.querySelector('.tt-err');
+    var days = Array.prototype.map.call(form.querySelectorAll('[data-tt-day][aria-pressed="true"]'), function(x){ return +x.getAttribute('data-tt-day'); });
+    var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
+    if(!days.length){ err.textContent = L('Pick at least one day.', 'اختار يوم واحد على الأقل.'); err.hidden = false; return false; }
+    if(!s || !en || mins(en) <= mins(s)){ err.textContent = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.'); err.hidden = false; return false; }
+    var map = forPlan(openFor), key = form.getAttribute('data-tt-form');
+    (map[key] = map[key] || []).push({ d: days, s: s, e: en, r: r });
+    savePlan(openFor, map);
+    editing = null; picked = null;
+    return true;
   }
   function open(planId){
     openFor = planId || (window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected && window.AAUP_DASHBOARD.getSelected());
