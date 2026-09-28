@@ -67,7 +67,12 @@
 
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days — "stay signed in", not a work session
 const LOGIN_DELAY_MS = 400;                    // blunts online password guessing, same as admin
-const MAX_SYNC_BYTES = 2 * 1024 * 1024;        // one student's whole local state, generously
+const MAX_SYNC_BYTES = 16 * 1024 * 1024;       // one student's whole local state as sent, generously
+// D1 refuses any single value over 2,000,000 bytes, and a student's state is
+// already over 1 MB on a fresh install (the app's copy of every major's plan
+// rides along). So the blob is stored gzipped (see packData), which brings it
+// down to about a tenth; this is the ceiling for what is actually stored.
+const MAX_STORED_BYTES = 1900000;
 const MIN_PASSWORD_LEN = 8;
 const MAX_PASSWORD_LEN = 200;
 const MAX_EMAIL_LEN = 200;
@@ -582,10 +587,29 @@ async function handleDeleteAccount(env, request, user) {
   return json({ ok: true }, 200, env, request);
 }
 
+// The stored form of a sync blob: 'gz1:' + base64 of the gzipped JSON.
+// Rows written before compression are plain JSON and still read as they are.
+const PACKED = 'gz1:';
+async function packData(text) {
+  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+  const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return PACKED + btoa(bin);
+}
+async function unpackData(stored) {
+  if (!stored.startsWith(PACKED)) return JSON.parse(stored);
+  const bin = atob(stored.slice(PACKED.length));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text());
+}
+
 async function handleGetSync(env, request, user) {
   const row = await env.DB.prepare('SELECT data, updated_at FROM sync_state WHERE user_id = ?').bind(user.id).first();
   if (!row) return json({ ok: true, data: null, updatedAt: 0 }, 200, env, request);
-  return json({ ok: true, data: JSON.parse(row.data), updatedAt: row.updated_at }, 200, env, request);
+  return json({ ok: true, data: await unpackData(row.data), updatedAt: row.updated_at }, 200, env, request);
 }
 
 async function handlePostSync(request, env, user) {
@@ -604,13 +628,13 @@ async function handlePostSync(request, env, user) {
     return json({
       error: 'synced data changed since this device last read it',
       conflict: true,
-      serverData: JSON.parse(existing.data),
+      serverData: await unpackData(existing.data),
       serverUpdatedAt: existing.updated_at,
     }, 409, env, request);
   }
 
-  const dataText = JSON.stringify(body.data);
-  if (dataText.length > MAX_SYNC_BYTES) return json({ error: 'synced data is too large' }, 413, env, request);
+  const dataText = await packData(JSON.stringify(body.data));
+  if (dataText.length > MAX_STORED_BYTES) return json({ error: 'synced data is too large' }, 413, env, request);
   const updatedAt = Date.now();
   await env.DB.prepare(
     'INSERT INTO sync_state (user_id, data, updated_at) VALUES (?, ?, ?) ' +

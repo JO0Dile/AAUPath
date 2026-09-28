@@ -161,7 +161,7 @@ instead of one:
 | Thing | Limit | Why |
 |---|---|---|
 | Password | 8–200 characters | Long enough to matter, short enough to type on a phone |
-| Synced data | 2 MB | One student's whole local state, generously |
+| Synced data | 16 MB sent, 1.9 MB stored | One student's whole local state; stored gzipped (about a tenth) to stay under D1's 2 MB per-value limit |
 | Session | 30 days | "Stay signed in," not a work session — unlike the 8-hour admin session |
 
 All of it fits inside Cloudflare's free tier (D1's free tier is 5 GB and 5
