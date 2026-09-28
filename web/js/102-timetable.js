@@ -96,12 +96,15 @@
       }).join('') +
       '</section>';
   }
-  // For the This semester card: one quiet line that leads here, only while
-  // no times have been added.
+  // For the This semester card: one quiet line that leads here. It stays
+  // once times are added (it used to vanish, taking the way back with it)
+  // and then reads as the way to see or change them.
   function promptHtml(planId){
-    if(!planId || hasAny(planId) || !courses(planId).length) return '';
+    if(!planId || !courses(planId).length) return '';
     return '<button type="button" class="hm-tt-prompt" data-tt-open>' + ic('clock', 14) +
-      esc(L('Add your class times to see today\'s classes here', 'ضيف أوقات محاضراتك لتشوف محاضرات اليوم هون')) + '</button>';
+      (hasAny(planId)
+        ? esc(L('My class times · Edit', 'أوقات محاضراتي · تعديل'))
+        : esc(L('Add your class times to see today\'s classes here', 'ضيف أوقات محاضراتك لتشوف محاضرات اليوم هون'))) + '</button>';
   }
 
   // ---- the window -----------------------------------------------------------
