@@ -34,6 +34,13 @@
 // actually decides.
 // ---------------------------------------------------------------------------
 
+// Which commit this Worker was deployed from. .github/workflows/
+// deploy-workers.yml writes it in on every deploy; a copy pasted by hand
+// keeps the placeholder, which the admin room reads as "version unknown".
+// GET /__version answers with it, so the admin room can tell whether each
+// Worker is up to date.
+const WORKER_BUILD = '__WORKER_BUILD__';
+
 const MAX_LEN = 280;
 const MAX_PER_PLAN = 200;        // the wall keeps the most recent N
 const RATE_WINDOW_MS = 20 * 1000;
@@ -49,6 +56,7 @@ export default {
       'Access-Control-Max-Age': '86400',
     };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (new URL(request.url).pathname.replace(/\/+$/, '') === '/__version') return json({ build: WORKER_BUILD }, 200, cors);
     if (!env.THOUGHTS) return json({ error: 'KV namespace THOUGHTS is not bound' }, 500, cors);
 
     const url = new URL(request.url);

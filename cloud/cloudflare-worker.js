@@ -65,6 +65,13 @@
 //     account with the same verified email, or makes a new one.
 // ---------------------------------------------------------------------------
 
+// Which commit this Worker was deployed from. .github/workflows/
+// deploy-workers.yml writes it in on every deploy; a copy pasted by hand
+// keeps the placeholder, which the admin room reads as "version unknown".
+// GET /__version answers with it, so the admin room can tell whether each
+// Worker is up to date.
+const WORKER_BUILD = '__WORKER_BUILD__';
+
 const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days — "stay signed in", not a work session
 const LOGIN_DELAY_MS = 400;                    // blunts online password guessing, same as admin
 const MAX_SYNC_BYTES = 16 * 1024 * 1024;       // one student's whole local state as sent, generously
@@ -658,6 +665,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(env, request) });
     }
+    if (path === '/__version') return json({ build: WORKER_BUILD }, 200, env, request);
 
     if (path === '/api/health' || path === '/health') {
       return json({ ok: true }, 200, env, request);

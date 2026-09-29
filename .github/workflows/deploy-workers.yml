@@ -1,0 +1,89 @@
+name: Deploy workers
+
+# Sends each Cloudflare Worker's new code to Cloudflare when it changes on
+# main, so nobody has to copy and paste Worker code into the dashboard again.
+#
+# Only the CODE is uploaded (Cloudflare's "put script content" call). The
+# Worker's settings stay exactly as they are in the dashboard: its secrets
+# (ADMIN_SECRET, SESSION_SECRET…), variables (ALLOWED_ORIGIN…) and bindings
+# (the D1 database, the KV namespaces). Nothing here can see or change those.
+#
+# Setup, once, in GitHub → Settings → Secrets and variables → Actions:
+#   CLOUDFLARE_API_TOKEN   a Cloudflare API token with "Workers Scripts: Edit"
+#   CLOUDFLARE_ACCOUNT_ID  the account id (the part after dash.cloudflare.com/)
+# Until both exist, this workflow says so and does nothing.
+#
+# Each Worker's code gets the commit it came from written into WORKER_BUILD,
+# which the Worker reports at /__version. The admin room compares that with
+# the file's latest commit on GitHub to show whether each one is up to date.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloud/cloudflare-worker.js'
+      - 'admin/cloudflare-worker.js'
+      - 'workers/*.js'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-workers
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Upload the Workers that changed
+        run: |
+          set -euo pipefail
+          if [ -z "${CF_TOKEN}" ] || [ -z "${CF_ACCOUNT}" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set, so nothing was deployed. Add them under Settings → Secrets and variables → Actions."
+            exit 0
+          fi
+          # Worker name = file it is built from.
+          MAP="studyplan-cloud=cloud/cloudflare-worker.js
+          studyplan-admin=admin/cloudflare-worker.js
+          thoughts-worker=workers/thoughts-worker.js
+          contributions-worker=workers/contributions-worker.js
+          ratings-worker=workers/ratings-worker.js"
+          # A manual run deploys all of them; a push deploys only what changed.
+          BEFORE="${{ github.event.before }}"
+          failed=0
+          while IFS='=' read -r name file; do
+            name="$(echo "$name" | xargs)"; file="$(echo "$file" | xargs)"
+            [ -z "$name" ] && continue
+            if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] && [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+              if git diff --quiet "$BEFORE" HEAD -- "$file" && git diff --quiet "$BEFORE" HEAD -- .github/workflows/deploy-workers.yml; then
+                echo "$name: no change"; continue
+              fi
+            fi
+            build="$(git log -1 --format=%h -- "$file")"
+            mkdir -p out
+            sed "s/__WORKER_BUILD__/${build}/" "$file" > out/worker.js
+            code=$(curl -sS -o out/resp.json -w '%{http_code}' -X PUT \
+              "https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/workers/scripts/${name}/content" \
+              -H "Authorization: Bearer ${CF_TOKEN}" \
+              -F 'metadata={"main_module":"worker.js"};type=application/json' \
+              -F "worker.js=@out/worker.js;type=application/javascript+module")
+            if [ "$code" = "200" ]; then
+              echo "$name: deployed ${build}"
+              echo "- **$name** deployed \`${build}\`" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::$name: Cloudflare answered HTTP $code"; cat out/resp.json; echo
+              echo "- **$name** failed (HTTP $code)" >> "$GITHUB_STEP_SUMMARY"
+              failed=1
+            fi
+          done <<< "$MAP"
+          exit $failed

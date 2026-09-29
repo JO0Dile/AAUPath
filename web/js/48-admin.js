@@ -154,6 +154,7 @@
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
     ['accounts',      '👤 Student accounts'],
+    ['workers',       '🚀 Workers'],
     ['settings',      '⚙️ Settings']
   ];
 
@@ -404,11 +405,114 @@
 
   // ---------- sections ----------
 
+  // ---------- Workers: deploys and versions (round 7, ideas 28 + 29) ----------
+  // Each Worker reports the commit it was deployed from at /__version (the
+  // deploy workflow writes it in). GitHub says the latest commit of each
+  // Worker's file, and how the last "Deploy workers" run went. Side by side:
+  // up to date, behind (with the file to paste if deploys aren't set up), or
+  // "version unknown" for a copy pasted by hand.
+  var WORKERS = [
+    { name: 'studyplan-cloud', file: 'cloud/cloudflare-worker.js', url: function(){ return window.APP_CLOUD_URL; } },
+    { name: 'studyplan-admin', file: 'admin/cloudflare-worker.js', url: function(){ return base(); } },
+    { name: 'thoughts-worker', file: 'workers/thoughts-worker.js', url: function(){ return window.APP_THOUGHTS_URL; } },
+    { name: 'contributions-worker', file: 'workers/contributions-worker.js', url: function(){ return window.APP_CONTRIB_URL; } },
+    { name: 'ratings-worker', file: 'workers/ratings-worker.js', url: function(){ return window.APP_RATINGS_URL; } }
+  ];
+  function ghRepo(){ return (state.status && state.status.repo) || 'JO0Dile/AAUPath'; }
+  function getJson(u){ return fetch(u, { cache: 'no-store' }).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
+  function loadWorkers(){
+    state.workersLoading = true;
+    var repo = ghRepo();
+    var runs = getJson('https://api.github.com/repos/' + repo + '/actions/workflows/deploy-workers.yml/runs?per_page=1')
+      .then(function(d){ return (d.workflow_runs || [])[0] || null; }).catch(function(){ return null; });
+    Promise.all([runs].concat(WORKERS.map(function(w){
+      var live = w.url() ? getJson(String(w.url()).replace(/\/+$/, '') + '/__version').then(function(d){ return d && d.build; }).catch(function(e){ return e && /HTTP 404/.test(e.message) ? '' : null; }) : Promise.resolve(null);
+      var latest = getJson('https://api.github.com/repos/' + repo + '/commits?path=' + encodeURIComponent(w.file) + '&per_page=1')
+        .then(function(d){ return d && d[0] ? { sha: d[0].sha, msg: (d[0].commit && d[0].commit.message || '').split('\n')[0], at: d[0].commit && d[0].commit.committer && d[0].commit.committer.date } : null; })
+        .catch(function(){ return null; });
+      return Promise.all([live, latest]).then(function(x){ return { w: w, live: x[0], latest: x[1] }; });
+    }))).then(function(all){
+      state.deployRun = all[0];
+      state.workers = all.slice(1).map(function(r){
+        var st = 'unknown';
+        if(r.live === null) st = 'down';
+        else if(!r.live || r.live === '__WORKER_BUILD__') st = 'unknown';
+        else if(r.latest && r.latest.sha.indexOf(r.live) === 0) st = 'ok';
+        else if(r.latest) st = 'behind';
+        return { name: r.w.name, file: r.w.file, live: r.live, latest: r.latest, status: st };
+      });
+      state.workersAt = Date.now();
+    }).then(function(){ state.workersLoading = false; render(); });
+  }
+  function agoTx(t){
+    var m = Math.round((Date.now() - new Date(t).getTime()) / 60000);
+    return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago';
+  }
+  function sectionWorkers(){
+    var head = '<h2>🚀 Workers</h2>';
+    if(!state.workers) return head + '<p class="admin-hint">Checking each Worker…</p>';
+    var run = state.deployRun;
+    var runTx = run
+      ? '<div class="admin-note">Last <strong>Deploy workers</strong> run: ' +
+          (run.status !== 'completed' ? '⏳ ' + esc(run.status) : run.conclusion === 'success' ? '✓ succeeded' : '✗ ' + esc(run.conclusion || 'failed')) +
+          ' · after “' + esc((run.head_commit && run.head_commit.message || '').split('\n')[0]) + '”' +
+          (run.run_started_at && run.updated_at ? ' · ' + Math.max(1, Math.round((new Date(run.updated_at) - new Date(run.run_started_at)) / 1000)) + ' s' : '') +
+          ' · ' + agoTx(run.created_at) + ' · <a href="' + esc(run.html_url) + '" target="_blank" rel="noopener">open the run</a></div>'
+      : '<div class="admin-note admin-note-warn"><strong>Automatic deploys aren\'t running yet.</strong> In GitHub → the repository → Settings → Secrets and variables → Actions, add <code>CLOUDFLARE_API_TOKEN</code> (a Cloudflare API token with “Workers Scripts: Edit”) and <code>CLOUDFLARE_ACCOUNT_ID</code>. From then on, every merge that changes a Worker deploys it by itself.</div>';
+    var badge = { ok: '<span class="adm-ok">✓ deployed</span>', behind: '<span class="adm-warn">behind</span>',
+                  unknown: '<span class="adm-dim">version unknown</span>', down: '<span class="adm-bad">not reachable</span>' };
+    return head + runTx +
+      '<table class="admin-table"><thead><tr><th>Worker</th><th>Running</th><th>Latest on GitHub</th><th></th></tr></thead><tbody>' +
+      state.workers.map(function(w){
+        var fileUrl = 'https://github.com/' + ghRepo() + '/blob/main/' + w.file;
+        return '<tr><td><strong>' + esc(w.name) + '</strong><br><span class="admin-sub">' + esc(w.file) + '</span></td>' +
+          '<td><code>' + esc(w.live && w.live !== '__WORKER_BUILD__' ? w.live : '—') + '</code></td>' +
+          '<td>' + (w.latest ? '<code>' + esc(w.latest.sha.slice(0, 7)) + '</code> <span class="admin-sub">' + esc(agoTx(w.latest.at)) + '</span>' : '—') + '</td>' +
+          '<td>' + badge[w.status] + (w.status === 'behind' || w.status === 'unknown' ? '<br><a class="admin-sub" href="' + esc(fileUrl) + '" target="_blank" rel="noopener">the code to paste</a>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<p class="admin-hint">“Version unknown” means that Worker was pasted by hand, so it can\'t say which commit it is. The first automatic deploy fixes that.</p>' +
+      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn" id="adminWorkersRefresh">Check again</button></div>';
+  }
+
+  // ---------- Waiting for you (round 7, idea 30) ----------
+  // The Dashboard opens on the things that need the maintainer: Workers
+  // behind, contributions not answered, thoughts since the last look, and
+  // universities with no upcoming dates. Each row goes where it's dealt with.
+  var SEEN_THOUGHTS_KEY = 'aaup_adminSeenThoughts';
+  function inboxHtml(){
+    var rows = [];
+    var row = function(text, section, btn){ rows.push('<div class="adm-inbox-row"><span>' + text + '</span><button type="button" class="home-btn" data-inbox-go="' + section + '">' + btn + '</button></div>'); };
+    if(state.workers){
+      var behind = state.workers.filter(function(w){ return w.status === 'behind' || w.status === 'down'; });
+      if(behind.length) row('🚀 ' + behind.length + ' Worker' + (behind.length === 1 ? '' : 's') + ' behind or not reachable: ' + esc(behind.map(function(w){ return w.name; }).join(', ')), 'workers', 'Open');
+      if(!state.deployRun) row('🚀 Automatic Worker deploys aren\'t set up yet', 'workers', 'How');
+    }
+    if(contribSecret() && state.contribItems){
+      var pend = state.contribItems.filter(function(c){ return (c.status || 'pending') === 'pending'; });
+      if(pend.length) row('📮 ' + pend.length + ' contribution' + (pend.length === 1 ? '' : 's') + ' waiting for a reply', 'contributions', 'Review');
+    } else if(contribUrl() && !contribSecret()) row('📮 Contributions: enter the secret once to check for new ones', 'contributions', 'Open');
+    if(thoughtsSecret() && state.thoughtItems){
+      var seen = 0; try{ seen = +localStorage.getItem(SEEN_THOUGHTS_KEY) || 0; }catch(e){}
+      var fresh = state.thoughtItems.filter(function(t){ return (t.at || 0) > seen; });
+      if(fresh.length) row('💬 ' + fresh.length + ' new student thought' + (fresh.length === 1 ? '' : 's') + ' since you last looked', 'thoughts', 'Read');
+    }
+    var today = new Date().toISOString().slice(0, 10);
+    (state.tree || []).filter(function(u){ return u.published; }).forEach(function(u){
+      var d = ((window.APP_UNIVERSITIES || {})[u.slug] || {}).dates || [];
+      if(!d.some(function(x){ return x && x.date >= today; })) row('🗓 ' + esc(u.shortName || u.name) + ' has no upcoming dates (add/drop, midterms, finals)', 'universities', 'Add');
+    });
+    return '<h2>Waiting for you</h2>' + (rows.length ? '<div class="adm-inbox">' + rows.join('') + '</div>'
+      : '<p class="admin-hint">' + (state.workers ? 'Nothing right now.' : 'Checking…') + '</p>');
+  }
+
   function sectionDashboard(){
+    if(!state.workers && !state.workersLoading) setTimeout(loadWorkers, 0);
+    if(contribSecret() && !state.contribItems && !state.contribLoading) setTimeout(loadContributions, 0);
+    if(thoughtsSecret() && !state.thoughtItems && !state.thoughtsLoading) setTimeout(loadThoughts, 0);
     var unis = state.tree || [];
     var majorCount = unis.reduce(function(n, u){ return n + (u.majors || []).length; }, 0);
     var published = unis.filter(function(u){ return u.published; });
-    return '<h2>Overview</h2>' +
+    return inboxHtml() + '<h2>Overview</h2>' +
       '<div class="admin-stats">' +
         stat(published.length, 'published universities') +
         stat(unis.length - published.length, 'unpublished') +
@@ -1476,6 +1580,10 @@
       if(!state.contribLoading && !state.contribItems) loadContributions();
     }
     else if(s === 'accounts') main.innerHTML = sectionAccounts();
+    else if(s === 'workers'){
+      main.innerHTML = sectionWorkers();
+      if(!state.workersLoading && !state.workers) loadWorkers();
+    }
     else if(s === 'thoughts'){
       main.innerHTML = sectionThoughts();
       if(!state.thoughtsLoading && !state.thoughtItems) loadThoughts();
@@ -1495,6 +1603,14 @@
     if(state.section === 'contributions') bindContributions(main);
     if(state.section === 'thoughts') bindThoughts(main);
     if(state.section === 'accounts') bindAccounts(main);
+    on('adminWorkersRefresh', 'click', function(){ state.workers = null; render(); });
+    main.querySelectorAll('[data-inbox-go]').forEach(function(b){
+      b.addEventListener('click', function(){ state.section = b.getAttribute('data-inbox-go'); render(); });
+    });
+    if(state.section === 'thoughts' && state.thoughtItems){
+      var newest = state.thoughtItems.reduce(function(m, t){ return Math.max(m, t.at || 0); }, 0);
+      try{ if(newest) localStorage.setItem(SEEN_THOUGHTS_KEY, String(newest)); }catch(e){}
+    }
 
     main.querySelectorAll('[data-edit-uni]').forEach(function(b){
       b.addEventListener('click', function(){

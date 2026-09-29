@@ -60,6 +60,13 @@
 //   3. Put the Worker URL in APP_ADMIN_URL in web/js/01-catalogue.js.
 // ---------------------------------------------------------------------------
 
+// Which commit this Worker was deployed from. .github/workflows/
+// deploy-workers.yml writes it in on every deploy; a copy pasted by hand
+// keeps the placeholder, which the admin room reads as "version unknown".
+// GET /__version answers with it, so the admin room can tell whether each
+// Worker is up to date.
+const WORKER_BUILD = '__WORKER_BUILD__';
+
 const SESSION_TTL_SECONDS = 8 * 60 * 60;      // a working day, then log in again
 const MAX_JSON_BYTES = 400 * 1024;            // one major file, generously
 const MAX_IMAGE_BYTES = 512 * 1024;           // a logo, not a photograph
@@ -998,6 +1005,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: corsHeaders(env, request) });
     }
+    if (path === '/__version') return json({ build: WORKER_BUILD }, 200, env, request);
 
     // Unauthenticated, and deliberately almost silent. An earlier version
     // reported whether an admin was configured and which repo it wrote to,
