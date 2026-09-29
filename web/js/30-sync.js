@@ -405,7 +405,19 @@
     return run;
   }
 
+  // The university's own version of one plan, fresh from the feed and
+  // cleaned the same way an update is: what "Reset to official plan" puts a
+  // semester back to (js/106-semester.js). Resolves to null when offline or
+  // when the plan isn't an official one.
+  function officialPlan(id){
+    return fetchFeed().then(function(feed){
+      var fp = feed && Array.isArray(feed.plans) ? feed.plans.filter(function(x){ return x && x.id === id; })[0] : null;
+      return fp ? sanitizePlan(fp) : null;
+    }).catch(function(){ return null; });
+  }
+
   window.AAUP_SYNC = {
+    officialPlan: officialPlan,
     checkForUpdates: checkForUpdates,
     lastSyncLabel: lastSyncLabel,
     // Exposed so the consent path can be driven with a crafted feed. Reaching

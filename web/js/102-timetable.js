@@ -127,6 +127,7 @@
       if(form && form.querySelector('[data-tt-day][aria-pressed="true"]') && saveForm(form)) render();
     }).observe(el, { attributes: true, attributeFilter: ['class'] });
     el.addEventListener('input', function(e){ if(e.target.id === 'ttPick') fillPicks(); });
+    el.addEventListener('change', function(e){ var f = e.target.closest && e.target.closest('.tt-form'); if(f) autoSave(f); });
     el.addEventListener('keydown', function(e){
       if(e.target.id !== 'ttPick' || e.key !== 'Enter') return;
       var first = document.querySelector('#ttPickList [data-tt-pick]') || document.querySelector('#ttPickList [data-tt-own]');
@@ -171,7 +172,7 @@
         var rows = m[c.id] || [];
         return '<div class="tt-course">' +
           '<div class="tt-course-h"><b>' + esc(courseName(c)) + '</b>' +
-            (editing === c.id ? '' : '<button type="button" class="cloud-link" data-tt-add="' + esc(c.id) + '">+ ' + esc(L('Add a time', 'ضيف وقت')) + '</button>') + '</div>' +
+            '<button type="button" class="cloud-link" data-tt-add="' + esc(c.id) + '">+ ' + esc(L('Add a time', 'ضيف وقت')) + '</button></div>' +
           rows.map(function(x, i){
             return '<div class="tt-meet"><span>' + meetingHtml(x) + '</span>' +
               '<button type="button" class="dates-del" data-tt-del="' + esc(c.id) + '" data-tt-i="' + i + '" aria-label="' + esc(L('Remove', 'احذف')) + '">×</button></div>';
@@ -232,8 +233,10 @@
         '<label class="tt-room">' + esc(L('Room', 'القاعة')) + '<input type="text" class="tt-r" maxlength="20" placeholder="B-203"></label>' +
       '</div>' +
       '<p class="dev-error-msg tt-err" hidden></p>' +
-      '<div class="form-actions" style="justify-content:flex-start;">' +
-        '<button type="button" class="home-btn btn-pri btn-sm" data-tt-save="' + esc(slug) + '">' + esc(L('Save', 'حفظ')) + '</button>' +
+      // No Save button (round 7, idea 10): the time is kept as soon as it has
+      // a day and a start and end, and "Saved" says so. Cancel takes it back.
+      '<div class="form-actions" style="justify-content:flex-start;align-items:center;">' +
+        '<span class="tt-saved" hidden>' + esc(L('✓ Saved', '✓ انحفظ')) + '</span>' +
         '<button type="button" class="home-btn btn-quiet btn-sm" data-tt-cancel>' + esc(L('Cancel', 'إلغاء')) + '</button>' +
       '</div></div>';
   }
@@ -242,7 +245,14 @@
     var t = e.target, b;
     if(t === el || t.closest('[data-tt-close]')){ close(); return; }
     if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); render(); return; }
-    if(t.closest('[data-tt-cancel]')){ editing = null; adding = false; picked = null; render(); return; }
+    if(t.closest('[data-tt-cancel]')){
+      var cf = t.closest('.tt-form');
+      if(cf && cf.getAttribute('data-idx')){
+        var cm = forPlan(openFor), ck = cf.getAttribute('data-tt-form');
+        if(cm[ck]){ cm[ck].splice(+cf.getAttribute('data-idx'), 1); if(!cm[ck].length) delete cm[ck]; savePlan(openFor, cm); }
+      }
+      editing = null; adding = false; picked = null; render(); return;
+    }
     if(t.closest('[data-tt-cal]')){
       var dm = document.getElementById('devModalOverlay');
       if(dm){
@@ -260,7 +270,7 @@
       if(nm) startTimes('x:' + nm);
       return;
     }
-    if((b = t.closest('[data-tt-day]'))){ b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); return; }
+    if((b = t.closest('[data-tt-day]'))){ b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); autoSave(b.closest('.tt-form')); return; }
     if((b = t.closest('[data-tt-del]'))){
       var m = forPlan(openFor), slug = b.getAttribute('data-tt-del'), i = +b.getAttribute('data-tt-i');
       (m[slug] || []).splice(i, 1);
@@ -268,23 +278,42 @@
       savePlan(openFor, m); render();
       return;
     }
-    if((b = t.closest('[data-tt-save]'))){
-      if(saveForm(b.closest('.tt-form'))) render();
-    }
   }
-  // Saves the open add-a-time form; false (with the reason shown) if it can't.
-  function saveForm(form){
-    var err = form.querySelector('.tt-err');
+  // What the form holds, and what's wrong with it if anything.
+  function readForm(form){
     var days = Array.prototype.map.call(form.querySelectorAll('[data-tt-day][aria-pressed="true"]'), function(x){ return +x.getAttribute('data-tt-day'); });
     var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
-    if(!days.length){ err.textContent = L('Pick at least one day.', 'اختار يوم واحد على الأقل.'); err.hidden = false; return false; }
-    if(!s || !en || mins(en) <= mins(s)){ err.textContent = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.'); err.hidden = false; return false; }
+    var problem = '';
+    if(!days.length) problem = L('Pick at least one day.', 'اختار يوم واحد على الأقل.');
+    else if(!s || !en || mins(en) <= mins(s)) problem = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.');
     // A class before 6 in the morning is almost always 12:15 PM entered as AM
     // on a phone's 12-hour clock.
-    if(mins(s) < 6 * 60){ err.textContent = L('That is ' + s + ' at night. Did you mean PM? (e.g. 12:15 PM)', 'هاد ' + s + ' بالليل. قصدك بعد الظهر؟ (مثلًا 12:15 م)'); err.hidden = false; return false; }
-    var map = forPlan(openFor), key = form.getAttribute('data-tt-form');
-    (map[key] = map[key] || []).push({ d: days, s: s, e: en, r: r });
+    else if(mins(s) < 6 * 60) problem = L('That is ' + s + ' at night. Did you mean PM? (e.g. 12:15 PM)', 'هاد ' + s + ' بالليل. قصدك بعد الظهر؟ (مثلًا 12:15 م)');
+    return { v: { d: days, s: s, e: en, r: r }, problem: problem };
+  }
+  // The first write adds the time; later ones update the same time.
+  function writeForm(form, v){
+    var map = forPlan(openFor), key = form.getAttribute('data-tt-form'), idx = form.getAttribute('data-idx');
+    map[key] = map[key] || [];
+    if(idx && map[key][+idx]) map[key][+idx] = v;
+    else { map[key].push(v); form.setAttribute('data-idx', String(map[key].length - 1)); }
     savePlan(openFor, map);
+  }
+  // Kept as it is typed (round 7, idea 10). Silent while it isn't complete;
+  // what is wrong is said when the window closes.
+  function autoSave(form){
+    if(!form) return;
+    var f = readForm(form), ok = form.querySelector('.tt-saved');
+    if(f.problem){ if(ok) ok.hidden = true; return; }
+    writeForm(form, f.v);
+    form.querySelector('.tt-err').hidden = true;
+    if(ok) ok.hidden = false;
+  }
+  // On the way out: saves, or says what to fix and keeps the window open.
+  function saveForm(form){
+    var err = form.querySelector('.tt-err'), f = readForm(form);
+    if(f.problem){ err.textContent = f.problem; err.hidden = false; return false; }
+    writeForm(form, f.v);
     editing = null; picked = null;
     return true;
   }

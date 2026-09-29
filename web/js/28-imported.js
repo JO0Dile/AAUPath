@@ -1891,6 +1891,13 @@
       // history is marking forty-odd courses one at a time before the app is
       // useful to them at all, which is where most people give up. The button
       // says which way it will go, so it is never a guess.
+      // Round 7: in Edit Mode, an official plan's semester can be put back
+      // the way the university has it (js/106-semester.js), with an undo.
+      (editing && plan && plan.official
+        ? '<button type="button" class="imp-sem-reset" data-sem-reset="' + window.__escapeHtml(yearId + '|' + semester) +
+          '" data-plan="' + window.__escapeHtml(planId) + '" aria-label="' + window.__escapeHtml(rtl ? 'رجّع هالفصل للخطة الرسمية' : 'Reset this semester to the official plan') +
+          '" title="' + window.__escapeHtml(rtl ? 'رجّع هالفصل للخطة الرسمية' : 'Reset this semester to the official plan') + '">' + window.__escapeHtml(rtl ? '↺ رجّع' : '↺ Reset') + '</button>'
+        : '') +
       (!editing && courses.length
         ? '<button type="button" class="imp-sem-bulk" data-sem-bulk="' + containerId +
           '" data-plan="' + window.__escapeHtml(planId) + '">' +

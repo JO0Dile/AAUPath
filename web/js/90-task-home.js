@@ -345,6 +345,10 @@
       dEn: 'How far you are and what is left', dAr: 'وين وصلت وشو ضايل',
       words: ['progress', 'audit', 'graduat', 'dashboard', 'تقدم', 'تخرج'],
       run: function(id){ window.AAUP_DASHBOARD.open(id); } },
+    { key: 'finish', icon: 'check', needs: true, en: 'Finish this semester', ar: 'سكّر الفصل',
+      dEn: 'Tick what you passed and add the grades, in one go', dAr: 'علّم اللي نجحت فيه وحط العلامات، مرة وحدة',
+      words: ['end of semester', 'finish semester', 'semester over', 'انتهى الفصل', 'خلص الفصل', 'سكر الفصل', 'نهاية الفصل'],
+      run: function(id){ window.AAUP_SEMESTER.open(id); } },
     { key: 'contacts', icon: 'people', needs: false, en: 'University Contacts', ar: 'جهات اتصال الجامعة',
       dEn: 'Registration, finance, IT, deans', dAr: 'التسجيل، المالية، تقنية المعلومات، العمادات',
       words: ['contact', 'registration', 'finance', 'email', 'office', 'اتصال', 'تسجيل', 'مالي', 'مكتب'],
@@ -644,6 +648,7 @@
           '</button></div>';
       }).join('') +
       (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.promptHtml(id) : '') +
+      (window.AAUP_SEMESTER ? window.AAUP_SEMESTER.promptHtml(id) : '') +
       '</section>';
   }
 

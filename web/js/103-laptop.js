@@ -6,6 +6,9 @@
 // and its status, without opening it. Only where there is a real mouse
 // (hover + fine pointer); a finger never sees it.
 //
+// On a phone, holding a card for half a second opens the same menu as a
+// sheet along the bottom (round 7).
+//
 // Right-click: the common actions without opening the course: passed /
 // in progress / planned / not started, open, pin to Home, move to another
 // semester. Status changes go through the same calls the course window's
@@ -167,6 +170,9 @@
   }
   function placeMenu(x, y){
     menu.hidden = false;
+    // On a phone the menu is a sheet along the bottom (round 7, long-press),
+    // where the thumb already is; CSS places it.
+    if(menu.classList.contains('is-sheet')){ menu.style.left = menu.style.top = ''; return; }
     var w = menu.offsetWidth, hgt = menu.offsetHeight;
     menu.style.left = Math.min(Math.max(8, x), window.innerWidth - w - 8) + 'px';
     menu.style.top = Math.min(Math.max(8, y), window.innerHeight - hgt - 8) + 'px';
@@ -209,20 +215,67 @@
       if(window.__showToast) window.__showToast(L('Moved', 'انتقل'));
     }
   }
+  function openMenu(hit, x, y, asSheet){
+    hideTip();
+    menuEl();
+    menuFor = hit;
+    menu.classList.toggle('is-sheet', !!asSheet);
+    renderMenu(false);
+    placeMenu(x, y);
+    var first = menu.querySelector('button');
+    if(first && !asSheet) first.focus({ preventScroll: true });
+  }
   document.addEventListener('contextmenu', function(e){
     if(!hasMouse()) return;
     var hit = cardAt(e.target);
     if(!hit) return;
     e.preventDefault();
-    hideTip();
-    menuEl();
-    menuFor = hit;
-    renderMenu(false);
-    placeMenu(e.clientX, e.clientY);
-    var first = menu.querySelector('button');
-    if(first) first.focus({ preventScroll: true });
+    openMenu(hit, e.clientX, e.clientY, false);
   });
-  document.addEventListener('mousedown', function(e){ if(menu && !menu.hidden && !menu.contains(e.target)) closeMenu(); }, true);
+
+  // ---- long-press on a phone (round 7, ideas 12 and 13) ------------------------
+  // Holding a course for half a second opens the same menu, as a sheet:
+  // status, open, pin, and Move to… for the semester list. Moving the finger
+  // (a scroll, or the swipe that ticks a card) cancels it, and the tap that
+  // ends a long-press doesn't also open the course.
+  var press = null, swallowClick = false, lastTouch = 0;
+  document.addEventListener('touchstart', function(e){
+    lastTouch = Date.now();
+    // A new touch means the click that may follow a long-press never came.
+    if(!(menu && !menu.hidden)) swallowClick = false;
+    if(e.touches.length !== 1) { press = null; return; }
+    var hit = cardAt(e.target);
+    if(!hit) return;
+    var t = e.touches[0];
+    press = { hit: hit, x: t.clientX, y: t.clientY, timer: setTimeout(function(){
+      if(!press) return;
+      swallowClick = true;
+      if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(err){} }
+      openMenu(press.hit, 0, 0, true);
+      press = null;
+    }, 480) };
+  }, { passive: true, capture: true });
+  document.addEventListener('touchmove', function(e){
+    if(!press) return;
+    var t = e.touches[0];
+    if(Math.abs(t.clientX - press.x) > 10 || Math.abs(t.clientY - press.y) > 10){ clearTimeout(press.timer); press = null; }
+  }, { passive: true, capture: true });
+  ['touchend', 'touchcancel'].forEach(function(ev){
+    document.addEventListener(ev, function(){ lastTouch = Date.now(); if(press){ clearTimeout(press.timer); press = null; } }, { passive: true, capture: true });
+  });
+  document.addEventListener('click', function(e){
+    if(!swallowClick) return;
+    swallowClick = false;
+    if(menu && menu.contains(e.target)) return;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
+  document.addEventListener('touchstart', function(e){ if(menu && !menu.hidden && !menu.contains(e.target)) closeMenu(); }, true);
+  // The pretend mouse events a phone fires after a touch don't close it; a
+  // real outside tap does, through touchstart above.
+  document.addEventListener('mousedown', function(e){
+    if(Date.now() - lastTouch < 800) return;
+    if(menu && !menu.hidden && !menu.contains(e.target)) closeMenu();
+  }, true);
   document.addEventListener('keydown', function(e){
     if(!menu || menu.hidden) return;
     if(e.key === 'Escape'){ closeMenu(); return; }
@@ -234,5 +287,7 @@
       e.preventDefault();
     }
   });
-  window.addEventListener('scroll', function(){ closeMenu(); }, true);
+  // Scrolling the page closes the menu; scrolling inside it (the semester
+  // list in the sheet) doesn't.
+  window.addEventListener('scroll', function(e){ if(!(menu && e.target && e.target.nodeType === 1 && menu.contains(e.target))) closeMenu(); }, true);
 })();
