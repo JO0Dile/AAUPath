@@ -49,8 +49,8 @@
 //                                     section. Without it those routes are off.
 //   7. Optional — Sign in with Google:
 //        GOOGLE_CLIENT_ID (Variable)  the OAuth "Web application" client id
-//                                     from Google Cloud; the same value goes
-//                                     in APP_GOOGLE_CLIENT_ID in 01-catalogue.js.
+//                                     from Google Cloud. The app reads it from
+//                                     GET /api/google/config, so it is set here only.
 //   See cloud/README.md for the full walkthrough.
 //
 // ACCOUNT RECOVERY (no email service needed):
@@ -669,6 +669,12 @@ export default {
 
     if (path === '/api/health' || path === '/health') {
       return json({ ok: true }, 200, env, request);
+    }
+    // The Google client id is public (Google shows it to anyone who opens the
+    // sign-in button), so the app reads it from here instead of it being
+    // copied into the app's code as well.
+    if (path === '/api/google/config' && request.method === 'GET') {
+      return json({ clientId: env.GOOGLE_CLIENT_ID || '' }, 200, env, request);
     }
 
     // `return await`, never a bare `return`: an un-awaited handler promise

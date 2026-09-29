@@ -513,7 +513,7 @@
           ? 'ما عندك الرمز؟ إذا لسا مسجّل دخول على جهاز ثاني، غيّرها من هناك (تغيير كلمة المرور ← نسيت كلمتك الحالية؟). غير هيك، تواصل مع فريق AAUPath ليعطوك كلمة مرور مؤقتة.'
           : 'No code? If you are still signed in on another phone, change it there (Change password → "Forgot your current password?"). Otherwise, contact the AAUPath team for a temporary password.') + '</p>' +
       '</div>' +
-      (window.APP_GOOGLE_CLIENT_ID ? '<div class="cloud-or"><span>' + (r ? 'أو' : 'or') + '</span></div><div id="cloudGoogleBtn" class="cloud-google"></div>' : '') +
+      '<div id="cloudGoogleWrap" style="display:none;"><div class="cloud-or"><span>' + (r ? 'أو' : 'or') + '</span></div><div id="cloudGoogleBtn" class="cloud-google"></div></div>' +
       '<div id="cloudSignUpBox" style="display:none;margin-top:10px;">' +
       '<p class="form-note" style="margin-top:0;">' + (r
         ? 'أنشئ حسابًا بنفس الإيميل أعلاه — اسم مستخدم اختياري لتسجيل دخول أسهل من الإيميل.'
@@ -690,8 +690,14 @@
         });
       });
     }
-    var gHost = root.querySelector('#cloudGoogleBtn');
-    if(gHost) mountGoogle(gHost, rtl, root);
+    var gWrap = root.querySelector('#cloudGoogleWrap');
+    if(gWrap){
+      googleClientId().then(function(id){
+        if(!id || !gWrap.isConnected) return;
+        gWrap.style.display = '';
+        mountGoogle(gWrap.querySelector('#cloudGoogleBtn'), rtl, root);
+      });
+    }
     var signInBtn = root.querySelector('#cloudSignInBtn');
     var toggleSignUpBtn = root.querySelector('#cloudToggleSignUpBtn');
     if(toggleSignUpBtn){
@@ -781,7 +787,23 @@
   }
 
   // Sign in with Google: Google's own button (Identity Services), loaded
-  // only when APP_GOOGLE_CLIENT_ID is set and only when this form is shown.
+  // only when a client id is known and only when this form is shown. The id
+  // comes from APP_GOOGLE_CLIENT_ID if set, otherwise from the cloud Worker's
+  // GOOGLE_CLIENT_ID (asked once per app open; no id means no button).
+  var gIdAsk = null;
+  function googleClientId(){
+    if(window.APP_GOOGLE_CLIENT_ID) return Promise.resolve(window.APP_GOOGLE_CLIENT_ID);
+    if(!isConfigured()) return Promise.resolve('');
+    if(!gIdAsk){
+      gIdAsk = request('/api/google/config').then(function(r){
+        var id = (r.ok && r.data && r.data.clientId) || '';
+        if(id) window.APP_GOOGLE_CLIENT_ID = id;
+        else gIdAsk = null;   // offline or not set up yet: ask again next time
+        return id;
+      });
+    }
+    return gIdAsk;
+  }
   var gsiLoading = null;
   function loadGsi(){
     if(window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
