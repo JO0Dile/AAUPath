@@ -163,6 +163,10 @@
       '<button type="button" class="home-btn btn-quiet btn-sm" id="ttClose" data-tt-close>' + esc(L('Done', 'تم')) + '</button></div>' +
       '<p class="form-note" style="margin-top:0;">' + esc(L('From your registration. Home shows today\'s classes from these.', 'من تسجيلك. الرئيسية بتعرض محاضرات اليوم منها.')) + '</p>' +
       (window.AAUP_WEEK ? window.AAUP_WEEK.panelHtml(openFor) : '') +
+      // My Week holds the calendar file too (round 7, idea 1): it opens over
+      // this window, and closing it comes back here.
+      (window.AAUP_CALENDAR && hasAny(openFor) ? '<button type="button" class="home-btn btn-sm tt-cal-btn" data-tt-cal>' + ic('calendar', 15) +
+        esc(L('Add to my calendar', 'ضيفها لتقويمي')) + '</button>' : '') +
       (list.length ? list.map(function(c){
         var rows = m[c.id] || [];
         return '<div class="tt-course">' +
@@ -239,6 +243,16 @@
     if(t === el || t.closest('[data-tt-close]')){ close(); return; }
     if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); render(); return; }
     if(t.closest('[data-tt-cancel]')){ editing = null; adding = false; picked = null; render(); return; }
+    if(t.closest('[data-tt-cal]')){
+      var dm = document.getElementById('devModalOverlay');
+      if(dm){
+        dm.classList.add('is-over-tt');
+        new MutationObserver(function(l, o){ if(!dm.classList.contains('open')){ dm.classList.remove('is-over-tt'); o.disconnect(); } })
+          .observe(dm, { attributes: true, attributeFilter: ['class'] });
+      }
+      window.AAUP_CALENDAR.open(openFor);
+      return;
+    }
     if(t.closest('[data-tt-more]')){ adding = true; editing = null; render(); return; }
     if((b = t.closest('[data-tt-pick]'))){ startTimes(b.getAttribute('data-tt-pick')); return; }
     if(t.closest('[data-tt-own]')){

@@ -342,8 +342,19 @@
     if(hash.indexOf('#action=') === 0){
       var action = hash.slice(8);
       history.replaceState(null, '', location.pathname + location.search);
+      // Search needs no plan: Home, with the box focused.
+      if(action === 'search'){
+        if(window.AAUP_TASK_HOME) window.AAUP_TASK_HOME.show();
+        setTimeout(function(){ var box = document.getElementById('hmSearch'); if(box) box.focus(); }, 400);
+        return;
+      }
       var actionPrefix = window.AAUP_DASHBOARD ? window.AAUP_DASHBOARD.getSelected() : null;
       if(!actionPrefix) return;
+      if(action === 'times' && window.AAUP_TIMETABLE){
+        if(window.AAUP_TASK_HOME) window.AAUP_TASK_HOME.show();
+        setTimeout(function(){ window.AAUP_TIMETABLE.open(actionPrefix); }, 400);
+        return;
+      }
       window.AAUP_DASHBOARD.selectAndOpen(actionPrefix);
       if(action === 'assistant' && window.AAUP_ASSISTANT_UI){
         setTimeout(function(){ window.AAUP_ASSISTANT_UI.open(); }, 300);

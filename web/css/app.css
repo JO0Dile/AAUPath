@@ -7850,13 +7850,29 @@ html[dir="rtl"] .imp-semester-block.sem-now{padding:10px 16px 12px 12px;}
 @media (hover:hover){ .hm-card:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.14);} }
 @media (prefers-reduced-motion: reduce){ .hm-card, .hm-card-ic{transition:none;} .hm-card:hover{transform:none;} }
 
-.hm-also{display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
-.hm-also .hm-label{flex-basis:100%;}
 .hm-pill{
   min-height:44px; padding:0 16px; display:inline-flex; align-items:center; gap:7px;
   border-radius:999px; border:1px solid var(--line); background:var(--surface-bg); color:var(--text);
   font-size:13.5px; font-weight:600;
 }
+/* The More row under the Home cards (round 7) and the list it opens. */
+.hm-more-row{display:flex; align-items:center; gap:12px; width:100%; min-height:56px; margin-top:10px; padding:10px 14px; border:1px solid var(--line); border-radius:14px; background:var(--surface-bg); color:var(--text); font:inherit; text-align:start; cursor:pointer;}
+.hm-more-row > svg{color:var(--accent); flex:none;}
+.hm-more-body{display:flex; flex-direction:column; min-width:0; flex:1;}
+.hm-more-body b{font-size:14px;}
+.hm-more-body span{font-size:12px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hm-more-go{color:var(--text-dim); font-size:20px; line-height:1;}
+[dir="rtl"] .hm-more-go{transform:scaleX(-1);}
+.hm-more-card{max-width:460px;}
+.hm-more-list{display:flex; flex-direction:column; margin:4px 0 6px;}
+.hm-more-item{display:flex; align-items:center; gap:12px; min-height:56px; padding:8px 4px; border:0; border-top:1px solid var(--line); background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer;}
+.hm-more-item:first-child{border-top:0;}
+.hm-more-item span span{white-space:normal;}
+/* Search that answers (round 7). */
+.hm-answer{display:flex; flex-direction:column; align-items:flex-start; width:100%; margin:0 0 10px; padding:12px 14px; border:1px solid color-mix(in srgb, var(--accent) 50%, var(--line)); border-radius:14px; background:color-mix(in srgb, var(--accent) 8%, var(--surface-bg)); color:var(--text); font:inherit; text-align:start; cursor:pointer;}
+.hm-answer-l{font-size:12px; color:var(--text-dim); font-weight:700;}
+.hm-answer-big{font-size:28px; font-weight:900; line-height:1.15; font-variant-numeric:tabular-nums;}
+.hm-answer-sub{font-size:12.5px; color:var(--text-dim);}
 .hm-foot{display:flex; align-items:center; justify-content:center; gap:14px; padding-top:4px;}
 .hm-ver{background:none; border:0; padding:4px 6px; font:inherit; color:var(--text-dim); font-size:11.5px; cursor:default; -webkit-tap-highlight-color:transparent;}
 .hm-rail{display:none;}
@@ -7904,7 +7920,6 @@ html[dir="rtl"] .imp-semester-block.sem-now{padding:10px 16px 12px 12px;}
   .hm-card-desc{font-size:13.5px; line-height:1.4; -webkit-line-clamp:2;}
   /* On a wide screen the numbers live in the panel beside the cards. */
   .hm-card-val{display:none;}
-  .hm-also .hm-label{flex-basis:auto; margin-inline-end:4px;}
   .hm-foot{justify-content:flex-start;}
 
   .hm-rail{
@@ -9049,6 +9064,8 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .tt-meet{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; font-size:12.5px; color:var(--text-dim);}
 .tt-form{margin-top:8px;}
 .tt-more{margin-top:10px;}
+.tt-cal-btn{margin:2px 0 8px;}
+#devModalOverlay.is-over-tt{z-index:1002;}
 .tt-pick{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px;}
 .tt-pick-l{display:block; font-weight:700; font-size:13px; margin-bottom:6px;}
 .tt-pick input{width:100%; font:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:var(--surface-bg); color:var(--text);}

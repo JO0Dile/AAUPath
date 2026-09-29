@@ -168,63 +168,70 @@
       dEn: 'Prerequisites, hours, what unlocks what', dAr: 'المتطلبات والساعات وشو بيفتح شو',
       words: ['course', 'prereq', 'library', 'subject', 'مساق', 'متطلب', 'مادة'],
       run: function(id){ window.AAUP_IMPORTED.openLibrary(id); } },
-    { key: 'sched', icon: 'calendar', needs: true, en: 'My Schedule', ar: 'جدولي',
-      dEn: 'Your semesters on your calendar', dAr: 'فصولك على تقويمك',
-      words: ['schedule', 'calendar', 'semester', 'جدول', 'تقويم', 'فصل'],
-      run: function(id){ window.AAUP_CALENDAR.open(id); } },
-    { key: 'classes', icon: 'clock', needs: true, en: 'My Class Times', ar: 'أوقات محاضراتي',
-      dEn: 'Days, times and rooms, clashes in red', dAr: 'الأيام والساعات والقاعات، والتعارض بالأحمر',
-      words: ['class', 'time', 'timetable', 'lecture', 'room', 'محاضر', 'وقت', 'أوقات', 'ساعات', 'موعد', 'قاعة'],
+    // My Week: the class times, with "Add to my calendar" inside them. It
+    // took the place of the two cards My Schedule and My Class Times.
+    { key: 'classes', icon: 'clock', needs: true, en: 'My Week', ar: 'أسبوعي',
+      dEn: 'Class times, and your calendar', dAr: 'أوقات محاضراتك، وتقويمك',
+      words: ['class', 'time', 'timetable', 'lecture', 'room', 'week', 'محاضر', 'وقت', 'أوقات', 'ساعات', 'موعد', 'قاعة', 'أسبوع'],
       run: function(id){ window.AAUP_TIMETABLE.open(id); } },
-    { key: 'progress', icon: 'chart', needs: true, en: 'Degree Progress', ar: 'تقدّمي الدراسي',
-      dEn: 'How far you are and what is left', dAr: 'وين وصلت وشو ضايل',
-      words: ['progress', 'audit', 'graduat', 'dashboard', 'تقدم', 'تخرج'],
-      run: function(id){ window.AAUP_DASHBOARD.open(id); } },
     { key: 'ach', icon: 'trophy', needs: true, en: 'Achievements', ar: 'الإنجازات',
       dEn: 'Badges you’ve earned so far', dAr: 'الشارات اللي حصّلتها لهلق',
       words: ['achiev', 'badge', 'إنجاز', 'شار'],
       run: function(id){ window.AAUP_ACHIEVEMENTS.open(id); } }
   ];
   // ---- Arrange Home (idea 18) ------------------------------------------------
-  // The student's own order for the cards, and the ones they hid. Hidden
-  // cards still turn up in search, so nothing becomes unreachable.
+  // The student's own order for the cards, and where each thing lives: on
+  // Home as a card, or in the More row under the cards. Cards start on Home
+  // and the small extras (switch major, share, about, what's new) start in
+  // More; Arrange moves either way.
+  //   order:  the Home order (card and extra keys)
+  //   hidden: cards moved to More (the name is older than More)
+  //   out:    extras brought out onto Home
   var ARRANGE_KEY = 'aaup_homeArrange';
   function arrangeCfg(){
     var c = window.AAUP_STORAGE ? window.AAUP_STORAGE.getJSON(ARRANGE_KEY, {}) : {};
-    return { order: Array.isArray(c && c.order) ? c.order : [], hidden: Array.isArray(c && c.hidden) ? c.hidden : [] };
+    var arr = function(v){ return Array.isArray(v) ? v : []; };
+    return { order: arr(c && c.order), hidden: arr(c && c.hidden), out: arr(c && c.out) };
   }
   function saveArrange(c){ if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(ARRANGE_KEY, c); }
+  function isExtra(key){ return EXTRAS.some(function(f){ return f.key === key; }); }
+  function offered(f){ return !f.onlyWithPlan || !!selected(); }
+  function onHome(f, c){ return isExtra(f.key) ? c.out.indexOf(f.key) >= 0 : c.hidden.indexOf(f.key) < 0; }
+  // Everything that can be a card or a More row, in the student's order.
   function orderedFeatures(){
     var order = arrangeCfg().order, byKey = {};
-    FEATURES.forEach(function(f){ byKey[f.key] = f; });
+    var pool = FEATURES.concat(EXTRAS).filter(offered);
+    pool.forEach(function(f){ byKey[f.key] = f; });
     var out = [];
     order.forEach(function(k){ if(byKey[k]){ out.push(byKey[k]); delete byKey[k]; } });
-    FEATURES.forEach(function(f){ if(byKey[f.key]) out.push(f); });   // new cards join at the end
+    pool.forEach(function(f){ if(byKey[f.key]) out.push(f); });   // new ones join at the end
     return out;
   }
   function arrangedFeatures(){
-    var hidden = arrangeCfg().hidden;
-    return orderedFeatures().filter(function(f){ return hidden.indexOf(f.key) < 0; });
+    var c = arrangeCfg();
+    return orderedFeatures().filter(function(f){ return onHome(f, c); });
+  }
+  function moreFeatures(){
+    var c = arrangeCfg();
+    return orderedFeatures().filter(function(f){ return !onHome(f, c); });
   }
 
   function arrangeRowsHtml(){
-    var hidden = arrangeCfg().hidden;
-    var list = orderedFeatures();
-    var shown = list.filter(function(f){ return hidden.indexOf(f.key) < 0; });
-    var off = list.filter(function(f){ return hidden.indexOf(f.key) >= 0; });
+    var shown = arrangedFeatures();
+    var off = moreFeatures();
     var row = function(f, isHidden, i, n){
       return '<div class="arr-row' + (isHidden ? ' is-hidden' : '') + '" data-arr-key="' + f.key + '">' +
         (isHidden ? '' : '<span class="arr-handle" aria-hidden="true">' + ic('menu', 16) + '</span>') +
         '<span class="arr-ic">' + ic(f.icon, 16) + '</span>' +
-        '<span class="arr-name">' + esc(L(f.en, f.ar)) + '</span>' +
+        '<span class="arr-name">' + esc(titleOf(f)) + '</span>' +
         (isHidden ? '' :
           '<button type="button" class="arr-mv" data-arr-up="' + f.key + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="' + esc(L('Move up', 'لفوق')) + '">↑</button>' +
           '<button type="button" class="arr-mv" data-arr-down="' + f.key + '"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="' + esc(L('Move down', 'لتحت')) + '">↓</button>') +
-        '<button type="button" class="arr-hide" data-arr-toggle="' + f.key + '">' + esc(isHidden ? L('Show', 'أظهر') : L('Hide', 'أخفِ')) + '</button>' +
+        '<button type="button" class="arr-hide" data-arr-toggle="' + f.key + '">' + esc(isHidden ? L('Put on Home', 'حطّها بالرئيسية') : L('Move to More', 'انقلها لـ المزيد')) + '</button>' +
         '</div>';
     };
     return '<div class="arr-list" id="arrShown">' + shown.map(function(f, i){ return row(f, false, i, shown.length); }).join('') + '</div>' +
-      (off.length ? '<div class="arr-sub">' + esc(L('Hidden · still found by search', 'مخفية · بتلاقيها بالبحث')) + '</div>' +
+      (off.length ? '<div class="arr-sub">' + esc(L('In More', 'بـ المزيد')) + '</div>' +
         '<div class="arr-list">' + off.map(function(f){ return row(f, true); }).join('') + '</div>' : '');
   }
   function arrangeOverlay(){
@@ -238,21 +245,22 @@
     el.addEventListener('click', function(e){
       var t = e.target, b, c = arrangeCfg();
       if(t === el || t.closest('[data-arr-done]')){ el.classList.remove('open'); render(); return; }
-      if(t.closest('[data-arr-reset]')){ saveArrange({ order: [], hidden: [] }); renderArrange(); return; }
-      var keys = orderedFeatures().filter(function(f){ return c.hidden.indexOf(f.key) < 0; }).map(function(f){ return f.key; });
+      if(t.closest('[data-arr-reset]')){ saveArrange({ order: [], hidden: [], out: [] }); renderArrange(); return; }
+      var keys = arrangedFeatures().map(function(f){ return f.key; });
+      var offKeys = moreFeatures().map(function(f){ return f.key; });
       if((b = t.closest('[data-arr-up]')) || (b = t.closest('[data-arr-down]'))){
         var k = b.getAttribute('data-arr-up') || b.getAttribute('data-arr-down');
         var i = keys.indexOf(k), j = b.hasAttribute('data-arr-up') ? i - 1 : i + 1;
         if(i < 0 || j < 0 || j >= keys.length) return;
         keys.splice(j, 0, keys.splice(i, 1)[0]);
-        c.order = keys.concat(c.hidden);
+        c.order = keys.concat(offKeys);
         saveArrange(c); renderArrange();
         return;
       }
       if((b = t.closest('[data-arr-toggle]'))){
         var key = b.getAttribute('data-arr-toggle');
-        if(c.hidden.indexOf(key) >= 0) c.hidden = c.hidden.filter(function(x){ return x !== key; });
-        else c.hidden.push(key);
+        var list = isExtra(key) ? c.out : c.hidden;
+        if(list.indexOf(key) >= 0) list.splice(list.indexOf(key), 1); else list.push(key);
         c.order = orderedFeatures().map(function(f){ return f.key; });
         saveArrange(c); renderArrange();
       }
@@ -283,7 +291,8 @@
       if(!drag) return;
       drag.row.classList.remove('is-drag');
       var c = arrangeCfg();
-      c.order = Array.prototype.map.call(drag.list.children, function(r){ return r.getAttribute('data-arr-key'); }).concat(c.hidden);
+      c.order = Array.prototype.map.call(drag.list.children, function(r){ return r.getAttribute('data-arr-key'); })
+        .concat(moreFeatures().map(function(f){ return f.key; }));
       saveArrange(c);
       drag = null;
       renderArrange();
@@ -299,7 +308,7 @@
     body.innerHTML =
       '<div class="arr-head"><h2 class="mh" id="arrTitle" style="margin:0;">' + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</h2>' +
       '<button type="button" class="home-btn btn-pri btn-sm" data-arr-done>' + esc(L('Done', 'تم')) + '</button></div>' +
-      '<p class="form-note" style="margin-top:0;">' + esc(L('Drag by the handle, or use the arrows. Hide what you never use.', 'اسحب من المقبض أو استعمل الأسهم. أخفِ اللي ما بتستعمله.')) + '</p>' +
+      '<p class="form-note" style="margin-top:0;">' + esc(L('Drag by the handle, or use the arrows. Move what you rarely use to More, or bring things out of it.', 'اسحب من المقبض أو استعمل الأسهم. انقل اللي نادرًا بتستعمله لـ المزيد، أو طلّع أشياء منه.')) + '</p>' +
       arrangeRowsHtml() +
       '<div class="form-actions" style="justify-content:flex-start;margin-top:10px;"><button type="button" class="home-btn btn-quiet btn-sm" data-arr-reset>' + esc(L('Back to the usual order', 'رجّع الترتيب الأصلي')) + '</button></div>';
   }
@@ -309,12 +318,16 @@
     // The one place to switch major: here, beside it. Only offered once a
     // major is chosen — before that, Choose a Plan is the same question.
     { key: 'switch', icon: 'shuffle', needs: true, onlyWithPlan: true, en: 'Switch major', ar: 'غيّر التخصص',
+      dEn: 'Pick a different major', dAr: 'اختار تخصص ثاني',
       run: function(id){ window.AAUP_SIDEBAR.openPlanChooser(id); } },
     { key: 'share', icon: 'send', needs: true, en: 'Share my plan', ar: 'شارك خطتي',
+      dEn: 'A link or picture of your plan', dAr: 'رابط أو صورة لخطتك',
       run: function(id){ window.AAUP_SHARE.open(id); } },
     { key: 'about', icon: 'help', needs: false, en: 'About', ar: 'عن التطبيق',
+      dEn: 'Who made AAUPath, and how to reach them', dAr: 'مين عمل AAUPath وكيف توصله',
       run: function(){ window.AAUP_ABOUT.open(); } },
     { key: 'whatsnew', icon: 'news', needs: false, en: "What's new", ar: 'الجديد',
+      dEn: 'Changes in the latest update', dAr: 'شو تغيّر بآخر تحديث',
       run: function(){ if(window.AAUP_WHATS_NEW) window.AAUP_WHATS_NEW.open(); } }
   ];
   // Found by search, never drawn as a card. University Contacts opened the
@@ -322,6 +335,16 @@
   // keeps one card for it — but "registration" or "finance" should still
   // land a student on the right tab.
   var SEARCH_ONLY = [
+    // My Plan now carries progress (its Courses | Progress tabs) and My Week
+    // carries the calendar, so these two left the grid; search still finds them.
+    { key: 'sched', icon: 'calendar', needs: true, en: 'My Schedule', ar: 'جدولي',
+      dEn: 'Your semesters on your calendar', dAr: 'فصولك على تقويمك',
+      words: ['schedule', 'calendar', 'semester', 'جدول', 'تقويم', 'فصل'],
+      run: function(id){ window.AAUP_CALENDAR.open(id); } },
+    { key: 'progress', icon: 'chart', needs: true, en: 'Degree Progress', ar: 'تقدّمي الدراسي',
+      dEn: 'How far you are and what is left', dAr: 'وين وصلت وشو ضايل',
+      words: ['progress', 'audit', 'graduat', 'dashboard', 'تقدم', 'تخرج'],
+      run: function(id){ window.AAUP_DASHBOARD.open(id); } },
     { key: 'contacts', icon: 'people', needs: false, en: 'University Contacts', ar: 'جهات اتصال الجامعة',
       dEn: 'Registration, finance, IT, deans', dAr: 'التسجيل، المالية، تقنية المعلومات، العمادات',
       words: ['contact', 'registration', 'finance', 'email', 'office', 'اتصال', 'تسجيل', 'مالي', 'مكتب'],
@@ -370,11 +393,13 @@
   var CHIPS = { en: ['my GPA', 'Calculus', 'Suwan'], ar: ['معدلي', 'Calculus', 'Suwan'] };
   function hint(){ var h = HINTS[ar() ? 'ar' : 'en']; return h[state.hint % h.length]; }
 
+  // The name a card goes by: the plan card says My Plan once a major is chosen.
+  function titleOf(f){ return (f.key === 'plan' && selected()) ? L('My Plan', 'خطتي') : L(f.en, f.ar); }
   function cardHtml(f, id, s){
     var val = '';
     if(id && f.key === 'gpa' && s.gpa != null) val = s.gpa.toFixed(2);
-    if(id && f.key === 'progress') val = s.pct + '%';
-    var title = (f.key === 'plan' && id) ? L('My Plan', 'خطتي') : L(f.en, f.ar);
+    if(id && f.key === 'plan') val = s.pct + '%';
+    var title = titleOf(f);
     var desc = (f.key === 'plan' && id)
       ? '<span class="hm-card-desc hm-card-major">' + clean(planName(plans()[id])) + '</span>'
       : '<span class="hm-card-desc">' + esc(L(f.dEn, f.dAr)) + '</span>';
@@ -383,6 +408,114 @@
         (val ? '<span class="hm-card-val">' + esc(val) + '</span>' : '') + '</span>' +
       '<span class="hm-card-title">' + esc(title) + '</span>' + desc +
     '</button>';
+  }
+
+  // ---- More (round 7, idea 5) ---------------------------------------------------
+  // One row under the cards instead of a line of small pills: it names what
+  // is inside and opens them as a list. Arrange Home decides what lives here.
+  function moreRowHtml(){
+    var list = moreFeatures();
+    if(!list.length) return '';
+    return '<button type="button" class="hm-more-row" data-hm-more-open>' + ic('menu', 18) +
+      '<span class="hm-more-body"><b>' + esc(L('More', 'المزيد')) + '</b><span>' +
+        esc(list.map(titleOf).join(L(', ', '، '))) + '</span></span>' +
+      '<span class="hm-more-go" aria-hidden="true">›</span></button>';
+  }
+  function moreOverlay(){
+    var el = document.getElementById('hmMoreOverlay');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'hmMoreOverlay';
+    el.className = 'modal-overlay';
+    el.innerHTML = '<div class="modal-card hm-more-card" role="dialog" aria-modal="true" aria-labelledby="hmMoreTitle"><div class="modal-body" id="hmMoreBody"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', function(e){
+      if(e.target === el || e.target.closest('[data-hm-more-close]')){ el.classList.remove('open'); return; }
+      var b = e.target.closest('[data-hm-more-go]');
+      if(b){ el.classList.remove('open'); go(b.getAttribute('data-hm-more-go')); return; }
+      if(e.target.closest('[data-hm-more-arrange]')){ el.classList.remove('open'); openArrange(); }
+    });
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && el.classList.contains('open')) el.classList.remove('open'); });
+    return el;
+  }
+  function openMore(){
+    moreOverlay().classList.add('open');
+    document.getElementById('hmMoreBody').innerHTML =
+      '<div class="arr-head"><h2 class="mh" id="hmMoreTitle" style="margin:0;">' + esc(L('More', 'المزيد')) + '</h2>' +
+        '<button type="button" class="home-btn btn-quiet btn-sm" data-hm-more-close>' + esc(L('Close', 'إغلاق')) + '</button></div>' +
+      '<div class="hm-more-list">' + moreFeatures().map(function(f){
+        return '<button type="button" class="hm-more-item" data-hm-more-go="' + f.key + '">' +
+          '<span class="arr-ic">' + ic(f.icon, 18) + '</span><span class="hm-more-body"><b>' + esc(titleOf(f)) + '</b>' +
+          (f.dEn ? '<span>' + esc(L(f.dEn, f.dAr)) + '</span>' : '') + '</span></button>';
+      }).join('') + '</div>' +
+      '<button type="button" class="hm-arrange-link" data-hm-more-arrange>' + ic('menu', 14) + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</button>';
+  }
+
+  // ---- Search that answers (round 7, idea 3) ------------------------------------
+  // A few questions students actually type get the answer itself on top of
+  // the results, from this phone's own data. Only these; anything else
+  // searches exactly as before, so the results don't get busier.
+  var ANSWERS = [
+    { key: 'gpa', re: /^(my\s+)?(gpa|cgpa|average)$|^معدل(ي)?$|^المعدل$/ },
+    { key: 'next', re: /^(my\s+)?next\s+(class|lecture)$|^(the\s+)?next$|^(المحاضرة|محاضرتي)\s*(الجاية|الجاي|القادمة)$/ },
+    { key: 'left', re: /^(how\s+many\s+)?hours\s+(left|remaining)$|^(كم\s+)?(ضايل|باقي)$|^(الساعات\s+)?(الباقية|المتبقية)$|^كم\s+ساعة\s+(ضايل|باقي)$/ },
+    { key: 'grad', re: /^(when\s+(do\s+|will\s+)?i\s+)?graduat(e|ion)$|^(متى|إمتى|امتى)\s+(بتخرج|رح\s+اتخرج)$|^التخرج$/ }
+  ];
+  var DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var DAYS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  function nextClass(id){
+    var T = window.AAUP_TIMETABLE;
+    if(!T || !T.meetingsOn || !T.hasAny(id)) return null;
+    var now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
+    for(var k = 0; k < 7; k++){
+      var day = (now.getDay() + k) % 7;
+      var list = T.meetingsOn(id, day).filter(function(x){
+        var p = String(x.s).split(':'); return k > 0 || (+p[0] * 60 + +p[1]) > nowM;
+      });
+      if(list.length) return { x: list[0], day: day, k: k };
+    }
+    return null;
+  }
+  function answerFor(raw){
+    var id = selected();
+    if(!id) return null;
+    var q = String(raw || '').trim().toLowerCase().replace(/[?؟]+$/, '').replace(/\s+/g, ' ');
+    var hit = ANSWERS.filter(function(a){ return a.re.test(q); })[0];
+    if(!hit) return null;
+    var s = stats(id);
+    if(hit.key === 'gpa'){
+      if(s.gpa == null) return { label: L('Your GPA', 'معدلك'), big: '—', sub: L('No grades yet', 'ما في علامات بعد'), go: 'gpa' };
+      return { label: L('Your GPA', 'معدلك'), big: s.gpa.toFixed(2), sub: s.standing ? (ar() ? s.standing.ar : s.standing.label) : '', go: 'gpa' };
+    }
+    if(hit.key === 'left'){
+      return { label: L('Hours left', 'الساعات الباقية'), big: String(Math.max(0, s.total - s.done)),
+               sub: L(s.done + ' of ' + s.total + ' hours · ' + s.pct + '%', s.done + ' من ' + s.total + ' ساعة · ' + s.pct + '%'), go: 'plan' };
+    }
+    if(hit.key === 'grad'){
+      if(!s.finish) return null;
+      return { label: L('Projected finish', 'التخرج المتوقع'), big: s.finish.term, sub: s.finish.left || '', go: 'progress' };
+    }
+    var n = nextClass(id);
+    if(!n) return { label: L('Next class', 'المحاضرة الجاية'), big: '—', sub: L('Add your class times to see it', 'ضيف أوقات محاضراتك لتشوفها'), go: 'classes' };
+    var c = n.x.c, when = n.k === 0 ? L('Today', 'اليوم') : n.k === 1 ? L('Tomorrow', 'بكرا') : (ar() ? DAYS_AR[n.day] : DAYS_EN[n.day]);
+    return { label: L('Next class', 'المحاضرة الجاية'), big: n.x.s, sub: (ar() && c.ar ? c.ar : c.name) + ' · ' + when + (n.x.r ? ' · ' + n.x.r : ''), go: 'classes' };
+  }
+  function answerHtml(){
+    var a = answerFor(state.q);
+    if(!a) return '';
+    return '<button type="button" class="hm-answer" data-hm-res="f:' + a.go + '">' +
+      '<span class="hm-answer-l">' + esc(a.label) + '</span>' +
+      '<b class="hm-answer-big">' + esc(a.big) + '</b>' +
+      (a.sub ? '<span class="hm-answer-sub">' + esc(a.sub) + '</span>' : '') + '</button>';
+  }
+  // The "Ask AAUPath" line under results: always when nothing matched, and
+  // otherwise only for what reads like a question (round 7, idea 4), so a
+  // plain search like "calc" doesn't carry it every time.
+  function looksLikeQuestion(q){
+    q = String(q || '').trim().toLowerCase();
+    if(/[?؟]/.test(q)) return true;
+    if(/^(how|what|which|when|why|can|could|should|is|are|do|does|will|who|where|هل|كيف|شو|ايش|إيش|ليش|ليه|متى|إمتى|امتى|وين|مين|قديش|بقدر|ممكن)\b/.test(q)) return true;
+    return q.split(/\s+/).length >= 4;
   }
 
   function railHtml(id, s){
@@ -556,10 +689,8 @@
           thisSemesterHtml(id) +
           '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
           '<div class="hm-grid">' + arrangedFeatures().map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
+          moreRowHtml() +
           '<button type="button" class="hm-arrange-link" data-hm-arrange>' + ic('menu', 14) + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</button>' +
-          '<div class="hm-also"><span class="hm-label">' + esc(L('Also here', 'كمان هون')) + '</span>' +
-            EXTRAS.filter(function(f){ return !f.onlyWithPlan || id; }).map(function(f){ return '<button type="button" class="hm-pill" data-hm-go="' + f.key + '">' + ic(f.icon, 15) + esc(L(f.en, f.ar)) + '</button>'; }).join('') +
-          '</div>' +
           '<div class="hm-foot"><button type="button" class="app-version-badge hm-ver" data-hm-ver>v' + esc(window.APP_VERSION || '?') + '</button>' +
             (devShown() ? '<button type="button" class="dev-link" data-hm-dev>' + esc(L('Developer', 'المطوّر')) + '</button>' : '') + '</div>' +
         '</div>' +
@@ -650,9 +781,10 @@
       return;
     }
     var rs = results();
+    var answer = answerHtml();
     var groups = {};
     rs.forEach(function(r){ var k = r.go.slice(0, 2); (groups[k] = groups[k] || []).push(r); });
-    box.innerHTML = GROUP_ORDER.filter(function(k){ return groups[k]; }).map(function(k){
+    box.innerHTML = answer + GROUP_ORDER.filter(function(k){ return groups[k]; }).map(function(k){
       var list = groups[k], all = openGroups[k] || list.length <= GROUP_CAP + 1;
       var shown = all ? list : list.slice(0, GROUP_CAP);
       return '<div class="hm-group" role="group" aria-label="' + esc(L(GROUP_NAME[k][0], GROUP_NAME[k][1])) + '">' +
@@ -665,9 +797,11 @@
           esc(L('Show all ' + list.length, 'اعرض الكل (' + list.length + ')')) + '</button>') +
         '</div>';
     }).join('') +
-      '<button type="button" class="hm-res hm-res-ask" data-hm-res="ask">' + ic('chatdots', 17) +
-        esc(rs.length ? L('Ask AAUPath: “' + q + '”', 'اسأل AAUPath: «' + q + '»')
-                      : L('Nothing matches that. Ask AAUPath instead', 'ما في نتيجة. اسأل AAUPath بدالها')) + '</button>';
+      ((!rs.length && !answer) || looksLikeQuestion(q)
+        ? '<button type="button" class="hm-res hm-res-ask" data-hm-res="ask">' + ic('chatdots', 17) +
+          esc(rs.length || answer ? L('Ask AAUPath: “' + q + '”', 'اسأل AAUPath: «' + q + '»')
+                                  : L('Nothing matches that. Ask AAUPath instead', 'ما في نتيجة. اسأل AAUPath بدالها')) + '</button>'
+        : '');
     box.hidden = false;
   }
 
@@ -893,6 +1027,7 @@
       else if(t.closest('[data-hm-dev]')){ if(window.AAUP_DEV) window.AAUP_DEV.openDialog(); }
       else if(t.closest('[data-hm-ver]')) verTap();
       else if(t.closest('[data-hm-arrange]')){ openArrange(); }
+      else if(t.closest('[data-hm-more-open]')){ openMore(); }
       else if((b = t.closest('[data-hm-pin]'))){
         var pidPlan = selected();
         if(pidPlan && window.AAUP_IMPORTED){ ensurePlan(pidPlan); window.AAUP_IMPORTED.openCourseModal(pidPlan, b.getAttribute('data-hm-pin')); }
