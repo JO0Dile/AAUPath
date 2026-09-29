@@ -14,16 +14,15 @@
 // so the one field that decides whether the course is even available to you
 // was the one you had to work out yourself.
 //
-// So the panel leads with status and reasoning:
+// So the panel leads with the answer, in one sentence (round 7, idea 15):
 //
-//   Why you can take this now   — the chain, with each link showing its state
-//   What it opens               — what stops being reachable if you skip it
-//   Your grade                  — unchanged, still js/21-course-modal-extras.js
-//   Details                     — the reference facts, kept, moved to the side
+//   "You can take this now: Calculus I ✓ is passed. It opens …"
+//   Status and grade            — unchanged, still js/21-course-modal-extras.js
+//   Prerequisites and what it opens   } folded, one tap to open
+//   Student thoughts                  }
+//   Details (number, hours…)          }
 //
-// It renders the same on a phone and a desktop: two columns become one, and
-// nothing is hidden at the narrow size — a student on a phone between lectures
-// is the common case, not the degraded one.
+// It renders the same on a phone and a desktop.
 //
 // This module only builds markup and answers questions about state. It stores
 // nothing and decides nothing: grades, progress and prerequisites all stay
@@ -204,46 +203,11 @@
     return '<div class="cd-row"><span>' + k + '</span><b>' + esc(v) + '</b></div>';
   }
 
-  // Phone-only additions below (catChipHTML/statTilesHTML/miniChainHTML) —
-  // desktop keeps the original cd-sub line + chainHTML()/opensHTML() prose
-  // as its only content; these are extra markup hidden on desktop by CSS,
-  // not a replacement for it, so nothing here needs its own RTL-desktop
-  // parity beyond what already exists.
+  // The category chip above the name; phones only (hidden on wide screens).
   function catChipHTML(course, cats){
     var cat = course && course.category;
     if(!cat) return '';
     return '<span class="cd-catchip cd-catchip-' + esc(cat) + '">' + esc(cats[cat] || cat) + '</span>';
-  }
-
-  function statTilesHTML(prefix, slug, course, t){
-    var unlocks = ((window.__PLAN_DATA[prefix] || {}).unlocksMap || {})[slug] || [];
-    var cr = course && course.creditHours != null ? course.creditHours : null;
-    var tiles = [];
-    if(cr != null){
-      tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + esc(cr) + '</div><div class="cd-stat-l">' + t.credits + '</div></div>');
-    }
-    tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + unlocks.length + '</div><div class="cd-stat-l">' + t.unlocksN + '</div></div>');
-    // Status used to be the third tile, and also the pill above it, and also
-    // the switch below — "Passed" three times. The switch is the one that
-    // can change it, so it is the one that stays; this tile says what the
-    // course needs instead.
-    var needs = ((window.__PLAN_DATA[prefix] || {}).needsMap || {})[slug] || [];
-    tiles.push('<div class="cd-stat"><div class="cd-stat-n">' + (needs.length ? needs.length : esc(t.none)) + '</div><div class="cd-stat-l">' + t.needsN + '</div></div>');
-    return '<div class="cd-stats">' + tiles.join('') + '</div>';
-  }
-
-  // A compact always-visible chain (just the chips, no paragraph) — the
-  // verbose "why locked"/"what it opens" prose moves into the swipeable
-  // slides below instead of stacking under this.
-  function miniChainHTML(prefix, slug, rtl){
-    var needs = ((window.__PLAN_DATA[prefix] || {}).needsMap || {})[slug] || [];
-    if(!needs.length) return '';
-    var parts = needs.map(function(n){
-      var ok = isPassed(prefix, n);
-      return '<button type="button" class="cd-prereq-chip' + (ok ? ' is-ok' : '') + '" data-goto="' + esc(n) + '">' +
-        courseName(prefix, n, rtl) + '</button>';
-    });
-    return '<div class="cd-mini-chain">' + parts.join('<span class="cd-prereq-arrow">' + (rtl ? '←' : '→') + '</span>') + '</div>';
   }
 
   // What students said about THIS course, from the major's Student Thoughts
@@ -272,6 +236,63 @@
       '<span class="cd-said-quote">“' + esc(quote) + '”</span></button>';
   }
 
+  // Round 7, idea 15 · ONE SENTENCE FIRST
+  //
+  // The window used to open on three number tiles, a chip, a heading and a
+  // chain before it said whether you could take the course. Now its first
+  // line says that, and what the course opens, in words; everything else is
+  // folded underneath. Names here are already HTML-safe (see courseName).
+  function listOf(names, rtl){
+    if(names.length < 2) return names.join('');
+    if(rtl) return names.slice(0, -1).join('، ') + ' و' + names[names.length - 1];
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+  }
+  function leadHTML(prefix, slug, rtl, pid){
+    var data = window.__PLAN_DATA[prefix] || {};
+    var needs = (data.needsMap || {})[slug] || [];
+    var unlocks = (data.unlocksMap || {})[slug] || [];
+    var nm = function(s){ return courseName(prefix, s, rtl); };
+    var b = function(s){ return '<b>' + s + '</b>'; };
+    var statuses = (window.AAUP_GPA && window.AAUP_GPA.loadStatuses) ? window.AAUP_GPA.loadStatuses() : {};
+    var taking = function(s){
+      var p = (window.AAUP_GPA && window.AAUP_GPA.primaryId) ? window.AAUP_GPA.primaryId(prefix, s) : (prefix + '-c-' + s);
+      return statuses[p] === 'in_progress';
+    };
+    var opens = '';
+    if(unlocks.length){
+      var shown = unlocks.slice(0, 2).map(function(u){ return b(nm(u)); });
+      var more = unlocks.length - shown.length;
+      opens = rtl
+        ? ' بتفتحلك ' + (more > 0 ? shown.join('، ') + ' و' + more + ' كمان' : listOf(shown, true)) + '.'
+        : ' It opens ' + (more > 0 ? shown.join(', ') + ' and ' + more + ' more' : listOf(shown, false)) + '.';
+    }
+    var st = statusOf(prefix, slug), s;
+    if(st === 'passed'){
+      var g = (window.AAUP_GPA && window.AAUP_GPA.loadGrades) ? window.AAUP_GPA.loadGrades()[pid] : '';
+      var gl = g && window.AAUP_GPA.gradeLabel ? window.AAUP_GPA.gradeLabel(g) : g;
+      s = g
+        ? (rtl ? 'نجحت فيها بـ <span class="cd-ok">' + esc(gl) + '</span>، وبتنحسب بمعدلك.' : 'Passed with <span class="cd-ok">' + esc(gl) + '</span>. It counts toward your GPA.')
+        : (rtl ? 'نجحت في هاي المادة.' : 'You passed this.');
+    } else if(statuses[pid] === 'in_progress'){
+      s = (rtl ? 'بتاخدها هلق.' : 'You’re taking this now.') + opens;
+    } else if(st === 'locked'){
+      var missing = needs.filter(function(n){ return !isPassed(prefix, n); });
+      var now = missing.filter(taking);
+      s = rtl
+        ? 'مش هلق: لازم تنجح بـ ' + listOf(missing.map(function(n){ return '<span class="cd-warn">' + nm(n) + '</span>'; }), true) + ' أول.'
+        : 'Not yet: pass ' + listOf(missing.map(function(n){ return '<span class="cd-warn">' + nm(n) + '</span>'; }), false) + ' first.';
+      if(now.length) s += rtl ? ' بتاخد ' + listOf(now.map(function(n){ return b(nm(n)); }), true) + ' هلق.'
+                              : ' You’re taking ' + listOf(now.map(function(n){ return b(nm(n)); }), false) + ' now.';
+    } else {
+      var have = needs.map(function(n){ return '<span class="cd-ok">' + nm(n) + ' ✓</span>'; });
+      s = rtl
+        ? 'بتقدر تاخدها هلق' + (have.length ? ': ' + listOf(have, true) + (have.length > 1 ? ' ناجح فيهم.' : ' ناجح فيها.') : '.')
+        : 'You can take this now' + (have.length ? ': ' + listOf(have, false) + (have.length > 1 ? ' are passed.' : ' is passed.') : '.');
+      s += opens;
+    }
+    return '<p class="cd-lead">' + s + '</p>';
+  }
+
   // course is the plan's own record (credit hours, term); info is the
   // registered course table (number, theoretical/practical split, Arabic name).
   function build(prefix, slug, course, rtl){
@@ -290,49 +311,52 @@
 
     var whyTitle = st === 'passed' ? t.whyDone : st === 'locked' ? t.whyLocked : t.why;
     var pid = (window.AAUP_GPA && window.AAUP_GPA.primaryId) ? window.AAUP_GPA.primaryId(prefix, slug) : (prefix + '-c-' + slug);
+    var hrs = course && course.creditHours != null ? (parseFloat(course.creditHours) || 0) : null;
+    var num = info.num || (course && course.courseNumber);
 
+    // One sentence, then the status buttons (js/21 fills .cd-extras), then
+    // the rest folded: prerequisites and what it opens, student thoughts,
+    // details. The number lives in Details, where you copy it.
     return '<div class="cd" dir="' + (rtl ? 'rtl' : 'ltr') + '">' +
       '<div class="cd-head">' +
         '<div class="cd-title">' + catChipHTML(course, cats) + '<h3>' + name + '</h3>' +
           '<div class="cd-sub">' +
-            [info.num || (course && course.courseNumber), term].filter(Boolean).map(esc).join(' · ') +
+            [hrs != null ? (rtl ? (hrs === 2 ? 'ساعتين' : hrs + (hrs >= 3 && hrs <= 10 ? ' ساعات' : ' ساعة')) : hrs + (hrs === 1 ? ' hour' : ' hours')) : '', term].filter(Boolean).map(esc).join(' · ') +
           '</div></div>' +
         moreMenuHTML(prefix, slug, pid, t) +
       '</div>' +
-      statTilesHTML(prefix, slug, course, t) +
-      miniChainHTML(prefix, slug, rtl) +
       '<div class="cd-body">' +
         '<div class="cd-main">' +
-          '<div class="cd-slides" id="cdSlides">' +
-            '<div class="cd-slide"><div class="cd-sec"><div class="cd-lbl">' + whyTitle + '</div>' +
-              chainHTML(prefix, slug, rtl, t) + '</div></div>' +
-            '<div class="cd-slide"><div class="cd-sec"><div class="cd-lbl">' + t.opens + '</div>' +
-              opensHTML(prefix, slug, rtl, t) + '</div></div>' +
-          '</div>' +
-          '<div class="cd-swipe-dots" id="cdSlideDots"><span class="on"></span><span></span></div>' +
-          dropsHTML(prefix, slug, rtl) +
-          saidHTML(prefix, slug, rtl, t, info) +
+          leadHTML(prefix, slug, rtl, pid) +
+          '<div class="cd-extras"></div>' +
           // 52 · The English placement question, asked on the three courses
           // it decides rather than as a gate in front of the whole app.
           // Empty for every other course, and once it has been answered.
           (window.AAUP_ENGLISH && window.AAUP_ENGLISH.askHereHtml
             ? window.AAUP_ENGLISH.askHereHtml(prefix, slug, rtl) : '') +
-          // 41 · One tap to say an arrow is wrong. Empty on a course with no
-          // prerequisites — there is nothing there to be wrong about.
-          (window.AAUP_PREREQ_REPORT
-            ? window.AAUP_PREREQ_REPORT.lineHtml(prefix, slug, rtl) : '') +
-          '<div class="cd-extras"></div>' +
-        '</div>' +
-        '<div class="cd-side">' +
-          '<div class="cd-lbl">' + t.details + '</div>' +
-          row(t.code, info.num || (course && course.courseNumber)) +
-          row(t.ch, course && course.creditHours != null ? course.creditHours : null) +
-          row(t.th, info.th) +
-          row(t.pr, info.pr) +
-          row(t.cat, cats[(course && course.category) || ''] || '') +
-          (!rtl && info.ar ? row(t.ar, info.ar) : '') +
-          row(t.term, term) +
-          (course && course.termSuggested ? '<p class="cd-note">' + esc(t.termSuggested) + '</p>' : '') +
+          '<details class="cd-fold"><summary>' + esc(rtl ? 'المتطلبات وشو بتفتح' : 'Prerequisites and what it opens') + '</summary>' +
+            '<div class="cd-fold-body">' +
+              '<div class="cd-sec"><div class="cd-lbl">' + whyTitle + '</div>' + chainHTML(prefix, slug, rtl, t) + '</div>' +
+              '<div class="cd-sec"><div class="cd-lbl">' + t.opens + '</div>' + opensHTML(prefix, slug, rtl, t) + '</div>' +
+              dropsHTML(prefix, slug, rtl) +
+              // 41 · One tap to say an arrow is wrong. Empty on a course with
+              // no prerequisites — there is nothing there to be wrong about.
+              (window.AAUP_PREREQ_REPORT
+                ? window.AAUP_PREREQ_REPORT.lineHtml(prefix, slug, rtl) : '') +
+            '</div></details>' +
+          saidHTML(prefix, slug, rtl, t, info) +
+          '<details class="cd-fold"><summary>' + esc(t.details) +
+            (num ? ' <span class="cd-fold-hint">· ' + esc(num) + '</span>' : '') + '</summary>' +
+            '<div class="cd-fold-body cd-side">' +
+              row(t.code, num) +
+              row(t.ch, hrs) +
+              row(t.th, info.th) +
+              row(t.pr, info.pr) +
+              row(t.cat, cats[(course && course.category) || ''] || '') +
+              (!rtl && info.ar ? row(t.ar, info.ar) : '') +
+              row(t.term, term) +
+              (course && course.termSuggested ? '<p class="cd-note">' + esc(t.termSuggested) + '</p>' : '') +
+            '</div></details>' +
         '</div>' +
       '</div>' +
       '</div>';
@@ -381,15 +405,6 @@
         var ov = container.closest('.modal-overlay');
         if(ov) ov.classList.remove('open');
         if(window.__refreshPlanUI) window.__refreshPlanUI(prefix);
-      });
-    }
-    var slides = container.querySelector('#cdSlides');
-    var dots = container.querySelector('#cdSlideDots');
-    if(slides && dots){
-      var dotEls = dots.querySelectorAll('span');
-      slides.addEventListener('scroll', function(){
-        var idx = Math.round(slides.scrollLeft / slides.clientWidth);
-        dotEls.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
       });
     }
     var moreBtn = container.querySelector('#cdMoreBtn');

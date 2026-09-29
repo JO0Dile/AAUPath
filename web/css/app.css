@@ -6716,7 +6716,30 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
 /* The grade controls are js/21-course-modal-extras.js and are not restyled
    here — only given room and a rule off the section above them. */
 .cd-extras:empty{display:none;}
-.cd-extras{margin-top:18px; padding-top:16px; border-top:1px solid var(--line);}
+.cd-extras{margin-top:4px;}
+
+/* Round 7, idea 15: the course window opens on one sentence that answers
+   "can I take this, and what does it open"; the rest is folded below it. */
+.cd-lead{font-size:15px; font-weight:600; line-height:1.55; color:var(--text); margin:0 0 14px;}
+.cd-lead b{font-weight:800;}
+.cd-lead .cd-ok{color:var(--unlock); font-weight:800;}
+.cd-lead .cd-warn{color:#ffb648; font-weight:800;}
+.cd-fold{margin-top:10px; border:1px solid var(--line); border-radius:12px; background:var(--search-bg);}
+.cd-fold > summary{
+  list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:12px 14px; min-height:44px; font-size:13.5px; font-weight:700; color:var(--text);
+}
+.cd-fold > summary::-webkit-details-marker{display:none;}
+.cd-fold > summary::after{content:"›"; color:var(--text-dim); font-size:18px; line-height:1; transition:transform .15s ease;}
+html[dir="rtl"] .cd-fold > summary::after, .cd[dir="rtl"] .cd-fold > summary::after{content:"‹";}
+.cd-fold[open] > summary::after{transform:rotate(90deg);}
+html[dir="rtl"] .cd-fold[open] > summary::after, .cd[dir="rtl"] .cd-fold[open] > summary::after{transform:rotate(-90deg);}
+.cd-fold > summary:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:12px;}
+.cd-fold-hint{color:var(--text-dim); font-weight:600; margin-inline-end:auto;}
+.cd-fold-body{padding:2px 14px 14px;}
+.cd-fold-body.cd-side{padding:0 14px 8px;}
+.cd-fold + .cd-said{margin-top:10px;}
+@media (prefers-reduced-motion:reduce){ .cd-fold > summary::after{transition:none;} }
 .cd-extras .modal-extras{margin:0;}
 
 /* ---- phone-only additions (mockup-matched): category chip, the three
@@ -6802,9 +6825,7 @@ html[dir="rtl"] .cd-head, .cd[dir="rtl"] .cd-head{padding:20px 22px 16px 46px;}
 .modal-extras:not(.is-done) .cd-review-block{display:none;}
 
 @media (min-width:720px){
-  .cd-body{display:grid; grid-template-columns:1.35fr 1fr; align-items:start;}
-  .cd-main{padding:20px 24px; border-inline-end:1px solid var(--line);}
-  .cd-side{padding:20px 24px;}
+  .cd-main{padding:20px 24px;}
   .cd-head{padding:22px 50px 18px 26px;}
   .cd-catchip, .cd-stats, .cd-mini-chain, .cd-swipe-dots{display:none;}
   .cd-slides{display:block; overflow:visible;}
@@ -8898,7 +8919,6 @@ html[dir="rtl"] .way-range{background:linear-gradient(to left, var(--accent) var
   /* One column inside the panel: it is phone-width, whatever the screen. */
   #impCourseModalOverlay .cd-body{display:block;}
   #impCourseModalOverlay .cd-main{border-inline-end:0;}
-  #impCourseModalOverlay .cd-side{border-top:1px solid var(--line);}
   body:has(#impCourseModalOverlay.open) .sheet-plan{margin-inline-end:440px; transition:margin .2s ease;}
   @media (prefers-reduced-motion:no-preference){
     #impCourseModalOverlay.open .modal-card.cd-card{animation:scr-in .26s cubic-bezier(.2,.8,.2,1);}
@@ -9246,3 +9266,57 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .adm-inbox{border:1px solid var(--line); border-radius:12px; padding:2px 12px; margin:0 0 18px;}
 .adm-inbox-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px solid var(--line);}
 .adm-inbox-row:first-child{border-top:0;}
+
+/* Round 8, idea 4: the laptop sidebar folds to a strip of icons
+   (js/37-sidebar.js, the « button at its foot). Each row keeps its name as a
+   hover tooltip. Phones never see this: their sidebar is the More sheet. */
+.app-sidebar .sb-fold{
+  display:flex; align-items:center; gap:11px; width:100%; padding:10px 18px;
+  background:none; border:none; border-inline-start:3px solid transparent;
+  color:var(--text-faint); font-family:inherit; font-size:12.5px; font-weight:600;
+  cursor:pointer; text-align:start;
+}
+.app-sidebar .sb-fold:hover{color:var(--text); background:rgba(255,255,255,.04);}
+.app-sidebar .sb-fold .sb-icon{font-size:17px; line-height:1;}
+@media (max-width:900px){ .app-sidebar .sb-fold{display:none;} }
+@media (min-width:901px){
+  .app-sidebar{transition:transform .25s ease, width .2s ease;}
+  .sheet, .dashboard-page{transition:margin .2s ease;}
+  body.has-sidebar.sb-folded .app-sidebar{width:64px; overflow-x:hidden;}
+  body.has-sidebar.sb-folded .dashboard-page,
+  body.has-sidebar.sb-folded .sheet{margin-inline-start:64px;}
+  body.sb-folded .app-sidebar .sb-brand{justify-content:center; padding-inline:0;}
+  body.sb-folded .app-sidebar .sb-home{justify-content:center; margin-inline:10px; padding-inline:0;}
+  body.sb-folded .app-sidebar .sb-item,
+  body.sb-folded .app-sidebar .sb-adv-toggle,
+  body.sb-folded .app-sidebar .sb-fold{justify-content:center; padding-inline:0;}
+  body.sb-folded .app-sidebar .sb-brand > span:not(.sb-mark),
+  body.sb-folded .app-sidebar .sb-home > span:not(.sb-icon),
+  body.sb-folded .app-sidebar .sb-item > span:not(.sb-icon),
+  body.sb-folded .app-sidebar .sb-fold > span:not(.sb-icon),
+  body.sb-folded .app-sidebar .sb-adv-label,
+  body.sb-folded .app-sidebar .sb-adv-count,
+  body.sb-folded .app-sidebar .sb-adv-chevron{display:none;}
+}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){
+  .app-sidebar, .sheet, .dashboard-page{transition:none;}
+}
+
+/* Round 8, idea 3: on a big screen the plan uses the width, so a year sits
+   on fewer rows (cards keep their size; more of them fit across). */
+@media (min-width:1600px){
+  .sheet-plan{max-width:1500px;}
+}
+
+/* Round 8, idea 11: Edit Mode on a laptop is a focus mode. The sidebar and
+   the plan's title bar step aside and the plan takes the screen; the Done
+   bar at the bottom is the way out, as it already is on phones. */
+@media (min-width:901px){
+  /* !important: js/37-sidebar.js show() sets an inline display on it. */
+  body.has-sidebar:has(.sheet-plan.editing) .app-sidebar{display:none !important;}
+  body.has-sidebar:has(.sheet-plan.editing) .sheet-plan{margin-inline:auto; max-width:min(1500px, calc(100% - 48px));}
+  /* The Done bar lives inside the header, so the header's box goes and
+     everything in it but the Done bar is hidden. */
+  .sheet-plan.editing > header{display:contents;}
+  .sheet-plan.editing > header > :not(.edit-donebar){display:none;}
+}
