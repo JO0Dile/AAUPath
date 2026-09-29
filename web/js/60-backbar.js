@@ -253,6 +253,59 @@
     }
   }
 
+  // ============================================================
+  // SWIPE DOWN CLOSES THE WINDOW (round 7, idea 22)
+  //
+  // On a phone every window is a full page. Pulling it down from the top —
+  // while its content is scrolled to the top — closes it, the way the course
+  // window already does, so there is one gesture to learn. It closes through
+  // the window's own back arrow, so whatever that window does on close still
+  // happens. Not on the windows that must be answered (SKIP), and not when
+  // the finger starts on something that scrolls sideways or takes input.
+  function isPhoneWidth(){ return !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches); }
+  function topOpen(){
+    var open = [].slice.call(document.querySelectorAll('.modal-overlay.open')).filter(function(o){ return SKIP.indexOf(o.id) === -1 && o.id !== 'impCourseModalOverlay'; });
+    if(!open.length) return null;
+    return open.sort(function(a, b){ return (+getComputedStyle(a).zIndex || 0) - (+getComputedStyle(b).zIndex || 0); })[open.length - 1];
+  }
+  function atTop(ov){
+    var els = [ov, ov.querySelector('.modal-card'), ov.querySelector('.modal-body')];
+    return els.every(function(el){ return !el || el.scrollTop <= 0; });
+  }
+  var pull = null;
+  document.addEventListener('touchstart', function(e){
+    pull = null;
+    if(e.touches.length !== 1 || !isPhoneWidth()) return;
+    var ov = topOpen();
+    if(!ov || !ov.contains(e.target) || !atTop(ov)) return;
+    if(e.target.closest('input, textarea, select, [contenteditable], .crs-menu, [data-hscroll], .settings-tabbar, .tt-days')) return;
+    var sc = e.target.closest('*');
+    while(sc && sc !== ov){ if(sc.scrollWidth > sc.clientWidth + 4 && /auto|scroll/.test(getComputedStyle(sc).overflowX)) return; sc = sc.parentElement; }
+    var t = e.touches[0];
+    pull = { ov: ov, card: ov.querySelector('.modal-card'), x: t.clientX, y: t.clientY, dy: 0, on: false };
+  }, { passive: true, capture: true });
+  document.addEventListener('touchmove', function(e){
+    if(!pull) return;
+    var t = e.touches[0], dx = t.clientX - pull.x, dy = t.clientY - pull.y;
+    if(!pull.on){
+      if(dy > 12 && Math.abs(dx) < dy * 0.6 && atTop(pull.ov)) pull.on = true;
+      else if(Math.abs(dx) > 12 || dy < -8){ pull = null; return; }
+      else return;
+    }
+    pull.dy = Math.max(0, dy);
+    if(pull.card){ pull.card.style.transition = 'none'; pull.card.style.transform = 'translateY(' + (pull.dy * 0.6) + 'px)'; pull.card.style.opacity = String(Math.max(0.55, 1 - pull.dy / 600)); }
+  }, { passive: true, capture: true });
+  function endPull(){
+    if(!pull) return;
+    var p = pull; pull = null;
+    if(p.card){ p.card.style.transition = 'transform .18s ease, opacity .18s ease'; p.card.style.transform = ''; p.card.style.opacity = ''; }
+    if(!p.on || p.dy < 110) return;
+    var back = p.ov.querySelector('[data-back-for]');
+    if(back) back.click(); else closeOverlay(p.ov.id);
+  }
+  document.addEventListener('touchend', endPull, { passive: true, capture: true });
+  document.addEventListener('touchcancel', endPull, { passive: true, capture: true });
+
   function watch(){
     document.querySelectorAll('.modal-overlay').forEach(function(ov){
       if(ov.classList.contains('open')) inject(ov);

@@ -9065,6 +9065,29 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .tt-form{margin-top:8px;}
 .tt-more{margin-top:10px;}
 .tt-cal-btn{margin:2px 0 8px;}
+/* Settings: main page + More settings (round 7). */
+.set-more{border:1px solid var(--line); border-radius:14px; padding:2px 12px;}
+.set-more-row{display:flex; align-items:center; gap:12px; width:100%; min-height:56px; padding:6px 0; border:0; border-top:1px solid var(--line); background:none; color:var(--text); font:inherit; text-align:start; cursor:pointer;}
+.set-more-row:first-child{border-top:0;}
+.set-more-body{display:flex; flex-direction:column; flex:1; min-width:0;}
+.set-more-body b{font-size:14px;}
+.set-more-body small{font-size:12px; color:var(--text-dim);}
+.set-more-go{color:var(--text-dim); font-size:20px;}
+[dir="rtl"] .set-more-go{transform:scaleX(-1);}
+.set-back{min-height:40px; padding:0 6px; border:0; background:none; color:var(--accent); font:inherit; font-size:13.5px; font-weight:800; cursor:pointer;}
+/* My account (js/52-cloud.js, round 7). */
+.myacct-rows{border:1px solid var(--line); border-radius:14px; padding:2px 12px; margin:10px 0;}
+.myacct-row{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:6px 0; border-top:1px solid var(--line);}
+.myacct-row:first-child{border-top:0;}
+.myacct-row-l{display:flex; flex-direction:column; min-width:0; font-size:14px; font-weight:700;}
+.myacct-row-l small{font-size:12px; font-weight:600; color:var(--text-dim);}
+.myacct-row-l b{overflow:hidden; text-overflow:ellipsis;}
+.myacct-row-l small.myacct-ok{color:var(--good, #3fb07a); font-weight:800;}
+.myacct-links{display:inline-flex; gap:4px;}
+.myacct-link{flex:none; min-height:40px; padding:0 10px; border:0; border-radius:10px; background:none; color:var(--accent); font:inherit; font-size:13.5px; font-weight:800; cursor:pointer;}
+.myacct-link:hover, .myacct-link:focus-visible{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.myacct-link:disabled{opacity:.6; cursor:default;}
+.myacct-bad{color:var(--danger, #e2596b);}
 .tt-saved{font-size:12.5px; font-weight:800; color:var(--good, #3fb07a); margin-inline-end:6px;}
 /* Finish this semester (js/106-semester.js). */
 .sem-end-card{max-width:480px;}
@@ -9184,3 +9207,34 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .wk-clash{margin-top:8px; padding:8px 10px; border-radius:10px; border:1px solid rgba(226,89,107,.6); background:rgba(226,89,107,.08);}
 .wk-clash b{display:block; color:#e2596b; font-size:13px;}
 .wk-clash span{display:block; font-size:12px; color:var(--text-dim);}
+
+/* ---- Phone in one hand (round 7, ideas 21 and 23) ----------------------------
+   21 · The main button of a window (Done / Close) sits in a bar at the
+   bottom on phones, where a thumb reaches, instead of the top corner. The
+   top back arrow stays. The window's content gets room at the bottom so the
+   bar never covers its last row. */
+@media (max-width:720px){
+  .modal-overlay.open [data-tt-close],
+  .modal-overlay.open [data-dates-close],
+  .modal-overlay.open [data-arr-done],
+  .modal-overlay.open [data-hm-more-close],
+  .modal-overlay.open [data-sem-end-close]{
+    position:fixed; inset-inline:16px; bottom:calc(12px + env(safe-area-inset-bottom, 0px)); z-index:5;
+    display:flex; align-items:center; justify-content:center; min-height:50px;
+    border-radius:14px; border:0; background:var(--accent); color:var(--on-accent); font-size:15px; font-weight:800;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+  }
+  #ttOverlay .modal-body, #datesOverlay .modal-body, #hmArrangeOverlay .modal-body,
+  #hmMoreOverlay .modal-body, #semEndOverlay .modal-body{padding-bottom:84px;}
+}
+/* 23 · Small links and × buttons keep their look but get a tap area of at
+   least 44px, through an invisible margin around them. */
+@media (pointer:coarse){
+  .cloud-link, .dates-del, .hm-arrange-link, .imp-sem-reset, .imp-sem-bulk, .set-back, .tt-day, .hm-recent-x{position:relative;}
+  .cloud-link::after, .dates-del::after, .hm-arrange-link::after, .imp-sem-reset::after, .imp-sem-bulk::after, .set-back::after, .hm-recent-x::after{
+    content:""; position:absolute; inset:-10px -6px;
+  }
+  .tt-day{min-height:40px;}
+  .hm-tt-prompt{min-height:44px;}
+}
+

@@ -397,21 +397,25 @@
     if(!p) return;
     var course = (p.courses || []).filter(function(c){ return c.id === slug; })[0];
     if(!course) return;
-    var dependents = (p.prerequisites || []).filter(function(pair){ return pair[0] === slug; }).map(function(pair){ return pair[1]; });
-    var dependentNames = dependents.map(function(depSlug){
-      var d = (p.courses || []).filter(function(c){ return c.id === depSlug; })[0];
-      return d ? d.name : depSlug;
-    });
-    var msg = 'Remove "' + course.name + '"?' +
-      (dependentNames.length ? ' ' + dependentNames.join(', ') + ' currently need it — that prerequisite link will be removed too, not the courses themselves.' : '') +
-      ' This can\u2019t be undone.';
-    if(window.__showConfirmDialog){
-      window.__showConfirmDialog(msg, function(){ removeCourse(planId, slug); });
-    } else if(window.confirm(msg)){
-      removeCourse(planId, slug);
-    }
+    // Round 7, idea 17: no "Are you sure?" for something Undo can take back.
+    // The course goes at once and the toast offers Undo, which restores the
+    // plan (course, its prerequisite links) and the tick exactly as they were.
+    var before = JSON.parse(JSON.stringify(p));
+    var progKey = planId + '-c-' + slug;
+    var prog0 = window.__getProgress ? window.__getProgress()[progKey] : undefined;
+    removeCourse(planId, slug, true);
+    var rtlNow = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var name = rtlNow && course.ar ? course.ar : course.name;
+    var undo = function(){
+      var all = loadImportedPlans();
+      all[planId] = before;
+      saveImportedPlans(all);
+      if(prog0 !== undefined && window.__getProgress){ window.__getProgress()[progKey] = prog0; persistProgress(); }
+      render(planId);
+    };
+    if(window.__showActionToast) window.__showActionToast((rtlNow ? 'انشال «' + name + '»' : 'Removed "' + name + '"'), rtlNow ? 'تراجع' : 'Undo', undo);
   }
-  function removeCourse(planId, slug){
+  function removeCourse(planId, slug, quiet){
     var plans = loadImportedPlans();
     var p = plans[planId];
     if(!p) return;
@@ -425,7 +429,7 @@
     var progress = window.__getProgress ? window.__getProgress() : {};
     delete progress[planId + '-c-' + slug];
     persistProgress();
-    if(window.__showToast){ window.__showToast('Removed "' + name + '".'); }
+    if(!quiet && window.__showToast){ window.__showToast('Removed "' + name + '".'); }
     render(planId);
   }
 

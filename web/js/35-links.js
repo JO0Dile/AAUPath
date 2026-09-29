@@ -108,18 +108,20 @@
 
   function resetAll(prefix){
     var rtl = isRtl(prefix);
-    var msg = rtl
-      ? 'إعادة كل خطوط المتطلبات إلى الخطة الرسمية؟ ستفقد تعديلاتك على الخطوط في هذه الخطة.'
-      : 'Reset every prerequisite line back to the official plan? Your line edits for this plan will be lost.';
-    var doIt = function(){
-      var all = window.__loadPrereqEdits();
-      delete all[prefix];
-      window.__savePrereqEdits(all);
+    // Round 7, idea 17: done at once, with Undo in the toast.
+    var all = window.__loadPrereqEdits();
+    var before = all[prefix] ? JSON.parse(JSON.stringify(all[prefix])) : null;
+    delete all[prefix];
+    window.__savePrereqEdits(all);
+    afterChange(prefix);
+    var undo = function(){
+      var now = window.__loadPrereqEdits();
+      if(before) now[prefix] = before;
+      window.__savePrereqEdits(now);
       afterChange(prefix);
-      if(window.__showToast){ window.__showToast(rtl ? 'تمت الإعادة إلى الخطة الرسمية.' : 'Reset to the official plan.'); }
     };
-    if(window.__showConfirmDialog){ window.__showConfirmDialog(msg, doIt, rtl); }
-    else { doIt(); }
+    if(window.__showActionToast) window.__showActionToast(rtl ? 'رجعت خطوط المتطلبات للخطة الرسمية.' : 'Lines reset to the official plan.', rtl ? 'تراجع' : 'Undo', undo);
+    else if(window.__showToast) window.__showToast(rtl ? 'تمت الإعادة إلى الخطة الرسمية.' : 'Reset to the official plan.');
   }
 
   function courseOptionsHtml(prefix, rtl){

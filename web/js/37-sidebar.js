@@ -572,6 +572,7 @@
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
     if(!overlay || !body) return;
+    activeSettingsTab = 'prefs';          // always opens on the main page
     renderSettingsBody(body);
     overlay.classList.add('open');
   }
@@ -592,11 +593,17 @@
   // filed it under. They are one tab now — My data — with the same sections
   // in the same order, cloud first and the local copies under it.
   var SETTINGS_TABS = [
-    { key: 'mydata', iconKey: 'save', en: 'My data', ar: 'بياناتي' },
     { key: 'prefs', iconKey: 'palette', en: 'Preferences', ar: 'التفضيلات' },
-    { key: 'help', iconKey: 'help', en: 'Help', ar: 'مساعدة' }
+    { key: 'mydata', iconKey: 'save', en: 'My data', ar: 'بياناتي',
+      subEn: 'Account and sync, backup, profiles, reset', subAr: 'الحساب والمزامنة، النسخ، الملفات، المسح' },
+    { key: 'help', iconKey: 'help', en: 'Help', ar: 'مساعدة',
+      subEn: 'Tips, the tour, and how things work', subAr: 'تلميحات، الجولة، وكيف الأشياء بتشتغل' }
   ];
-  var activeSettingsTab = 'mydata';
+  // Round 7, idea 20: Settings opens on what students change often (the
+  // Preferences: language, theme, text and card size, vibration). The rest
+  // — account, sync, backup, profiles, data tools, reset — and Help are one
+  // tap deeper, under "More settings", each with a way back.
+  var activeSettingsTab = 'prefs';
 
   // "Device Profiles" beside "Cloud Sync" read as two names for the same
   // thing. What it is for is a shared laptop: each person gets their own
@@ -822,15 +829,23 @@
          dataTabHtml(r, devUnlocked) +
          '<div class="set-grp set-grp-danger">' + dangerHtml(r) + '</div>');
 
+    var isMain = activeSettingsTab === 'prefs';
+    var sub = SETTINGS_TABS.filter(function(t){ return t.key === activeSettingsTab; })[0];
+    var moreHtml = isMain
+      ? '<h3 class="mh set-grp-h" style="margin-top:18px;">' + (r ? 'إعدادات أكثر' : 'More settings') + '</h3>' +
+        '<div class="set-more">' + SETTINGS_TABS.filter(function(t){ return t.key !== 'prefs'; }).map(function(t){
+          return '<button type="button" class="set-more-row" data-settings-tab="' + t.key + '">' +
+            '<span class="settings-tab-icon">' + window.AAUP_ICONS.preview(t.iconKey, 18) + '</span>' +
+            '<span class="set-more-body"><b>' + (r ? t.ar : t.en) + '</b><small>' + (r ? t.subAr : t.subEn) + '</small></span>' +
+            '<span class="set-more-go" aria-hidden="true">›</span></button>';
+        }).join('') + '</div>'
+      : '';
     body.innerHTML =
-      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('gear', 20) + (r ? 'الإعدادات' : 'Settings') + '</h2>' +
-      '<div class="settings-tabbar">' +
-      SETTINGS_TABS.map(function(t){
-        return '<div class="settings-tab' + (t.key === activeSettingsTab ? ' active' : '') + '" data-settings-tab="' + t.key + '">' +
-          '<span class="settings-tab-icon">' + window.AAUP_ICONS.preview(t.iconKey, 16) + '</span><span>' + (r ? t.ar : t.en) + '</span></div>';
-      }).join('') +
-      '</div>' +
-      '<div id="settingsTabContent">' + tabContent + '</div>' +
+      (isMain
+        ? '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('gear', 20) + (r ? 'الإعدادات' : 'Settings') + '</h2>'
+        : '<button type="button" class="set-back" data-settings-tab="prefs">‹ ' + (r ? 'الإعدادات' : 'Settings') + '</button>' +
+          '<h2 class="mh" style="margin-top:4px;">' + window.AAUP_ICONS.preview(sub ? sub.iconKey : 'gear', 20) + (sub ? (r ? sub.ar : sub.en) : '') + '</h2>') +
+      '<div id="settingsTabContent">' + tabContent + moreHtml + '</div>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="setClose">' + (r ? 'إغلاق' : 'Close') + '</button></div>' +
       '<p class="form-note" style="text-align:center;opacity:.6;">v' + (window.APP_VERSION || '?') + ' · ' + (r ? 'مشروع طلابي مفتوح' : 'an open student project') + '</p>';
 
