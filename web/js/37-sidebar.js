@@ -359,7 +359,9 @@
     // the plan gets the room. Remembered on this device.
     var foldLab = folded() ? (ar() ? 'كبّر القائمة' : 'Open the sidebar') : (ar() ? 'صغّر القائمة' : 'Fold the sidebar');
     html += '<button type="button" class="sb-fold" id="sbFoldBtn" title="' + foldLab + '" aria-label="' + foldLab + '">' +
-      '<span class="sb-icon" aria-hidden="true">' + (folded() !== ar() ? '»' : '«') + '</span>' +
+      // The guillemets mirror by themselves in Arabic (bidi mirroring), so one
+      // choice covers both directions: « folds toward the edge, » opens.
+      '<span class="sb-icon" aria-hidden="true">' + (folded() ? '»' : '«') + '</span>' +
       '<span>' + foldLab + '</span></button>';
     html += '</div></div>';
     html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey) + '</div>';
@@ -367,7 +369,7 @@
     // Folded, only the icons show, so every row carries its name (and its
     // key, where it has one: round 8, idea 17) for the hover tooltip.
     sidebar.querySelectorAll('.sb-flat-list .sb-item, .sb-flat-list .sb-adv-toggle, .sb-brand, .sb-home').forEach(function(el){
-      var lab = el.querySelector('span:not(.sb-icon):not(.sb-mark):not(.sb-adv-count):not(.sb-adv-chevron)');
+      var lab = el.querySelector(':scope > span:not(.sb-icon):not(.sb-mark):not(.sb-adv-count):not(.sb-adv-chevron)');
       var key = el.getAttribute('data-sb-key');
       var hint = SHORTCUT_HINTS[key];
       if(lab && !el.title) el.title = lab.textContent.trim() + (hint ? '  (' + hint + ')' : '');

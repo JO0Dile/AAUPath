@@ -9307,3 +9307,16 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 @media (min-width:1600px){
   .sheet-plan{max-width:1500px;}
 }
+
+/* Round 8, idea 11: Edit Mode on a laptop is a focus mode. The sidebar and
+   the plan's title bar step aside and the plan takes the screen; the Done
+   bar at the bottom is the way out, as it already is on phones. */
+@media (min-width:901px){
+  /* !important: js/37-sidebar.js show() sets an inline display on it. */
+  body.has-sidebar:has(.sheet-plan.editing) .app-sidebar{display:none !important;}
+  body.has-sidebar:has(.sheet-plan.editing) .sheet-plan{margin-inline:auto; max-width:min(1500px, calc(100% - 48px));}
+  /* The Done bar lives inside the header, so the header's box goes and
+     everything in it but the Done bar is hidden. */
+  .sheet-plan.editing > header{display:contents;}
+  .sheet-plan.editing > header > :not(.edit-donebar){display:none;}
+}
