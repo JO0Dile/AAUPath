@@ -434,10 +434,8 @@
               });
             }
           };
-          if(!removing) return go();
-          var msg = t.removeAsk(nm);
-          if(window.__showConfirmDialog) window.__showConfirmDialog(msg, go);
-          else if(window.confirm(msg)) go();
+          // Round 7, idea 17: the toast after it offers Undo, so no question first.
+          go();
         });
       }
     }

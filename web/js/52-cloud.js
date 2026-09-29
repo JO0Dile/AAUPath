@@ -31,8 +31,9 @@
   // signed-in student, so they must never round-trip through a sync blob —
   // syncing "the list of local profile names on this device" from one
   // device to another would just corrupt both.
+  var HASH_KEY = 'aaup_cloudLastHash';
   var EXCLUDE_EXACT = { aaup_cloudToken: 1, aaup_cloudEmail: 1, aaup_cloudUsername: 1, aaup_cloudLastSyncedAt: 1,
-                         aaup_accounts: 1, aaup_currentAccount: 1 };
+                         aaup_cloudLastHash: 1, aaup_accounts: 1, aaup_currentAccount: 1 };
   var EXCLUDE_PREFIX = 'aaup_account_snapshot_';
   var AUTO_SYNC_MS = 45000;
 
@@ -187,12 +188,107 @@
   // on visibilitychange->hidden); it is NOT used for interactive pushes,
   // where a real response (and conflict handling) is expected.
   function push(baseUpdatedAt, keepalive){
+    var data = collectLocalData();
     return request('/api/sync', {
       method: 'POST', keepalive: keepalive,
-      body: { data: collectLocalData(), baseUpdatedAt: baseUpdatedAt }
+      body: { data: data, baseUpdatedAt: baseUpdatedAt }
     }).then(function(r){
-      if(r.ok){ setLastSyncedAt(r.data.updatedAt); }
+      if(r.ok){ setLastSyncedAt(r.data.updatedAt); rememberSynced(data); }
       return r;
+    });
+  }
+
+  // ---------- keeping itself up to date (round 7, idea 18) ----------
+  // What was last sent or received is remembered as a fingerprint per key,
+  // so the app knows which keys THIS device changed since, and which keys
+  // ANOTHER device changed. Only real changes are uploaded (the blob is over
+  // a megabyte), and two devices that changed different things are merged
+  // without asking: the question comes up only when both changed the same
+  // thing.
+  function hashStr(v){
+    var s = String(v == null ? '' : v), h = 2166136261;
+    for(var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return s.length + ':' + h.toString(36);
+  }
+  function fingerprints(data){
+    var out = {};
+    Object.keys(data || {}).forEach(function(k){ out[k] = hashStr(data[k]); });
+    return out;
+  }
+  function lastPrints(){ try{ return JSON.parse(localStorage.getItem(HASH_KEY) || 'null'); }catch(e){ return null; } }
+  function rememberSynced(data){ try{ localStorage.setItem(HASH_KEY, JSON.stringify(fingerprints(data || collectLocalData()))); }catch(e){} }
+  // Keys this device changed (added, edited or removed) since the last sync.
+  function localChanges(){
+    var was = lastPrints();
+    var now = fingerprints(collectLocalData());
+    if(!was) return Object.keys(now);          // never synced from here: all of it
+    var out = [];
+    Object.keys(now).forEach(function(k){ if(now[k] !== was[k]) out.push(k); });
+    Object.keys(was).forEach(function(k){ if(!(k in now)) out.push(k); });
+    return out;
+  }
+  function isDirty(){ return localChanges().length > 0; }
+  var conflictOpen = false;
+  function resolveConflict(serverData, serverUpdatedAt){
+    if(conflictOpen) return;
+    conflictOpen = true;
+    var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    showConflictChoice(rtl, function(choice){
+      conflictOpen = false;
+      if(choice === 'remote'){ applyRemoteData(serverData); setLastSyncedAt(serverUpdatedAt); rememberSynced(); location.reload(); }
+      else if(choice === 'local'){ push(serverUpdatedAt); }
+    });
+  }
+  // Another device synced something newer. Takes the keys it changed; asks
+  // only if this device changed one of the same keys.
+  function mergeFrom(remote, remoteAt){
+    var was = lastPrints() || {};
+    var mine = localChanges(), mineSet = {};
+    mine.forEach(function(k){ mineSet[k] = 1; });
+    var theirs = Object.keys(remote || {}).filter(function(k){
+      if(EXCLUDE_EXACT[k] || k.indexOf(EXCLUDE_PREFIX) === 0) return false;
+      return hashStr(remote[k]) !== was[k];
+    });
+    if(!lastPrints() && mine.length){ resolveConflict(remote, remoteAt); return; }
+    if(theirs.some(function(k){ return mineSet[k]; })){ resolveConflict(remote, remoteAt); return; }
+    var take = {};
+    theirs.forEach(function(k){ take[k] = remote[k]; });
+    applyRemoteData(take);
+    setLastSyncedAt(remoteAt);
+    var after = function(){
+      if(!theirs.length) return;
+      try{ sessionStorage.setItem('aaup_syncedIn', '1'); }catch(e){}
+      location.reload();
+    };
+    if(mine.length){
+      // Send the merged whole back, so the other device gets this one's changes.
+      push(remoteAt).then(after);
+    } else {
+      rememberSynced();
+      after();
+    }
+  }
+  // Uploads this device's changes, if there are any.
+  function autoPush(keepalive){
+    if(!isSignedIn() || !isDirty()) return Promise.resolve(null);
+    return push(getLastSyncedAt(), keepalive).then(function(r){
+      if(r && !r.ok && r.data && r.data.conflict) mergeFrom(r.data.serverData, r.data.serverUpdatedAt);
+      return r;
+    });
+  }
+  // When the app opens or comes back to the front: if another device synced
+  // since, bring its data here (quietly when nothing changed here, asking
+  // when both did); otherwise send this device's changes.
+  var lastCheck = 0;
+  function checkIn(){
+    if(!isSignedIn() || conflictOpen || Date.now() - lastCheck < 60000) return;
+    lastCheck = Date.now();
+    var before = getLastSyncedAt();
+    request('/api/sync', { method: 'GET' }).then(function(r){
+      if(!r.ok) return;
+      var remoteAt = r.data.updatedAt || 0, remote = r.data.data;
+      if(remoteAt > before && remote && Object.keys(remote).length){ mergeFrom(remote, remoteAt); return; }
+      autoPush();
     });
   }
   function pull(){
@@ -223,7 +319,7 @@
         // A fresh device (or a student who hasn't used this browser before)
         // signing into an account that already has real progress — just
         // load it, nothing here is worth asking about.
-        applyRemoteData(r.data.data);
+        applyRemoteData(r.data.data); rememberSynced();
         onDone({ ok: true, applied: true, reload: true });
         return;
       }
@@ -232,7 +328,7 @@
       // is disposable.
       showConflictChoice(rtl, function(choice){
         if(choice === 'remote'){
-          applyRemoteData(r.data.data);
+          applyRemoteData(r.data.data); rememberSynced();
           onDone({ ok: true, applied: true, reload: true });
         } else if(choice === 'local'){
           push(r.data.updatedAt).then(function(){ onDone({ ok: true }); });
@@ -287,14 +383,26 @@
   function startAutoSync(){
     stopAutoSync();
     autoTimer = setInterval(function(){
-      if(isSignedIn() && document.visibilityState === 'visible'){ push(getLastSyncedAt()); }
+      if(isSignedIn() && document.visibilityState === 'visible') autoPush();
     }, AUTO_SYNC_MS);
   }
   function stopAutoSync(){ if(autoTimer){ clearInterval(autoTimer); autoTimer = null; } }
   document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState === 'hidden' && isSignedIn()){ push(getLastSyncedAt(), true); }
+    if(!isSignedIn()) return;
+    if(document.visibilityState === 'hidden') autoPush(true);
+    else checkIn();
   });
-  if(isSignedIn()){ startAutoSync(); }
+  if(isSignedIn()){
+    startAutoSync();
+    var boot = function(){
+      setTimeout(checkIn, 1500);
+      var came = false; try{ came = sessionStorage.getItem('aaup_syncedIn') === '1'; sessionStorage.removeItem('aaup_syncedIn'); }catch(e){}
+      if(came && window.__showToast){
+        setTimeout(function(){ window.__showToast(window.AAUP_LANG && window.AAUP_LANG.isAr() ? 'تحدّث من جهازك الثاني' : 'Updated from your other device'); }, 1600);
+      }
+    };
+    if(document.readyState === 'complete') boot(); else window.addEventListener('load', boot);
+  }
 
   // ---------- Settings: a one-line status + a button that opens the popup ----------
   function sectionHtml(r){
@@ -349,22 +457,35 @@
   // ---------- the dedicated popup ----------
   function detailHtml(r){
     if(isSignedIn()){
+      // My account (round 7, idea 19): everything about the account on one
+      // list — who, whether it is synced, username, password, recovery
+      // code, a backup file, sign out; deleting the account last and red.
+      // Sync runs by itself now (idea 18), so "Sync now" is a small link.
       var name = window.__escapeHtml(displayName());
-      return '<h2 style="margin-top:0;">' + ICONMARK(20) + ' ' + (r ? 'المزامنة السحابية' : 'Cloud Sync') + '</h2>' +
-        '<p class="form-note" style="margin-top:0;">' + (r ? 'مسجّل الدخول باسم ' : 'Signed in as ') + '<b>' + name + '</b></p>' +
-        '<div class="form-actions" style="justify-content:flex-start;flex-wrap:wrap;">' +
-        '<button type="button" class="home-btn" id="cloudSyncNowBtn">' + ICONBTN('refresh') + (r ? 'مزامنة الآن' : 'Sync now') + '</button>' +
-        '<button type="button" class="home-btn" id="cloudUsernameBtn">' + ICONBTN('person') + (r ? 'اسم المستخدم' : 'Username') + '</button>' +
-        '<button type="button" class="home-btn" id="cloudChangePwBtn">' + ICONBTN('keys') + (r ? 'تغيير كلمة المرور' : 'Change password') + '</button>' +
-        '<button type="button" class="home-btn" id="cloudRecoveryBtn">' + ICONBTN('lock') + (r ? 'رمز الاسترجاع' : 'Recovery code') + '</button>' +
-        '<button type="button" class="home-btn" id="cloudSignOutBtn">' + ICONBTN('undo') + (r ? 'تسجيل الخروج' : 'Sign out') + '</button>' +
+      var row = function(label, value, btn){
+        return '<div class="myacct-row"><span class="myacct-row-l">' + label + (value ? '<small>' + value + '</small>' : '') + '</span>' + (btn || '') + '</div>';
+      };
+      var link = function(id, text){ return '<button type="button" class="myacct-link" id="' + id + '">' + text + '</button>'; };
+      var last = lastSyncLabel(r);
+      return '<h2 style="margin-top:0;">' + ICONMARK(20) + ' ' + (r ? 'حسابي' : 'My account') + '</h2>' +
+        '<div class="myacct-rows">' +
+          '<div class="myacct-row myacct-row-top"><span class="myacct-row-l"><b>' + name + '</b>' +
+            '<small class="myacct-ok" id="cloudSyncStatus">✓ ' + (last || (r ? 'متزامن' : 'Synced')) + '</small></span>' +
+            link('cloudSyncNowBtn', r ? 'زامن هلق' : 'Sync now') + '</div>' +
+          row(r ? 'اسم المستخدم' : 'Username', window.__escapeHtml(getUsername() || (r ? 'ما في' : 'none')), link('cloudUsernameBtn', r ? 'غيّر' : 'Change')) +
+          '<div id="cloudUsernameForm" style="display:none;"></div>' +
+          row(r ? 'كلمة المرور' : 'Password', '', link('cloudChangePwBtn', r ? 'غيّر' : 'Change')) +
+          '<div id="cloudChangePwForm" style="display:none;"></div>' +
+          row(r ? 'رمز الاسترجاع' : 'Recovery code', r ? 'لو نسيت كلمة المرور' : 'If you forget your password', link('cloudRecoveryBtn', r ? 'رمز جديد' : 'New code')) +
+          '<div id="cloudRecoveryBox" style="display:none;"></div>' +
+          row(r ? 'ملف نسخة احتياطية' : 'Backup file', r ? 'نسخة على جهازك' : 'A copy on this device',
+            '<span class="myacct-links">' + link('cloudBackupSaveBtn', r ? 'احفظ' : 'Save') + link('cloudBackupRestoreBtn', r ? 'استرجع' : 'Restore') + '</span>') +
+          row(r ? 'تسجيل الخروج' : 'Sign out', r ? 'بياناتك بتضل على هالجهاز' : 'Your data stays on this device', link('cloudSignOutBtn', r ? 'اطلع' : 'Sign out')) +
         '</div>' +
-        '<p class="form-note" id="cloudSyncStatus" style="margin-top:4px;">' + lastSyncLabel(r) + '</p>' +
-        '<div id="cloudUsernameForm" style="display:none;margin-top:8px;"></div>' +
-        '<div id="cloudChangePwForm" style="display:none;margin-top:8px;"></div>' +
-        '<div id="cloudRecoveryBox" style="display:none;margin-top:8px;"></div>' +
-        '<p class="form-note" style="margin-top:14px;"><button type="button" id="cloudDeleteAcctBtn" style="background:none;border:none;color:var(--danger, #ff6b6b);font-size:11.5px;cursor:pointer;padding:0;">' +
-          ICONBTN('trash') + (r ? 'حذف الحساب السحابي نهائيًا' : 'Permanently delete cloud account') + '</button></p>' +
+        '<div class="myacct-rows myacct-danger">' +
+          row('<span class="myacct-bad">' + (r ? 'حذف الحساب' : 'Delete account') + '</span>', r ? 'نهائيًا، من السحابة' : 'For good, from the cloud',
+            '<button type="button" class="myacct-link myacct-bad" id="cloudDeleteAcctBtn">' + (r ? 'احذف' : 'Delete') + '</button>') +
+        '</div>' +
         '<div id="cloudMsg"></div>';
     }
     return '<h2 style="margin-top:0;">' + ICONMARK(20) + ' ' + (r ? 'المزامنة السحابية' : 'Cloud Sync') + '</h2>' +
@@ -424,22 +545,26 @@
     var syncBtn = root.querySelector('#cloudSyncNowBtn');
     if(syncBtn){
       syncBtn.addEventListener('click', function(){
-        syncBtn.disabled = true; syncBtn.textContent = (rtl ? 'جارٍ...' : 'Syncing…');
+        syncBtn.disabled = true; syncBtn.textContent = (rtl ? 'جارٍ…' : 'Syncing…');
         push(getLastSyncedAt()).then(function(r){
           if(r.ok){ render(); return; }
           if(r.data && r.data.conflict){
             showConflictChoice(rtl, function(choice){
-              if(choice === 'remote'){ applyRemoteData(r.data.serverData); setLastSyncedAt(r.data.serverUpdatedAt); location.reload(); }
+              if(choice === 'remote'){ applyRemoteData(r.data.serverData); setLastSyncedAt(r.data.serverUpdatedAt); rememberSynced(); location.reload(); }
               else if(choice === 'local'){ push(r.data.serverUpdatedAt).then(render); }
               else { render(); }
             });
             return;
           }
           showMsg(root, (r.data && r.data.error) || 'Sync failed.', true);
-          syncBtn.disabled = false; syncBtn.textContent = (rtl ? 'مزامنة الآن' : 'Sync now');
+          syncBtn.disabled = false; syncBtn.textContent = (rtl ? 'زامن هلق' : 'Sync now');
         });
       });
     }
+    var bkSave = root.querySelector('#cloudBackupSaveBtn');
+    if(bkSave) bkSave.addEventListener('click', function(){ if(window.AAUP_DATA) window.AAUP_DATA.exportData(); });
+    var bkRestore = root.querySelector('#cloudBackupRestoreBtn');
+    if(bkRestore) bkRestore.addEventListener('click', function(){ if(window.AAUP_DATA) window.AAUP_DATA.triggerImport(); });
     var signOutBtn = root.querySelector('#cloudSignOutBtn');
     if(signOutBtn){
       signOutBtn.addEventListener('click', function(){ signOut(); stopAutoSync(); location.reload(); });
@@ -740,6 +865,8 @@
     // "two real copies of data" choice has to be made, and it's worth
     // reusing rather than re-deciding differently in a second place.
     signIn: signIn, signUp: signUp, reconcileAfterSignIn: reconcileAfterSignIn, startAutoSync: startAutoSync,
+    // Runs the open-time check now (it normally waits a minute between runs).
+    checkIn: function(){ lastCheck = 0; checkIn(); },
     showPendingRecovery: showPendingRecovery
   };
   // A recovery code the student has not confirmed saving yet (the app was

@@ -175,12 +175,15 @@
         // rtl-mode is set on the plan page, never on <body> — so this was
         // always false and this screen was always English.
         var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
-        var msg = rtl
-          ? 'إزالة بياناتك المحفوظة لهذا المساق نهائيًا؟ لا يمكن التراجع عن هذا.'
-          : 'Permanently remove your saved data for this course? This can’t be undone.';
-        var doIt = function(){ remove(pid); onChange(); };
-        if(window.__showConfirmDialog){ window.__showConfirmDialog(msg, doIt, rtl); }
-        else { doIt(); }
+        // Round 7, idea 17: at once, with Undo (every store's value for it
+        // is kept until the toast goes).
+        var kept = pidStores().map(function(store){ var m = readMap(store.key); return { key: store.key, has: pid in m, v: m[pid] }; });
+        remove(pid); onChange();
+        var undo = function(){
+          kept.forEach(function(k){ if(!k.has) return; var m = readMap(k.key); m[pid] = k.v; writeMap(k.key, m); });
+          onChange();
+        };
+        if(window.__showActionToast) window.__showActionToast(rtl ? 'انشالت البيانات.' : 'Removed.', rtl ? 'تراجع' : 'Undo', undo);
       });
     });
     var all = root.querySelector('#orphanKeepAll');
