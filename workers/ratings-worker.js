@@ -32,6 +32,13 @@
 //   4. Optional: set ALLOWED_ORIGIN to your site so no other page can post.
 // ---------------------------------------------------------------------------
 
+// Which commit this Worker was deployed from. .github/workflows/
+// deploy-workers.yml writes it in on every deploy; a copy pasted by hand
+// keeps the placeholder, which the admin room reads as "version unknown".
+// GET /__version answers with it, so the admin room can tell whether each
+// Worker is up to date.
+const WORKER_BUILD = '__WORKER_BUILD__';
+
 const RATE_WINDOW_MS = 5 * 1000;       // one write per device per course-ish burst
 const MAX_COURSES_PER_QUERY = 60;
 const WORKLOAD_VALUES = ['Easy', 'Medium', 'Hard'];
@@ -47,6 +54,7 @@ export default {
       'Access-Control-Max-Age': '86400',
     };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+    if (new URL(request.url).pathname.replace(/\/+$/, '') === '/__version') return json({ build: WORKER_BUILD }, 200, cors);
     if (!env.RATINGS) return json({ error: 'KV namespace RATINGS is not bound' }, 500, cors);
 
     const url = new URL(request.url);

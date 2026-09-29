@@ -9238,3 +9238,11 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
   .hm-tt-prompt{min-height:44px;}
 }
 
+/* Admin room: Workers status and Waiting for you (js/48-admin.js, round 7). */
+.adm-ok{color:var(--good, #3fb07a); font-weight:800;}
+.adm-warn{color:var(--warn, #e0a13a); font-weight:800;}
+.adm-bad{color:var(--danger, #e2596b); font-weight:800;}
+.adm-dim{color:var(--text-dim); font-weight:700;}
+.adm-inbox{border:1px solid var(--line); border-radius:12px; padding:2px 12px; margin:0 0 18px;}
+.adm-inbox-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 0; border-top:1px solid var(--line);}
+.adm-inbox-row:first-child{border-top:0;}
