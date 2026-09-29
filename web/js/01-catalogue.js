@@ -139,8 +139,9 @@ window.APP_AI_SECRET = '';
 // different. Nobody's progress ever leaves their device until this is set.
 window.APP_CLOUD_URL = 'https://studyplan-cloud.pmhtrfalab999.workers.dev';
 // Sign in with Google (js/52-cloud.js): the OAuth "Web application" client id
-// from Google Cloud, also set on the cloud Worker as GOOGLE_CLIENT_ID. Empty
-// means no Google button. Setup steps: cloud/README.md.
+// from Google Cloud. Left empty, the app asks the cloud Worker for its
+// GOOGLE_CLIENT_ID instead, so setting it there is enough; neither set means
+// no Google button. Setup steps: cloud/README.md.
 window.APP_GOOGLE_CLIENT_ID = '';
 // Hosted JSON manifest of official/community plans the app can pull updates
 // from when online (see "Check for updates" in Settings). A relative path
@@ -163,7 +164,7 @@ window.APP_GITHUB_REPO = 'JO0Dile/AAUPath';
 //   small feature             -> +0.1   (2.0  -> 2.1)
 //   big feature / redesign    -> next .5, or next whole number if already
 //                                 past x.5 (2.0 -> 2.5, 2.5 -> 3.0)
-window.APP_VERSION = '8.55';
+window.APP_VERSION = '8.56';
 
 (function(){
   // The catalogue ships with the app. Relative on purpose: it must resolve the
