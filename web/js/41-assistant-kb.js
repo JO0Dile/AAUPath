@@ -207,9 +207,11 @@
     switchPlan: {
       title: { en: 'Changing plan', ar: 'تغيير الخطة' },
       steps: [
-        { target: q('#taskHome [data-hm-go="switch"]'),
-          text: { en: 'Switch major is on the home screen. It asks which: move to another major (and see what carries over), or just open another of your plans. Nothing is lost either way.',
-                  ar: '«غيّر التخصص» موجود بالشاشة الرئيسية. بيسأل أي واحدة: تنتقل لتخصص ثاني (وتشوف شو بينحسب إلك)، أو تفتح خطة ثانية عندك. ما بضيع إشي بالحالتين.' } }
+        // On Home as a card if the student brought it out, otherwise inside
+        // the More row under the cards.
+        { target: function(){ return document.querySelector('#taskHome [data-hm-go="switch"]') || document.querySelector('#taskHome [data-hm-more-open]'); },
+          text: { en: 'Switch major is on the home screen, under More. It asks which: move to another major (and see what carries over), or just open another of your plans. Nothing is lost either way.',
+                  ar: '«غيّر التخصص» موجود بالشاشة الرئيسية تحت «المزيد». بيسأل أي واحدة: تنتقل لتخصص ثاني (وتشوف شو بينحسب إلك)، أو تفتح خطة ثانية عندك. ما بضيع إشي بالحالتين.' } }
       ]
     },
     menu: {

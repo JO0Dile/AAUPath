@@ -264,70 +264,9 @@
   }
   window.__deviceId = deviceId;
 
-  // ---------------------------------------------------------------------
-  // On a phone a dialog is presented as a page (see the max-width:720px block
-  // in css/app.css), so the phone's own Back gesture has to close it. Without
-  // this, Back leaves the app entirely from what looks like a normal screen —
-  // the single most jarring thing a "page" can do.
-  //
-  // Done here, once, by watching the shared .open class rather than by editing
-  // each dialog's open()/close(): there are a dozen of them across as many
-  // modules, and any new one should get this for free.
-  var pushedForModal = 0;      // history entries this owns, so it never eats
-                               // a Back press that belongs to the app itself.
-  function openModalCount(){
-    return document.querySelectorAll('.modal-overlay.open').length;
-  }
-  function isPhone(){
-    return window.matchMedia && window.matchMedia('(max-width:720px)').matches;
-  }
-
-  var lastCount = 0;
-  function syncHistory(){
-    var now = openModalCount();
-    if(now > lastCount && isPhone()){
-      // A dialog just opened as a page: give Back something to land on.
-      try{ history.pushState({ __aaupModal: true }, ''); pushedForModal++; }catch(e){}
-    } else if(now < lastCount && pushedForModal > 0){
-      // Closed by its own back arrow / Escape / backdrop rather than by Back.
-      // Drop the entry we added so the next Back press is not swallowed.
-      pushedForModal--;
-      try{ history.back(); }catch(e){}
-    }
-    lastCount = now;
-  }
-
-  window.addEventListener('popstate', function(){
-    if(pushedForModal <= 0) return;   // not ours — let the app navigate
-    var open = document.querySelectorAll('.modal-overlay.open');
-    if(!open.length){ pushedForModal = 0; lastCount = 0; return; }
-    pushedForModal--;
-    // Close the topmost one via its own control so each module's own cleanup
-    // runs, falling back to the class when a dialog has no close button.
-    var top = open[open.length - 1];
-    var btn = top.querySelector('.modal-close, [id$="Close"]');
-    if(btn){ btn.click(); } else { top.classList.remove('open'); }
-    lastCount = openModalCount();
-  });
-
-  function watchModals(){
-    lastCount = openModalCount();
-    var obs = new MutationObserver(syncHistory);
-    document.querySelectorAll('.modal-overlay').forEach(function(el){
-      obs.observe(el, { attributes: true, attributeFilter: ['class'] });
-    });
-    // Dialogs created after load (the Plan Overview builds its overlay on
-    // demand) are picked up by watching the body for new overlays.
-    new MutationObserver(function(muts){
-      muts.forEach(function(m){
-        Array.prototype.forEach.call(m.addedNodes, function(n){
-          if(n.nodeType === 1 && n.classList && n.classList.contains('modal-overlay')){
-            obs.observe(n, { attributes: true, attributeFilter: ['class'] });
-          }
-        });
-      });
-    }).observe(document.body, { childList: true });
-  }
-  if(document.readyState === 'complete'){ watchModals(); }
-  else { window.addEventListener('load', watchModals); }
+  // The phone's Back gesture closing a dialog lives in js/60-backbar.js
+  // (one history entry per open dialog). A second, older copy here used to
+  // push its own entries too; the two answered the same Back press and the
+  // same self-made history steps, and closed windows that should have stayed
+  // open, so it was removed.
 })();

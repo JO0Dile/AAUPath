@@ -191,6 +191,12 @@
   // screen ever opened.
   var pushed = [];          // overlay ids we have pushed an entry for
   var popping = false;      // true while we are the ones closing it
+  // history.back() calls we make ourselves, to drop the entry of a dialog
+  // that closed by its own button. Each one comes back as a popstate, and
+  // that popstate must not be read as the student pressing back: it used to
+  // close the NEXT dialog down too (closing the calendar sheet also closed
+  // My Week under it; opening a window from another one's button shut it).
+  var selfBacks = 0;
 
   function openIds(){
     return [].slice.call(document.querySelectorAll('.modal-overlay.open'))
@@ -217,6 +223,7 @@
   window.addEventListener('popstate', function(e){
     var st = e.state;
     // Not one of ours: let the browser do what it was going to do.
+    if(selfBacks > 0){ selfBacks--; return; }
     if(!pushed.length) return;
     var id = pushed.pop();
     popping = true;
@@ -239,7 +246,7 @@
       for(var i = pushed.length - 1; i >= 0; i--){
         if(open.indexOf(pushed[i]) === -1){
           pushed.splice(i, 1);
-          try{ history.back(); }catch(e){}
+          try{ selfBacks++; history.back(); }catch(e){ selfBacks--; }
           break;   // one per tick; the next mutation will catch the rest
         }
       }
