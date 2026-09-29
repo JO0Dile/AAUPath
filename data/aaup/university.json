@@ -7,6 +7,139 @@
   "icon": "🏛️",
   "iconKey": "",
   "website": "https://www.aaup.edu",
+  "country": null,
+  "logoUrl": "assets/uploads/main-logo-transparent.png",
+  "description": "Arab American University (AAUP), established in 2000, is the first private Palestinian university. Founded in collaboration with California State University and Utah State University, AAUP is committed to providing high-quality education through diverse academic programs.\n\nThe University promotes excellence in education, research, innovation, and entrepreneurship while providing a dynamic learning environment that supports student success. AAUP continues to advance its academic programs and facilities in accordance with international quality standards, preparing graduates to contribute to Palestinian and global development.",
+  "imageUrl": "",
+  "colleges": [
+    {
+      "slug": "aaup-allied-medical",
+      "name": "Faculty of Allied Medical Sciences",
+      "nameAr": "كلية العلوم الطبية المساندة",
+      "icon": "🩻",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-architecture-art",
+      "name": "Faculty of Architecture and Art",
+      "nameAr": "كلية العمارة والفنون",
+      "icon": "🏛",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-ai-ds",
+      "name": "Faculty of Artificial Intelligence and Data Science",
+      "nameAr": "كلية الذكاء الاصطناعي وعلوم البيانات",
+      "icon": "🤖",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-arts-education",
+      "name": "Faculty of Arts and Education",
+      "nameAr": "كلية الآداب والعلوم التربوية",
+      "icon": "📖",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-business",
+      "name": "Faculty of Business",
+      "nameAr": "كلية الأعمال والاقتصاد",
+      "icon": "📊",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-dentistry",
+      "name": "Faculty of Dentistry",
+      "nameAr": "كلية طب الأسنان",
+      "icon": "🦷",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-digital-sciences",
+      "name": "Faculty of Digital Sciences",
+      "nameAr": "كلية العلوم الرقمية",
+      "icon": "🌐",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-engineering",
+      "name": "Faculty of Engineering",
+      "nameAr": "كلية الهندسة",
+      "icon": "⚙️",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-it",
+      "name": "Faculty of Information Technology",
+      "nameAr": "كلية تكنولوجيا المعلومات",
+      "icon": "💻",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-law",
+      "name": "Faculty of Law",
+      "nameAr": "كلية الحقوق",
+      "icon": "⚖️",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-medicine",
+      "name": "Faculty of Medicine",
+      "nameAr": "كلية الطب",
+      "icon": "🩺",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-modern-media",
+      "name": "Faculty of Modern Media",
+      "nameAr": "كلية الإعلام الحديث",
+      "icon": "🎙",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-nursing",
+      "name": "Faculty of Nursing",
+      "nameAr": "كلية التمريض",
+      "icon": "🩺",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-pharmacy",
+      "name": "Faculty of Pharmacy",
+      "nameAr": "كلية الصيدلة",
+      "icon": "💊",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-junior-college",
+      "name": "Junior College",
+      "nameAr": "كلية المجتمع",
+      "icon": "🎓",
+      "iconKey": "",
+      "imageUrl": ""
+    }
+  ],
+  "dates": [
+    {
+      "en": "ADD/DROP ENDS + start of uni",
+      "ar": "اخر يوم سحب واضافة + بداية الدوام",
+      "date": "2026-10-04"
+    }
+  ],
   "contacts": {
     "source": "https://www.aaup.edu/arab-american-university-official-offices",
     "email": "info@aaup.edu",
@@ -24,131 +157,5 @@
         "fax": "+970 2 2941979"
       }
     ]
-  },
-  "country": null,
-  "logoUrl": "assets/uploads/main-logo-transparent.png",
-  "description": "Arab American University (AAUP), established in 2000, is the first private Palestinian university. Founded in collaboration with California State University and Utah State University, AAUP is committed to providing high-quality education through diverse academic programs.\n\nThe University promotes excellence in education, research, innovation, and entrepreneurship while providing a dynamic learning environment that supports student success. AAUP continues to advance its academic programs and facilities in accordance with international quality standards, preparing graduates to contribute to Palestinian and global development.",
-  "imageUrl": "",
-  "colleges": [
-    {
-      "slug": "aaup-allied-medical",
-      "name": "Faculty of Allied Medical Sciences",
-      "nameAr": "كلية العلوم الطبية المساندة",
-      "icon": "🩻",
-      "iconKey": "microscope",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-architecture-art",
-      "name": "Faculty of Architecture and Art",
-      "nameAr": "كلية العمارة والفنون",
-      "icon": "🏛",
-      "iconKey": "ruler",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-ai-ds",
-      "name": "Faculty of Artificial Intelligence and Data Science",
-      "nameAr": "كلية الذكاء الاصطناعي وعلوم البيانات",
-      "icon": "🤖",
-      "iconKey": "robot",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-arts-education",
-      "name": "Faculty of Arts and Education",
-      "nameAr": "كلية الآداب والعلوم التربوية",
-      "icon": "📖",
-      "iconKey": "ruler",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-business",
-      "name": "Faculty of Business",
-      "nameAr": "كلية الأعمال والاقتصاد",
-      "icon": "📊",
-      "iconKey": "briefcase",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-dentistry",
-      "name": "Faculty of Dentistry",
-      "nameAr": "كلية طب الأسنان",
-      "icon": "🦷",
-      "iconKey": "tooth",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-digital-sciences",
-      "name": "Faculty of Digital Sciences",
-      "nameAr": "كلية العلوم الرقمية",
-      "icon": "🌐",
-      "iconKey": "globe",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-engineering",
-      "name": "Faculty of Engineering",
-      "nameAr": "كلية الهندسة",
-      "icon": "⚙️",
-      "iconKey": "gear",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-it",
-      "name": "Faculty of Information Technology",
-      "nameAr": "كلية تكنولوجيا المعلومات",
-      "icon": "💻",
-      "iconKey": "code",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-law",
-      "name": "Faculty of Law",
-      "nameAr": "كلية الحقوق",
-      "icon": "⚖️",
-      "iconKey": "scales",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-medicine",
-      "name": "Faculty of Medicine",
-      "nameAr": "كلية الطب",
-      "icon": "🩺",
-      "iconKey": "medical",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-modern-media",
-      "name": "Faculty of Modern Media",
-      "nameAr": "كلية الإعلام الحديث",
-      "icon": "🎙",
-      "iconKey": "news",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-nursing",
-      "name": "Faculty of Nursing",
-      "nameAr": "كلية التمريض",
-      "icon": "🩺",
-      "iconKey": "health",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-pharmacy",
-      "name": "Faculty of Pharmacy",
-      "nameAr": "كلية الصيدلة",
-      "icon": "💊",
-      "iconKey": "pharmacy",
-      "imageUrl": ""
-    },
-    {
-      "slug": "aaup-junior-college",
-      "name": "Junior College",
-      "nameAr": "كلية المجتمع",
-      "icon": "🎓",
-      "iconKey": "people",
-      "imageUrl": ""
-    }
-  ]
+  }
 }
