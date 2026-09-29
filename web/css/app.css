@@ -9065,6 +9065,22 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .tt-form{margin-top:8px;}
 .tt-more{margin-top:10px;}
 .tt-cal-btn{margin:2px 0 8px;}
+.tt-saved{font-size:12.5px; font-weight:800; color:var(--good, #3fb07a); margin-inline-end:6px;}
+/* Finish this semester (js/106-semester.js). */
+.sem-end-card{max-width:480px;}
+.sem-end-list{display:flex; flex-direction:column; margin:6px 0 12px;}
+.sem-end-row{display:flex; align-items:center; gap:10px; min-height:52px; padding:6px 2px; border-top:1px solid var(--line); cursor:pointer;}
+.sem-end-row:first-child{border-top:0;}
+.sem-end-tick{width:22px; height:22px; border-radius:7px; border:2px solid var(--line); flex:none; display:grid; place-items:center;}
+.sem-end-row[aria-pressed="true"] .sem-end-tick{background:var(--accent); border-color:var(--accent);}
+.sem-end-row[aria-pressed="true"] .sem-end-tick::after{content:""; width:9px; height:5px; border:solid var(--on-accent); border-width:0 0 2px 2px; transform:translateY(-1px) rotate(-45deg);}
+.sem-end-row[aria-pressed="false"] .sem-end-name{color:var(--text-dim); text-decoration:line-through;}
+.sem-end-name{flex:1; min-width:0; font-size:13.5px; font-weight:700;}
+.sem-end-name small{margin-inline-start:6px; color:var(--text-dim); font-weight:600;}
+.sem-end-row select{font:inherit; font-size:13px; padding:6px 8px; border-radius:9px; border:1px solid var(--line); background:var(--surface-bg); color:var(--text);}
+/* Reset to official, in Edit Mode (js/106-semester.js). */
+.imp-sem-reset{margin-inline-start:auto; flex:none; white-space:nowrap; border:1px solid var(--line); border-radius:999px; background:none; color:var(--text-dim); font:inherit; font-size:11.5px; font-weight:700; letter-spacing:0; text-transform:none; padding:3px 10px; cursor:pointer;}
+.imp-sem-reset:hover{color:var(--accent); border-color:var(--accent);}
 #devModalOverlay.is-over-tt{z-index:1002;}
 .tt-pick{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:10px;}
 .tt-pick-l{display:block; font-weight:700; font-size:13px; margin-bottom:6px;}
@@ -9146,6 +9162,12 @@ html[data-plan-view="list"] .sheet-plan.editing .cp-pair::after{inset-inline-end
 .crs-dot, .crs-dot-off{width:7px; height:7px; border-radius:50%; flex:none;}
 .crs-dot{background:var(--accent);}
 .crs-menu-sep{height:1px; background:var(--line); margin:4px 0;}
+/* The same menu from a long-press on a phone: a sheet along the bottom with
+   thumb-sized rows (round 7). */
+.crs-menu.is-sheet{inset-inline:8px; bottom:8px; top:auto; max-width:none; min-width:0; max-height:72vh; overflow-y:auto; padding:8px; border-radius:18px; box-shadow:0 -10px 40px rgba(0,0,0,.5);}
+.crs-menu.is-sheet button{min-height:46px; font-size:14.5px;}
+.crs-menu.is-sheet .crs-menu-h{font-size:13px; padding:8px 10px;}
+.sheet-plan .course{-webkit-touch-callout:none;}
 .crs-menu-sub{max-height:220px; overflow-y:auto; border-top:1px solid var(--line); margin-top:4px; padding-top:4px;}
 /* Your week grid, clashes (js/104-week.js). */
 .wk-panel{border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin:6px 0 10px;}
