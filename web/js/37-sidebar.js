@@ -315,6 +315,12 @@
       groupHtml('plan') + groupHtml('community') + advHtml + groupHtml('account');
   }
 
+  var FOLD_KEY = 'aaup_sbFolded';
+  function folded(){ try{ return localStorage.getItem(FOLD_KEY) === '1'; }catch(e){ return false; } }
+  function setFolded(on){ try{ if(on) localStorage.setItem(FOLD_KEY, '1'); else localStorage.removeItem(FOLD_KEY); }catch(e){} }
+  // Keys js/96-shortcuts.js answers to, shown in each row's tooltip.
+  var SHORTCUT_HINTS = { edit: 'E' };
+
   function render(prefix, activeKey){
     activeKey = navKey(activeKey);
     var sidebar = document.getElementById('appSidebar');
@@ -348,10 +354,28 @@
     // Course Library. Switching major lives in one place now: the home
     // screen (js/90-task-home.js), next to the major it switches.
     html += itemsFor(prefix).filter(function(i){ return i.bottom; }).map(itemHtml).join('');
-    html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button></div>';
-    html += '</div>';
+    html += '<button type="button" class="sb-item" data-sb-key="settings"><span class="sb-icon">' + window.AAUP_ICONS.preview('gear', 16) + '</span><span>' + (ar() ? 'الإعدادات' : 'Settings') + '</span></button>';
+    // Round 8, idea 4: fold the sidebar to a strip of icons on a laptop, so
+    // the plan gets the room. Remembered on this device.
+    var foldLab = folded() ? (ar() ? 'كبّر القائمة' : 'Open the sidebar') : (ar() ? 'صغّر القائمة' : 'Fold the sidebar');
+    html += '<button type="button" class="sb-fold" id="sbFoldBtn" title="' + foldLab + '" aria-label="' + foldLab + '">' +
+      '<span class="sb-icon" aria-hidden="true">' + (folded() !== ar() ? '»' : '«') + '</span>' +
+      '<span>' + foldLab + '</span></button>';
+    html += '</div></div>';
     html += '<div class="sb-groups">' + moreGroupsHtml(prefix, activeKey) + '</div>';
     sidebar.innerHTML = html;
+    // Folded, only the icons show, so every row carries its name (and its
+    // key, where it has one: round 8, idea 17) for the hover tooltip.
+    sidebar.querySelectorAll('.sb-flat-list .sb-item, .sb-flat-list .sb-adv-toggle, .sb-brand, .sb-home').forEach(function(el){
+      var lab = el.querySelector('span:not(.sb-icon):not(.sb-mark):not(.sb-adv-count):not(.sb-adv-chevron)');
+      var key = el.getAttribute('data-sb-key');
+      var hint = SHORTCUT_HINTS[key];
+      if(lab && !el.title) el.title = lab.textContent.trim() + (hint ? '  (' + hint + ')' : '');
+      else if(hint && el.title) el.title += '  (' + hint + ')';
+    });
+    var foldBtn = sidebar.querySelector('#sbFoldBtn');
+    if(foldBtn) foldBtn.addEventListener('click', function(){ setFolded(!folded()); render(prefix, activeKeyNow); });
+    document.body.classList.toggle('sb-folded', folded());
 
     // Toggling Advanced re-renders in place rather than re-running render(),
     // which would rebuild the whole sidebar and lose nothing but cost a
