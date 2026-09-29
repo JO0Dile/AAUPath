@@ -1239,7 +1239,7 @@
     font-size:13.5px;color:var(--text-dim);white-space:nowrap;
     font-variant-numeric:tabular-nums;
   }
-  .pw-num b{color:var(--text);font-weight:800;font-size:13.5px;direction:ltr;unicode-bidi:isolate;}
+  .pw-num b{color:var(--text);font-weight:800;font-size:13.5px;unicode-bidi:plaintext;}
 
   /* A folded year hides its body outright rather than height-animating it:
      the connector SVG is redrawn against the new layout on every toggle

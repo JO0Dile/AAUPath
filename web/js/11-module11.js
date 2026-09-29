@@ -277,9 +277,7 @@
     var pct = total ? Math.round(done / total * 100) : 0;
     if(fill){ fill.style.width = pct + '%'; }
     if(text){
-      text.textContent = isRtl(prefix)
-        ? (done + ' / ' + total + ' مكتمل (' + pct + '٪)')
-        : (done + ' / ' + total + ' completed (' + pct + '%)');
+      text.textContent = window.__progressText(done, total, isRtl(prefix));
     }
 
     // Recalculate which courses just became available now that completion

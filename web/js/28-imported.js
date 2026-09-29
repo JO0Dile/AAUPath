@@ -2105,7 +2105,7 @@
       // is the one thing that stays on screen all the way down the plan — the
       // box used to sit above it and scroll away with the header.
       '<div class="progress-widget"><div class="pw-track"><div class="pw-fill" style="width:' + pct + '%;"></div></div>' +
-      '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span>' +
+      '<span class="pw-num"><b>' + window.__progressText(doneCr, totalCr, rtl) + '</b></span>' +
       // Cards or List: List puts each course on one line (tick, name, hours)
       // so a whole year fits on a phone screen. Remembered per device.
       // Offered in Edit Mode too: there List stacks each semester full width,
@@ -2271,7 +2271,7 @@
     var totalCr = 0, doneCr = 0;
     window.AAUP_AUDIT.computeAudit(planId).forEach(function(r){ totalCr += r.total; doneCr += r.completed; });
     var pct = totalCr ? Math.round(doneCr / totalCr * 100) : 0;
-    num.innerHTML = '<b>' + doneCr + ' / ' + totalCr + 'H</b>';
+    num.innerHTML = '<b>' + window.__progressText(doneCr, totalCr) + '</b>';
     var fill = page.querySelector('.pw-fill');
     if(fill){ fill.style.width = pct + '%'; }
   }
@@ -2571,7 +2571,7 @@
       // two numbers, plus (from js/64-milestones.js, which appends into this
       // same line) the hours to the nearest requirement still open.
       '<div class="progress-widget"><div class="pw-track"><div class="pw-fill" style="width:' + pct + '%;"></div></div>' +
-      '<span class="pw-num"><b>' + doneCr + ' / ' + totalCr + 'H</b></span></div>';
+      '<span class="pw-num"><b>' + window.__progressText(doneCr, totalCr) + '</b></span></div>';
 
     var community = window.AAUP_COMMUNITY ? window.AAUP_COMMUNITY.loadCommunity() : {};
     Object.keys(bySemester).forEach(function(sem){
@@ -2909,7 +2909,9 @@
         // id this app made up, which means nothing to a student and nothing
         // to the registrar either. Courses whose plan carries no number show
         // just the hours rather than a placeholder dash.
-        var num = c.num && c.num !== '-' ? window.__escapeHtml(String(c.num)) + ' · ' : '';
+        // Round 7, idea 27: name and hours only; the number is in the
+        // course window, the transcript and the calendar, where it's copied.
+        var num = '';
         return '<div class="lib-row">' +
           '<span class="lib-row-name">' + window.__escapeHtml(c.name) +
             ' <span class="lib-row-meta">' + num + c.cr + 'H</span></span>' +

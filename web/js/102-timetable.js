@@ -84,7 +84,7 @@
     var first = list[0], startIn = mins(first.s) - nowM;
     var pill = startIn <= 0 ? L('on now', 'هلأ')
       : startIn < 60 ? L('next in ' + startIn + ' min', 'بعد ' + startIn + ' دقيقة')
-      : L('next at ' + first.s, 'الجاي الساعة ' + first.s);
+      : L('next at ' + window.__fmtTime(first.s), 'الجاي الساعة ' + window.__fmtTime(first.s));
     return '<section class="hm-sem hm-today" aria-label="' + esc(L('Today', 'اليوم')) + '">' +
       '<div class="hm-sem-h"><b>' + esc(L('Today · ' + DAY_FULL_EN[day], 'اليوم · ' + DAY_FULL_AR[day])) + '</b>' +
         '<span class="hm-today-pill' + (startIn <= 0 ? ' is-now' : '') + '">' + esc(pill) + '</span></div>' +
@@ -92,7 +92,7 @@
         var on = mins(x.s) <= nowM;
         return '<div class="hm-sem-row hm-today-row' + (on ? ' is-now' : '') + '">' +
           '<span class="hm-sem-name">' + esc(courseName(x.c)) + (x.r ? '<small>' + esc(x.r) + '</small>' : '') + '</span>' +
-          '<b class="hm-today-time">' + esc(x.s) + '</b></div>';
+          '<b class="hm-today-time">' + esc(window.__fmtTime(x.s)) + '</b></div>';
       }).join('') +
       '</section>';
   }
@@ -153,7 +153,7 @@
   // Days in the reading direction; the time range and room always left to right.
   function meetingHtml(x){
     return esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
-      ' · <bdi dir="ltr">' + esc(x.s + '–' + x.e) + '</bdi>' + (x.r ? ' · <bdi dir="ltr">' + esc(x.r) + '</bdi>' : '');
+      ' · <bdi dir="ltr">' + esc(window.__fmtTime(x.s) + '–' + window.__fmtTime(x.e)) + '</bdi>' + (x.r ? ' · <bdi dir="ltr">' + esc(x.r) + '</bdi>' : '');
   }
   function render(){
     var body = document.getElementById('ttBody');
@@ -212,9 +212,8 @@
     box.innerHTML =
       (raw && !exact ? '<button type="button" class="tt-pick-row is-own" data-tt-own>' + esc(L('Add “' + raw + '”', 'ضيف “' + raw + '”')) + '<small>' + esc(L('not in your plan', 'مش بخطتك')) + '</small></button>' : '') +
       list.map(function(c){
-        var code = c.num || c.courseNumber || '';
         return '<button type="button" class="tt-pick-row" role="option" data-tt-pick="' + esc(c.id) + '">' + esc(courseName(c)) +
-          '<small>' + esc((code ? code + ' · ' : '') + (parseFloat(c.creditHours) || 0) + L('H', ' س')) + '</small></button>';
+          '<small>' + esc((parseFloat(c.creditHours) || 0) + L('H', ' س')) + '</small></button>';
       }).join('') +
       (!raw && !list.length ? '<p class="form-note">' + esc(L('Type the course name.', 'اكتب اسم المساق.')) + '</p>' : '');
   }
