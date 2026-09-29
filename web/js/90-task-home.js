@@ -502,7 +502,7 @@
     var n = nextClass(id);
     if(!n) return { label: L('Next class', 'المحاضرة الجاية'), big: '—', sub: L('Add your class times to see it', 'ضيف أوقات محاضراتك لتشوفها'), go: 'classes' };
     var c = n.x.c, when = n.k === 0 ? L('Today', 'اليوم') : n.k === 1 ? L('Tomorrow', 'بكرا') : (ar() ? DAYS_AR[n.day] : DAYS_EN[n.day]);
-    return { label: L('Next class', 'المحاضرة الجاية'), big: n.x.s, sub: (ar() && c.ar ? c.ar : c.name) + ' · ' + when + (n.x.r ? ' · ' + n.x.r : ''), go: 'classes' };
+    return { label: L('Next class', 'المحاضرة الجاية'), big: window.__fmtTime(n.x.s), sub: (ar() && c.ar ? c.ar : c.name) + ' · ' + when + (n.x.r ? ' · ' + n.x.r : ''), go: 'classes' };
   }
   function answerHtml(){
     var a = answerFor(state.q);

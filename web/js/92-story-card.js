@@ -117,7 +117,7 @@
       : L(f.semsDone + ' semesters down', 'خلّصت ' + f.semsDone + ' فصول'), W / 2, yH);
     ctx.fillStyle = 'rgba(255,255,255,.8)';
     ctx.font = '600 38px ' + font;
-    var sub = L(f.done + ' of ' + f.total + ' hours', f.done + ' من ' + f.total + ' ساعة');
+    var sub = window.__progressText(f.done, f.total);
     if(opts.finish && f.finish) sub += L(' · finishing ' + f.finish, ' · التخرج ' + f.finish);
     ctx.fillText(sub, W / 2, yH + 70);
 

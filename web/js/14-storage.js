@@ -220,6 +220,31 @@
   }
   window.__showToast = showToast;
 
+  // Round 7, idea 26: progress said one way everywhere —
+  // "34 of 128 hours · 27%" / "34 من 128 ساعة · 27%".
+  window.__progressText = function(done, total, rtl){
+    if(rtl === undefined) rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    done = Math.round(done || 0); total = Math.round(total || 0);
+    var pct = total ? Math.round(done / total * 100) : 0;
+    return rtl ? (done + ' من ' + total + ' ساعة · ' + pct + '%') : (done + ' of ' + total + ' hours · ' + pct + '%');
+  };
+  // Round 7, idea 25: a class time the way this phone's clock shows time. On
+  // a 12-hour phone "13:30" is "1:30 PM" (Arabic "1:30 م"), so a 12:15 class
+  // can't pass for midnight; on a 24-hour phone it stays "13:30".
+  var clock12 = (function(){
+    try{
+      var o = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions();
+      return o.hour12 === true || o.hourCycle === 'h12' || o.hourCycle === 'h11';
+    }catch(e){ return false; }
+  })();
+  window.__fmtTime = function(hhmm, rtl){
+    var m = /^(\d{1,2}):(\d{2})/.exec(String(hhmm || ''));
+    if(!m || !clock12) return String(hhmm || '');
+    if(rtl === undefined) rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var h = +m[1], am = h < 12;
+    return ((h % 12) || 12) + ':' + m[2] + (rtl ? (am ? ' ص' : ' م') : (am ? ' AM' : ' PM'));
+  };
+
   // A small buzz on the taps that matter, where the phone supports it:
   // 'tick' (a course passed), 'unlock' (it opened others), 'big' (a whole
   // semester done). Off from Settings -> Preferences (aaup_haptics = 'off').

@@ -75,7 +75,6 @@
     var dash = window.AAUP_DASHBOARD;
     var info = dash && dash.planDisplayInfo ? dash.planDisplayInfo(prefix) : { icon: '🎓', name: prefix };
     var student = window.AAUP_STUDENT ? window.AAUP_STUDENT.get() : null;
-    var pct = dash && dash.planPercent ? dash.planPercent(prefix) : null;
     var stats = window.__computeStats ? (function(){ try{ return window.__computeStats(prefix); }catch(e){ return null; } })() : null;
     var gpaObj = (window.AAUP_GPA && window.AAUP_GPA.gpaFor) ? (function(){ try{ return window.AAUP_GPA.gpaFor(prefix); }catch(e){ return null; } })() : null;
     var gpa = gpaObj && gpaObj.gpa != null ? gpaObj.gpa.toFixed(2) : null;
@@ -83,7 +82,7 @@
     var rows = [];
     if(student && student.name){ rows.push((rtl ? 'الطالب: ' : 'Student: ') + esc(student.name)); }
     if(gpa){ rows.push((rtl ? 'المعدل التراكمي: ' : 'GPA: ') + gpa); }
-    if(stats && stats.totalCredits){ rows.push((rtl ? 'الساعات: ' : 'Credit hours: ') + stats.doneCredits + ' / ' + stats.totalCredits + (pct != null ? ' (' + pct + '%)' : '')); }
+    if(stats && stats.totalCredits){ rows.push((rtl ? 'الساعات: ' : 'Credit hours: ') + window.__progressText(stats.doneCredits, stats.totalCredits, rtl)); }
     var today = new Date();
     rows.push((rtl ? 'أُنشئ في: ' : 'Generated: ') + today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0'));
 

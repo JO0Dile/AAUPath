@@ -95,7 +95,7 @@
             var top = (mins(x.s) - lo) / span * 100, ht = (mins(x.e) - mins(x.s)) / span * 100;
             var wpc = 100 / (x.lanes || 1), start = (x.lane || 0) * wpc;
             return '<span class="wk-blk' + (clashIds[d + '|' + x.c.id] ? ' is-clash' : '') + '" style="top:' + top + '%;height:' + ht + '%;inset-inline-start:calc(' + start + '% + 1px);width:calc(' + wpc + '% - 2px)">' +
-              '<span class="wk-nm">' + esc(x.lanes > 1 ? abbr(x.c) : full(x.c)) + '</span><small>' + esc(x.s) + '</small></span>';
+              '<span class="wk-nm">' + esc(x.lanes > 1 ? abbr(x.c) : full(x.c)) + '</span><small>' + esc(window.__fmtTime(x.s)) + '</small></span>';
           }).join('') + '</div></div>';
       }).join('') + '</div>';
   }
@@ -106,7 +106,7 @@
       return '<div class="wk-clash">' +
         '<b>' + esc(L((ar() && cl.a.ar ? cl.a.ar : cl.a.name) + ' and ' + cl.b.name + ' overlap',
                       'في تعارض بين ' + (cl.a.ar || cl.a.name) + ' و' + (cl.b.ar || cl.b.name))) + '</b>' +
-        '<span>' + esc(days) + ' · <bdi dir="ltr">' + esc(hhmm(cl.from) + '–' + hhmm(cl.to)) + '</bdi></span></div>';
+        '<span>' + esc(days) + ' · <bdi dir="ltr">' + esc(window.__fmtTime(hhmm(cl.from)) + '–' + window.__fmtTime(hhmm(cl.to))) + '</bdi></span></div>';
     }).join('');
   }
 
