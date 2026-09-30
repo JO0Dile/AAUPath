@@ -348,6 +348,16 @@ async function ghGet(env, path) {
   return { exists: true, sha: meta.sha, text: new TextDecoder().decode(b64decode(meta.content || '')) };
 }
 
+// The same file as it was at an earlier commit (round 8, idea 30: the
+// change history). Read-only: nothing is ever written from this.
+async function ghGetAt(env, path, ref) {
+  const r = await fetch(`${ghUrl(env, path)}?ref=${encodeURIComponent(ref)}`, { headers: ghHeaders(env) });
+  if (r.status === 404) return { exists: false };
+  if (!r.ok) throw new Error(`github GET ${path}@${ref}: ${r.status}`);
+  const meta = await r.json();
+  return { exists: true, text: new TextDecoder().decode(b64decode(meta.content || '')) };
+}
+
 async function ghPut(env, path, contentBytes, message, sha) {
   const body = {
     message,
@@ -891,11 +901,36 @@ async function handleDeleteUniversity(env, slug, request) {
   return json({ ok: true, unpublished: slug, note: 'files kept in data/; set published:true to restore' }, 200, env, request);
 }
 
-async function handleGetMajor(env, uni, slug, request) {
+async function handleGetMajor(env, uni, slug, request, ref) {
   if (!SLUG_RE.test(uni) || !SLUG_RE.test(slug)) return json({ error: 'bad slug' }, 400, env, request);
+  // ?ref=<commit>: the major as it was then, in the editor's shape, so the
+  // dashboard can show what changed and put an old version back (as a new
+  // save, never by rewriting history).
+  if (ref) {
+    if (!/^[0-9a-f]{7,40}$/.test(ref)) return json({ error: 'bad ref' }, 400, env, request);
+    const old = await ghGetAt(env, `data/${uni}/majors/${slug}.json`, ref);
+    if (!old.exists) return json({ error: 'not found at that version' }, 404, env, request);
+    return json({ ok: true, major: toEditable(JSON.parse(old.text)), ref }, 200, env, request);
+  }
   const f = await ghGet(env, `data/${uni}/majors/${slug}.json`);
   if (!f.exists) return json({ error: 'not found' }, 404, env, request);
   return json({ ok: true, major: toEditable(JSON.parse(f.text)), sha: f.sha }, 200, env, request);
+}
+
+// The saves that touched one major, newest first (round 8, idea 30).
+async function handleHistory(env, uni, slug, request) {
+  if (!SLUG_RE.test(uni) || !SLUG_RE.test(slug)) return json({ error: 'bad slug' }, 400, env, request);
+  const path = `data/${uni}/majors/${slug}.json`;
+  const branch = env.REPO_BRANCH || 'main';
+  const r = await fetch(`https://api.github.com/repos/${env.REPO_OWNER}/${env.REPO_NAME}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(branch)}&per_page=20`,
+    { headers: ghHeaders(env) });
+  if (!r.ok) throw new Error(`github commits ${path}: ${r.status}`);
+  const list = await r.json();
+  return json({ ok: true, commits: (Array.isArray(list) ? list : []).map((c) => ({
+    sha: c.sha,
+    date: c.commit && c.commit.author ? c.commit.author.date : null,
+    message: c.commit ? String(c.commit.message || '').split('\n')[0].slice(0, 200) : '',
+  })) }, 200, env, request);
 }
 
 async function handlePutMajor(request, env, uni, slug) {
@@ -1095,9 +1130,14 @@ export default {
 
       // /api/major/:university/:slug
       if (seg[1] === 'major' && seg[2] && seg[3]) {
-        if (request.method === 'GET') return await handleGetMajor(env, seg[2], seg[3], request);
+        if (request.method === 'GET') return await handleGetMajor(env, seg[2], seg[3], request, url.searchParams.get('ref'));
         if (request.method === 'PUT') return await handlePutMajor(request, env, seg[2], seg[3]);
         if (request.method === 'DELETE') return await handleDeleteMajor(env, seg[2], seg[3], request);
+      }
+
+      // /api/history/:university/:slug
+      if (seg[1] === 'history' && seg[2] && seg[3] && request.method === 'GET') {
+        return await handleHistory(env, seg[2], seg[3], request);
       }
 
       // /api/assets  ·  /api/assets/:filename
