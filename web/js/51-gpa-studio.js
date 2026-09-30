@@ -206,6 +206,16 @@
   // Round 8, idea 15: on a laptop the grades are a table you type into
   // (A, Tab, B+, Tab…); a Table | List switch goes back to the list with
   // chips, and the choice is remembered on this device. Phones keep the list.
+  // After a grade is saved: Grades redraws, and when it is docked beside the
+  // plan the plan redraws too, so its cards show the new grade. The plan's
+  // own redraw would ask Grades to redraw a second time; the flag stops that.
+  function redrawAfterSave(prefix){
+    if(document.documentElement.classList.contains('grades-docked') && window.AAUP_IMPORTED && window.AAUP_IMPORTED.refresh){
+      window.__gradesRedrawing = true;
+      try{ window.AAUP_IMPORTED.refresh(prefix); } finally { window.__gradesRedrawing = false; }
+    }
+    if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
+  }
   var VIEW_KEY = 'aaup_gradesView';
   function canTable(){ return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 900px)').matches); }
   function tableView(){
@@ -587,7 +597,7 @@
         // already calls, so the summary cards, the semester panel, the audit
         // table and this table all recompute from the one save — there is no
         // partial-refresh path here to fall out of sync with the others.
-        if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
+        redrawAfterSave(prefix);
       });
     });
     if(openNext){
@@ -656,7 +666,7 @@
           if(!dirty || !ov || !ov.classList.contains('open')) return;
           if(document.activeElement && tbl.contains(document.activeElement)) return;
           dirty = false;
-          if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
+          redrawAfterSave(prefix);
         }, 350);
       });
     }

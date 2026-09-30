@@ -382,10 +382,29 @@
       '</p></div>';
   }
 
+  // Round 8, idea 1: on a laptop with the plan on screen, Grades opens beside
+  // the plan instead of over it, so ticking a course on the left and typing
+  // its grade on the right happen without switching screens. Anywhere else
+  // (a phone, Home, a narrow window) it is the usual full window.
+  function dockable(prefix){
+    if(!(window.matchMedia && window.matchMedia('(min-width: 1100px) and (hover: hover) and (pointer: fine)').matches)) return false;
+    var host = document.getElementById('importedPlanView');
+    var page = document.getElementById('page-' + prefix);
+    return !!(host && page && host.style.display !== 'none' && page.offsetWidth);
+  }
+  function syncDock(overlay, prefix){
+    var docked = overlay.classList.contains('open') && dockable(prefix);
+    overlay.classList.toggle('is-docked', docked);
+    document.documentElement.classList.toggle('grades-docked', docked);
+    if(docked) overlay.setAttribute('data-prefix', prefix);
+  }
+
   function open(prefix, startMode){
     var body = document.getElementById('auditModalBody');
     var overlay = document.getElementById('auditModalOverlay');
     if(!body || !overlay) return;
+    overlay.classList.add('open');
+    syncDock(overlay, prefix);
     // This same open() is what a grade chip calls to rebuild the screen after
     // a save, so "was the overlay already open?" is the only thing that
     // separates a fresh visit from a redraw. The GPA list's "changed" marks
@@ -617,6 +636,14 @@
     var closeBtn = document.getElementById('auditModalClose');
     if(!overlay) return;
     var close = function(){ overlay.classList.remove('open'); };
+    // However it closes (the button, Escape, the back bar), docked mode ends
+    // with it and the plan gets its full width back.
+    new MutationObserver(function(){
+      // Only when it is actually set: remove() rewrites the class attribute
+      // even when there is nothing to remove, which would wake this observer
+      // again, forever.
+      if(!overlay.classList.contains('open') && overlay.classList.contains('is-docked')){ overlay.classList.remove('is-docked'); document.documentElement.classList.remove('grades-docked'); }
+    }).observe(overlay, { attributes: true, attributeFilter: ['class'] });
     if(closeBtn) closeBtn.addEventListener('click', close);
     overlay.addEventListener('click', function(e){ if(e.target === overlay) close(); });
     var card = overlay.querySelector('.modal-card');
@@ -626,5 +653,15 @@
   if(document.readyState === 'complete'){ bind(); }
   else { window.addEventListener('load', bind); }
 
-  window.AAUP_AUDIT = { open: open, computeAudit: computeAudit, labelFor: labelFor };
+  // Redraws Grades if it is docked beside this plan and not being typed in —
+  // called when the plan changes on the left (a tick), so the two agree.
+  function refreshDocked(prefix){
+    var overlay = document.getElementById('auditModalOverlay');
+    if(!overlay || !overlay.classList.contains('is-docked') || !overlay.classList.contains('open')) return;
+    if(overlay.getAttribute('data-prefix') !== prefix) return;
+    if(window.__gradesRedrawing) return;
+    if(document.activeElement && overlay.contains(document.activeElement) && /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    open(prefix);
+  }
+  window.AAUP_AUDIT = { open: open, computeAudit: computeAudit, labelFor: labelFor, refreshDocked: refreshDocked };
 })();

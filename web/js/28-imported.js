@@ -2290,6 +2290,8 @@
     // silently seeds already-complete semesters; later ones (after a toggle
     // re-renders) fire confetti for a semester that just became complete.
     if(window.__celebrateCheck){ window.__celebrateCheck(id); }
+    // Grades docked beside this plan follows a tick made here.
+    if(window.AAUP_AUDIT && window.AAUP_AUDIT.refreshDocked){ window.AAUP_AUDIT.refreshDocked(id); }
   }
 
   // Re-reads the audit against the rendered cards and writes the two numbers
