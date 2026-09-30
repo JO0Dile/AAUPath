@@ -154,6 +154,7 @@
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
     ['accounts',      '👤 Student accounts'],
+    ['staff',         '🎓 Staff logins'],
     ['workers',       '🚀 Workers'],
     ['settings',      '⚙️ Settings']
   ];
@@ -163,7 +164,7 @@
   var NAV_GROUPS = [
     [null, ['dashboard']],
     ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'assets']],
-    ['People', ['contributions', 'thoughts', 'accounts']],
+    ['People', ['contributions', 'thoughts', 'accounts', 'staff']],
     ['System', ['workers', 'settings']]
   ];
   function navCount(key){
@@ -1526,6 +1527,139 @@
       });
     });
   }
+  // ---------- Staff logins (round 10) ----------
+  // Deans and professors who sign in on the staff page (#staff). A login is a
+  // role, a university and college, and for a professor the courses it covers.
+  // It has no password until the person opens the setup link made here and
+  // chooses one. The pickers and the link come from js/110-staff-room.js.
+  function loadStaff(){
+    state.staffLoading = true;
+    api('GET', '/api/admin/staff').then(function(d){ state.staffItems = d.staff || []; state.staffErr = ''; })
+      .catch(function(e){ state.staffErr = e.message; })
+      .then(function(){ state.staffLoading = false; render(); });
+  }
+  function staffDraftFrom(s){
+    return s ? { id: s.id, name: s.name, username: s.username, role: s.role, uni: s.uni, college: s.college, courses: (s.courses || []).slice() }
+             : { id: '', name: '', username: '', role: 'professor', uni: 'aaup', college: '', courses: [] };
+  }
+  function staffFormHtml(d){
+    var R = window.AAUP_STAFF_ROOM;
+    var cols = R.colleges(d.uni);
+    if(d.college && !cols.some(function(c){ return c.id === d.college; })) d.college = '';
+    return '<div class="admin-note" id="asForm" style="border-color:var(--accent);">' +
+      '<strong>' + (d.id ? 'Change ' + esc(d.name || d.username) : 'New staff login') + '</strong>' +
+      '<div class="form-field"><label for="asName">Name (what you and their dean see)</label><input id="asName" maxlength="80" value="' + esc(d.name) + '"></div>' +
+      '<div class="form-field"><label for="asUser">Username (what they sign in with)</label><input id="asUser" maxlength="32" autocapitalize="off" spellcheck="false" placeholder="dean.ai" value="' + esc(d.username) + '"' + (d.id ? ' disabled' : '') + '></div>' +
+      '<div class="form-field"><label for="asRole">Role</label><select id="asRole">' +
+        '<option value="dean"' + (d.role === 'dean' ? ' selected' : '') + '>Dean — changes for their college, and gives professors logins</option>' +
+        '<option value="professor"' + (d.role === 'professor' ? ' selected' : '') + '>Professor — their own courses</option></select></div>' +
+      '<div class="form-field"><label for="asUni">University</label><select id="asUni">' + R.universities().map(function(u){
+        return '<option value="' + esc(u.id) + '"' + (u.id === d.uni ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="form-field"><label for="asCollege">College</label><select id="asCollege"><option value="">' + (d.role === 'dean' ? 'Pick a college' : 'Any college') + '</option>' + cols.map(function(c){
+        return '<option value="' + esc(c.id) + '"' + (c.id === d.college ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' +
+      (d.role === 'professor'
+        ? '<div class="form-field"><label>Their courses</label>' + R.pickerHtml(d.uni, d.college, d.courses) + '</div>'
+        : '') +
+      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="asSave">' + (d.id ? 'Save' : 'Make the login') + '</button> ' +
+        '<button type="button" class="home-btn" id="asCancel">Cancel</button></div></div>';
+  }
+  function sectionStaff(){
+    var R = window.AAUP_STAFF_ROOM;
+    var head = '<h2>🎓 Staff logins</h2>' +
+      '<p class="admin-hint">Deans and professors who sign in on the staff page. You choose what each login covers; they choose their own password from the link you send them. A dean can also give logins to professors in their own college.</p>';
+    if(!R) return head + '<div class="admin-note admin-note-warn">The staff module did not load. Reload the page.</div>';
+    if(state.staffErr) return head + '<div class="admin-note admin-note-warn">' + esc(state.staffErr) + '</div>' +
+      '<div class="form-actions"><button type="button" class="home-btn" id="asRetry">Try again</button></div>';
+    if(!state.staffItems) return head + '<p class="admin-hint">Loading…</p>';
+    var list = state.staffItems;
+    var covers = function(s){
+      var where = R.uniName(s.uni) + (s.college ? ' · ' + R.collegeName(s.college) : '');
+      if(s.role === 'dean') return esc(where);
+      var names = R.courseNames(s.courses, s.uni);
+      return esc(where) + '<br><span class="admin-sub">' + esc(names.length ? names.join(', ') : 'No courses yet') + '</span>';
+    };
+    return head +
+      (state.staffLink ? R.linkBoxHtml(state.staffLink.who, state.staffLink.link) : '') +
+      (state.staffDraft ? staffFormHtml(state.staffDraft)
+        : '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="asNew">+ New staff login</button></div>') +
+      (list.length
+        ? '<table class="admin-table"><thead><tr><th>Login</th><th>Role</th><th>Covers</th><th>State</th><th></th></tr></thead><tbody>' +
+          list.map(function(s){
+            return '<tr' + (s.status === 'paused' ? ' style="opacity:.6"' : '') + '><td><strong>' + esc(s.name || s.username) + '</strong><br><span class="admin-sub">' + esc(s.username) + '</span></td>' +
+              '<td><span class="sr-role ' + (s.role === 'dean' ? 'sr-dean' : 'sr-prof') + '">' + (s.role === 'dean' ? 'Dean' : 'Professor') + '</span></td>' +
+              '<td>' + covers(s) + '</td>' +
+              '<td>' + esc(R.stateTx(s)) + (s.createdBy && s.createdBy !== 'admin' ? '<br><span class="admin-sub">given by ' + esc(s.createdBy) + '</span>' : '') + '</td>' +
+              '<td style="white-space:nowrap;">' +
+                '<button type="button" class="home-btn admin-mini" data-as-edit="' + esc(s.id) + '">Change</button> ' +
+                '<button type="button" class="home-btn admin-mini" data-as-status="' + esc(s.id) + '" data-to="' + (s.status === 'paused' ? 'active' : 'paused') + '">' + (s.status === 'paused' ? 'Turn back on' : 'Pause') + '</button> ' +
+                '<button type="button" class="home-btn admin-mini" data-as-link="' + esc(s.id) + '">New link</button> ' +
+                '<button type="button" class="home-btn admin-mini admin-danger" data-as-del="' + esc(s.id) + '">Remove</button></td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<p class="admin-hint">No staff logins yet.</p>');
+  }
+  function bindStaff(main){
+    var R = window.AAUP_STAFF_ROOM;
+    if(!R) return;
+    var byId = function(id){ return (state.staffItems || []).filter(function(s){ return s.id === id; })[0]; };
+    var err = function(e){ toast(e.message); };
+    on('asRetry', 'click', function(){ state.staffErr = ''; render(); });
+    on('asNew', 'click', function(){ state.staffDraft = staffDraftFrom(null); state.staffLink = null; render(); });
+    main.querySelectorAll('[data-sr-copy]').forEach(function(b){ b.addEventListener('click', function(){ R.copy(b.getAttribute('data-sr-copy')); }); });
+    var form = document.getElementById('asForm');
+    if(form){
+      R.bindPickers(form);
+      var read = function(){
+        var d = state.staffDraft;
+        d.name = document.getElementById('asName').value;
+        if(!d.id) d.username = document.getElementById('asUser').value;
+        d.role = document.getElementById('asRole').value;
+        d.uni = document.getElementById('asUni').value;
+        d.college = document.getElementById('asCollege').value;
+        if(d.role === 'professor') d.courses = R.pickerValue(form);
+        return d;
+      };
+      ['asRole', 'asUni', 'asCollege'].forEach(function(id){ on(id, 'change', function(){ read(); render(); }); });
+      on('asCancel', 'click', function(){ state.staffDraft = null; render(); });
+      on('asSave', 'click', function(){
+        var d = read();
+        var body = { name: d.name.trim(), role: d.role, uni: d.uni, college: d.college, courses: d.role === 'professor' ? d.courses : [] };
+        if(!d.id) body.username = d.username.trim();
+        api(d.id ? 'PATCH' : 'POST', '/api/admin/staff' + (d.id ? '/' + d.id : ''), body).then(function(res){
+          state.staffDraft = null;
+          if(res.setupCode) state.staffLink = { who: res.staff.name || res.staff.username, link: R.setupLink(res.staff.username, res.setupCode) };
+          toast(d.id ? 'Saved' : 'Login made — send them the link');
+          state.staffItems = null; render();
+        }).catch(err);
+      });
+    }
+    main.querySelectorAll('[data-as-edit]').forEach(function(b){
+      b.addEventListener('click', function(){ state.staffDraft = staffDraftFrom(byId(b.getAttribute('data-as-edit'))); state.staffLink = null; render(); });
+    });
+    main.querySelectorAll('[data-as-status]').forEach(function(b){
+      b.addEventListener('click', function(){
+        api('PATCH', '/api/admin/staff/' + b.getAttribute('data-as-status'), { status: b.getAttribute('data-to') })
+          .then(function(){ state.staffItems = null; render(); }).catch(err);
+      });
+    });
+    main.querySelectorAll('[data-as-link]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = byId(b.getAttribute('data-as-link'));
+        if(s && s.hasPassword && !confirm('A new link signs ' + (s.name || s.username) + ' out until they use it to choose a new password. Make one?')) return;
+        api('PATCH', '/api/admin/staff/' + s.id, { newSetupCode: true }).then(function(res){
+          state.staffLink = { who: res.staff.name || res.staff.username, link: R.setupLink(res.staff.username, res.setupCode) };
+          state.staffItems = null; render();
+        }).catch(err);
+      });
+    });
+    main.querySelectorAll('[data-as-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = byId(b.getAttribute('data-as-del'));
+        if(!confirm('Remove ' + ((s && (s.name || s.username)) || 'this login') + '? They can\'t sign in any more.')) return;
+        api('DELETE', '/api/admin/staff/' + s.id).then(function(){ state.staffItems = null; render(); }).catch(err);
+      });
+    });
+  }
+
   function sectionAccounts(){
     var head = '<h2>👤 Student accounts</h2>';
     if(!cloudUrl()) return head + '<div class="admin-note">APP_CLOUD_URL is not set, so there are no accounts.</div>';
@@ -1635,6 +1769,10 @@
       if(!state.contribLoading && !state.contribItems) loadContributions();
     }
     else if(s === 'accounts') main.innerHTML = sectionAccounts();
+    else if(s === 'staff'){
+      main.innerHTML = sectionStaff();
+      if(!state.staffLoading && !state.staffItems && !state.staffErr) loadStaff();
+    }
     else if(s === 'workers'){
       main.innerHTML = sectionWorkers();
       if(!state.workersLoading && !state.workers) loadWorkers();
@@ -1658,6 +1796,7 @@
     if(state.section === 'contributions') bindContributions(main);
     if(state.section === 'thoughts') bindThoughts(main);
     if(state.section === 'accounts') bindAccounts(main);
+    if(state.section === 'staff') bindStaff(main);
     on('adminWorkersRefresh', 'click', function(){ state.workers = null; render(); });
     main.querySelectorAll('[data-inbox-go]').forEach(function(b){
       b.addEventListener('click', function(){ state.section = b.getAttribute('data-inbox-go'); render(); });

@@ -74,7 +74,8 @@
   function open(planId){
     var list = majors();
     if(!list.length) return;
-    current = planId && plans()[planId] ? planId : (current || list[0].id);
+    var known = function(id){ return list.some(function(m){ return m.id === id; }); };
+    current = planId && known(planId) ? planId : (current && known(current) ? current : list[0].id);
     var wiz = document.getElementById('onboardingWizardOverlay');
     if(wiz) wiz.remove();
     if(!view){
@@ -91,6 +92,7 @@
     }
     view.classList.add('open');
     document.documentElement.classList.add('stf-open');
+    if(window.AAUP_STAFF_ROOM) window.AAUP_STAFF_ROOM.loadMe();
     render();
   }
   function close(){
@@ -104,15 +106,18 @@
     if(!p){ close(); return; }
     var g = graph(p), years = yearsOf(p);
     var total = hours(p.courses || []);
+    var R = window.AAUP_STAFF_ROOM;
+    var role = R ? R.pillHtml() : '';
     view.setAttribute('dir', ar() ? 'rtl' : 'ltr');
     view.setAttribute('aria-label', L('AAUPath for staff', 'AAUPath للكادر'));
     view.innerHTML =
       '<header class="stf-head">' +
-        '<div class="stf-brand"><b>AAUPath</b><span>' + esc(L('for staff', 'للكادر')) + '</span><span class="stf-pill">' + esc(L('Read only', 'للقراءة فقط')) + '</span></div>' +
+        '<div class="stf-brand"><b>AAUPath</b><span>' + esc(L('for staff', 'للكادر')) + '</span>' + (role || '<span class="stf-pill">' + esc(L('Read only', 'للقراءة فقط')) + '</span>') + '</div>' +
         '<label class="stf-pick"><span>' + esc(L('Major', 'التخصص')) + '</span><select id="stfMajor">' + majors().map(function(m){
           return '<option value="' + esc(m.id) + '"' + (m.id === current ? ' selected' : '') + '>' + esc(m.name) + '</option>';
         }).join('') + '</select></label>' +
         '<div class="stf-actions">' +
+          (R ? R.actionsHtml() : '') +
           '<button type="button" class="stf-btn stf-pri" data-stf="present">' + esc(L('Present', 'اعرض على الشاشة')) + '</button>' +
           '<button type="button" class="stf-btn" data-stf="link">' + esc(L('Copy link', 'انسخ الرابط')) + '</button>' +
           '<button type="button" class="stf-btn" data-stf="lang">' + esc(L('العربية', 'English')) + '</button>' +
@@ -135,7 +140,9 @@
               }).join('') + '</div>';
           }).join('') + '</section>';
       }).join('') + '</div>' +
-      (openCourse ? detailHtml(p, g) : '') + '</div>';
+      (openCourse ? detailHtml(p, g) : (R ? R.panelHtml() : '')) + '</div>' +
+      (R ? R.dialogHtml() : '');
+    if(R) R.afterRender(view);
   }
 
   // ---- 20 · one course, with the counts ----------------------------------------------
@@ -182,6 +189,7 @@
   }
 
   function onClick(e){
+    if(window.AAUP_STAFF_ROOM && window.AAUP_STAFF_ROOM.onClick(e)) return;
     var b = e.target.closest('[data-stf], [data-stf-c]');
     if(!b) return;
     var act = b.getAttribute('data-stf');
@@ -265,6 +273,7 @@
       else if(e.key === 'Escape'){ e.preventDefault(); endShow(); }
       return;
     }
+    if(view && view.classList.contains('open') && window.AAUP_STAFF_ROOM && window.AAUP_STAFF_ROOM.onKey(e)){ e.preventDefault(); return; }
     if(view && view.classList.contains('open') && e.key === 'Escape'){
       if(openCourse){ openCourse = null; render(); } else close();
     }
@@ -286,5 +295,7 @@
   window.addEventListener('hashchange', fromHash);
   if(document.readyState === 'complete') fromHash(); else window.addEventListener('load', fromHash);
 
-  window.AAUP_STAFF = { open: open, close: close, present: present };
+  window.AAUP_STAFF = { open: open, close: close, present: present,
+    refresh: function(){ if(view && view.classList.contains('open')) render(); },
+    current: function(){ return current; } };
 })();
