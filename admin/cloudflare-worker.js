@@ -1300,6 +1300,18 @@ const CONTENT_FIELDS = {
   revise: (v) => str(v, 400),
   offered: (v) => { if (!['', 's1', 's2'].includes(v || '')) throw fail('offered must be s1, s2 or empty'); return v || ''; },
   prereqNote: (v) => str(v, 300),
+  // This semester's sections: [{ n, days: [0-6], s: 'HH:MM', e: 'HH:MM', room, prof }].
+  sections: (v) => {
+    if (!v || (Array.isArray(v) && !v.length)) return '';
+    if (!Array.isArray(v) || v.length > 30) throw fail('sections must be a list of up to 30');
+    const T = /^([01]\d|2[0-3]):[0-5]\d$/;
+    return JSON.stringify(v.map((x, i) => {
+      const days = Array.isArray(x.days) ? [...new Set(x.days.map(Number))].filter((d) => d >= 0 && d <= 6).sort() : [];
+      if (!days.length) throw fail(`section ${i + 1}: pick at least one day`);
+      if (!T.test(String(x.s)) || !T.test(String(x.e)) || String(x.e) <= String(x.s)) throw fail(`section ${i + 1}: check the start and end time`);
+      return { n: str(x.n, 20) || String(i + 1), days, s: String(x.s), e: String(x.e), room: str(x.room, 40), prof: str(x.prof, 80) };
+    }));
+  },
   note: (v) => {
     if (!v || !String(v.text || '').trim()) return '';
     if (!DATE_RE.test(String(v.until || ''))) throw fail('a pinned note needs an end date');
@@ -1341,17 +1353,18 @@ async function plansIndex(env) {
     { headers: env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'studyplan-admin-worker' } : { 'User-Agent': 'studyplan-admin-worker' } });
   if (!r.ok) throw new Error(`plans.json: ${r.status}`);
   const data = await r.json();
-  const courseColleges = {}, majorCollege = {}, courseNames = {};
+  const courseColleges = {}, majorCollege = {}, courseNames = {}, courseCodes = {};
   for (const p of data.plans || []) {
     const uni = p.university || 'aaup';
-    majorCollege[p.id] = { uni, college: p.collegeId || '' };
+    majorCollege[p.id] = { uni, college: p.collegeId || '', name: (p.majorName && p.majorName.en && p.majorName.en.big) || p.id };
     for (const c of p.courses || []) {
       const k = `${uni}/${c.id}`;
       (courseColleges[k] = courseColleges[k] || new Set()).add(p.collegeId || '');
       if (!courseNames[k]) courseNames[k] = c.name || c.id;
+      if (c.courseNumber) courseCodes[k] = c.courseNumber;
     }
   }
-  planIndex = { courseColleges, majorCollege, courseNames };
+  planIndex = { courseColleges, majorCollege, courseNames, courseCodes };
   planIndexAt = Date.now();
   return planIndex;
 }
@@ -1377,7 +1390,7 @@ async function mayWriteCourse(env, me, course) {
   return false;
 }
 
-const FIELD_LABEL = { about: 'About this course', revise: 'Revise first', offered: 'Offered in', prereqNote: 'Prerequisite note', note: 'Pinned note' };
+const FIELD_LABEL = { about: 'About this course', revise: 'Revise first', offered: 'Offered in', prereqNote: 'Prerequisite note', note: 'Pinned note', sections: 'Sections' };
 async function applyContent(db, env, uni, college, course, field, value, by) {
   const now = Math.floor(Date.now() / 1000);
   if (value === '') await db.prepare('DELETE FROM staff_content WHERE uni = ? AND course = ? AND field = ?').bind(uni, course, field).run();
@@ -1497,7 +1510,7 @@ async function handlePublicContent(request, env, uni) {
   let v = 0;
   for (const r of rs.results || []) {
     const c = courses[r.course] = courses[r.course] || {};
-    c[r.field] = r.field === 'note' ? JSON.parse(r.value) : r.value;
+    c[r.field] = r.field === 'note' || r.field === 'sections' ? JSON.parse(r.value) : r.value;
     v = Math.max(v, r.at);
   }
   const cs = await db.prepare('SELECT username, name, office, hours, contact, courses, at FROM staff_cards WHERE uni = ?').bind(uni).all();
@@ -1512,16 +1525,137 @@ async function handlePublicContent(request, env, uni) {
   return res;
 }
 
+// ---------------------------------------------------------------------------
+// Deans change their majors' plans (round 10, ideas 1 and A)
+//
+// The same major files the admin room edits, through the same validation and
+// commits, limited to majors of the dean's colleges. Each commit says which
+// dean made it, so the admin room's history shows it and Put back works.
+// ---------------------------------------------------------------------------
+
+async function deanMajorOk(env, me, uni, slug) {
+  if (me.role !== 'dean' || uni !== me.uni || !SLUG_RE.test(slug)) return false;
+  const f = await ghGet(env, `data/${uni}/majors/${slug}.json`);
+  if (!f.exists) return false;
+  return coversCollege(me, JSON.parse(f.text).college || '');
+}
+
+async function staffLog(env, me, college, what) {
+  const db = await contentDb(env);
+  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at) VALUES (?, ?, ?, ?, ?)')
+    .bind(me.uni, college, what, me.name || me.username, Math.floor(Date.now() / 1000)).run();
+}
+
+async function handleStaffMajors(request, env, me, seg, url) {
+  if (me.role !== 'dean') return json({ error: 'only a dean can change a plan' }, 403, env, request);
+  // /api/staff/majors — the majors a dean may open.
+  if (seg[2] === 'majors' && request.method === 'GET') {
+    const ix = await plansIndex(env);
+    const list = Object.keys(ix.majorCollege).filter((id) => {
+      const m = ix.majorCollege[id];
+      return m.uni === me.uni && coversCollege(me, m.college);
+    }).map((id) => ({ slug: id, name: ix.majorCollege[id].name, college: ix.majorCollege[id].college }));
+    return json({ ok: true, majors: list }, 200, env, request);
+  }
+  // What the plan editor asks for on opening, cut to the dean's majors.
+  if (seg[2] === 'status' && request.method === 'GET') {
+    return json({ ok: true, username: me.name || me.username, canWrite: true, staff: true }, 200, env, request);
+  }
+  if (seg[2] === 'tree' && request.method === 'GET') {
+    const ix = await plansIndex(env);
+    const majors = Object.keys(ix.majorCollege).filter((id) => ix.majorCollege[id].uni === me.uni && coversCollege(me, ix.majorCollege[id].college)).map((slug) => ({ slug }));
+    return json({ ok: true, universities: [{ slug: me.uni, name: me.uni.toUpperCase(), published: true, majors }] }, 200, env, request);
+  }
+  if (seg[2] === 'university' && seg[3] === me.uni && request.method === 'GET') return await handleGetUniversity(env, me.uni, request);
+  const uni = seg[3], slug = seg[4];
+  if (!(await deanMajorOk(env, me, uni, slug))) return json({ error: 'this major isn’t in your colleges' }, 403, env, request);
+  if (seg[2] === 'history' && request.method === 'GET') return await handleHistory(env, uni, slug, request);
+  if (seg[2] === 'major' && request.method === 'GET') return await handleGetMajor(env, uni, slug, request, url.searchParams.get('ref'));
+  if (seg[2] === 'major' && request.method === 'PUT') {
+    const body = await readJson(request, MAX_JSON_BYTES);
+    const path = `data/${uni}/majors/${slug}.json`;
+    const existing = await ghGet(env, path);
+    const original = JSON.parse(existing.text);
+    // A dean's save can't move the major out of the college it is in.
+    const clean = validMajor({ ...body.major, slug, university: uni, college: original.college });
+    const conflict = staleBase(body, existing, env, request);
+    if (conflict) return conflict;
+    const newSha = await ghPut(env, path, jsonBytes(toStored(clean, original)), `staff ${me.username}: update ${uni}/${slug}`, existing.sha);
+    await staffLog(env, me, original.college || '', `${(await plansIndex(env)).majorCollege[slug]?.name || slug} · plan changed`);
+    return json({ ok: true, major: clean, sha: newSha }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
+// The prerequisites of one course, in every major of the dean's colleges that
+// teaches it. `requires` names courses by id; in another major the same course
+// is matched by id or by course number. { preview: true } only reports.
+async function handleStaffPrereqs(request, env, me) {
+  if (me.role !== 'dean') return json({ error: 'only a dean can change prerequisites' }, 403, env, request);
+  const body = await readJson(request, 16384);
+  const course = String(body.course || '');
+  if (!SLUG_RE.test(course)) throw fail('pick a course');
+  const want = Array.isArray(body.requires) ? body.requires.map(String).filter((x) => SLUG_RE.test(x)) : [];
+  const ix = await plansIndex(env);
+  const codeOf = (id) => ix.courseCodes[`${me.uni}/${id}`] || '';
+  const code = codeOf(course);
+  const wantCodes = want.map((id) => ({ id, code: codeOf(id) }));
+  const changes = [];
+  for (const slug of Object.keys(ix.majorCollege)) {
+    const m = ix.majorCollege[slug];
+    if (m.uni !== me.uni || !coversCollege(me, m.college)) continue;
+    const path = `data/${me.uni}/majors/${slug}.json`;
+    const f = await ghGet(env, path);
+    if (!f.exists) continue;
+    const major = JSON.parse(f.text);
+    const courses = major.courses || [];
+    const find = (id, cd) => courses.find((c) => c.slug === id) || (cd ? courses.find((c) => c.code === cd && !/-lab$/.test(c.slug)) : null);
+    const target = find(course, code);
+    if (!target) continue;
+    const before = (major.prerequisites || []).filter((p) => p.forCourse === target.slug).map((p) => p.requires);
+    const after = [];
+    for (const w of wantCodes) {
+      const c = find(w.id, w.code);
+      if (c && c.slug !== target.slug && !after.includes(c.slug)) after.push(c.slug);
+    }
+    if (before.slice().sort().join(',') === after.slice().sort().join(',')) continue;
+    const name = (id) => (courses.find((c) => c.slug === id) || {}).name || id;
+    changes.push({ slug, major: m.name, course: target.name, before: before.map(name), after: after.map(name),
+                   path, sha: f.sha, file: major, target: target.slug, next: after });
+  }
+  const report = changes.map((c) => ({ slug: c.slug, major: c.major, course: c.course, before: c.before, after: c.after }));
+  if (body.preview) return json({ ok: true, changes: report }, 200, env, request);
+  for (const c of changes) {
+    const major = c.file;
+    major.prerequisites = (major.prerequisites || []).filter((p) => p.forCourse !== c.target)
+      .concat(c.next.map((r) => ({ requires: r, forCourse: c.target })));
+    // Same checks as any save (no loops, no unknown courses).
+    validMajor(toEditable(major));
+    await ghPut(env, c.path, jsonBytes(major), `staff ${me.username}: prerequisites of ${c.course} in ${me.uni}/${c.slug}`, c.sha);
+    await staffLog(env, me, ix.majorCollege[c.slug].college, `${c.course} · prerequisites in ${c.major}`);
+  }
+  return json({ ok: true, changes: report }, 200, env, request);
+}
+
 // Routes a signed-in staff member can use. Returns a Response, or null when
 // the path is not one of them.
-async function handleStaffRoutes(request, env, seg) {
+async function handleStaffRoutes(request, env, seg, url) {
   if (seg[1] !== 'staff') return null;
   if (seg[2] === 'login' && request.method === 'POST') return await handleStaffLogin(request, env);
   if (seg[2] === 'setup' && request.method === 'POST') return await handleStaffSetup(request, env);
-  const me = await verifyStaff(request, env);
+  let me = await verifyStaff(request, env);
+  // The admin, on the staff page, works as a dean of every college.
+  if (!me) {
+    const auth = request.headers.get('Authorization') || '';
+    const admin = await verifyToken(auth.startsWith('Bearer ') ? auth.slice(7) : '', env);
+    if (admin) me = { id: 'admin', username: 'admin', name: 'Admin', role: 'dean', uni: 'aaup', college: '*', courses: '[]', status: 'active', password_hash: 'x', admin: true };
+  }
   if (!me) return json({ error: 'unauthorized' }, 401, env, request);
-  if (seg[2] === 'me' && request.method === 'GET') return json({ ok: true, me: staffOut(me) }, 200, env, request);
+  if (me.admin && seg[2] === 'card') return json({ ok: true, card: null }, 200, env, request);
+  if (seg[2] === 'me' && request.method === 'GET') return json({ ok: true, me: { ...staffOut(me), admin: !!me.admin } }, 200, env, request);
   if (seg[2] === 'content' && request.method === 'POST') return await handleStaffContent(request, env, me);
+  if (seg[2] === 'prereqs' && request.method === 'POST') return await handleStaffPrereqs(request, env, me);
+  if (['majors', 'major', 'history', 'status', 'tree', 'university'].includes(seg[2])) return await handleStaffMajors(request, env, me, seg, url);
   if (seg[2] === 'card' && request.method === 'POST') return await handleStaffCard(request, env, me);
   if (seg[2] === 'card' && request.method === 'GET') {
     const db = await contentDb(env);
@@ -1656,7 +1790,7 @@ export default {
 
       // Staff (deans and professors) sign in and work through their own
       // routes, checked by verifyStaff() — never by the admin gate below.
-      if (seg[0] === 'api' && seg[1] === 'staff') return await handleStaffRoutes(request, env, seg);
+      if (seg[0] === 'api' && seg[1] === 'staff') return await handleStaffRoutes(request, env, seg, url);
       // What staff wrote, for every student (no sign-in).
       if (seg[1] === 'public' && seg[2] === 'content' && request.method === 'GET') {
         return await handlePublicContent(request, env, url.searchParams.get('uni') || 'aaup');

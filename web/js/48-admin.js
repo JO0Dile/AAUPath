@@ -67,8 +67,24 @@
 
   // ---------- API ----------
 
+  // Round 10: a dean opens this same editor from the staff page ("Edit this
+  // major"). In that staff mode it signs in with their staff login and asks
+  // the staff routes, which only answer for majors in the dean's colleges.
+  var staffMode = null;   // { label } while a dean is editing
+  var STAFF_PATHS = [[/^\/api\/major\//, '/api/staff/major/'], [/^\/api\/history\//, '/api/staff/history/'],
+    [/^\/api\/majors\/[^/]+$/, '/api/staff/majors'], [/^\/api\/tree$/, '/api/staff/tree'],
+    [/^\/api\/status$/, '/api/staff/status'], [/^\/api\/university\//, '/api/staff/university/']];
+  function staffPath(path){
+    for(var i = 0; i < STAFF_PATHS.length; i++){ if(STAFF_PATHS[i][0].test(path)) return path.replace(STAFF_PATHS[i][0], STAFF_PATHS[i][1]); }
+    return null;
+  }
   function api(method, path, body){
     if(!base()) return Promise.reject(new Error('No admin API configured (APP_ADMIN_URL is empty).'));
+    if(staffMode){
+      var sp = staffPath(path);
+      if(!sp) return Promise.reject(new Error('Not available here.'));
+      path = sp;
+    }
     // no-store, because a cached read here is not a stale view — it is data
     // loss. The editor renders its form from the response and Save posts the
     // whole object back, so a minutes-old copy silently reverts everything
@@ -97,6 +113,7 @@
         // rotated, so the token is dropped rather than letting every later
         // click fail one at a time.
         if(r.status === 401 && path !== '/api/login'){
+          if(staffMode){ endStaff(); throw new Error('Your staff session ended. Sign in again on the staff page.'); }
           signOut(true);
           throw new Error('Your admin session ended. Sign in again.');
         }
@@ -196,7 +213,8 @@
         (off ? ' is-off' : '') + (needsMajor && state.dirty ? ' is-dirty' : '') + '" data-section="' + key + '">' + label[key] +
         (n ? '<span class="admin-navcount">' + n + '</span>' : '') + '</button>';
     };
-    nav.innerHTML = NAV_GROUPS.map(function(g){
+    var groups = staffMode ? [[null, ['majors']], ['Plan', ['courses', 'prereqs', 'schedule']]] : NAV_GROUPS;
+    nav.innerHTML = groups.map(function(g){
       return (g[0] ? '<div class="admin-navgroup">' + g[0] + '</div>' : '') + g[1].map(btn).join('');
     }).join('') +
     (state.major
@@ -399,7 +417,16 @@
     }
   }
 
+  function endStaff(){
+    staffMode = null;
+    state.token = null; state.username = ''; state.major = null; state.tree = null; state.dirty = false;
+    state.browseUni = null; state.browseMajors = null; state.browseFaculties = null;
+    var el = document.getElementById('adminOverlay');
+    if(el){ el.classList.remove('open', 'is-staff'); }
+    document.body.style.overflow = '';
+  }
   function signOut(silent){
+    if(staffMode){ endStaff(); return; }
     state.token = null; state.username = ''; state.major = null; state.tree = null; state.dirty = false;
     try{ sessionStorage.removeItem(TOKEN_KEY); }catch(e){}
     if(!silent && document.getElementById('adminOverlay')) render();
@@ -1791,6 +1818,9 @@
     var who = document.getElementById('adminWho');
     if(!state.token){ if(who) who.textContent = ''; renderLogin(''); return; }
     if(who) who.textContent = ' · ' + state.username;
+    var brand = document.querySelector('#adminOverlay .admin-brand strong');
+    if(brand) brand.textContent = staffMode ? 'Staff room' : T('Admin', 'لوحة الإدارة');
+    document.getElementById('adminOverlay').classList.toggle('is-staff', !!staffMode);
 
     renderNav();
     var s = state.section;
@@ -2984,6 +3014,7 @@
 
   function close(){
     if(state.dirty && !confirm('You have unsaved changes. Close anyway?')) return;
+    if(staffMode){ endStaff(); return; }
     var el = document.getElementById('adminOverlay');
     if(el) el.classList.remove('open');
     document.body.style.overflow = '';
@@ -2992,7 +3023,24 @@
     }
   }
 
-  window.AAUP_ADMIN = { open: open, close: close, isOpen: function(){
+  // A dean's "Edit this major" (js/110-staff-room.js): the editor, with their
+  // staff login, straight on that major.
+  function openStaff(token, label, uni, slug){
+    if(state.token && !staffMode && state.token !== token && !confirm('You are signed in to the admin room in this tab. Open the dean\'s editor instead?')) return;
+    staffMode = { label: label };
+    state.token = token; state.username = label; state.tree = null; state.major = null; state.dirty = false;
+    state.browseUni = null; state.browseMajors = null; state.browseFaculties = null;
+    state.section = 'courses';
+    ensureOverlay();
+    document.getElementById('adminOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    api('GET', '/api/status').then(function(st){ state.status = st; return loadTree(); })
+      .then(function(){ return slug ? openMajor(uni, slug) : null; })
+      .then(function(){ state.section = slug ? 'courses' : 'majors'; render(); })
+      .catch(function(e){ toast(e.message); render(); });
+  }
+
+  window.AAUP_ADMIN = { open: open, close: close, openStaff: openStaff, isOpen: function(){
     var el = document.getElementById('adminOverlay');
     return !!(el && el.classList.contains('open'));
   } };

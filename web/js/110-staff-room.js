@@ -98,12 +98,17 @@
 
   // A search box over the courses of a college: type part of a name, pick it
   // from the list, and it becomes a chip. Names only, each once.
-  function pickerHtml(uni, college, selected){
-    var list = coursesIn(uni, college);
+  // `only`: an explicit list to pick from (a plan's own courses), instead of
+  // every course of the college. `tag`: remembered on the box (a course id).
+  var pickerLists = {}, pickerN = 0;
+  function pickerHtml(uni, college, selected, only, tag){
+    var list = only || coursesIn(uni, college);
+    var key = 'p' + (++pickerN);
+    pickerLists[key] = list;
     var sel = {};
     (selected || []).forEach(function(id){ sel[id] = 1; });
     var chips = list.filter(function(c){ return c.ids.some(function(id){ return sel[id]; }); });
-    return '<div class="sr-pick" data-sr-pick data-uni="' + esc(uni) + '" data-college="' + esc(college || '') + '">' +
+    return '<div class="sr-pick" data-sr-pick data-list="' + key + '"' + (tag ? ' data-tag="' + esc(tag) + '"' : '') + '>' +
       '<div class="sr-chips">' + chips.map(chipHtml).join('') + '</div>' +
       '<div class="sr-pick-in"><input type="text" class="sr-in" autocomplete="off" placeholder="' + esc(L('Type part of a course name…', 'اكتب جزء من اسم المساق…')) + '" aria-label="' + esc(L('Add a course', 'ضيف مساق')) + '">' +
       '<div class="sr-opts" role="listbox" hidden></div></div>' +
@@ -119,7 +124,7 @@
       if(box._srBound) return;
       box._srBound = true;
       var inp = box.querySelector('input'), opts = box.querySelector('.sr-opts');
-      var all = coursesIn(box.getAttribute('data-uni'), box.getAttribute('data-college'));
+      var all = pickerLists[box.getAttribute('data-list')] || [];
       var hits = [], at = 0;
       var chosen = function(){ var m = {}; box.querySelectorAll('.sr-chip').forEach(function(c){ m[c.textContent.replace(/×$/, '')] = 1; }); return m; };
       var draw = function(){
@@ -131,10 +136,15 @@
         }).join('') : '<p class="sr-opt-none">' + esc(L('No course by that name here.', 'ما في مساق بهالاسم هون.')) + '</p>';
         opts.hidden = false;
       };
+      var changed = function(){
+        var tag = box.getAttribute('data-tag');
+        if(tag){ preDraft[tag] = pickerValue(box.parentElement); if(prePreview[tag]){ delete prePreview[tag]; refresh(); } }
+      };
       var add = function(c){
         if(!c) return;
         box.querySelector('.sr-chips').insertAdjacentHTML('beforeend', chipHtml(c));
         inp.value = ''; opts.hidden = true; inp.focus();
+        changed();
       };
       inp.addEventListener('input', draw);
       inp.addEventListener('focus', draw);
@@ -151,7 +161,7 @@
       opts.addEventListener('mousedown', function(e){ var b = e.target.closest('.sr-opt'); if(b){ e.preventDefault(); add(hits[+b.getAttribute('data-i')]); } });
       box.addEventListener('click', function(e){
         var x = e.target.closest('[data-sr-unchip]');
-        if(x){ x.parentElement.remove(); inp.focus(); }
+        if(x){ x.parentElement.remove(); inp.focus(); changed(); }
       });
     });
   }
@@ -190,7 +200,14 @@
 
   // ---- the staff page's sign-in -----------------------------------------------------
   var me = null, team = null, dlg = null, dlgMsg = '', lastLink = null, busy = false, askRelink = null;
-  function token(){ try{ return localStorage.getItem(TOKEN_KEY) || ''; }catch(e){ return ''; } }
+  // A staff login, or else the admin's session in this tab (the admin works
+  // on the staff page as a dean of every college).
+  var adminOff = false;
+  function token(){
+    try{
+      return localStorage.getItem(TOKEN_KEY) || (adminOff ? '' : sessionStorage.getItem('aaup_adminToken') || '');
+    }catch(e){ return ''; }
+  }
   function setToken(t){ try{ if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }catch(e){} }
   function base(){ return String(window.APP_ADMIN_URL || '').replace(/\/+$/, ''); }
   function api(method, path, body){
@@ -269,14 +286,18 @@
   // Called by js/109-staff.js while it draws the page.
   function pillHtml(){
     if(!me) return '';
+    if(me.admin) return '<span class="sr-role sr-dean">' + esc(L('Admin · all colleges', 'الإدارة · كل الكليات')) + '</span>';
     return me.role === 'dean'
       ? '<span class="sr-role sr-dean">' + esc(L('Dean · ', 'عميد · ') + collegeLabel(me.college, true)) + '</span>'
       : '<span class="sr-role sr-prof">' + esc(L('Professor', 'أستاذ')) + '</span>';
   }
   function actionsHtml(){
     if(!base()) return '';
+    var cur = window.AAUP_STAFF && window.AAUP_STAFF.current && window.AAUP_STAFF.current();
+    var editable = me && me.role === 'dean' && cur && plansIn(me.uni, me.college).some(function(p){ return p.id === cur; });
     return me
-      ? '<button type="button" class="stf-btn" data-sr="signout">' + esc(L('Sign out', 'تسجيل خروج')) + '</button>'
+      ? (editable ? '<button type="button" class="stf-btn" data-sr="editmajor">' + esc(L('Edit this major', 'عدّل هالتخصص')) + '</button>' : '') +
+        '<button type="button" class="stf-btn" data-sr="signout">' + esc(L('Sign out', 'تسجيل خروج')) + '</button>'
       : '<button type="button" class="stf-btn" data-sr="signin">' + esc(L('Staff sign in', 'دخول الكادر')) + '</button>';
   }
   function panelHtml(){
@@ -312,20 +333,33 @@
         '<p class="stf-muted sr-foot">' + esc(L('Click a course on the left to see its details and counts.', 'اضغط على أي مساق لتشوف تفاصيله وأعداده.')) + '</p>' +
       '</aside>';
     }
-    var names = courseNames(me.courses, me.uni);
+    // E · the professor's page: each course with what it has, and their card.
+    var mine = coursesIn(me.uni, '').filter(function(c){ return c.ids.some(function(id){ return (me.courses || []).indexOf(id) !== -1; }); });
     return '<aside class="stf-detail sr-panel">' +
       '<div class="stf-detail-h"><b>' + esc(L('Your courses', 'مساقاتك')) + '</b></div>' +
       '<p class="stf-muted">' + esc(L('Signed in as ', 'داخل كـ ') + (me.name || me.username)) + '</p>' +
-      (names.length ? '<ul class="sr-list">' + names.map(function(n){ return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>'
-                    : '<p class="stf-muted">' + esc(L('Your login doesn’t cover any courses yet. Ask your dean to add them.', 'حسابك لسا ما فيه مساقات. اطلب من العميد يضيفها.')) + '</p>') +
+      (mine.length ? mine.map(function(c){
+        var info = {};
+        c.ids.forEach(function(id){ var x = (live || {})[id]; if(x) Object.keys(x).forEach(function(f){ info[f] = x[f]; }); });
+        var secs = Array.isArray(info.sections) ? info.sections.length : 0;
+        var note = info.note && info.note.until >= todayIso() ? info.note : null;
+        var waits = (pending || []).filter(function(p){ return c.ids.indexOf(p.course) !== -1; }).length;
+        var line = [secs ? L(secs + (secs === 1 ? ' section' : ' sections'), secs + ' شعب') : L('no sections yet', 'بدون شعب'),
+                    note ? L('note until ', 'ملاحظة لحد ') + note.until : L('no note', 'بدون ملاحظة'),
+                    waits ? L(waits + ' waiting for your dean', waits + ' بستنّى العميد') : ''].filter(Boolean).join(' · ');
+        return '<div class="sr-row sr-row-line"><div class="sr-grow"><b>' + esc(c.name) + '</b><small>' + esc(line) + '</small></div>' +
+          '<button type="button" class="stf-btn" data-sr="opencourse" data-id="' + esc(c.ids.join(',')) + '">' + esc(L('Open', 'افتح')) + '</button></div>';
+      }).join('') : '<p class="stf-muted">' + esc(L('Your login doesn’t cover any courses yet. Ask your dean to add them.', 'حسابك لسا ما فيه مساقات. اطلب من العميد يضيفها.')) + '</p>') +
       waitingHtml() + cardFormHtml() +
       '<p class="stf-muted sr-foot">' + esc(L('Click a course on the left to see its details and counts.', 'اضغط على أي مساق لتشوف تفاصيله وأعداده.')) + '</p>' +
     '</aside>';
   }
+  function todayIso(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   // ---- writing for students (part B) ------------------------------------------------
   var FIELD_TX = {
     about: ['About this course', 'عن المساق'], revise: ['Revise first', 'راجع قبل'], offered: ['Offered in', 'بتنعطى بـ'],
-    prereqNote: ['Prerequisite note', 'ملاحظة عن المتطلبات'], note: ['Pinned note', 'ملاحظة مثبّتة']
+    prereqNote: ['Prerequisite note', 'ملاحظة عن المتطلبات'], note: ['Pinned note', 'ملاحظة مثبّتة'],
+    sections: ['Sections', 'الشعب']
   };
   function fieldTx(f){ var x = FIELD_TX[f] || [f, f]; return L(x[0], x[1]); }
   function offeredTx(v){ return v === 's1' ? L('First semester only', 'الفصل الأول بس') : v === 's2' ? L('Second semester only', 'الفصل الثاني بس') : L('Both semesters', 'الفصلين'); }
@@ -334,6 +368,9 @@
     if(field === 'note'){
       if(!v) return '';
       try{ var n = typeof v === 'string' ? JSON.parse(v) : v; return n.text + L(' (until ', ' (لحد ') + n.until + ')'; }catch(e){ return String(v); }
+    }
+    if(field === 'sections'){
+      try{ var sl = typeof v === 'string' ? JSON.parse(v) : v; return (sl || []).map(function(x){ return L('Section ', 'شعبة ') + x.n + ': ' + sectionLine(x); }).join(' · '); }catch(e){ return ''; }
     }
     if(field === 'card'){
       try{ var c = JSON.parse(v); return [c.office, c.hours, c.contact].filter(Boolean).join(' · '); }catch(e){ return ''; }
@@ -349,42 +386,133 @@
   // what students see now.
   function current(courseId, field){
     var w = (pending || []).filter(function(p){ return p.kind === 'content' && p.course === courseId && p.field === field && p.by === me.username; })[0];
-    if(w) return w.field === 'note' && w.value ? JSON.parse(w.value) : w.value;
+    if(w) return (w.field === 'note' || w.field === 'sections') && w.value ? JSON.parse(w.value) : w.value;
     var c = (live || {})[courseId] || {};
     return c[field] || '';
+  }
+  // ---- the course panel (A for a dean, D for a professor) -------------------------------
+  var DAYS = [[6, 'Sat', 'سبت'], [0, 'Sun', 'أحد'], [1, 'Mon', 'اثنين'], [2, 'Tue', 'ثلاثاء'], [3, 'Wed', 'أربعاء'], [4, 'Thu', 'خميس'], [5, 'Fri', 'جمعة']];
+  function fmt(t){ return window.__fmtTime ? window.__fmtTime(t) : t; }
+  function sectionLine(x){
+    var days = DAYS.filter(function(y){ return (x.days || []).indexOf(y[0]) !== -1; }).map(function(y){ return L(y[1], y[2]); }).join(L(', ', '، '));
+    return [days, fmt(x.s) + '–' + fmt(x.e), x.room].filter(Boolean).join(' · ');
+  }
+  var secDraft = {}, secOpen = {}, preDraft = {}, prePreview = {};
+  function draftFor(id){
+    if(!secDraft[id]){
+      var cur = current(id, 'sections');
+      if(typeof cur === 'string' && cur) try{ cur = JSON.parse(cur); }catch(e){ cur = []; }
+      secDraft[id] = Array.isArray(cur) ? JSON.parse(JSON.stringify(cur)) : [];
+    }
+    return secDraft[id];
+  }
+  function plansNow(){ var p = plans(), cur = window.AAUP_STAFF && window.AAUP_STAFF.current && window.AAUP_STAFF.current(); return { p: p[cur], id: cur }; }
+  function prereqsOf(id){
+    var pl = plansNow().p;
+    return pl ? (pl.prerequisites || []).filter(function(x){ return x[1] === id; }).map(function(x){ return x[0]; }) : [];
+  }
+  function courseName2(id){
+    var pl = plansNow().p, c = pl && (pl.courses || []).filter(function(x){ return x.id === id; })[0];
+    return c ? plain(ar() && c.ar ? c.ar : c.name) : id;
+  }
+  function sectionsHtml(id){
+    var list = draftFor(id);
+    return list.map(function(x, i){
+      var open = secOpen[id] === i;
+      return '<div class="sr-sec">' +
+        '<div class="sr-sec-h"><b>' + esc(L('Section ', 'شعبة ') + (x.n || i + 1)) + '</b>' +
+          '<button type="button" class="stf-btn" data-sr="secedit" data-course="' + esc(id) + '" data-i="' + i + '">' + esc(open ? L('Done', 'تمام') : L('Edit', 'عدّل')) + '</button>' +
+          '<button type="button" class="stf-btn sr-bad" data-sr="secdel" data-course="' + esc(id) + '" data-i="' + i + '" aria-label="' + esc(L('Remove section', 'احذف الشعبة')) + '">×</button></div>' +
+        (open
+          ? '<div class="sr-days">' + DAYS.map(function(d){
+              return '<button type="button" class="sr-day' + ((x.days || []).indexOf(d[0]) !== -1 ? ' is-on' : '') + '" data-sr="secday" data-course="' + esc(id) + '" data-i="' + i + '" data-d="' + d[0] + '">' + esc(L(d[1], d[2])) + '</button>';
+            }).join('') + '</div>' +
+            '<div class="sr-sec-grid">' +
+              '<label><span>' + esc(L('Starts', 'بتبدأ')) + '</span><input class="sr-in" type="time" data-sec="' + esc(id) + ':' + i + ':s" value="' + esc(x.s || '') + '"></label>' +
+              '<label><span>' + esc(L('Ends', 'بتخلص')) + '</span><input class="sr-in" type="time" data-sec="' + esc(id) + ':' + i + ':e" value="' + esc(x.e || '') + '"></label>' +
+              '<label><span>' + esc(L('Room', 'القاعة')) + '</span><input class="sr-in" maxlength="40" data-sec="' + esc(id) + ':' + i + ':room" value="' + esc(x.room || '') + '" placeholder="B-110"></label>' +
+            '</div>' +
+            '<label class="sr-f"><span>' + esc(L('Professor', 'المدرّس')) + '</span><input class="sr-in" maxlength="80" data-sec="' + esc(id) + ':' + i + ':prof" value="' + esc(x.prof || '') + '"></label>'
+          : '<small>' + esc(sectionLine(x) || L('No days or times yet', 'لسا بدون أيام وأوقات')) + '</small>' + (x.prof ? '<small>' + esc(x.prof) + '</small>' : '')) +
+      '</div>';
+    }).join('') +
+    '<button type="button" class="stf-btn" data-sr="secadd" data-course="' + esc(id) + '">' + esc(L('+ Add a section', '+ ضيف شعبة')) + '</button>';
+  }
+  function prereqHtml(id){
+    var dean = me.role === 'dean';
+    var now = prereqsOf(id);
+    if(!dean){
+      return '<div class="sr-f"><span>' + esc(L('Prerequisites', 'المتطلبات')) + '</span>' +
+        '<p class="sr-ro">' + esc(now.length ? now.map(courseName2).join(L(', ', '، ')) : L('None', 'ولا إشي')) + '</p>' +
+        '<small class="sr-lock">' + esc(L('Only your dean changes prerequisites.', 'العميد بس بيغيّر المتطلبات.')) + '</small></div>';
+    }
+    var pl = plansNow().p;
+    var inPlan = pl ? coursesInPlan(pl, id) : [];
+    var chosen = preDraft[id] || now;
+    var pv = prePreview[id];
+    return '<div class="sr-f"><span>' + esc(L('Prerequisites', 'المتطلبات')) + '</span>' +
+      pickerHtml(me.uni, me.college, chosen, inPlan, id) +
+      '<small class="sr-lock">' + esc(L('Changes the plan for every major in your colleges that has this course. You see each change before it is saved.', 'بيغيّر الخطة بكل تخصص بكلياتك فيه هالمساق. بتشوف كل تغيير قبل ما ينحفظ.')) + '</small>' +
+      (pv ? (pv.length
+        ? '<div class="sr-link"><b>' + esc(L('This changes ' + pv.length + (pv.length === 1 ? ' major:' : ' majors:'), 'هاد بيغيّر ' + pv.length + ' تخصص:')) + '</b>' +
+            pv.map(function(c){ return '<p><b>' + esc(c.major) + '</b><br><span class="sr-was">' + esc(c.before.join(', ') || L('none', 'ولا إشي')) + '</span> → ' + esc(c.after.join(', ') || L('none', 'ولا إشي')) + '</p>'; }).join('') +
+            '<div class="sr-link-row"><button type="button" class="stf-btn stf-pri" data-sr="presave" data-course="' + esc(id) + '">' + esc(L('Save prerequisites', 'احفظ المتطلبات')) + '</button>' +
+            '<button type="button" class="stf-btn" data-sr="precancel" data-course="' + esc(id) + '">' + esc(L('Cancel', 'إلغاء')) + '</button></div></div>'
+        : '<p class="stf-muted">' + esc(L('Nothing would change.', 'ما رح يتغيّر إشي.')) + '</p>')
+      : '<button type="button" class="stf-btn" data-sr="precheck" data-course="' + esc(id) + '">' + esc(L('See what changes', 'شوف شو بيتغيّر')) + '</button>') +
+    '</div>';
+  }
+  // The courses of one plan, each once, for the prerequisite picker.
+  function coursesInPlan(pl, except){
+    return (pl.courses || []).filter(function(c){ return c.id !== except && !/-lab$/.test(c.id); }).map(function(c){
+      return { id: c.id, ids: [c.id], name: plain(ar() && c.ar ? c.ar : c.name) };
+    }).sort(function(a, b){ return a.name.localeCompare(b.name); });
   }
   function courseEditHtml(course){
     if(!me || !course || !mayWrite(course.id)) return '';
     if(live === null || pending === null) return '<h4>' + esc(L('Write for students', 'اكتب للطلاب')) + '</h4><p class="stf-muted">' + esc(L('Loading…', 'عم نحمّل…')) + '</p>';
     var id = course.id, k = function(f){ return 'srC-' + f + '-' + id; };
+    var dean = me.role === 'dean';
     var note = current(id, 'note') || {};
-    var waits = (pending || []).filter(function(p){ return p.kind === 'content' && p.course === id && (me.role === 'dean' || p.by === me.username); });
+    if(typeof note === 'string') try{ note = JSON.parse(note); }catch(e){ note = {}; }
+    var waits = (pending || []).filter(function(p){ return p.kind === 'content' && p.course === id && p.by === me.username; });
     var offered = current(id, 'offered');
     return '<div class="sr-edit">' +
       '<h4>' + esc(L('Write for students', 'اكتب للطلاب')) + '</h4>' +
-      '<p class="stf-muted">' + esc(me.role === 'dean'
+      '<p class="stf-muted">' + esc(dean
         ? L('Students see it in this course’s window as soon as you save.', 'الطلاب بيشوفوه بنافذة المساق أول ما تحفظ.')
         : L('Your dean checks it first, then students see it in this course’s window.', 'العميد بيراجعه أول، وبعدين بيشوفه الطلاب بنافذة المساق.')) + '</p>' +
-      (waits.length && me.role !== 'dean' ? '<p class="sr-wait">' + esc(L('Waiting for your dean: ', 'بستنّى العميد: ') + waits.map(function(w){ return fieldTx(w.field); }).join(L(', ', '، '))) + '</p>' : '') +
+      (waits.length ? '<p class="sr-wait">' + esc(L('Waiting for your dean: ', 'بستنّى العميد: ') + waits.map(function(w){ return fieldTx(w.field); }).join(L(', ', '، '))) + '</p>' : '') +
       '<label class="sr-f"><span>' + esc(fieldTx('about')) + '</span><textarea class="sr-in" rows="3" maxlength="1200" id="' + k('about') + '" data-keep>' + esc(current(id, 'about')) + '</textarea></label>' +
-      '<label class="sr-f"><span>' + esc(fieldTx('revise')) + '</span><input class="sr-in" maxlength="400" id="' + k('revise') + '" data-keep value="' + esc(current(id, 'revise')) + '"></label>' +
-      '<label class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><select class="sr-in" id="' + k('offered') + '" data-keep>' +
-        ['', 's1', 's2'].map(function(v){ return '<option value="' + v + '"' + (v === offered ? ' selected' : '') + '>' + esc(offeredTx(v)) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="sr-f"><span>' + esc(fieldTx('prereqNote')) + '</span><input class="sr-in" maxlength="300" id="' + k('prereqNote') + '" data-keep placeholder="' + esc(L('e.g. or with the instructor’s permission', 'مثلاً: أو بموافقة المدرّس')) + '" value="' + esc(current(id, 'prereqNote')) + '"></label>' +
-      '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="' + k('noteText') + '" data-keep placeholder="' + esc(L('e.g. The lab moves to B-203 this semester.', 'مثلاً: المختبر انتقل لـ B-203 هالفصل.')) + '">' + esc(note.text || '') + '</textarea></label>' +
+      (dean
+        ? '<label class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><select class="sr-in" id="' + k('offered') + '" data-keep>' +
+            ['', 's1', 's2'].map(function(v){ return '<option value="' + v + '"' + (v === offered ? ' selected' : '') + '>' + esc(offeredTx(v)) + '</option>'; }).join('') + '</select></label>'
+        : '<div class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><p class="sr-ro">' + esc(offeredTx(offered)) + '</p><small class="sr-lock">' + esc(L('Set by your dean.', 'العميد بيحدّدها.')) + '</small></div>') +
+      prereqHtml(id) +
+      '<div class="sr-f"><span>' + esc(dean ? L('Sections this semester', 'شعب هالفصل') : L('Your sections', 'شعبك')) + '</span>' + sectionsHtml(id) + '</div>' +
+      '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="' + k('noteText') + '" data-keep placeholder="' + esc(L('e.g. Midterm moved to Thursday, room B-05.', 'مثلاً: النصفي انتقل للخميس، قاعة B-05.')) + '">' + esc(note.text || '') + '</textarea></label>' +
       '<label class="sr-f sr-f-row"><span>' + esc(L('Show it until', 'اعرضها لحد')) + '</span><input class="sr-in" type="date" id="' + k('noteUntil') + '" data-keep value="' + esc(note.until || '') + '"></label>' +
-      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecourse" data-course="' + esc(id) + '">' + esc(me.role === 'dean' ? L('Save for students', 'احفظ للطلاب') : L('Send to my dean', 'ابعت للعميد')) + '</button>' +
+      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecourse" data-course="' + esc(id) + '">' + esc(dean ? L('Save for students', 'احفظ للطلاب') : L('Send to my dean', 'ابعت للعميد')) + '</button>' +
     '</div>';
   }
+  function cleanSections(list){
+    return (list || []).map(function(x, i){ return { n: String(x.n || i + 1), days: (x.days || []).slice().sort(), s: x.s || '', e: x.e || '', room: x.room || '', prof: x.prof || '' }; });
+  }
   function saveCourse(courseId){
-    var k = function(f){ var e = document.getElementById('srC-' + f + '-' + courseId); return e ? e.value : ''; };
-    var noteText = k('noteText').trim(), noteUntil = k('noteUntil');
+    var k = function(f){ var e = document.getElementById('srC-' + f + '-' + courseId); return e ? e.value : null; };
+    var noteText = (k('noteText') || '').trim(), noteUntil = k('noteUntil') || '';
     if(noteText && !noteUntil){ if(window.__showToast) window.__showToast(L('Pick the date the pinned note ends.', 'اختار لإيمتى الملاحظة المثبّتة.')); return; }
-    var want = { about: k('about').trim(), revise: k('revise').trim(), offered: k('offered'), prereqNote: k('prereqNote').trim(),
-                 note: noteText ? { text: noteText, until: noteUntil } : '' };
+    var bad = draftFor(courseId).filter(function(x){ return !(x.days || []).length || !x.s || !x.e || x.e <= x.s; })[0];
+    if(bad){ if(window.__showToast) window.__showToast(L('Section ' + (bad.n || '') + ': pick its days, and an end time after its start.', 'الشعبة ' + (bad.n || '') + ': اختار أيامها، ووقت نهاية بعد البداية.')); return; }
+    var want = { about: (k('about') || '').trim(), note: noteText ? { text: noteText, until: noteUntil } : '', sections: cleanSections(draftFor(courseId)) };
+    if(me.role === 'dean') want.offered = k('offered') || '';
     var sends = Object.keys(want).filter(function(f){
       var cur = current(courseId, f);
       if(f === 'note') return JSON.stringify(want.note || '') !== JSON.stringify(cur && cur.text ? { text: cur.text, until: cur.until } : '');
+      if(f === 'sections'){
+        if(typeof cur === 'string' && cur) try{ cur = JSON.parse(cur); }catch(e){ cur = []; }
+        return JSON.stringify(want.sections) !== JSON.stringify(cleanSections(Array.isArray(cur) ? cur : []));
+      }
       return (want[f] || '') !== (cur || '');
     });
     if(!sends.length){ if(window.__showToast) window.__showToast(L('Nothing changed', 'ما تغيّر إشي')); return; }
@@ -392,10 +520,23 @@
     var chain = Promise.resolve();
     sends.forEach(function(f){ chain = chain.then(function(){ return api('POST', '/api/staff/content', { course: courseId, field: f, value: want[f] }); }); });
     chain.then(function(){
-      busy = false; dropKept = true;
-      if(window.__showToast) window.__showToast(me.role === 'dean' ? L('Saved — students see it now', 'انحفظ — الطلاب بيشوفوه هلق') : L('Sent to your dean', 'انبعت للعميد'));
+      busy = false; dropKept = true; delete secDraft[courseId]; secOpen[courseId] = null;
+      if(window.__showToast) window.__showToast(me.role === 'dean' ? L('Saved. Students see it now.', 'انحفظ. الطلاب بيشوفوه هلق.') : L('Sent to your dean', 'انبعت للعميد'));
       if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
       loadWork();
+    }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+  }
+  function prereqRun(courseId, preview){
+    var box = document.querySelector('.sr-edit [data-sr-pick]');
+    var want = box ? pickerValue(box.parentElement) : (preDraft[courseId] || prereqsOf(courseId));
+    preDraft[courseId] = want;
+    busy = true;
+    return api('POST', '/api/staff/prereqs', { course: courseId, requires: want, preview: !!preview }).then(function(d){
+      busy = false;
+      if(preview){ prePreview[courseId] = d.changes || []; refresh(); return; }
+      delete prePreview[courseId]; delete preDraft[courseId];
+      if(window.__showToast) window.__showToast(L('Saved in ' + (d.changes || []).length + ' majors. Students see it after the next update, in a few minutes.', 'انحفظ بـ' + (d.changes || []).length + ' تخصص. الطلاب بيشوفوه بالتحديث الجاي، بعد كم دقيقة.'));
+      refresh();
     }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
   }
   function waitingHtml(){
@@ -495,8 +636,22 @@
     if(act === 'signin'){ dlg = 'signin'; dlgMsg = ''; refresh(); return true; }
     if(act === 'dlgclose'){ dlg = null; dlgMsg = ''; refresh(); return true; }
     if(act === 'give'){ dlg = 'give'; dlgMsg = ''; lastLink = null; refresh(); return true; }
-    if(act === 'signout'){ setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = null; refresh(); return true; }
+    if(act === 'signout'){ if(me && me.admin) adminOff = true; setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = null; refresh(); return true; }
     if(act === 'savecourse'){ saveCourse(b.getAttribute('data-course')); return true; }
+    var cid = b.getAttribute('data-course'), si = +b.getAttribute('data-i');
+    if(act === 'secadd'){ var dl = draftFor(cid); dl.push({ n: String(dl.length + 1), days: [], s: '08:00', e: '09:00', room: '', prof: me.role === 'professor' ? (me.name || '') : '' }); secOpen[cid] = dl.length - 1; refresh(); return true; }
+    if(act === 'secedit'){ secOpen[cid] = secOpen[cid] === si ? null : si; refresh(); return true; }
+    if(act === 'secdel'){ draftFor(cid).splice(si, 1); draftFor(cid).forEach(function(x, i){ x.n = String(i + 1); }); secOpen[cid] = null; refresh(); return true; }
+    if(act === 'secday'){ var x = draftFor(cid)[si], d = +b.getAttribute('data-d'); x.days = x.days || []; var at = x.days.indexOf(d); if(at === -1) x.days.push(d); else x.days.splice(at, 1); refresh(); return true; }
+    if(act === 'precheck'){ prereqRun(cid, true); return true; }
+    if(act === 'presave'){ prereqRun(cid, false); return true; }
+    if(act === 'precancel'){ delete prePreview[cid]; delete preDraft[cid]; refresh(); return true; }
+    if(act === 'opencourse'){ if(window.AAUP_STAFF && window.AAUP_STAFF.openCourse) window.AAUP_STAFF.openCourse(String(id).split(',')); return true; }
+    if(act === 'editmajor'){
+      var curMajor = window.AAUP_STAFF && window.AAUP_STAFF.current && window.AAUP_STAFF.current();
+      if(window.AAUP_ADMIN && window.AAUP_ADMIN.openStaff) window.AAUP_ADMIN.openStaff(token(), me.name || me.username, me.uni, curMajor);
+      return true;
+    }
     if(act === 'savecard'){ saveCard(); return true; }
     if(act === 'accept' || act === 'refuse'){
       busy = true;
@@ -569,6 +724,13 @@
     return false;
   }
 
+  // Section fields write straight into the draft, so a redraw keeps them.
+  document.addEventListener('input', function(e){
+    var f = e.target && e.target.getAttribute && e.target.getAttribute('data-sec');
+    if(!f) return;
+    var parts = f.split(':'), list = secDraft[parts[0]];
+    if(list && list[+parts[1]]) list[+parts[1]][parts[2]] = e.target.value;
+  });
   // #staff-setup=<username>~<code>: open the staff page on the password step.
   var setupFor = null;
   function fromHash(){

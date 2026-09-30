@@ -369,6 +369,19 @@
   // Round 8, idea 16: a time dragged out on the week grid (js/104-week.js).
   // The same start and end already on another day of that course joins it
   // (Mon & Wed 10:00–11:15 stays one line) instead of becoming a new one.
+  // A section the college published (js/111-staff-content.js): its days,
+  // times and room become this course's class times, replacing any others.
+  function pickSection(planId, key, sec){
+    var map = forPlan(planId);
+    map[key] = [{ d: (sec.days || []).slice(), s: sec.s, e: sec.e, r: sec.room || '', sec: String(sec.n || '') }];
+    savePlan(planId, map);
+    var el = document.getElementById('ttOverlay');
+    if(el && el.classList.contains('open') && openFor === planId) render();
+  }
+  function pickedSection(planId, key){
+    var list = forPlan(planId)[key] || [];
+    return list.length === 1 && list[0].sec ? list[0].sec : '';
+  }
   function addMeeting(planId, key, day, s, e){
     var map = forPlan(planId);
     map[key] = map[key] || [];
@@ -380,5 +393,6 @@
     if(el && el.classList.contains('open') && openFor === planId) render();
   }
 
-  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, lineHtml: lineHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny, addMeeting: addMeeting };
+  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, lineHtml: lineHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny, addMeeting: addMeeting,
+    pickSection: pickSection, pickedSection: pickedSection };
 })();

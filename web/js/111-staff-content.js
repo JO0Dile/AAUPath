@@ -101,16 +101,47 @@
       var until = new Date(n.until + 'T00:00:00').toLocaleDateString(ar() ? 'ar' : 'en', { day: 'numeric', month: 'short' });
       out += '<div class="sc-note"><b>' + esc(L('Note from the college · until ', 'ملاحظة من الكلية · لحد ') + until) + '</b>' + esc(n.text) + '</div>';
     }
-    if(c.about || c.revise){
-      out += '<div class="sc-about"><div class="sc-lbl">' + esc(L('About this course', 'عن المساق')) + '<span class="sc-by">' + esc(L('from the college', 'من الكلية')) + '</span></div>' +
-        (c.about ? '<p>' + esc(c.about) + '</p>' : '') +
-        (c.revise ? '<p><b>' + esc(L('Revise first: ', 'راجع قبل: ')) + '</b>' + esc(c.revise) + '</p>' : '') + '</div>';
+    // F · this semester's sections. "Put it in My Week" makes the section's
+    // days, times and room this course's class times.
+    if(Array.isArray(c.sections) && c.sections.length){
+      var picked = window.AAUP_TIMETABLE && course.plan ? window.AAUP_TIMETABLE.pickedSection(course.plan, course.id) : '';
+      out += '<div class="sc-secs"><div class="sc-lbl">' + esc(L('Sections this semester', 'شعب هالفصل')) + '</div>' +
+        c.sections.map(function(x, i){
+          var on = picked && picked === String(x.n);
+          return '<div class="sc-sec"><div class="sc-sec-t"><b>' + esc(L('Section ', 'شعبة ') + x.n) + '</b><small>' +
+              esc([secDays(x.days), fmt(x.s) + '–' + fmt(x.e), x.room, x.prof].filter(Boolean).join(' · ')) + '</small></div>' +
+            (course.plan ? '<button type="button" class="sc-pick' + (on ? ' is-on' : '') + '" data-sc-pick="' + esc(course.plan + '|' + course.id + '|' + i) + '">' +
+              esc(on ? L('In My Week ✓', 'بأسبوعي ✓') : L('Put it in My Week', 'حطها بأسبوعي')) + '</button>' : '') +
+          '</div>';
+        }).join('') + '</div>';
     }
-    if(c.prereqNote){
-      out += '<p class="sc-pre"><b>' + esc(L('About the prerequisites: ', 'عن المتطلبات: ')) + '</b>' + esc(c.prereqNote) + '</p>';
+    if(c.about){
+      out += '<div class="sc-about"><div class="sc-lbl">' + esc(L('About this course', 'عن المساق')) + '<span class="sc-by">' + esc(L('from the college', 'من الكلية')) + '</span></div>' +
+        '<p>' + esc(c.about) + '</p></div>';
     }
     return out ? '<div class="sc">' + out + '</div>' : '';
   }
+  var DAY_TX = { 6: ['Sat', 'سبت'], 0: ['Sun', 'أحد'], 1: ['Mon', 'اثنين'], 2: ['Tue', 'ثلاثاء'], 3: ['Wed', 'أربعاء'], 4: ['Thu', 'خميس'], 5: ['Fri', 'جمعة'] };
+  function secDays(days){
+    return [6, 0, 1, 2, 3, 4, 5].filter(function(d){ return (days || []).indexOf(d) !== -1; })
+      .map(function(d){ return L(DAY_TX[d][0], DAY_TX[d][1]); }).join(L(', ', '، '));
+  }
+  function fmt(t){ return window.__fmtTime ? window.__fmtTime(t) : t; }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-sc-pick]');
+    if(!b || !window.AAUP_TIMETABLE) return;
+    var parts = b.getAttribute('data-sc-pick').split('|');
+    var c = forCourse(parts[1]), sec = c && c.sections && c.sections[+parts[2]];
+    if(!sec) return;
+    window.AAUP_TIMETABLE.pickSection(parts[0], parts[1], sec);
+    var box = b.closest('.sc-secs');
+    if(box) box.querySelectorAll('[data-sc-pick]').forEach(function(x){
+      var on = x === b;
+      x.classList.toggle('is-on', on);
+      x.textContent = on ? L('In My Week ✓', 'بأسبوعي ✓') : L('Put it in My Week', 'حطها بأسبوعي');
+    });
+    if(window.__showToast) window.__showToast(L('Section ' + sec.n + ' is in My Week', 'الشعبة ' + sec.n + ' صارت بأسبوعي'));
+  });
   function cardChipHtml(course, done){
     var c = course && forCourse(course.id);
     if(!c || !c.offered || done) return '';
