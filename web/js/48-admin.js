@@ -158,14 +158,45 @@
     ['settings',      '⚙️ Settings']
   ];
 
+  // Round 8, idea 22: the same sections, same names, grouped under three
+  // headings, with a count beside the ones that are waiting on you.
+  var NAV_GROUPS = [
+    [null, ['dashboard']],
+    ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'assets']],
+    ['People', ['contributions', 'thoughts', 'accounts']],
+    ['System', ['workers', 'settings']]
+  ];
+  function navCount(key){
+    if(key === 'contributions' && state.contribItems){
+      return state.contribItems.filter(function(c){ return (c.status || 'pending') === 'pending'; }).length;
+    }
+    if(key === 'thoughts' && state.thoughtItems){
+      var seen = 0; try{ seen = +localStorage.getItem(SEEN_THOUGHTS_KEY) || 0; }catch(e){}
+      return state.thoughtItems.filter(function(t){ return (t.at || 0) > seen; }).length;
+    }
+    if(key === 'workers' && state.workers){
+      return state.workers.filter(function(w){ return w.status === 'behind' || w.status === 'down'; }).length;
+    }
+    if((key === 'courses' || key === 'prereqs' || key === 'schedule') && state.major){
+      return problemsOf(state.major).filter(function(x){ return x.sev === 'bad'; }).length;
+    }
+    return 0;
+  }
   function renderNav(){
     var nav = document.getElementById('adminNav');
     if(!nav) return;
-    nav.innerHTML = SECTIONS.map(function(s){
-      var needsMajor = ['courses', 'prereqs', 'schedule'].indexOf(s[0]) !== -1;
+    var label = {};
+    SECTIONS.forEach(function(s){ label[s[0]] = s[1]; });
+    var btn = function(key){
+      var needsMajor = ['courses', 'prereqs', 'schedule'].indexOf(key) !== -1;
       var off = needsMajor && !state.major;
-      return '<button type="button" class="admin-navbtn' + (state.section === s[0] ? ' is-active' : '') +
-        (off ? ' is-off' : '') + '" data-section="' + s[0] + '">' + s[1] + '</button>';
+      var n = navCount(key);
+      return '<button type="button" class="admin-navbtn' + (state.section === key ? ' is-active' : '') +
+        (off ? ' is-off' : '') + (needsMajor && state.dirty ? ' is-dirty' : '') + '" data-section="' + key + '">' + label[key] +
+        (n ? '<span class="admin-navcount">' + n + '</span>' : '') + '</button>';
+    };
+    nav.innerHTML = NAV_GROUPS.map(function(g){
+      return (g[0] ? '<div class="admin-navgroup">' + g[0] + '</div>' : '') + g[1].map(btn).join('');
     }).join('') +
     (state.major
       ? '<div class="admin-nav-context">Editing<br><strong>' + esc(state.majorSlug) + '</strong>' +
@@ -204,9 +235,13 @@
   function setDirty(on){
     state.dirty = on;
     var s = document.getElementById('adminSaveState');
-    if(s) s.textContent = on ? '● unsaved' : 'saved';
+    if(s) s.textContent = on ? '● unsaved · Ctrl+S to save' : 'saved';
     var ctx = document.getElementById('adminNavDirty');
     if(ctx) ctx.style.display = on ? '' : 'none';
+    // Round 8, idea 26: a dot on the sections holding the unsaved major.
+    document.querySelectorAll('.admin-navbtn[data-section="courses"], .admin-navbtn[data-section="prereqs"], .admin-navbtn[data-section="schedule"]')
+      .forEach(function(b){ b.classList.toggle('is-dirty', !!on); });
+    if(on) schedulePreview();
   }
   function markDirty(){ setDirty(true); }
   function markClean(){ setDirty(false); }
@@ -936,12 +971,13 @@
       buckets.push({ title: 'Not placed in a year or semester', rows: loose, warn: true });
     }
 
-    return '<h2>Courses</h2>' + crumbs() +
+    return '<h2>Courses</h2>' + crumbs() + problemsHtml() +
       '<p class="admin-hint">Grouped by where each course sits in the plan. ' +
       'Add straight into a term with its own button, or change a row\'s Year or Sem ' +
-      'and it moves to the matching group immediately.</p>' +
+      'and it moves to the matching group immediately. Type straight into the cells; ' +
+      'Enter or ↓ goes to the next row, and a changed cell is marked until you save.</p>' +
       '<div class="form-field"><label for="acFilter">Search this plan</label><input type="text" id="acFilter" placeholder="Filter by name or code…"></div>' +
-      coursePicker() +
+      coursePicker() + pasteToolHtml() + whereUsedHtml() + historyHtml() +
       '<div id="acBody">' + buckets.map(function(b){
         var ch = b.rows.reduce(function(n, r){ return n + (Number(r.c.creditHours) || 0); }, 0);
         return '<section class="admin-termgroup' + (b.warn ? ' is-orphan' : '') + '">' +
@@ -1063,7 +1099,7 @@
       }).join('') + '</optgroup>';
     }).join('');
 
-    return '<h2>Prerequisites</h2>' + crumbs() +
+    return '<h2>Prerequisites</h2>' + crumbs() + problemsHtml() +
       '<p class="admin-hint">Each row is “must pass <strong>before</strong> → can then take <strong>after</strong>”. ' +
       'The server rejects a loop, so a plan can never be saved in a state where a course is impossible to reach.</p>' +
       '<table class="admin-table"><thead><tr><th>Before</th><th>After</th><th></th></tr></thead><tbody id="apBody">' +
@@ -1085,7 +1121,7 @@
   function sectionSchedule(){
     var m = state.major;
     var years = m.years || [];
-    return '<h2>Study Plan</h2>' + crumbs() +
+    return '<h2>Study Plan</h2>' + crumbs() + problemsHtml() +
       '<p class="admin-hint">Move a course to a different year or semester, or change the year layout. ' +
       'Same file as Courses — one Save covers both.</p>' +
       '<h4>Years</h4><div id="asYears">' + years.map(function(y, i){
@@ -1545,7 +1581,9 @@
       'universities and majors from the repo. It changes nothing and deletes nothing — ' +
       'use it if you edited files in GitHub directly and want this dashboard to catch up. ' +
       'Any major you have open with unsaved changes is left alone.</div>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="adminReload">🔄 Refresh list from GitHub</button></div>';
+      '<div class="form-actions"><button type="button" class="home-btn" id="adminReload">🔄 Refresh list from GitHub</button></div>' +
+      '<div class="admin-note"><strong>Student preview.</strong> The phone beside a major\'s editor shows what students will see as you type.</div>' +
+      '<div class="form-actions"><button type="button" class="home-btn" id="adminPreviewToggle">📱 ' + (previewOn() ? 'Hide' : 'Show') + ' the student preview</button></div>';
   }
 
   // ---------- render + binding ----------
@@ -1660,6 +1698,11 @@
     if(state.section === 'assets') bindAssets();
     if(document.getElementById('amSave')) bindMajorSave();
     on('adminReload', 'click', function(){ loadTree().then(render).catch(function(e){ toast(e.message); }); });
+    on('adminPreviewToggle', 'click', function(){
+      try{ localStorage.setItem(PREVIEW_KEY, previewOn() ? '0' : '1'); }catch(e){}
+      render();
+    });
+    bindPlus();
   }
 
   // Turns "AI and Robotics" into "ai-and-robotics". The slug is the filename
@@ -1762,6 +1805,8 @@
   }
 
   function openMajor(uni, slug){
+    if(state.dirty && state.major && (uni !== state.uni || slug !== state.majorSlug) &&
+       !confirm('You have unsaved changes to ' + state.majorSlug + '. Open ' + slug + ' and lose them?')) return Promise.resolve();
     // The editor's faculty list comes from the browse data. Opening a major
     // belonging to a university we have not browsed would otherwise render an
     // empty dropdown and look like the major has no faculty to choose from.
@@ -1770,6 +1815,7 @@
     return ready.then(function(){
     return api('GET', '/api/major/' + uni + '/' + slug).then(function(res){
       state.uni = uni; state.majorSlug = slug; state.major = res.major; state.dirty = false;
+      state.majorOrig = clone(res.major);
       state.majorSha = res.sha || '';
       state.section = 'majors'; render();
       var host = document.getElementById('adminMajorEditor');
@@ -2194,15 +2240,36 @@
     });
   }
 
+  // Round 8, idea 25: Save first shows what will change, then saves.
   function bindMajorSave(){
     on('amSave', 'click', function(){
       harvestCourses(); harvestMajorMeta();
+      var lines = diffMajors(state.majorOrig, state.major);
+      if(state.majorOrig && !lines.length){ setMsg('Nothing has changed since this major was opened.', 'ok'); return; }
+      var el = document.getElementById('adminMsg');
+      if(!el){ doSaveMajor(); return; }
+      var adds = lines.filter(function(l){ return l.kind === 'add'; }).length,
+          chg = lines.filter(function(l){ return l.kind === 'chg'; }).length,
+          del = lines.filter(function(l){ return l.kind === 'del'; }).length;
+      el.innerHTML = '<div class="adm-confirm"><b>Save these changes to ' + esc(state.major.name || state.majorSlug) + '?</b>' +
+        '<p class="admin-hint">' + adds + ' added · ' + chg + ' changed · ' + del + ' removed</p>' +
+        diffHtml(lines, 40) +
+        '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="amSaveGo">💾 Save these changes</button>' +
+        '<button type="button" class="home-btn" id="amSaveBack">Back to editing</button></div></div>';
+      el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      on('amSaveBack', 'click', function(){ el.innerHTML = ''; });
+      on('amSaveGo', 'click', doSaveMajor);
+    });
+  }
+  function doSaveMajor(){
       setMsg('Saving…', 'ok');
       api('PUT', '/api/major/' + state.uni + '/' + state.majorSlug,
           { major: state.major, baseSha: state.majorSha || '' })
         .then(function(res){
           state.major = res.major;
           state.majorSha = res.sha || '';
+          state.majorOrig = clone(res.major);
+          delete historyCache[state.uni + '/' + state.majorSlug];
           markClean();
           setMsg('Saved. Live for everyone in about a minute.', 'ok');
           // Refresh the browser too, not just the tree — a new major, a
@@ -2213,7 +2280,6 @@
           });
         })
         .catch(function(e){ setMsg(esc(e.message), 'err'); });
-    });
   }
 
   function bindAssets(){
@@ -2260,6 +2326,438 @@
 
   function refreshAssets(){
     return api('GET', '/api/assets').then(function(res){ state.assets = res.assets || []; });
+  }
+
+  // =====================================================================
+  // ROUND 8, BATCH E — the admin room on a laptop (ideas 23–30).
+  // =====================================================================
+  function clone(o){ return o == null ? o : JSON.parse(JSON.stringify(o)); }
+  function termTx(c){
+    if(!c || !c.yearId) return 'unscheduled';
+    var s = semKey(c);
+    return c.yearId.toUpperCase() + ' · ' + (s === 's3' ? 'Summer' : (s || '?').toUpperCase());
+  }
+  function cName(c){ return (c && (c.name || c.courseNumber || c.id)) || '?'; }
+
+  // ---- 25 · what changed, in plain words -------------------------------------------
+  // Used before a save (what this save will do) and in the history (what each
+  // past save did). Lines are { kind: 'add' | 'chg' | 'del', text }.
+  function diffMajors(a, b){
+    a = a || {}; b = b || {};
+    var out = [];
+    var push = function(kind, text){ out.push({ kind: kind, text: text }); };
+    var byId = function(m){ var o = {}; (m.courses || []).forEach(function(c){ o[c.id] = c; }); return o; };
+    var A = byId(a), B = byId(b);
+    Object.keys(B).forEach(function(id){
+      var n = B[id], o = A[id];
+      if(!o){ push('add', 'Added ' + cName(n) + ' (' + termTx(n) + ', ' + (Number(n.creditHours) || 0) + ' CH)'); return; }
+      if((o.name || '') !== (n.name || '')) push('chg', 'Renamed ' + cName(o) + ' → ' + cName(n));
+      if((o.nameAr || '') !== (n.nameAr || '')) push('chg', cName(n) + ': Arabic name ' + (o.nameAr ? '“' + o.nameAr + '”' : '(none)') + ' → ' + (n.nameAr ? '“' + n.nameAr + '”' : '(none)'));
+      if((o.courseNumber || '') !== (n.courseNumber || '')) push('chg', cName(n) + ': code ' + (o.courseNumber || '(none)') + ' → ' + (n.courseNumber || '(none)'));
+      if((Number(o.creditHours) || 0) !== (Number(n.creditHours) || 0)) push('chg', cName(n) + ': ' + (Number(o.creditHours) || 0) + ' CH → ' + (Number(n.creditHours) || 0) + ' CH');
+      if((o.category || '') !== (n.category || '')) push('chg', cName(n) + ': category ' + (o.category || '—') + ' → ' + (n.category || '—'));
+      if(termTx(o) !== termTx(n)) push('chg', 'Moved ' + cName(n) + ': ' + termTx(o) + ' → ' + termTx(n));
+    });
+    Object.keys(A).forEach(function(id){ if(!B[id]) push('del', 'Removed ' + cName(A[id]) + ' (' + termTx(A[id]) + ')'); });
+    var pairKey = function(p){ return p[0] + '>' + p[1]; };
+    var pa = {}, pb = {};
+    (a.prerequisites || []).forEach(function(p){ pa[pairKey(p)] = p; });
+    (b.prerequisites || []).forEach(function(p){ pb[pairKey(p)] = p; });
+    var nm = function(id){ return cName(B[id] || A[id] || { id: id }); };
+    Object.keys(pb).forEach(function(k){ if(!pa[k]) push('add', 'New prerequisite: ' + nm(pb[k][0]) + ' → ' + nm(pb[k][1])); });
+    Object.keys(pa).forEach(function(k){ if(!pb[k]) push('del', 'Prerequisite removed: ' + nm(pa[k][0]) + ' → ' + nm(pa[k][1])); });
+    var yrs = function(m){ return (m.years || []).map(function(y){ return y.id + (y.hasSummer ? '+summer' : ''); }).join(', '); };
+    if(yrs(a) !== yrs(b)) push('chg', 'Years: ' + (yrs(a) || 'none') + ' → ' + (yrs(b) || 'none'));
+    [['name', 'Name'], ['nameAr', 'Arabic name'], ['subtitle', 'Subtitle'], ['college', 'Faculty'], ['degreeHours', 'Degree hours'],
+     ['icon', 'Icon'], ['imageUrl', 'Image'], ['bio', 'Description'], ['bioAr', 'Arabic description'], ['sortOrder', 'Order']].forEach(function(f){
+      var x = a[f[0]] == null ? '' : String(a[f[0]]), y = b[f[0]] == null ? '' : String(b[f[0]]);
+      if(x !== y) push('chg', f[1] + ': ' + (x ? (x.length > 40 ? x.slice(0, 40) + '…' : x) : '(empty)') + ' → ' + (y ? (y.length > 40 ? y.slice(0, 40) + '…' : y) : '(empty)'));
+    });
+    return out;
+  }
+  function diffHtml(lines, max){
+    var shown = max ? lines.slice(0, max) : lines;
+    return '<ul class="adm-diff">' + shown.map(function(l){
+      return '<li class="adm-diff-' + l.kind + '"><span aria-hidden="true">' + (l.kind === 'add' ? '+' : l.kind === 'del' ? '−' : '~') + '</span>' + esc(l.text) + '</li>';
+    }).join('') + '</ul>' + (max && lines.length > max ? '<p class="admin-hint">…and ' + (lines.length - max) + ' more.</p>' : '');
+  }
+
+  // ---- 29 · problems in a plan ------------------------------------------------------
+  function problemsOf(m){
+    var out = [];
+    if(!m) return out;
+    var courses = m.courses || [];
+    var ids = {}, byNum = {};
+    courses.forEach(function(c, i){
+      ids[c.id] = i;
+      var n = (c.courseNumber || '').trim();
+      if(n) (byNum[n] = byNum[n] || []).push(i);
+    });
+    var years = {};
+    (m.years || []).forEach(function(y){ years[y.id] = y; });
+    courses.forEach(function(c, i){
+      if(!String(c.name || '').trim() || c.name === 'New course') out.push({ sev: 'bad', text: 'A course has no real name' + (c.courseNumber ? ' (' + c.courseNumber + ')' : ''), i: i });
+      if(!(Number(c.creditHours) > 0) && ['core', 'math', 'dept'].indexOf(c.category) !== -1) out.push({ sev: 'warn', text: cName(c) + ' has 0 hours', i: i });
+      if(c.yearId && !years[c.yearId]) out.push({ sev: 'bad', text: cName(c) + ' is in ' + c.yearId.toUpperCase() + ', which this plan doesn’t have', i: i });
+      else if(c.yearId && semKey(c) === 's3' && !years[c.yearId].hasSummer) out.push({ sev: 'bad', text: cName(c) + ' is in a summer that ' + c.yearId.toUpperCase() + ' doesn’t have', i: i });
+      if(!c.yearId) out.push({ sev: 'warn', text: cName(c) + ' isn’t placed in a year', i: i });
+    });
+    Object.keys(byNum).forEach(function(n){
+      if(byNum[n].length > 1) out.push({ sev: 'bad', text: 'Code ' + n + ' is used by ' + byNum[n].length + ' courses', i: byNum[n][1] });
+    });
+    var next = {};
+    (m.prerequisites || []).forEach(function(p){
+      if(!(p[0] in ids) || !(p[1] in ids)) out.push({ sev: 'bad', text: 'A prerequisite points at a course that isn’t in this plan (' + (p[0] in ids ? p[1] : p[0]) + ')' });
+      else (next[p[0]] = next[p[0]] || []).push(p[1]);
+    });
+    // A loop: a course that (through others) needs itself.
+    var state2 = {}, loopAt = null;
+    var visit = function(id){
+      if(loopAt) return;
+      state2[id] = 1;
+      (next[id] || []).forEach(function(n){ if(state2[n] === 1 && !loopAt) loopAt = [id, n]; else if(!state2[n]) visit(n); });
+      state2[id] = 2;
+    };
+    Object.keys(next).forEach(function(id){ if(!state2[id]) visit(id); });
+    if(loopAt) out.push({ sev: 'bad', text: 'Prerequisite loop: ' + cName(courses[ids[loopAt[0]]]) + ' ⇄ ' + cName(courses[ids[loopAt[1]]]) + ' (the server will refuse to save)' });
+    // Heavy terms.
+    var load = {};
+    courses.forEach(function(c){ if(c.yearId && semKey(c)){ var k = c.yearId + '|' + semKey(c); load[k] = (load[k] || 0) + (Number(c.creditHours) || 0); } });
+    Object.keys(load).forEach(function(k){
+      var p = k.split('|'), cap = p[1] === 's3' ? 9 : 21;
+      if(load[k] > cap) out.push({ sev: 'warn', text: p[0].toUpperCase() + ' · ' + (p[1] === 's3' ? 'Summer' : p[1].toUpperCase()) + ' has ' + load[k] + ' CH (over ' + cap + ')' });
+    });
+    var noAr = courses.filter(function(c){ return !String(c.nameAr || '').trim(); }).length;
+    if(noAr) out.push({ sev: 'info', text: noAr + ' course' + (noAr === 1 ? ' has' : 's have') + ' no Arabic name' });
+    return out;
+  }
+  function problemsHtml(){
+    var list = problemsOf(state.major);
+    var bad = list.filter(function(x){ return x.sev !== 'info'; }).length;
+    if(!list.length) return '<div class="adm-probs is-ok">✓ No problems found in this plan.</div>';
+    return '<details class="adm-probs"' + (bad ? ' open' : '') + '><summary>' + (bad ? '⚠️ ' + bad + ' problem' + (bad === 1 ? '' : 's') + ' in this plan' : 'ℹ️ A note on this plan') + '</summary><ul>' +
+      list.map(function(x){
+        return '<li class="adm-prob-' + x.sev + '">' + (x.i != null ? '<button type="button" class="admin-linkbtn" data-prob-go="' + x.i + '">' + esc(x.text) + '</button>' : esc(x.text)) + '</li>';
+      }).join('') + '</ul></details>';
+  }
+  function goToCourse(i){
+    if(state.section !== 'courses'){ harvestCourses(); state.section = 'courses'; render(); }
+    var row = document.querySelector('[data-course="' + i + '"]');
+    if(!row) return;
+    row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    row.classList.add('is-autofilled');
+    setTimeout(function(){ row.classList.remove('is-autofilled'); }, 1400);
+    var inp = row.querySelector('.cc-name');
+    if(inp) inp.focus({ preventScroll: true });
+  }
+
+  // ---- 24 · paste rows from Excel -----------------------------------------------------
+  function pasteToolHtml(){
+    var years = (state.major || {}).years || [];
+    var termOpts = '<option value="">unscheduled</option>' + years.map(function(y){
+      return ['s1', 's2'].concat(y.hasSummer ? ['s3'] : []).map(function(sm){
+        return '<option value="' + esc(y.id + '|' + sm) + '">' + esc(y.id.toUpperCase()) + ' · ' + SEM_LABEL[sm] + '</option>';
+      }).join('');
+    }).join('');
+    return '<details class="admin-picker" id="acPaste"><summary>📋 Paste rows from Excel</summary><div class="admin-picker-body">' +
+      '<p class="admin-hint">Copy rows from a spreadsheet (code, name, Arabic name, hours, in any order) and paste them here. ' +
+      'Rows whose code is already in this plan update that course; the rest are added. Nothing changes until you press Apply, and nothing is saved until Save major.</p>' +
+      '<textarea id="acPasteBox" rows="5" placeholder="290312210&#9;Reinforcement Learning&#9;التعلم المعزز&#9;3"></textarea>' +
+      '<div class="admin-row"><label class="admin-hint" for="acPasteTerm">New courses go to</label><select id="acPasteTerm">' + termOpts + '</select></div>' +
+      '<div id="acPastePreview"></div></div></details>';
+  }
+  function parsePasted(text){
+    var lines = String(text || '').split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var sep = lines.some(function(l){ return l.indexOf('\t') !== -1; }) ? '\t' : (lines.some(function(l){ return l.indexOf(';') !== -1; }) ? ';' : ',');
+    var rows = [];
+    lines.forEach(function(l){
+      var cells = l.split(sep).map(function(x){ return x.trim().replace(/^"|"$/g, ''); }).filter(function(x){ return x !== ''; });
+      var r = { courseNumber: '', name: '', nameAr: '', creditHours: null };
+      cells.forEach(function(x){
+        if(!r.courseNumber && /^\d{6,12}$/.test(x)) r.courseNumber = x;
+        else if(r.creditHours === null && /^\d{1,2}(\.\d)?$/.test(x)) r.creditHours = Number(x);
+        else if(!r.nameAr && /[؀-ۿ]/.test(x)) r.nameAr = x;
+        else if(!r.name) r.name = x;
+      });
+      // A header row ("Code, Name, Hours") has no code and no hours.
+      if(!r.courseNumber && r.creditHours === null && /code|name|course|hours|اسم|رقم|ساعات/i.test(l)) return;
+      if(r.name || r.courseNumber) rows.push(r);
+    });
+    return rows;
+  }
+  function planPaste(rows){
+    var courses = state.major.courses || [];
+    return rows.map(function(r){
+      var hit = null;
+      courses.forEach(function(c, i){
+        if(hit) return;
+        if(r.courseNumber && (c.courseNumber || '').trim() === r.courseNumber) hit = { c: c, i: i };
+        else if(!r.courseNumber && r.name && (c.name || '').trim().toLowerCase() === r.name.toLowerCase()) hit = { c: c, i: i };
+      });
+      if(!hit) return { kind: 'add', r: r };
+      var changes = [];
+      if(r.name && r.name !== hit.c.name) changes.push('name');
+      if(r.nameAr && r.nameAr !== hit.c.nameAr) changes.push('Arabic name');
+      if(r.creditHours !== null && r.creditHours !== Number(hit.c.creditHours)) changes.push('hours');
+      return { kind: changes.length ? 'chg' : 'same', r: r, i: hit.i, changes: changes };
+    });
+  }
+  function renderPastePreview(){
+    var box = document.getElementById('acPastePreview');
+    var ta = document.getElementById('acPasteBox');
+    if(!box || !ta) return;
+    var plan = planPaste(parsePasted(ta.value));
+    if(!plan.length){ box.innerHTML = ''; return; }
+    var adds = plan.filter(function(x){ return x.kind === 'add'; }).length, chg = plan.filter(function(x){ return x.kind === 'chg'; }).length;
+    box.innerHTML = '<table class="admin-table"><thead><tr><th>Code</th><th>Name</th><th>Arabic</th><th>CH</th><th></th></tr></thead><tbody>' +
+      plan.map(function(x){
+        return '<tr class="adm-paste-' + x.kind + '"><td>' + esc(x.r.courseNumber || '—') + '</td><td>' + esc(x.r.name || '—') + '</td><td dir="rtl">' + esc(x.r.nameAr || '') + '</td><td>' +
+          (x.r.creditHours === null ? '—' : x.r.creditHours) + '</td><td>' + (x.kind === 'add' ? 'new' : x.kind === 'chg' ? 'changes ' + esc(x.changes.join(', ')) : 'already the same') + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="acPasteApply"' + (adds + chg ? '' : ' disabled') + '>Apply: ' +
+        adds + ' new, ' + chg + ' changed</button></div>';
+    on('acPasteApply', 'click', function(){
+      harvestCourses();
+      var term = String(val('acPasteTerm') || '').split('|');
+      plan.forEach(function(x){
+        if(x.kind === 'add'){
+          state.major.courses.push({ id: newCourseId(), courseNumber: x.r.courseNumber, name: x.r.name || x.r.courseNumber, nameAr: x.r.nameAr,
+            creditHours: x.r.creditHours === null ? 3 : x.r.creditHours, category: 'core', yearId: term[0] || '', semester: term[1] || '' });
+        } else if(x.kind === 'chg'){
+          var c = state.major.courses[x.i];
+          if(x.r.name) c.name = x.r.name;
+          if(x.r.nameAr) c.nameAr = x.r.nameAr;
+          if(x.r.creditHours !== null) c.creditHours = x.r.creditHours;
+        }
+      });
+      markDirty(); render();
+      toast('Applied ' + adds + ' new and ' + chg + ' changed. Press Save major to publish.');
+    });
+  }
+
+  // ---- 28 · where is this course used? -----------------------------------------------
+  var feedCache = null;
+  function loadFeed(){
+    if(feedCache) return Promise.resolve(feedCache);
+    return fetch('plans.json', { cache: 'no-store' }).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(f){ feedCache = f; return f; });
+  }
+  function whereUsedHtml(){
+    return '<details class="admin-picker" id="acWhere"><summary>🔎 Where is a course used?</summary><div class="admin-picker-body">' +
+      '<p class="admin-hint">Every published plan that has it, and where in the plan. Handy before renaming a course or changing its hours: each of those plans has its own copy to update.</p>' +
+      '<input type="text" id="acWhereQ" placeholder="Course code or name…"><div id="acWhereOut"></div></div></details>';
+  }
+  function runWhere(q){
+    var out = document.getElementById('acWhereOut');
+    if(!out) return;
+    q = String(q || '').trim().toLowerCase();
+    if(q.length < 3){ out.innerHTML = '<p class="admin-hint">Type at least three characters.</p>'; return; }
+    loadFeed().then(function(feed){
+      var hits = [];
+      (feed.plans || []).forEach(function(p){
+        (p.courses || []).forEach(function(c){
+          var num = String(c.courseNumber || c.id || '').toLowerCase();
+          if(num === q || String(c.name || '').toLowerCase().indexOf(q) !== -1 || String(c.ar || '').indexOf(q) !== -1){
+            var mn = p.majorName && p.majorName.en ? (p.majorName.en.big || p.majorName.en) : p.id;
+            hits.push({ major: String(mn), uni: p.university, course: c.name, num: c.courseNumber || '', where: c.yearId ? (c.yearId.toUpperCase() + ' · ' + (c.semester === 's3' ? 'Summer' : String(c.semester || '').toUpperCase())) : 'unscheduled', hours: c.creditHours });
+          }
+        });
+      });
+      var byCourse = {};
+      hits.forEach(function(h){ var k = (h.num || h.course); (byCourse[k] = byCourse[k] || []).push(h); });
+      var keys = Object.keys(byCourse).slice(0, 12);
+      out.innerHTML = keys.length ? keys.map(function(k){
+        var list = byCourse[k];
+        var hrs = {}; list.forEach(function(h){ hrs[h.hours] = 1; });
+        return '<div class="adm-where"><b>' + esc(list[0].course) + (list[0].num ? ' <span class="admin-sub">' + esc(list[0].num) + '</span>' : '') + '</b>' +
+          '<span class="admin-sub"> is in ' + list.length + ' plan' + (list.length === 1 ? '' : 's') + (Object.keys(hrs).length > 1 ? ' · ⚠️ hours differ: ' + esc(Object.keys(hrs).join(' / ')) : '') + '</span>' +
+          '<ul>' + list.map(function(h){ return '<li>' + esc(h.major) + ' <span class="admin-sub">(' + esc(h.uni) + ') · ' + esc(h.where) + ' · ' + esc(h.hours) + ' CH</span></li>'; }).join('') + '</ul></div>';
+      }).join('') : '<p class="admin-hint">Not found in any published plan.</p>';
+    }).catch(function(e){ out.innerHTML = '<p class="admin-hint admin-warn">Could not read the catalogue (' + esc(e.message) + ').</p>'; });
+  }
+
+  // ---- 30 · change history with Put back ---------------------------------------------
+  function historyHtml(){
+    return '<details class="admin-picker" id="acHistory"><summary>🕘 Change history</summary><div class="admin-picker-body" id="acHistoryBody">' +
+      '<p class="admin-hint">Loading…</p></div></details>';
+  }
+  var historyCache = {};
+  function loadHistory(){
+    var body = document.getElementById('acHistoryBody');
+    if(!body || !state.major) return;
+    var key = state.uni + '/' + state.majorSlug;
+    var draw = function(h){
+      if(!document.getElementById('acHistoryBody')) return;
+      body = document.getElementById('acHistoryBody');
+      if(h.error){ body.innerHTML = '<p class="admin-hint admin-warn">' + esc(h.error) + '</p>'; return; }
+      if(!h.commits.length){ body.innerHTML = '<p class="admin-hint">No saved changes yet.</p>'; return; }
+      body.innerHTML = '<p class="admin-hint">Newest first. Put back loads that version into the editor; nothing changes until you press Save major, which shows exactly what it will undo first.</p>' +
+        h.commits.map(function(c, i){
+          var d = c.date ? new Date(c.date) : null;
+          return '<div class="adm-hist"><div class="adm-hist-h"><b>' + esc(d ? d.toLocaleString() : '') + '</b><span class="admin-sub">' + esc(c.message) + '</span>' +
+            (i > 0 ? '<button type="button" class="home-btn admin-mini" data-hist-back="' + esc(c.sha) + '">Put back</button>' : '<span class="admin-sub">current</span>') + '</div>' +
+            '<div class="adm-hist-d" data-hist-diff="' + i + '">' + (c.lines ? (c.lines.length ? diffHtml(c.lines, 4) : '<p class="admin-hint">No change to the plan itself.</p>') : '<p class="admin-hint">…</p>') + '</div></div>';
+        }).join('');
+      body.querySelectorAll('[data-hist-back]').forEach(function(b){
+        b.addEventListener('click', function(){ putBack(b.getAttribute('data-hist-back')); });
+      });
+    };
+    if(historyCache[key]){ draw(historyCache[key]); return; }
+    api('GET', '/api/history/' + state.uni + '/' + state.majorSlug).then(function(res){
+      var h = { commits: res.commits || [] };
+      historyCache[key] = h;
+      draw(h);
+      // What each save changed: that version against the one before it.
+      var versions = {};
+      var get = function(sha){
+        if(!versions[sha]) versions[sha] = api('GET', '/api/major/' + state.uni + '/' + state.majorSlug + '?ref=' + sha).then(function(r){ return r.major; }).catch(function(){ return null; });
+        return versions[sha];
+      };
+      var chain = Promise.resolve();
+      h.commits.slice(0, 10).forEach(function(c, i){
+        chain = chain.then(function(){
+          var prev = h.commits[i + 1];
+          return Promise.all([get(c.sha), prev ? get(prev.sha) : Promise.resolve({})]).then(function(pair){
+            c.lines = pair[0] ? diffMajors(pair[1] || {}, pair[0]) : [];
+            var slot = document.querySelector('[data-hist-diff="' + i + '"]');
+            if(slot) slot.innerHTML = c.lines.length ? diffHtml(c.lines, 4) : '<p class="admin-hint">No change to the plan itself.</p>';
+          });
+        });
+      });
+    }).catch(function(e){ historyCache[key] = { error: e.message }; draw(historyCache[key]); });
+  }
+  function putBack(sha){
+    if(state.dirty && !confirm('You have unsaved changes. Replace them with this older version?')) return;
+    api('GET', '/api/major/' + state.uni + '/' + state.majorSlug + '?ref=' + sha).then(function(res){
+      state.major = res.major;
+      markDirty();
+      render();
+      var lines = diffMajors(state.majorOrig, state.major);
+      setMsg('Loaded the version from that save. Saving would make these changes:' + diffHtml(lines, 8) + 'Press 💾 Save major to make it live, or reopen the major to cancel.', 'ok');
+    }).catch(function(e){ toast(e.message); });
+  }
+
+  // ---- 27 · what students will see ---------------------------------------------------
+  var PREVIEW_KEY = 'aaup_adminPreview';
+  function previewOn(){ try{ return localStorage.getItem(PREVIEW_KEY) !== '0'; }catch(e){ return true; } }
+  var previewTimer = null;
+  function schedulePreview(){ clearTimeout(previewTimer); previewTimer = setTimeout(drawPreview, 150); }
+  function drawPreview(){
+    var host = document.getElementById('adminPreview');
+    var shell = document.querySelector('#adminOverlay .admin-body');
+    var want = !!state.major && ['courses', 'schedule', 'prereqs', 'majors'].indexOf(state.section) !== -1 && previewOn();
+    if(!want){ if(host) host.remove(); if(shell) shell.classList.remove('has-preview'); return; }
+    if(!host && shell){
+      host = document.createElement('aside');
+      host.id = 'adminPreview';
+      host.className = 'adm-preview';
+      shell.appendChild(host);
+    }
+    if(!host) return;
+    shell.classList.add('has-preview');
+    // Read what is typed right now, without disturbing the form.
+    var m = clone(state.major);
+    document.querySelectorAll('[data-course]').forEach(function(r){
+      var c = m.courses[Number(r.getAttribute('data-course'))];
+      if(!c) return;
+      var g = function(sel){ var el = r.querySelector(sel); return el ? el.value : null; };
+      if(g('.cc-name') !== null) c.name = g('.cc-name').trim();
+      if(g('.cc-ch') !== null) c.creditHours = Number(g('.cc-ch')) || 0;
+      if(g('.cc-year') !== null) c.yearId = g('.cc-year');
+      if(g('.cc-sem') !== null) c.semester = g('.cc-sem');
+      if(g('.cc-cat') !== null) c.category = g('.cc-cat');
+    });
+    var years = m.years || [];
+    host.innerHTML = '<div class="adm-preview-h"><b>📱 What students see</b><button type="button" class="admin-linkbtn" id="adminPreviewHide">Hide</button></div>' +
+      '<div class="adm-phone"><div class="adm-phone-s"><div class="adm-phone-t">' + esc(m.name || state.majorSlug) + '</div>' +
+      years.map(function(y, yi){
+        return '<div class="adm-phone-y">Year ' + (yi + 1) + '</div>' +
+          ['s1', 's2'].concat(y.hasSummer ? ['s3'] : []).map(function(sm){
+            var list = (m.courses || []).filter(function(c){ return c.yearId === y.id && semKey(c) === sm; });
+            if(!list.length) return '';
+            return '<div class="adm-phone-sem">' + (sm === 's3' ? 'Summer' : sm === 's1' ? 'First semester' : 'Second semester') +
+              ' · ' + list.reduce(function(n, c){ return n + (Number(c.creditHours) || 0); }, 0) + 'H</div>' +
+              '<div class="adm-phone-grid">' + list.map(function(c){
+                return '<div class="adm-phone-c cat-' + esc(c.category || 'core') + '"><b>' + esc(c.name || '(no name)') + '</b><span>' + (Number(c.creditHours) || 0) + 'H</span></div>';
+              }).join('') + '</div>';
+          }).join('');
+      }).join('') + '</div></div>';
+    var hide = document.getElementById('adminPreviewHide');
+    if(hide) hide.addEventListener('click', function(){ try{ localStorage.setItem(PREVIEW_KEY, '0'); }catch(e){} drawPreview(); toast('Preview hidden. Turn it back on in Settings.'); });
+  }
+
+  // ---- 23 · the Courses table as a spreadsheet ---------------------------------------
+  // Enter or ↓ goes to the same column one row down, ↑ one row up; a cell
+  // that differs from the version that was opened is marked.
+  var FIELD_OF = { 'cc-num': 'courseNumber', 'cc-name': 'name', 'cc-namear': 'nameAr', 'cc-ch': 'creditHours' };
+  function markChanged(inp){
+    var row = inp.closest('[data-course]');
+    var cls = Object.keys(FIELD_OF).filter(function(k){ return inp.classList.contains(k); })[0];
+    if(!row || !cls || !state.major) return;
+    var c = state.major.courses[Number(row.getAttribute('data-course'))];
+    var orig = c && (state.majorOrig && (state.majorOrig.courses || []).filter(function(o){ return o.id === c.id; })[0]);
+    var was = orig ? orig[FIELD_OF[cls]] : null;
+    var now = cls === 'cc-ch' ? Number(inp.value) || 0 : inp.value.trim();
+    var same = orig ? String(cls === 'cc-ch' ? (Number(was) || 0) : (was || '')) === String(now) : false;
+    inp.classList.toggle('is-changed', !same);
+    inp.title = !orig ? 'New course' : (same ? '' : 'Was: ' + (was == null || was === '' ? '(empty)' : was));
+  }
+  function bindSheet(){
+    var cols = ['cc-num', 'cc-name', 'cc-namear', 'cc-ch'];
+    cols.forEach(function(cls){
+      var all = Array.prototype.slice.call(document.querySelectorAll('[data-course] .' + cls));
+      all.forEach(function(inp, i){
+        markChanged(inp);
+        inp.addEventListener('input', function(){ markChanged(inp); schedulePreview(); });
+        inp.addEventListener('keydown', function(e){
+          var to = null;
+          if(e.key === 'Enter' || (e.key === 'ArrowDown' && inp.type !== 'number')) to = all[i + 1];
+          else if(e.key === 'ArrowUp' && inp.type !== 'number') to = all[i - 1];
+          if(e.key === 'Enter' || to){
+            e.preventDefault();
+            if(to){ to.focus(); if(to.select) to.select(); }
+          }
+        });
+      });
+    });
+    document.querySelectorAll('[data-course] select').forEach(function(s){ s.addEventListener('change', schedulePreview); });
+  }
+
+  // ---- 26 · Ctrl+S, and not losing work ---------------------------------------------
+  document.addEventListener('keydown', function(e){
+    if(!(e.ctrlKey || e.metaKey) || e.altKey || String(e.key).toLowerCase() !== 's') return;
+    var ov = document.getElementById('adminOverlay');
+    if(!ov || !ov.classList.contains('open') || !state.token) return;
+    e.preventDefault();
+    var btn = document.getElementById('amSaveGo') || document.getElementById('amSave');
+    if(btn) btn.click();
+    else if(state.major && state.dirty){ harvestCourses(); state.section = 'courses'; render(); toast('Here is the major with unsaved changes — press Ctrl+S again to save it.'); }
+    else toast('Nothing to save here.');
+  });
+  window.addEventListener('beforeunload', function(e){
+    var ov = document.getElementById('adminOverlay');
+    if(state.dirty && ov && ov.classList.contains('open')){ e.preventDefault(); e.returnValue = ''; }
+  });
+
+  // Everything above, wired after each render of a major's sections.
+  function bindPlus(){
+    document.querySelectorAll('[data-prob-go]').forEach(function(b){
+      b.addEventListener('click', function(){ goToCourse(Number(b.getAttribute('data-prob-go'))); });
+    });
+    if(state.section === 'courses') bindSheet();
+    var pbox = document.getElementById('acPasteBox');
+    if(pbox){
+      pbox.addEventListener('input', renderPastePreview);
+      pbox.addEventListener('paste', function(){ setTimeout(renderPastePreview, 0); });
+    }
+    var wq = document.getElementById('acWhereQ');
+    if(wq){
+      var t = null;
+      wq.addEventListener('input', function(){ clearTimeout(t); t = setTimeout(function(){ runWhere(wq.value); }, 200); });
+    }
+    var hist = document.getElementById('acHistory');
+    if(hist) hist.addEventListener('toggle', function(){ if(hist.open) loadHistory(); });
+    drawPreview();
   }
 
   // ---------- open / close ----------
