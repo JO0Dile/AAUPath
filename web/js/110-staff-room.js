@@ -189,7 +189,7 @@
   }
 
   // ---- the staff page's sign-in -----------------------------------------------------
-  var me = null, team = null, dlg = null, dlgMsg = '', lastLink = null, busy = false;
+  var me = null, team = null, dlg = null, dlgMsg = '', lastLink = null, busy = false, askRelink = null;
   function token(){ try{ return localStorage.getItem(TOKEN_KEY) || ''; }catch(e){ return ''; } }
   function setToken(t){ try{ if(t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); }catch(e){} }
   function base(){ return String(window.APP_ADMIN_URL || '').replace(/\/+$/, ''); }
@@ -296,7 +296,11 @@
             '<button type="button" class="stf-btn" data-sr="' + (s.status === 'paused' ? 'resume' : 'pause') + '" data-id="' + esc(s.id) + '">' + esc(s.status === 'paused' ? L('Turn back on', 'رجّعه') : L('Pause', 'وقّف')) + '</button>' +
             '<button type="button" class="stf-btn" data-sr="relink" data-id="' + esc(s.id) + '">' + esc(L('New link', 'رابط جديد')) + '</button>' +
             '<button type="button" class="stf-btn sr-bad" data-sr="remove" data-id="' + esc(s.id) + '">' + esc(L('Remove', 'احذف')) + '</button>' +
-          '</div></div>';
+          '</div></div>' +
+          (askRelink === s.id ? '<div class="sr-link"><b>' + esc(L('Make a new link for ' + (s.name || s.username) + '?', 'نعمل رابط جديد لـ ' + (s.name || s.username) + '؟')) + '</b>' +
+            '<p>' + esc(L('It signs them out until they open it and choose a new password.', 'بيطلّعه لحد ما يفتحه ويختار كلمة سر جديدة.')) + '</p>' +
+            '<div class="sr-link-row"><button type="button" class="stf-btn stf-pri" data-sr="relinkgo" data-id="' + esc(s.id) + '">' + esc(L('Make the new link', 'اعمل الرابط')) + '</button>' +
+            '<button type="button" class="stf-btn" data-sr="relinkno">' + esc(L('Cancel', 'إلغاء')) + '</button></div></div>' : '');
       }).join('');
       return '<aside class="stf-detail sr-panel">' +
         '<div class="stf-detail-h"><b>' + esc(collegeIds(me.college).length === 1 ? L('Your college', 'كليتك') : L('Your colleges', 'كلياتك')) + '</b></div>' +
@@ -533,9 +537,12 @@
         .then(function(){ busy = false; loadTeam(); }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
       return true;
     }
-    if(act === 'relink'){
+    if(act === 'relinkno'){ askRelink = null; refresh(); return true; }
+    if(act === 'relink' || act === 'relinkgo'){
       var s = (team || []).filter(function(x){ return x.id === id; })[0];
-      if(s && s.hasPassword && !window.confirm(L('A new link signs ' + (s.name || s.username) + ' out until they use it to choose a new password. Make one?', 'الرابط الجديد بيطلّع ' + (s.name || s.username) + ' لحد ما يستعمله ويختار كلمة سر جديدة. نعمله؟'))) return true;
+      // Asked in the page, not a browser pop-up (those can be blocked).
+      if(act === 'relink' && s && s.hasPassword){ askRelink = id; lastLink = null; refresh(); return true; }
+      askRelink = null;
       busy = true;
       api('PATCH', '/api/staff/team/' + id, { newSetupCode: true })
         .then(function(d){ busy = false; lastLink = { who: d.staff.name || d.staff.username, link: setupLink(d.staff.username, d.setupCode) }; loadTeam(); },
