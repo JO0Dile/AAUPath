@@ -53,6 +53,8 @@
       run: function(id){ if(window.AAUP_TIMETABLE) window.AAUP_TIMETABLE.open(id); } },
     { en: 'Save my plan as a spreadsheet (Excel)', ar: 'احفظ خطتي كجدول (Excel)', words: 'excel xlsx spreadsheet export csv sheet جدول اكسل', plan: true,
       run: function(id){ exportXlsx(id); } },
+    { en: 'Present my plan on a big screen', ar: 'اعرض خطتي على شاشة كبيرة', words: 'present projector big screen slides عرض شاشة بروجكتر', plan: true,
+      run: function(id){ if(window.AAUP_STAFF) window.AAUP_STAFF.present(id); } },
     { en: 'Undo the last change', ar: 'تراجع عن آخر تغيير', words: 'undo تراجع', key: modKey() + ' Z', when: function(){ return !!editingPage(); },
       run: function(){ if(window.AAUP_EDIT_POWER) window.AAUP_EDIT_POWER.undo(); } },
     { en: 'Browse Courses beside the plan', ar: 'تصفّح المساقات جنب الخطة', words: 'browse library courses تصفح مكتبة', when: function(){ return !!editingPage(); },
