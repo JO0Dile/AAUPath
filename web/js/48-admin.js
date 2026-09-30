@@ -103,7 +103,7 @@
       // browser deliberately does not say which. "Failed to fetch" on its own
       // sends people hunting through their password; this says what it
       // actually means and offers the one thing worth trying.
-      var e = new Error('unreachable');
+      var e = new Error('The admin server didn\'t answer. Check your internet, reload the page and try again.');
       e.unreachable = true;
       throw e;
     }).then(function(r){

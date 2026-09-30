@@ -125,7 +125,9 @@ function resolveOrigin(request, env) {
 function corsHeaders(env, request) {
   return {
     'Access-Control-Allow-Origin': request ? resolveOrigin(request, env) : (allowedOrigins(env)[0] || '*'),
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    // PATCH too: staff logins are changed with it (Save, Pause, New link).
+    // Without it here the browser drops the reply before the page sees it.
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
