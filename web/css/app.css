@@ -9487,7 +9487,7 @@ html.stf-open, html.stf-open body{overflow:hidden;}
 @media (max-width:760px){
   .stf-body{flex-direction:column;}
   .stf-detail{width:auto; border-inline-start:0; border-top:1px solid var(--line); max-height:50vh;}
-  .stf-actions{margin-inline-start:0;}
+  .stf-actions{margin-inline-start:0; flex-wrap:wrap;}
 }
 .stf-show{position:fixed; inset:0; z-index:9950; display:none; flex-direction:column; padding:3vh 5vw; overflow:auto; background:var(--page-bg, #0a0e17); color:var(--text);}
 .stf-show.open{display:flex;}
@@ -9610,3 +9610,43 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
   .td-line{gap:7px; padding:6px 11px; font-size:12px;}
   .td-date, .td-room, .td-date + .td-sep, .td-sep:has(+ .td-date){display:none;}
 }
+
+/* Round 10: staff logins (js/110-staff-room.js), on the staff page and in the admin room. */
+.stf-actions .stf-btn{white-space:nowrap;}
+.sr-role{font-size:11.5px; font-weight:800; padding:2px 10px; border-radius:999px; border:1px solid var(--line); white-space:nowrap;}
+.sr-dean{color:#c9a2ff; border-color:rgba(201,162,255,.45); background:rgba(201,162,255,.08);}
+.sr-prof{color:#7fd0ff; border-color:rgba(127,208,255,.45); background:rgba(127,208,255,.08);}
+.sr-panel .sr-row{display:flex; flex-direction:column; gap:8px; padding:10px 0; border-top:1px solid var(--line);}
+.sr-panel .sr-row:first-of-type{border-top:0;}
+.sr-row.is-off{opacity:.65;}
+.sr-grow{display:flex; flex-direction:column; gap:2px; min-width:0;}
+.sr-grow small{font-size:12px; color:var(--text-dim); line-height:1.45;}
+.sr-acts{display:flex; flex-wrap:wrap; gap:6px;}
+.sr-acts .stf-btn{padding:5px 10px; font-size:12px;}
+.stf-btn.sr-bad{color:#e2596b; border-color:rgba(226,89,107,.45);}
+.sr-give{margin-top:12px; width:100%;}
+.sr-foot{margin-top:14px !important;}
+.sr-list{margin:4px 0 0; padding-inline-start:18px; font-size:13.5px; line-height:1.7;}
+.sr-veil{position:fixed; inset:0; z-index:9950; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(5,8,20,.65);}
+.sr-dlg{position:relative; width:min(440px, 100%); max-height:calc(100vh - 32px); overflow:auto; box-sizing:border-box; padding:22px 22px 18px; border-radius:18px; border:1px solid var(--line); background:var(--header-bg); color:var(--text); box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.sr-dlg h2{margin:0 36px 6px 0; font-size:19px;}
+[dir="rtl"] .sr-dlg h2{margin:0 0 6px 36px;}
+.sr-dlg p{margin:0 0 12px; font-size:13.5px; line-height:1.55;}
+.sr-close{position:absolute; top:12px; inset-inline-end:12px;}
+.sr-f{display:flex; flex-direction:column; gap:5px; margin:0 0 12px; font-size:12.5px; font-weight:700; color:var(--text-dim);}
+.sr-in{width:100%; box-sizing:border-box; font:inherit; font-size:14px; font-weight:500; padding:9px 12px; border-radius:10px; border:1px solid var(--line); background:var(--search-bg); color:var(--text);}
+.sr-in:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.sr-wide{width:100%; margin:4px 0 12px;}
+.sr-err{color:#e2596b; font-weight:700;}
+.sr-pick{display:flex; flex-direction:column; gap:6px;}
+.sr-chips{display:flex; flex-wrap:wrap; gap:6px;}
+.sr-chips:empty{display:none;}
+.sr-chip{display:inline-flex; align-items:center; gap:4px; padding:3px 4px 3px 10px; border-radius:999px; font-size:12.5px; font-weight:700; color:var(--text); background:color-mix(in srgb, var(--accent) 14%, transparent); border:1px solid color-mix(in srgb, var(--accent) 40%, transparent);}
+[dir="rtl"] .sr-chip{padding:3px 10px 3px 4px;}
+.sr-chip button{font:inherit; font-size:15px; line-height:1; width:22px; height:22px; border:0; border-radius:50%; background:none; color:var(--text-dim); cursor:pointer;}
+.sr-chip button:hover{color:var(--text); background:rgba(255,255,255,.08);}
+.sr-link{margin:12px 0 0; padding:12px; border-radius:12px; border:1px solid color-mix(in srgb, var(--accent) 45%, transparent); background:color-mix(in srgb, var(--accent) 8%, transparent);}
+.sr-link b{display:block; font-size:13.5px; margin-bottom:2px;}
+.sr-link p{margin:0 0 8px; font-size:12.5px; color:var(--text-dim);}
+.sr-link-row{display:flex; gap:6px;}
+.sr-link-row .sr-in{font-size:12px; min-width:0;}

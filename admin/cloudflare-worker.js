@@ -58,6 +58,10 @@
 //                                         your own login — the door locks with the key
 //                                         still inside.
 //   3. Put the Worker URL in APP_ADMIN_URL in web/js/01-catalogue.js.
+//   4. Optional — staff logins for deans and professors: Settings → Bindings →
+//      add a D1 database binding named STAFF_DB (the studyplan-cloud database
+//      is fine; it gets its own `staff` table). Without it, the admin room's
+//      Staff logins page says so and nothing else changes.
 // ---------------------------------------------------------------------------
 
 // Which commit this Worker was deployed from. .github/workflows/
@@ -1031,6 +1035,287 @@ async function handleDeleteAsset(env, filename, request) {
 
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Staff logins — deans and professors (round 10)
+//
+// You (the admin) make each login: a role, a university and college, and for a
+// professor the courses it covers. The login starts with no password: it gets
+// a one-time setup code, sent to the person as a link, and they choose their
+// own password with it. A dean can also make, pause and remove professor
+// logins inside their own college.
+//
+// Stored in a D1 database bound to this Worker as STAFF_DB (the same
+// studyplan-cloud database is fine; this makes its own `staff` table). No
+// binding = these routes say so, and nothing else in this Worker changes.
+//
+// A staff token is signed with the same SESSION_SECRET as the admin's but is a
+// different shape ({k:'staff', sid, tv}) with no `u`, so verifyToken() — the
+// admin gate — never accepts it, and verifyStaff() never accepts an admin's.
+// ---------------------------------------------------------------------------
+
+const STAFF_ROLES = ['dean', 'professor'];
+const STAFF_USER_RE = /^[a-z0-9][a-z0-9._-]{2,31}$/;
+const STAFF_SETUP_TTL = 14 * 24 * 60 * 60;       // a setup link lasts two weeks
+const STAFF_PBKDF2_TOTAL = 600000;
+const STAFF_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+let staffTableReady = false;
+async function staffDb(env) {
+  if (!env.STAFF_DB) {
+    throw fail('Staff logins need a database. In Cloudflare → Workers → studyplan-admin → Settings → Bindings, add a D1 database binding named STAFF_DB (the studyplan-cloud database is fine), then Deploy.');
+  }
+  if (!staffTableReady) {
+    await env.STAFF_DB.prepare(`CREATE TABLE IF NOT EXISTS staff (
+      id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, name TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL, uni TEXT NOT NULL, college TEXT NOT NULL DEFAULT '', courses TEXT NOT NULL DEFAULT '[]',
+      password_hash TEXT, setup_hash TEXT, setup_exp INTEGER, status TEXT NOT NULL DEFAULT 'active',
+      tv INTEGER NOT NULL DEFAULT 1, created_by TEXT NOT NULL DEFAULT '', created_at INTEGER NOT NULL,
+      last_seen INTEGER)`).run();
+    staffTableReady = true;
+  }
+  return env.STAFF_DB;
+}
+
+async function hashStaffPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const bits = await deriveChunked(enc.encode(password), salt, STAFF_PBKDF2_TOTAL);
+  return `pbkdf2$${STAFF_PBKDF2_TOTAL}$${b64url(salt)}$${b64url(bits)}`;
+}
+function newSetupCode() {
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  let out = '';
+  for (let i = 0; i < 12; i++) out += STAFF_CODE_ALPHABET[bytes[i] % STAFF_CODE_ALPHABET.length];
+  return out;
+}
+// Only an HMAC of the code is kept, tied to the login it was made for.
+async function setupHash(id, code, env) {
+  const clean = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey(env.SESSION_SECRET), enc.encode(`staff-setup:${id}:${clean}`));
+  return b64url(sig);
+}
+
+async function issueStaffToken(row, env) {
+  const payload = { k: 'staff', sid: row.id, tv: row.tv, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS };
+  const body = b64url(enc.encode(JSON.stringify(payload)));
+  const sig = await crypto.subtle.sign('HMAC', await hmacKey(env.SESSION_SECRET), enc.encode(body));
+  return `${body}.${b64url(sig)}`;
+}
+
+// The signed-in staff row, or null. A paused login, a changed password
+// (tv moved on) or an expired token all read as signed out.
+async function verifyStaff(request, env) {
+  try {
+    const auth = request.headers.get('Authorization') || '';
+    const [body, sig] = (auth.startsWith('Bearer ') ? auth.slice(7) : '').split('.');
+    if (!body || !sig) return null;
+    const ok = await crypto.subtle.verify('HMAC', await hmacKey(env.SESSION_SECRET), unb64url(sig), enc.encode(body));
+    if (!ok) return null;
+    const p = JSON.parse(new TextDecoder().decode(unb64url(body)));
+    if (!p || p.k !== 'staff' || !p.sid || typeof p.exp !== 'number' || p.exp < Math.floor(Date.now() / 1000)) return null;
+    const db = await staffDb(env);
+    const row = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(p.sid).first();
+    if (!row || row.status !== 'active' || row.tv !== p.tv) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (!row.last_seen || now - row.last_seen > 3600) {
+      await db.prepare('UPDATE staff SET last_seen = ? WHERE id = ?').bind(now, row.id).run();
+    }
+    return row;
+  } catch (e) {
+    if (e && e.userFacing) throw e;
+    return null;
+  }
+}
+
+function staffOut(r) {
+  let courses = [];
+  try { courses = JSON.parse(r.courses || '[]'); } catch { courses = []; }
+  return {
+    id: r.id, username: r.username, name: r.name, role: r.role, uni: r.uni, college: r.college, courses,
+    status: r.status, hasPassword: !!r.password_hash,
+    setupPending: !r.password_hash || !!r.setup_hash,
+    createdBy: r.created_by, createdAt: r.created_at, lastSeen: r.last_seen || null,
+  };
+}
+
+// Validates the parts of a login anyone may set. `forDean` fixes role,
+// university and college to the dean's own.
+function staffFields(body, forDean) {
+  const out = {};
+  if (body.name !== undefined) out.name = str(body.name, 80);
+  if (forDean) {
+    out.role = 'professor'; out.uni = forDean.uni; out.college = forDean.college;
+  } else {
+    if (body.role !== undefined) {
+      if (!STAFF_ROLES.includes(body.role)) throw fail('role must be dean or professor');
+      out.role = body.role;
+    }
+    if (body.uni !== undefined) {
+      if (!SLUG_RE.test(String(body.uni))) throw fail('pick a university');
+      out.uni = String(body.uni);
+    }
+    if (body.college !== undefined) {
+      if (body.college !== '' && !SLUG_RE.test(String(body.college))) throw fail('pick a college');
+      out.college = String(body.college);
+    }
+  }
+  if (body.courses !== undefined) {
+    if (!Array.isArray(body.courses) || body.courses.length > 60) throw fail('courses must be a list of up to 60 course ids');
+    const list = [];
+    for (const c of body.courses) {
+      const id = String(c || '').trim();
+      if (!SLUG_RE.test(id)) throw fail(`“${id.slice(0, 40)}” is not a course id`);
+      if (!list.includes(id)) list.push(id);
+    }
+    out.courses = JSON.stringify(list);
+  }
+  return out;
+}
+
+async function createStaff(env, body, createdBy, forDean) {
+  const db = await staffDb(env);
+  const username = String(body.username || '').trim().toLowerCase();
+  if (!STAFF_USER_RE.test(username)) throw fail('username: 3–32 letters, numbers, dots, dashes or underscores');
+  const f = staffFields(body, forDean);
+  if (!f.role) throw fail('role must be dean or professor');
+  if (!f.uni) throw fail('pick a university');
+  if (f.role === 'dean' && !f.college) throw fail('a dean needs a college');
+  const taken = await db.prepare('SELECT id FROM staff WHERE username = ?').bind(username).first();
+  if (taken) throw fail('that username is taken');
+  const id = crypto.randomUUID();
+  const code = newSetupCode();
+  const now = Math.floor(Date.now() / 1000);
+  await db.prepare(`INSERT INTO staff (id, username, name, role, uni, college, courses, setup_hash, setup_exp, status, tv, created_by, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', 1, ?, ?)`)
+    .bind(id, username, f.name || '', f.role, f.uni, f.college || '', f.courses || '[]',
+          await setupHash(id, code, env), now + STAFF_SETUP_TTL, createdBy, now).run();
+  const row = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(id).first();
+  return { staff: staffOut(row), setupCode: code };
+}
+
+async function updateStaff(env, row, body, forDean) {
+  const db = await staffDb(env);
+  const f = staffFields(body, forDean);
+  if (forDean) { delete f.role; delete f.uni; delete f.college; }
+  const sets = []; const vals = [];
+  for (const k of ['name', 'role', 'uni', 'college', 'courses']) {
+    if (f[k] !== undefined) { sets.push(`${k} = ?`); vals.push(f[k]); }
+  }
+  if (body.status !== undefined) {
+    if (!['active', 'paused'].includes(body.status)) throw fail('status must be active or paused');
+    sets.push('status = ?'); vals.push(body.status);
+  }
+  let code = null;
+  if (body.newSetupCode) {
+    code = newSetupCode();
+    // A new link also signs the login out everywhere until it is used.
+    sets.push('setup_hash = ?', 'setup_exp = ?', 'tv = tv + 1');
+    vals.push(await setupHash(row.id, code, env), Math.floor(Date.now() / 1000) + STAFF_SETUP_TTL);
+  }
+  if (!sets.length) throw fail('nothing to change');
+  await db.prepare(`UPDATE staff SET ${sets.join(', ')} WHERE id = ?`).bind(...vals, row.id).run();
+  const fresh = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(row.id).first();
+  return { staff: staffOut(fresh), setupCode: code };
+}
+
+async function handleStaffLogin(request, env) {
+  const body = await readJson(request, 4096);
+  await sleep(LOGIN_DELAY_MS);
+  const db = await staffDb(env);
+  const row = await db.prepare('SELECT * FROM staff WHERE username = ?')
+    .bind(String(body.username || '').trim().toLowerCase()).first();
+  if (!row || !row.password_hash || !(await verifyPassword(String(body.password || ''), row.password_hash))) {
+    return json({ error: 'wrong username or password' }, 401, env, request);
+  }
+  if (row.status !== 'active') return json({ error: 'this login is paused — ask whoever gave it to you' }, 403, env, request);
+  return json({ ok: true, token: await issueStaffToken(row, env), me: staffOut(row) }, 200, env, request);
+}
+
+async function handleStaffSetup(request, env) {
+  const body = await readJson(request, 4096);
+  await sleep(LOGIN_DELAY_MS);
+  const password = String(body.password || '');
+  if (password.length < 8 || password.length > 200) throw fail('the password needs at least 8 characters');
+  const db = await staffDb(env);
+  const row = await db.prepare('SELECT * FROM staff WHERE username = ?')
+    .bind(String(body.username || '').trim().toLowerCase()).first();
+  const now = Math.floor(Date.now() / 1000);
+  if (!row || !row.setup_hash || !row.setup_exp || row.setup_exp < now ||
+      !timingSafeEqual(await setupHash(row.id, body.code, env), row.setup_hash)) {
+    return json({ error: 'this setup link is not valid any more — ask for a new one' }, 401, env, request);
+  }
+  if (row.status !== 'active') return json({ error: 'this login is paused — ask whoever gave it to you' }, 403, env, request);
+  await db.prepare('UPDATE staff SET password_hash = ?, setup_hash = NULL, setup_exp = NULL, tv = tv + 1 WHERE id = ?')
+    .bind(await hashStaffPassword(password), row.id).run();
+  const fresh = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(row.id).first();
+  return json({ ok: true, token: await issueStaffToken(fresh, env), me: staffOut(fresh) }, 200, env, request);
+}
+
+// Routes a signed-in staff member can use. Returns a Response, or null when
+// the path is not one of them.
+async function handleStaffRoutes(request, env, seg) {
+  if (seg[1] !== 'staff') return null;
+  if (seg[2] === 'login' && request.method === 'POST') return await handleStaffLogin(request, env);
+  if (seg[2] === 'setup' && request.method === 'POST') return await handleStaffSetup(request, env);
+  const me = await verifyStaff(request, env);
+  if (!me) return json({ error: 'unauthorized' }, 401, env, request);
+  if (seg[2] === 'me' && request.method === 'GET') return json({ ok: true, me: staffOut(me) }, 200, env, request);
+
+  // /api/staff/team — a dean's professors (same university and college).
+  if (seg[2] === 'team') {
+    if (me.role !== 'dean') return json({ error: 'only a dean can do that' }, 403, env, request);
+    const db = await staffDb(env);
+    if (!seg[3] && request.method === 'GET') {
+      const rs = await db.prepare("SELECT * FROM staff WHERE role = 'professor' AND uni = ? AND college = ? ORDER BY created_at")
+        .bind(me.uni, me.college).all();
+      return json({ ok: true, staff: (rs.results || []).map(staffOut) }, 200, env, request);
+    }
+    if (!seg[3] && request.method === 'POST') {
+      const res = await createStaff(env, await readJson(request, 16384), me.username, me);
+      return json({ ok: true, ...res }, 200, env, request);
+    }
+    if (seg[3]) {
+      const row = await db.prepare("SELECT * FROM staff WHERE id = ? AND role = 'professor' AND uni = ? AND college = ?")
+        .bind(seg[3], me.uni, me.college).first();
+      if (!row) return json({ error: 'not found' }, 404, env, request);
+      if (request.method === 'PATCH') {
+        const res = await updateStaff(env, row, await readJson(request, 16384), me);
+        return json({ ok: true, ...res }, 200, env, request);
+      }
+      if (request.method === 'DELETE') {
+        await db.prepare('DELETE FROM staff WHERE id = ?').bind(row.id).run();
+        return json({ ok: true }, 200, env, request);
+      }
+    }
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
+// /api/admin/staff — the admin's view of every login.
+async function handleAdminStaff(request, env, seg) {
+  const db = await staffDb(env);
+  if (!seg[3] && request.method === 'GET') {
+    const rs = await db.prepare('SELECT * FROM staff ORDER BY role, uni, college, created_at').all();
+    return json({ ok: true, staff: (rs.results || []).map(staffOut) }, 200, env, request);
+  }
+  if (!seg[3] && request.method === 'POST') {
+    const res = await createStaff(env, await readJson(request, 16384), 'admin', null);
+    return json({ ok: true, ...res }, 200, env, request);
+  }
+  if (seg[3]) {
+    const row = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(seg[3]).first();
+    if (!row) return json({ error: 'not found' }, 404, env, request);
+    if (request.method === 'PATCH') {
+      const res = await updateStaff(env, row, await readJson(request, 16384), null);
+      return json({ ok: true, ...res }, 200, env, request);
+    }
+    if (request.method === 'DELETE') {
+      await db.prepare('DELETE FROM staff WHERE id = ?').bind(row.id).run();
+      return json({ ok: true }, 200, env, request);
+    }
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1098,6 +1383,10 @@ export default {
     try {
       if (path === '/api/login' && request.method === 'POST') return await handleLogin(request, env);
 
+      // Staff (deans and professors) sign in and work through their own
+      // routes, checked by verifyStaff() — never by the admin gate below.
+      if (seg[0] === 'api' && seg[1] === 'staff') return await handleStaffRoutes(request, env, seg);
+
       // Everything past this line requires a valid session. One gate, checked
       // before the route is even chosen, so no handler can be reached unguarded.
       const denied = await requireAdmin(request, env);
@@ -1134,6 +1423,9 @@ export default {
         if (request.method === 'PUT') return await handlePutMajor(request, env, seg[2], seg[3]);
         if (request.method === 'DELETE') return await handleDeleteMajor(env, seg[2], seg[3], request);
       }
+
+      // /api/admin/staff  ·  /api/admin/staff/:id
+      if (seg[1] === 'admin' && seg[2] === 'staff') return await handleAdminStaff(request, env, seg);
 
       // /api/history/:university/:slug
       if (seg[1] === 'history' && seg[2] && seg[3] && request.method === 'GET') {
