@@ -233,7 +233,20 @@
     var kept = {}, focus = document.activeElement && document.activeElement.id;
     if(!dropKept) document.querySelectorAll('#staffView [data-keep]').forEach(function(e){ kept[e.id] = e.value; });
     dropKept = false;
+    // A redraw replaces the panels, which put them back at the top: pressing
+    // "+ Add a section" low in a course sent you up to its name. Each scrolled
+    // box keeps its place (found again by its class and position).
+    var view = document.getElementById('staffView'), scrolls = [];
+    if(view) view.querySelectorAll('*').forEach(function(e, i){ if(e.scrollTop > 0) scrolls.push([e.className, i, e.scrollTop]); });
+    if(view && view.scrollTop > 0) scrolls.push([null, -1, view.scrollTop]);
     window.AAUP_STAFF.refresh();
+    if(view){
+      var all = view.querySelectorAll('*');
+      scrolls.forEach(function(s){
+        var el = s[1] === -1 ? view : (all[s[1]] && all[s[1]].className === s[0] ? all[s[1]] : view.getElementsByClassName(String(s[0]).split(' ')[0])[0]);
+        if(el) el.scrollTop = s[2];
+      });
+    }
     Object.keys(kept).forEach(function(id){ var e = document.getElementById(id); if(e) e.value = kept[id]; });
     if(focus){ var f = document.getElementById(focus); if(f && f.focus) f.focus(); }
   }
@@ -326,9 +339,11 @@
         return '<div class="sr-row' + (s.status === 'paused' ? ' is-off' : '') + '">' +
           '<div class="sr-grow"><b>' + esc(s.name || s.username) + '</b>' +
             '<small>' + esc(courseNames(s.courses, me.uni).join(L(', ', '، ')) || L('No courses yet', 'بدون مساقات')) + '</small>' +
-            '<small>' + esc(stateTx(s)) + '</small></div>' +
+            '<small>' + esc(stateTx(s)) + '</small>' +
+            (s.card && s.card.phone ? '<small>' + esc(L('Phone ', 'الهاتف ') + s.card.phone + (s.card.phoneShown ? L(' · shown to students', ' · ظاهر للطلاب') : L(' · not shown yet', ' · مش ظاهر لسا'))) + '</small>' : '') + '</div>' +
           '<div class="sr-acts">' +
             '<button type="button" class="stf-btn" data-sr="' + (s.status === 'paused' ? 'resume' : 'pause') + '" data-id="' + esc(s.id) + '">' + esc(s.status === 'paused' ? L('Turn back on', 'رجّعه') : L('Pause', 'وقّف')) + '</button>' +
+            (s.card && s.card.phone ? '<button type="button" class="stf-btn' + (s.card.phoneShown ? '' : ' stf-pri') + '" data-sr="' + (s.card.phoneShown ? 'phonehide' : 'phoneshow') + '" data-id="' + esc(s.id) + '">' + esc(s.card.phoneShown ? L('Hide phone', 'خبّي الرقم') : L('Show phone', 'أظهر الرقم')) + '</button>' : '') +
             '<button type="button" class="stf-btn" data-sr="relink" data-id="' + esc(s.id) + '">' + esc(L('New link', 'رابط جديد')) + '</button>' +
             '<button type="button" class="stf-btn sr-bad" data-sr="remove" data-id="' + esc(s.id) + '">' + esc(L('Remove', 'احذف')) + '</button>' +
           '</div></div>' +
@@ -344,6 +359,7 @@
         '<h4>' + esc(L('Professors', 'الأساتذة')) + '</h4>' + rows +
         (lastLink ? linkBoxHtml(lastLink.who, lastLink.link) : '') +
         '<button type="button" class="stf-btn stf-pri sr-give" data-sr="give">' + esc(L('Give a professor a login', 'اعطِ أستاذ حساب')) + '</button>' +
+        (me.admin ? '' : cardFormHtml()) +
         '<p class="stf-muted sr-foot">' + esc(L('Click a course on the left to see its details and counts.', 'اضغط على أي مساق لتشوف تفاصيله وأعداده.')) + '</p>' +
       '</aside>';
     }
@@ -429,6 +445,30 @@
     var pl = plansNow().p, c = pl && (pl.courses || []).filter(function(x){ return x.id === id; })[0];
     return c ? plain(ar() && c.ar ? c.ar : c.name) : id;
   }
+  // Names for a section's Professor box: everyone in Find a Professor, the
+  // staff logins, and yourself. A new name can still be typed.
+  var profNames = null;
+  function loadProfNames(){
+    if(profNames) return;
+    profNames = [];
+    fetch('contacts.json').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      ((d && d.contacts) || []).forEach(function(c){
+        var n = String(c.name || '').trim();
+        if(c.category === 'instructor' && n && profNames.indexOf(n) === -1) profNames.push(n);
+      });
+      profNames.sort(function(a, b){ return a.localeCompare(b); });
+      refresh();
+    }).catch(function(){});
+  }
+  function profListHtml(){
+    loadProfNames();
+    var all = (profNames || []).slice();
+    var add = function(n){ n = String(n || '').trim(); if(n && all.indexOf(n) === -1) all.unshift(n); };
+    ((window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.cards()) || []).forEach(function(c){ add(c.name); });
+    (Array.isArray(team) ? team : []).forEach(function(t){ add(t.name || t.username); });
+    if(me) add(me.name);
+    return '<datalist id="srProfNames">' + all.map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>';
+  }
   function sectionsHtml(id){
     var list = draftFor(id);
     return list.map(function(x, i){
@@ -446,7 +486,7 @@
               '<label><span>' + esc(L('Ends', 'بتخلص')) + '</span><input class="sr-in" type="time" data-sec="' + esc(id) + ':' + i + ':e" value="' + esc(x.e || '') + '"></label>' +
               '<label><span>' + esc(L('Room', 'القاعة')) + '</span><input class="sr-in" maxlength="40" data-sec="' + esc(id) + ':' + i + ':room" value="' + esc(x.room || '') + '" placeholder="B-110"></label>' +
             '</div>' +
-            '<label class="sr-f"><span>' + esc(L('Professor', 'المدرّس')) + '</span><input class="sr-in" maxlength="80" data-sec="' + esc(id) + ':' + i + ':prof" value="' + esc(x.prof || '') + '"></label>'
+            '<label class="sr-f"><span>' + esc(L('Professor', 'المدرّس')) + '</span><input class="sr-in" maxlength="80" list="srProfNames" autocomplete="off" placeholder="' + esc(L('Pick from the list, or type a new name', 'اختار من القائمة، أو اكتب اسم جديد')) + '" data-sec="' + esc(id) + ':' + i + ':prof" value="' + esc(x.prof || '') + '"></label>'
           : '<small>' + esc(sectionLine(x) || L('No days or times yet', 'لسا بدون أيام وأوقات')) + '</small>' + (x.prof ? '<small>' + esc(x.prof) + '</small>' : '')) +
       '</div>';
     }).join('') +
@@ -503,7 +543,7 @@
             ['', 's1', 's2'].map(function(v){ return '<option value="' + v + '"' + (v === offered ? ' selected' : '') + '>' + esc(offeredTx(v)) + '</option>'; }).join('') + '</select></label>'
         : '<div class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><p class="sr-ro">' + esc(offeredTx(offered)) + '</p><small class="sr-lock">' + esc(L('Set by your dean.', 'العميد بيحدّدها.')) + '</small></div>') +
       prereqHtml(id) +
-      '<div class="sr-f"><span>' + esc(dean ? L('Sections this semester', 'شعب هالفصل') : L('Your sections', 'شعبك')) + '</span>' + sectionsHtml(id) + '</div>' +
+      '<div class="sr-f"><span>' + esc(dean ? L('Sections this semester', 'شعب هالفصل') : L('Your sections', 'شعبك')) + '</span>' + sectionsHtml(id) + profListHtml() + '</div>' +
       '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="' + k('noteText') + '" data-keep placeholder="' + esc(L('e.g. Midterm moved to Thursday, room B-05.', 'مثلاً: النصفي انتقل للخميس، قاعة B-05.')) + '">' + esc(note.text || '') + '</textarea></label>' +
       '<label class="sr-f sr-f-row"><span>' + esc(L('Show it until', 'اعرضها لحد')) + '</span><input class="sr-in" type="date" id="' + k('noteUntil') + '" data-keep value="' + esc(note.until || '') + '"></label>' +
       '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecourse" data-course="' + esc(id) + '">' + esc(dean ? L('Save for students', 'احفظ للطلاب') : L('Send to my dean', 'ابعت للعميد')) + '</button>' +
@@ -755,6 +795,61 @@
         '<button type="button" class="stf-btn stf-pri" data-sr="dateadd">' + esc(L('Add', 'ضيف')) + '</button>' +
       '</div>';
   }
+  // ---- several courses at once (Ctrl/⌘ + click, or "Pick several") -------------------
+  // The same change for every picked course: when it is offered (a dean) and
+  // a pinned note. Courses this login doesn't cover are listed and left alone.
+  function bulkHtml(pl, ids, picking){
+    var byId = {};
+    (pl.courses || []).forEach(function(c){ byId[c.id] = c; });
+    var nm = function(id){ var c = byId[id]; return c ? plain(ar() && c.ar ? c.ar : c.name) : id; };
+    var mine = ids.filter(mayWrite), other = ids.filter(function(id){ return !mayWrite(id); });
+    var dean = me && me.role === 'dean';
+    var head = '<div class="stf-detail-h"><b>' + esc(L(ids.length + ' courses picked', ids.length + ' مساقات مختارة')) + '</b>' +
+      '<button type="button" class="stf-x" data-sr="bulkdone" aria-label="' + esc(L('Stop picking', 'وقّف الاختيار')) + '">×</button></div>' +
+      '<div class="sr-chips sr-bulk-chips">' + ids.map(function(id){
+        return '<span class="sr-chip">' + esc(nm(id)) + '<button type="button" data-sr="bulkun" data-id="' + esc(id) + '" aria-label="' + esc(L('Remove', 'شيل')) + '">×</button></span>';
+      }).join('') + '</div>' +
+      '<p class="stf-muted">' + esc(picking ? L('Tap more courses to add them, or tap one again to take it out.', 'اضغط على مساقات كمان لتضيفها، أو اضغط عليه مرة ثانية لتشيله.')
+        : L('Ctrl + click (⌘ on a Mac) more courses to add them, or one again to take it out.', 'Ctrl + نقرة (⌘ عالماك) على مساقات كمان لتضيفها، أو على وحدة مرة ثانية لتشيلها.')) + '</p>';
+    if(!me) return '<aside class="stf-detail sr-panel">' + head + '<p class="stf-muted">' + esc(L('Sign in to change them together.', 'سجّل دخول لتغيّرهم مع بعض.')) + '</p></aside>';
+    return '<aside class="stf-detail sr-panel">' + head +
+      (other.length ? '<p class="sr-wait">' + esc(L('Not yours, left alone: ', 'مش إلك، رح تضل زي ما هي: ') + other.map(nm).join(L(', ', '، '))) + '</p>' : '') +
+      (mine.length ? '<div class="sr-edit"><h4>' + esc(L('Change all ' + mine.length + ' together', 'غيّر الـ' + mine.length + ' مع بعض')) + '</h4>' +
+        '<p class="stf-muted">' + esc(dean ? L('Anything you leave as it is stays different per course.', 'اللي بتتركه زي ما هو بيضل مختلف لكل مساق.')
+          : L('Your dean checks it first, as with one course.', 'العميد بيراجعه أول، زي المساق الواحد.')) + '</p>' +
+        (dean ? '<label class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><select class="sr-in" id="srBulkOffered" data-keep>' +
+            '<option value="keep">' + esc(L('Leave as it is', 'خلّيها زي ما هي')) + '</option>' +
+            ['', 's1', 's2'].map(function(v){ return '<option value="' + v + '">' + esc(offeredTx(v)) + '</option>'; }).join('') + '</select></label>' : '') +
+        '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="srBulkNote" data-keep placeholder="' + esc(L('Empty: leave their notes as they are', 'فاضي: خلّي ملاحظاتهم زي ما هي')) + '"></textarea></label>' +
+        '<label class="sr-f sr-f-row"><span>' + esc(L('Show it until', 'اعرضها لحد')) + '</span><input class="sr-in" type="date" id="srBulkUntil" data-keep></label>' +
+        '<label class="sr-check"><input type="checkbox" id="srBulkNoteDel"> ' + esc(L('Remove their pinned notes', 'احذف ملاحظاتهم المثبّتة')) + '</label>' +
+        '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="bulkapply">' + esc(dean ? L('Save for all ' + mine.length, 'احفظ للـ' + mine.length) : L('Send all to my dean', 'ابعت الكل للعميد')) + '</button></div>'
+        : '<p class="stf-muted">' + esc(L('None of these courses is yours to change.', 'ولا مساق من هدول إلك تغيّره.')) + '</p>') +
+    '</aside>';
+  }
+  function bulkApply(){
+    var S = window.AAUP_STAFF, ids = (S && S.picked ? S.picked() : []).filter(mayWrite);
+    if(!ids.length || busy) return;
+    var sends = [];
+    var off = document.getElementById('srBulkOffered');
+    if(off && off.value !== 'keep') ids.forEach(function(id){ sends.push({ course: id, field: 'offered', value: off.value }); });
+    var del = document.getElementById('srBulkNoteDel').checked, text = val('srBulkNote').trim(), until = val('srBulkUntil');
+    if(del) ids.forEach(function(id){ sends.push({ course: id, field: 'note', value: '' }); });
+    else if(text){
+      if(!until){ if(window.__showToast) window.__showToast(L('Pick the date the pinned note ends.', 'اختار لإيمتى الملاحظة المثبّتة.')); return; }
+      ids.forEach(function(id){ sends.push({ course: id, field: 'note', value: { text: text, until: until } }); });
+    }
+    if(!sends.length){ if(window.__showToast) window.__showToast(L('Nothing to change: pick what to set first.', 'ما في إشي يتغيّر: اختار شو بدك تغيّر أول.')); return; }
+    busy = true;
+    var chain = Promise.resolve();
+    sends.forEach(function(x){ chain = chain.then(function(){ return api('POST', '/api/staff/content', x); }); });
+    chain.then(function(){
+      busy = false; dropKept = true;
+      if(window.__showToast) window.__showToast(me.role === 'dean' ? L('Saved for ' + ids.length + ' courses. Students see it now.', 'انحفظ لـ' + ids.length + ' مساقات. الطلاب بيشوفوه هلق.') : L('Sent to your dean for ' + ids.length + ' courses', 'انبعت للعميد لـ' + ids.length + ' مساقات'));
+      if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+      loadWork();
+    }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); loadWork(); });
+  }
   function cleanSections(list){
     return (list || []).map(function(x, i){ return { n: String(x.n || i + 1), days: (x.days || []).slice().sort(), s: x.s || '', e: x.e || '', room: x.room || '', prof: x.prof || '' }; });
   }
@@ -819,17 +914,23 @@
     if(myCard === null) return '';
     var v = function(f){ return esc(myCard[f] || ''); };
     return '<h4>' + esc(L('Your card in Find a Professor', 'بطاقتك بـ"ابحث عن محاضر"')) + '</h4>' +
-      '<p class="stf-muted">' + esc(L('Students see it when they look you up, under the name “', 'الطلاب بيشوفوها لما يدوروا عليك، تحت اسم "') + (me.name || me.username) + L('”.', '".')) + '</p>' +
+      '<p class="stf-muted">' + esc(L('You’re in Find a Professor as “', 'إنت بـ"ابحث عن محاضر" باسم "') + (me.name || me.username) + L('”, with your courses. What you save here shows there at once, except your phone.', '"، مع مساقاتك. اللي بتحفظه هون بيظهر هناك فوراً، إلا رقم الهاتف.')) + '</p>' +
       '<label class="sr-f"><span>' + esc(L('Office', 'المكتب')) + '</span><input class="sr-in" id="srCardOffice" data-keep maxlength="200" value="' + v('office') + '"></label>' +
       '<label class="sr-f"><span>' + esc(L('Office hours', 'الساعات المكتبية')) + '</span><input class="sr-in" id="srCardHours" data-keep maxlength="200" value="' + v('hours') + '"></label>' +
+      '<label class="sr-f"><span>' + esc(L('Email', 'الإيميل')) + '</span><input class="sr-in" id="srCardEmail" data-keep type="email" maxlength="200" dir="ltr" value="' + v('email') + '"></label>' +
       '<label class="sr-f"><span>' + esc(L('Best way to reach you', 'أحسن طريقة للتواصل')) + '</span><input class="sr-in" id="srCardContact" data-keep maxlength="200" value="' + v('contact') + '"></label>' +
-      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecard">' + esc(me.role === 'dean' ? L('Save my card', 'احفظ بطاقتي') : L('Send to my dean', 'ابعت للعميد')) + '</button>';
+      '<label class="sr-f"><span>' + esc(L('Phone', 'رقم الهاتف')) + '</span><input class="sr-in" id="srCardPhone" data-keep type="tel" maxlength="24" dir="ltr" value="' + v('phone') + '"></label>' +
+      '<small class="sr-lock">' + esc(!myCard.phone ? L('Students don’t see your phone until your dean allows it.', 'الطلاب ما بيشوفوا رقمك لحد ما العميد يسمح.')
+        : myCard.phoneShown ? L('Your phone is shown to students.', 'رقمك ظاهر للطلاب.')
+        : L('Your phone is saved. Students see it once your dean allows it.', 'رقمك محفوظ. الطلاب بيشوفوه لما العميد يسمح.')) + '</small>' +
+      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecard">' + esc(L('Save my card', 'احفظ بطاقتي')) + '</button>';
   }
   function saveCard(){
     busy = true;
-    api('POST', '/api/staff/card', { office: val('srCardOffice'), hours: val('srCardHours'), contact: val('srCardContact') }).then(function(d){
+    api('POST', '/api/staff/card', { office: val('srCardOffice').trim(), hours: val('srCardHours').trim(), contact: val('srCardContact').trim(), email: val('srCardEmail').trim(), phone: val('srCardPhone').trim() }).then(function(){
       busy = false; dropKept = true;
-      if(window.__showToast) window.__showToast(d.live ? L('Saved', 'انحفظ') : L('Sent to your dean', 'انبعت للعميد'));
+      if(window.__showToast) window.__showToast(L('Saved. Students see it in Find a Professor.', 'انحفظ. الطلاب بيشوفوه بـ"ابحث عن محاضر".'));
+      if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
       loadWork();
     }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
   }
@@ -859,6 +960,9 @@
               .map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select></label>') +
         '<label class="sr-f"><span>' + esc(L('Name (what you’ll see)', 'الاسم (اللي رح تشوفه)')) + '</span><input class="sr-in" id="srGName" maxlength="80"></label>' +
         '<label class="sr-f"><span>' + esc(L('Username (what they sign in with)', 'اسم المستخدم (للدخول)')) + '</span><input class="sr-in" id="srGUser" maxlength="32" autocapitalize="off" spellcheck="false" placeholder="calc.prof"></label>' +
+        '<label class="sr-f"><span>' + esc(L('Email (students see it)', 'الإيميل (الطلاب بيشوفوه)')) + '</span><input class="sr-in" id="srGEmail" type="email" maxlength="200" dir="ltr"></label>' +
+        '<label class="sr-f"><span>' + esc(L('Phone (optional)', 'الهاتف (اختياري)')) + '</span><input class="sr-in" id="srGPhone" type="tel" maxlength="24" dir="ltr"></label>' +
+        '<label class="sr-check"><input type="checkbox" id="srGPhoneOk"> ' + esc(L('Show the phone to students', 'أظهر الرقم للطلاب')) + '</label>' +
         '<div class="sr-f"><span>' + esc(L('Their courses', 'مساقاته')) + '</span>' + pickerHtml(me.uni, me.college, []) + '</div>' +
         '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="dogive">' + esc(L('Make the login', 'اعمل الحساب')) + '</button>';
     }
@@ -933,6 +1037,9 @@
       }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
       return true;
     }
+    if(act === 'bulkapply'){ bulkApply(); return true; }
+    if(act === 'bulkdone'){ if(window.AAUP_STAFF && window.AAUP_STAFF.endPick) window.AAUP_STAFF.endPick(); return true; }
+    if(act === 'bulkun'){ if(window.AAUP_STAFF && window.AAUP_STAFF.unpick) window.AAUP_STAFF.unpick(id); return true; }
     if(act === 'pdf'){ printPlan(); return true; }
     if(act === 'xlsx'){ exportPlan(); return true; }
     if(act === 'logall'){ logAll = !logAll; refresh(); return true; }
@@ -1001,8 +1108,17 @@
       busy = true;
       var gBody = { name: val('srGName').trim(), username: val('srGUser').trim(), courses: pickerValue(dlgEl) };
       if(document.getElementById('srGCollege')) gBody.college = val('srGCollege');
+      if(val('srGEmail').trim()) gBody.email = val('srGEmail').trim();
+      if(val('srGPhone').trim()){ gBody.phone = val('srGPhone').trim(); gBody.phoneShown = !!(document.getElementById('srGPhoneOk') || {}).checked; }
       api('POST', '/api/staff/team', gBody)
         .then(function(d){ busy = false; dlg = null; dlgMsg = ''; lastLink = { who: who, link: setupLink(d.staff.username, d.setupCode) }; loadTeam(); }, fail);
+      return true;
+    }
+    if(act === 'phoneshow' || act === 'phonehide'){
+      busy = true;
+      api('PATCH', '/api/staff/team/' + id, { phoneShown: act === 'phoneshow' })
+        .then(function(){ busy = false; if(window.__showToast) window.__showToast(act === 'phoneshow' ? L('Students see the phone now', 'الطلاب بيشوفوا الرقم هلق') : L('Phone hidden from students', 'الرقم مخفي عن الطلاب')); if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true); loadTeam(); },
+              function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
       return true;
     }
     if(act === 'pause' || act === 'resume'){
@@ -1072,7 +1188,7 @@
 
   window.AAUP_STAFF_ROOM = {
     // the staff page
-    loadMe: loadMe, pillHtml: pillHtml, actionsHtml: actionsHtml, panelHtml: panelHtml, courseEditHtml: courseEditHtml,
+    loadMe: loadMe, pillHtml: pillHtml, actionsHtml: actionsHtml, panelHtml: panelHtml, courseEditHtml: courseEditHtml, bulkHtml: bulkHtml,
     dialogHtml: dialogHtml, afterRender: afterRender, onClick: onClick, onKey: onKey,
     signedIn: function(){ return !!me; },
     // shared with the admin room

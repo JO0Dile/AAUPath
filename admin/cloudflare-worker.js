@@ -1320,7 +1320,56 @@ const CONTENT_FIELDS = {
     return JSON.stringify({ text: str(v.text, 300), until: String(v.until) });
   },
 };
-const CARD_FIELDS = ['office', 'hours', 'contact'];
+const CARD_FIELDS = ['office', 'hours', 'contact', 'email', 'phone'];
+const EMAIL_RE = /^[^\s@<>]{1,64}@[^\s@<>]{1,120}\.[^\s@<>]{2,20}$/;
+const PHONE_RE = /^\+?[0-9 ()-]{6,24}$/;
+// Only the fields that were sent, checked.
+function cardFields(body) {
+  const out = {};
+  for (const k of CARD_FIELDS) if (body[k] !== undefined) out[k] = str(body[k], 200).trim();
+  if (out.email && !EMAIL_RE.test(out.email)) throw fail('that email doesn’t look right');
+  if (out.phone && !PHONE_RE.test(out.phone)) throw fail('a phone number is digits, spaces, + ( ) or -');
+  return out;
+}
+// A login's card in Find a Professor, merged with what is sent. A new phone
+// number is hidden from students until it is allowed again, unless the one
+// saving it may allow it (showPhone true or false).
+async function saveCard(db, row, fields, by, showPhone) {
+  const was = await db.prepare('SELECT * FROM staff_cards WHERE uni = ? AND username = ?').bind(row.uni, row.username).first() || {};
+  const c = {};
+  for (const k of CARD_FIELDS) c[k] = fields[k] !== undefined ? fields[k] : (was[k] || '');
+  let ok = was.phone_ok ? 1 : 0;
+  if (c.phone !== (was.phone || '')) ok = 0;
+  if (showPhone !== undefined) ok = showPhone ? 1 : 0;
+  if (!c.phone) ok = 0;
+  const now = Math.floor(Date.now() / 1000);
+  await db.prepare(`INSERT INTO staff_cards (uni, username, name, office, hours, contact, email, phone, phone_ok, courses, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(uni, username) DO UPDATE SET name = excluded.name, office = excluded.office, hours = excluded.hours, contact = excluded.contact,
+      email = excluded.email, phone = excluded.phone, phone_ok = excluded.phone_ok, courses = excluded.courses, at = excluded.at`)
+    .bind(row.uni, row.username, row.name || row.username, c.office, c.hours, c.contact, c.email, c.phone, ok, row.courses || '[]', now).run();
+  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at) VALUES (?, ?, ?, ?, ?)')
+    .bind(row.uni, firstCollege(row), `Card in Find a Professor · ${row.name || row.username}${showPhone !== undefined && c.phone ? (ok ? ' · phone shown' : ' · phone hidden') : ''}`, by, now).run();
+}
+function cardOut(c) {
+  return c ? { office: c.office || '', hours: c.hours || '', contact: c.contact || '', email: c.email || '', phone: c.phone || '', phoneShown: !!c.phone_ok } : null;
+}
+// Staff lists carry each login's card, for the admin's and the dean's forms.
+async function withCards(env, rows) {
+  const db = await contentDb(env);
+  const out = [];
+  for (const r of rows) {
+    const c = await db.prepare('SELECT * FROM staff_cards WHERE uni = ? AND username = ?').bind(r.uni, r.username).first();
+    out.push({ ...staffOut(r), card: cardOut(c) });
+  }
+  return out;
+}
+// What the admin or a dean typed about a login's contact details when making
+// or changing it.
+async function cardFromForm(env, row, body, by) {
+  if (body.email === undefined && body.phone === undefined && body.phoneShown === undefined) return;
+  const f = cardFields({ email: body.email, phone: body.phone });
+  await saveCard(await contentDb(env), row, f, by, body.phoneShown === undefined ? undefined : !!body.phoneShown);
+}
 
 let contentTablesReady = false;
 async function contentDb(env) {
@@ -1352,6 +1401,11 @@ async function contentDb(env) {
     // can put it back. Added to a staff_log made before that.
     for (const col of ['undo TEXT', 'undone INTEGER NOT NULL DEFAULT 0']) {
       try { await db.prepare(`ALTER TABLE staff_log ADD COLUMN ${col}`).run(); } catch { /* already there */ }
+    }
+    // A card's email and phone. The phone reaches students only once a dean
+    // (or the admin) allows it: phone_ok.
+    for (const col of ["email TEXT NOT NULL DEFAULT ''", "phone TEXT NOT NULL DEFAULT ''", 'phone_ok INTEGER NOT NULL DEFAULT 0']) {
+      try { await db.prepare(`ALTER TABLE staff_cards ADD COLUMN ${col}`).run(); } catch { /* already there */ }
     }
     contentTablesReady = true;
   }
@@ -1452,19 +1506,14 @@ async function handleStaffContent(request, env, me) {
   return json({ ok: true, waiting: true }, 200, env, request);
 }
 
+// Their own card goes live at once; only the phone waits for a dean (a dean's
+// own phone waits for the admin).
 async function handleStaffCard(request, env, me) {
   const body = await readJson(request, 8192);
-  const card = {};
-  for (const k of CARD_FIELDS) card[k] = str(body[k], 200);
   const db = await contentDb(env);
-  if (me.role === 'dean') {
-    await applyCard(db, me.uni, firstCollege(me), me, card, me.name || me.username);
-    return json({ ok: true, live: true }, 200, env, request);
-  }
-  await db.prepare("DELETE FROM staff_pending WHERE status = 'waiting' AND kind = 'card' AND uni = ? AND by = ?").bind(me.uni, me.username).run();
-  await db.prepare(`INSERT INTO staff_pending (id, uni, college, kind, value, by, by_name, at) VALUES (?, ?, ?, 'card', ?, ?, ?, ?)`)
-    .bind(crypto.randomUUID(), me.uni, me.college || '', JSON.stringify(card), me.username, me.name || me.username, Math.floor(Date.now() / 1000)).run();
-  return json({ ok: true, waiting: true }, 200, env, request);
+  await saveCard(db, me, cardFields(body), me.name || me.username, me.admin ? true : undefined);
+  const c = await db.prepare('SELECT * FROM staff_cards WHERE uni = ? AND username = ?').bind(me.uni, me.username).first();
+  return json({ ok: true, live: true, card: cardOut(c) }, 200, env, request);
 }
 
 // What waits: for a dean, everything from their college's professors (a
@@ -1531,13 +1580,20 @@ async function handlePublicContent(request, env, uni) {
     c[r.field] = r.field === 'note' || r.field === 'sections' ? JSON.parse(r.value) : r.value;
     v = Math.max(v, r.at);
   }
-  const cs = await db.prepare('SELECT username, name, office, hours, contact, courses, at FROM staff_cards WHERE uni = ?').bind(uni).all();
-  const cards = (cs.results || []).map((r) => {
-    v = Math.max(v, r.at);
+  // Find a Professor: every active professor login, with what they teach, and
+  // a dean once they have a card. The phone only when it was allowed.
+  const cs = await db.prepare(`SELECT s.username, s.name, s.role, s.courses, s.created_at, c.office, c.hours, c.contact, c.email, c.phone, c.phone_ok, c.at
+    FROM staff s LEFT JOIN staff_cards c ON c.uni = s.uni AND c.username = s.username
+    WHERE s.uni = ? AND s.status = 'active'`).bind(uni).all();
+  const cards = [];
+  for (const r of cs.results || []) {
+    if (r.role !== 'professor' && r.at == null) continue;
+    v = Math.max(v, r.at || 0, r.created_at || 0);
     let list = [];
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
-    return { name: r.name, office: r.office, hours: r.hours, contact: r.contact, courses: list };
-  });
+    cards.push({ name: r.name || r.username, office: r.office || '', hours: r.hours || '', contact: r.contact || '', email: r.email || '',
+      phone: r.phone_ok ? (r.phone || '') : '', courses: list });
+  }
   // Replies under students' thoughts, by the thought's id.
   const replies = {};
   const rr = await db.prepare('SELECT thought, course, text, by_name, at FROM staff_replies WHERE uni = ?').bind(uni).all();
@@ -1868,8 +1924,8 @@ async function handleStaffRoutes(request, env, seg, url) {
   if (seg[2] === 'card' && request.method === 'POST') return await handleStaffCard(request, env, me);
   if (seg[2] === 'card' && request.method === 'GET') {
     const db = await contentDb(env);
-    const c = await db.prepare('SELECT office, hours, contact FROM staff_cards WHERE uni = ? AND username = ?').bind(me.uni, me.username).first();
-    return json({ ok: true, card: c || null }, 200, env, request);
+    const c = await db.prepare('SELECT * FROM staff_cards WHERE uni = ? AND username = ?').bind(me.uni, me.username).first();
+    return json({ ok: true, card: cardOut(c) }, 200, env, request);
   }
   if (seg[2] === 'pending' && !seg[3] && request.method === 'GET') return json({ ok: true, pending: await listPending(env, me) }, 200, env, request);
   if (seg[2] === 'pending' && seg[3] && request.method === 'POST') return await decidePending(request, env, me, seg[3]);
@@ -1880,10 +1936,12 @@ async function handleStaffRoutes(request, env, seg, url) {
     const db = await staffDb(env);
     if (!seg[3] && request.method === 'GET') {
       const rs = await db.prepare("SELECT * FROM staff WHERE role = 'professor' AND uni = ? ORDER BY created_at").bind(me.uni).all();
-      return json({ ok: true, staff: (rs.results || []).filter((r) => sharesCollege(me, r)).map(staffOut) }, 200, env, request);
+      return json({ ok: true, staff: await withCards(env, (rs.results || []).filter((r) => sharesCollege(me, r))) }, 200, env, request);
     }
     if (!seg[3] && request.method === 'POST') {
-      const res = await createStaff(env, await readJson(request, 16384), me.username, me);
+      const body = await readJson(request, 16384);
+      const res = await createStaff(env, body, me.username, me);
+      await cardFromForm(env, await db.prepare('SELECT * FROM staff WHERE id = ?').bind(res.staff.id).first(), body, me.name || me.username);
       return json({ ok: true, ...res }, 200, env, request);
     }
     if (seg[3]) {
@@ -1892,7 +1950,10 @@ async function handleStaffRoutes(request, env, seg, url) {
       const row = found && sharesCollege(me, found) ? found : null;
       if (!row) return json({ error: 'not found' }, 404, env, request);
       if (request.method === 'PATCH') {
-        const res = await updateStaff(env, row, await readJson(request, 16384), me);
+        const body = await readJson(request, 16384);
+        const onlyCard = !Object.keys(body).some((k) => !['email', 'phone', 'phoneShown'].includes(k));
+        const res = onlyCard ? { staff: staffOut(row) } : await updateStaff(env, row, body, me);
+        await cardFromForm(env, await db.prepare('SELECT * FROM staff WHERE id = ?').bind(row.id).first(), body, me.name || me.username);
         return json({ ok: true, ...res }, 200, env, request);
       }
       if (request.method === 'DELETE') {
@@ -1909,17 +1970,22 @@ async function handleAdminStaff(request, env, seg) {
   const db = await staffDb(env);
   if (!seg[3] && request.method === 'GET') {
     const rs = await db.prepare('SELECT * FROM staff ORDER BY role, uni, college, created_at').all();
-    return json({ ok: true, staff: (rs.results || []).map(staffOut) }, 200, env, request);
+    return json({ ok: true, staff: await withCards(env, rs.results || []) }, 200, env, request);
   }
   if (!seg[3] && request.method === 'POST') {
-    const res = await createStaff(env, await readJson(request, 16384), 'admin', null);
+    const body = await readJson(request, 16384);
+    const res = await createStaff(env, body, 'admin', null);
+    await cardFromForm(env, await db.prepare('SELECT * FROM staff WHERE id = ?').bind(res.staff.id).first(), body, 'Admin');
     return json({ ok: true, ...res }, 200, env, request);
   }
   if (seg[3]) {
     const row = await db.prepare('SELECT * FROM staff WHERE id = ?').bind(seg[3]).first();
     if (!row) return json({ error: 'not found' }, 404, env, request);
     if (request.method === 'PATCH') {
-      const res = await updateStaff(env, row, await readJson(request, 16384), null);
+      const body = await readJson(request, 16384);
+      const onlyCard = !Object.keys(body).some((k) => !['email', 'phone', 'phoneShown'].includes(k));
+      const res = onlyCard ? { staff: staffOut(row) } : await updateStaff(env, row, body, null);
+      await cardFromForm(env, await db.prepare('SELECT * FROM staff WHERE id = ?').bind(row.id).first(), body, 'Admin');
       return json({ ok: true, ...res }, 200, env, request);
     }
     if (request.method === 'DELETE') {
