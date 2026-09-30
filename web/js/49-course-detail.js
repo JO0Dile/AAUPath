@@ -313,7 +313,7 @@
     var pid = (window.AAUP_GPA && window.AAUP_GPA.primaryId) ? window.AAUP_GPA.primaryId(prefix, slug) : (prefix + '-c-' + slug);
     var hrs = course && course.creditHours != null ? (parseFloat(course.creditHours) || 0) : null;
     var num = info.num || (course && course.courseNumber);
-    var staffCourse = { id: slug, semester: course && course.semester };
+    var staffCourse = { id: slug, semester: course && course.semester, plan: prefix };
 
     // One sentence, then the status buttons (js/21 fills .cd-extras), then
     // the rest folded: prerequisites and what it opens, student thoughts,

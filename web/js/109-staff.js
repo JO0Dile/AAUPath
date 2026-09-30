@@ -316,5 +316,15 @@
 
   window.AAUP_STAFF = { open: open, close: close, present: present,
     refresh: function(){ if(view && view.classList.contains('open')) render(); },
-    current: function(){ return current; }, plans: plans };
+    current: function(){ return current; }, plans: plans,
+    // Opens a course (any of its ids), in this major if it has it, else in
+    // the first major that does.
+    openCourse: function(ids){
+      var all = plans(), has = function(pid){ var p = all[pid]; return p && (p.courses || []).filter(function(c){ return ids.indexOf(c.id) !== -1; })[0]; };
+      var pid = has(current) ? current : majors().map(function(m){ return m.id; }).filter(has)[0];
+      if(!pid) return;
+      var c = has(pid);
+      if(pid !== current){ current = pid; setHash(); }
+      openCourse = c.id; loadStats(current); render();
+    } };
 })();
