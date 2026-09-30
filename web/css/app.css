@@ -9564,3 +9564,21 @@ tr.adm-paste-same td{color:var(--text-dim);}
 .adm-phone-c.cat-free{border-inline-start-color:var(--free);}
 .adm-phone-c.cat-skills{border-inline-start-color:var(--skills);}
 @media (max-width:1180px){ .adm-preview{display:none;} }
+
+/* Round 8, idea 1: Grades docked beside the plan (laptops, plan on screen;
+   19-audit.js decides when). The window turns into a panel on the end side
+   and the plan narrows to make room, so both stay usable at once. */
+#auditModalOverlay.is-docked{
+  background:transparent; backdrop-filter:none; -webkit-backdrop-filter:none;
+  justify-content:flex-end; align-items:stretch; padding:0; pointer-events:none;
+}
+#auditModalOverlay.is-docked .modal-card{
+  pointer-events:auto; width:560px; max-width:560px; height:100vh; max-height:none;
+  margin:0; border-radius:0; overflow-y:auto;
+  border-inline-start:1px solid var(--line); box-shadow:0 0 40px rgba(0,0,0,.3);
+}
+#auditModalOverlay.is-docked .gs-layout{display:block;}
+#auditModalOverlay.is-docked .gs-col-side,
+#auditModalOverlay.is-docked .gs-swipe-dots{display:none;}
+#auditModalOverlay.is-docked .gs-summary{display:flex;}
+html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-width:none;}
