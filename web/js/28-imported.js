@@ -708,7 +708,26 @@
   var NS = 'http://www.w3.org/2000/svg';
   // Takes already-measured rects (see drawConnectors), so all the reads can
   // be batched before any DOM write instead of thrashing layout per pair.
-  function pathBetweenGeneric(f, t, cRect){
+  function pathBetweenGeneric(f, t, cRect, sideways){
+    // Timeline view (round 8 fix): semesters are columns left to right (right
+    // to left in Arabic), so a line leaves the side of one card and enters
+    // the side of the next, instead of bottom-to-top as in Cards.
+    if(sideways){
+      var fl = f.left - cRect.left, tl = t.left - cRect.left;
+      var fr = fl + f.width, tr = tl + t.width;
+      var fy = f.top - cRect.top + f.height / 2, ty = t.top - cRect.top + t.height / 2;
+      var sx, ex, dir;
+      if(tl >= fr - 2){ sx = fr; ex = tl; dir = 1; }        // target to the right
+      else if(tr <= fl + 2){ sx = fl; ex = tr; dir = -1; }   // target to the left
+      else { sx = null; }
+      if(sx !== null){
+        var dx = Math.max(24, Math.abs(ex - sx) / 2);
+        return 'M' + sx.toFixed(1) + ',' + fy.toFixed(1) +
+          ' C' + (sx + dir * dx).toFixed(1) + ',' + fy.toFixed(1) +
+          ' ' + (ex - dir * dx).toFixed(1) + ',' + ty.toFixed(1) +
+          ' ' + ex.toFixed(1) + ',' + ty.toFixed(1);
+      }
+    }
     var x1 = f.left - cRect.left + f.width / 2;
     var y1 = f.top - cRect.top + f.height;
     var x2 = t.left - cRect.left + t.width / 2;
@@ -761,7 +780,16 @@
     // lines we have rather than wiping them.
     if(!container.offsetWidth || !container.offsetHeight) return;
     var cRect = { left: 0, top: 0 };
+    // The layer counts in its wrapper's scroll size, so it is emptied first:
+    // otherwise it kept the tall Cards height after a switch to Timeline and
+    // left a page of nothing to scroll down into.
+    svg.style.width = '0px';
+    svg.style.height = '0px';
     var w = container.scrollWidth, h = container.scrollHeight;
+    var pageEl = document.getElementById('page-' + planId);
+    var sideways = document.documentElement.getAttribute('data-plan-view') === 'timeline' &&
+      !(pageEl && pageEl.classList.contains('editing')) &&
+      !!(window.matchMedia && window.matchMedia('(min-width: 1100px)').matches);
     var prereqs = data.prereqs || [];
     var rects = {};
     // Where a card sits in the layout, relative to the .years wrapper.
@@ -811,7 +839,7 @@
       var fa = rects[planId + '-c-' + pair[0]], tb = rects[planId + '-c-' + pair[1]];
       if(!fa || !tb) return; // one end may be in a collapsed/removed part of the plan
       var p = document.createElementNS(NS, 'path');
-      p.setAttribute('d', pathBetweenGeneric(fa, tb, cRect));
+      p.setAttribute('d', pathBetweenGeneric(fa, tb, cRect, sideways));
       p.setAttribute('class', 'edge');
       p.setAttribute('data-from', planId + '-c-' + pair[0]);
       p.setAttribute('data-to', planId + '-c-' + pair[1]);

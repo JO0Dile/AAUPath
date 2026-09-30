@@ -617,6 +617,66 @@ async function unpackData(stored) {
   return JSON.parse(await new Response(stream).text());
 }
 
+// ---------------------------------------------------------------------------
+// Round 8, idea 20: how many students have a course passed, are taking it,
+// or have it planned, for the staff view. Counts only, never who: read from
+// every synced blob (each student's ticks and course statuses), kept for 15
+// minutes, and any count under 5 is sent as null ("fewer than 5") so no one
+// student can be picked out. A major with fewer than 5 students says only that.
+const STATS_TTL_MS = 15 * 60 * 1000;
+const STATS_MIN = 5;
+let statsCache = null; // { at, byPlan: { planId: { students: Set, courses: { slug: {passed, now, planned} } } } }
+function planOfPid(pid) {
+  const i = String(pid).indexOf('-c-');
+  return i > 0 ? [pid.slice(0, i), pid.slice(i + 3)] : null;
+}
+async function buildStats(env) {
+  const byPlan = {};
+  const rows = await env.DB.prepare('SELECT user_id, data FROM sync_state LIMIT 20000').all();
+  for (const row of (rows.results || [])) {
+    let blob;
+    try { blob = await unpackData(row.data); } catch (e) { continue; }
+    if (!blob || typeof blob !== 'object') continue;
+    let progress = {}, statuses = {};
+    for (const k of Object.keys(blob)) {
+      try {
+        if (k.indexOf('aaup-ai-study-plans-progress-') === 0) progress = JSON.parse(blob[k]) || {};
+        else if (k === 'aaup_courseStatus') statuses = JSON.parse(blob[k]) || {};
+      } catch (e) { /* one bad key doesn't cost the rest */ }
+    }
+    const mark = (pid, field) => {
+      const parts = planOfPid(pid);
+      if (!parts) return;
+      const p = byPlan[parts[0]] || (byPlan[parts[0]] = { students: new Set(), courses: {} });
+      p.students.add(row.user_id);
+      const c = p.courses[parts[1]] || (p.courses[parts[1]] = { passed: 0, now: 0, planned: 0 });
+      c[field]++;
+    };
+    for (const pid of Object.keys(progress)) if (progress[pid]) mark(pid, 'passed');
+    for (const pid of Object.keys(statuses)) {
+      if (progress[pid]) continue;
+      if (statuses[pid] === 'in_progress') mark(pid, 'now');
+      else if (statuses[pid] === 'planned') mark(pid, 'planned');
+    }
+  }
+  return { at: Date.now(), byPlan };
+}
+async function handleStats(env, request, url) {
+  const id = String(url.searchParams.get('plan') || '');
+  if (!/^[a-z0-9-]{1,80}$/.test(id)) return json({ error: 'which plan?' }, 400, env, request);
+  if (!statsCache || Date.now() - statsCache.at > STATS_TTL_MS) statsCache = await buildStats(env);
+  const p = statsCache.byPlan[id];
+  const n = p ? p.students.size : 0;
+  if (n < STATS_MIN) return json({ ok: true, tooFew: true, asOf: statsCache.at }, 200, env, request);
+  const hide = (v) => (v >= STATS_MIN ? v : null);
+  const courses = {};
+  for (const slug of Object.keys(p.courses)) {
+    const c = p.courses[slug];
+    courses[slug] = { passed: hide(c.passed), now: hide(c.now), planned: hide(c.planned) };
+  }
+  return json({ ok: true, students: n, courses, asOf: statsCache.at }, 200, env, request);
+}
+
 async function handleGetSync(env, request, user) {
   const row = await env.DB.prepare('SELECT data, updated_at FROM sync_state WHERE user_id = ?').bind(user.id).first();
   if (!row) return json({ ok: true, data: null, updatedAt: 0 }, 200, env, request);
@@ -687,6 +747,7 @@ export default {
       if (path === '/api/login' && request.method === 'POST') return await handleLogin(request, env);
       if (path === '/api/recovery/use' && request.method === 'POST') return await handleUseRecovery(request, env);
       if (path === '/api/google' && request.method === 'POST') return await handleGoogle(request, env);
+      if (path === '/api/stats/plan' && request.method === 'GET') return await handleStats(env, request, url);
 
       // The maintainer's routes: the Developer panel's ADMIN_SECRET, not a
       // student session. Off entirely while ADMIN_SECRET is unset.
