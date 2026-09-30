@@ -9743,3 +9743,43 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .sr-row-line .sr-grow{flex:1;}
 .sr-date-add{display:grid; grid-template-columns:1fr auto; gap:6px; margin:8px 0 4px;}
 .sr-date-add input:first-child, .sr-date-add select{grid-column:1 / -1;}
+
+/* Numbers for the dean (js/110-staff-room.js, round 10, ideas 15 to 18). */
+.sr-sub{margin:14px 0 6px; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+.sr-small{font-size:11.5px !important;}
+.sr-exports{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 8px;}
+.sr-exports small{flex:1 1 140px; font-size:12px; color:var(--text-dim); line-height:1.35;}
+.sr-stuck{padding:8px 0; border-bottom:1px solid var(--line);}
+.sr-stuck-t{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.sr-stuck-t span{flex:0 0 auto; font-size:12.5px; color:var(--text-dim); font-variant-numeric:tabular-nums;}
+.sr-stuck small{display:block; font-size:12px; color:var(--text-dim); margin:1px 0 6px;}
+.sr-bar{height:6px; border-radius:99px; background:color-mix(in srgb, var(--accent) 14%, transparent); overflow:hidden;}
+.sr-bar i{display:block; height:100%; border-radius:99px; background:var(--accent);}
+.sr-tbl{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums;}
+.sr-tbl th{font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-dim); text-align:start; padding:6px 6px 6px 0; border-bottom:1px solid var(--line); vertical-align:bottom;}
+.sr-tbl td{padding:8px 6px 8px 0; border-bottom:1px solid var(--line);}
+.sr-tbl th:not(:first-child), .sr-tbl td:not(:first-child){text-align:end; white-space:nowrap;}
+.sr-tbl label{display:inline-flex; align-items:center; gap:4px;}
+.sr-tbl input{width:52px; padding:3px 6px; border-radius:8px; border:1px solid var(--line); background:transparent; color:inherit; font:inherit; font-size:12px; text-align:center;}
+.sr-more{margin:6px 0 2px;}
+/* The plan on paper: only #staffPrintRoot prints (see printPlan). */
+#staffPrintRoot{display:none;}
+@media print{
+  body.printing-staff #planOverviewOverlay{display:none !important;}
+  body.printing-staff #staffPrintRoot{display:block !important; color:#000; background:#fff; font:11pt/1.4 system-ui, sans-serif;}
+  #staffPrintRoot .sp-head{border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:10px;}
+  #staffPrintRoot h1{font-size:18pt; margin:0 0 4px;}
+  #staffPrintRoot p{margin:0 0 2px; color:#333;}
+  #staffPrintRoot .sp-note{font-size:9pt; color:#555;}
+  #staffPrintRoot .sp-year{break-inside:avoid; margin-top:12px;}
+  #staffPrintRoot h2{font-size:13pt; margin:0 0 4px;}
+  #staffPrintRoot h3{font-size:10.5pt; margin:8px 0 3px; color:#222;}
+  /* The same columns in every semester's table. */
+  #staffPrintRoot table{width:100%; border-collapse:collapse; table-layout:fixed; font-size:9.5pt;}
+  #staffPrintRoot th, #staffPrintRoot td{border:1px solid #999; padding:3px 6px; text-align:start; vertical-align:top; overflow-wrap:anywhere;}
+  #staffPrintRoot th{background:#eee;}
+  #staffPrintRoot th:nth-child(1){width:13%;}
+  #staffPrintRoot th:nth-child(2){width:42%;}
+  #staffPrintRoot th:nth-child(3){width:8%;}
+  #staffPrintRoot td:nth-child(3){text-align:center;}
+}

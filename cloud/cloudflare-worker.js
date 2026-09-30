@@ -619,7 +619,8 @@ async function unpackData(stored) {
 
 // ---------------------------------------------------------------------------
 // Round 8, idea 20: how many students have a course passed, are taking it,
-// or have it planned, for the staff view. Counts only, never who: read from
+// or have it planned, for the staff view; and (round 10, idea 15) how many
+// have everything it needs but haven't passed it yet. Counts only, never who: read from
 // every synced blob (each student's ticks and course statuses), kept for 15
 // minutes, and any count under 5 is sent as null ("fewer than 5") so no one
 // student can be picked out. A major with fewer than 5 students says only that.
@@ -637,26 +638,49 @@ async function buildStats(env) {
     let blob;
     try { blob = await unpackData(row.data); } catch (e) { continue; }
     if (!blob || typeof blob !== 'object') continue;
-    let progress = {}, statuses = {};
+    let progress = {}, statuses = {}, plans = {};
     for (const k of Object.keys(blob)) {
       try {
         if (k.indexOf('aaup-ai-study-plans-progress-') === 0) progress = JSON.parse(blob[k]) || {};
         else if (k === 'aaup_courseStatus') statuses = JSON.parse(blob[k]) || {};
+        else if (k === 'aaup_importedPlans') plans = JSON.parse(blob[k]) || {};
       } catch (e) { /* one bad key doesn't cost the rest */ }
     }
-    const mark = (pid, field) => {
-      const parts = planOfPid(pid);
-      if (!parts) return;
-      const p = byPlan[parts[0]] || (byPlan[parts[0]] = { students: new Set(), courses: {} });
+    const mark = (plan, slug, field) => {
+      const p = byPlan[plan] || (byPlan[plan] = { students: new Set(), courses: {} });
       p.students.add(row.user_id);
-      const c = p.courses[parts[1]] || (p.courses[parts[1]] = { passed: 0, now: 0, planned: 0 });
+      const c = p.courses[slug] || (p.courses[slug] = { passed: 0, now: 0, planned: 0, ready: 0 });
       c[field]++;
     };
-    for (const pid of Object.keys(progress)) if (progress[pid]) mark(pid, 'passed');
+    const passedIn = {}, nowIn = {};
+    for (const pid of Object.keys(progress)) {
+      const parts = progress[pid] && planOfPid(pid);
+      if (!parts) continue;
+      mark(parts[0], parts[1], 'passed');
+      (passedIn[parts[0]] = passedIn[parts[0]] || new Set()).add(parts[1]);
+    }
     for (const pid of Object.keys(statuses)) {
-      if (progress[pid]) continue;
-      if (statuses[pid] === 'in_progress') mark(pid, 'now');
-      else if (statuses[pid] === 'planned') mark(pid, 'planned');
+      const parts = !progress[pid] && planOfPid(pid);
+      if (!parts) continue;
+      if (statuses[pid] === 'in_progress') { mark(parts[0], parts[1], 'now'); (nowIn[parts[0]] = nowIn[parts[0]] || new Set()).add(parts[1]); }
+      else if (statuses[pid] === 'planned') mark(parts[0], parts[1], 'planned');
+    }
+    // Round 10, idea 15 · where students get stuck: a course this student
+    // has everything for (every course it needs, passed) but hasn't passed
+    // and isn't taking. What it needs comes from the student's own copy of
+    // the plan in the same blob, so nothing has to be fetched.
+    for (const plan of Object.keys(passedIn)) {
+      const pl = plans[plan];
+      if (!pl || !Array.isArray(pl.prerequisites)) continue;
+      const needs = {};
+      for (const pr of pl.prerequisites) {
+        if (Array.isArray(pr) && pr.length >= 2 && pr[0] && pr[1]) (needs[pr[1]] = needs[pr[1]] || []).push(String(pr[0]));
+      }
+      const passed = passedIn[plan], now = nowIn[plan] || new Set();
+      for (const slug of Object.keys(needs)) {
+        if (passed.has(slug) || now.has(slug)) continue;
+        if (needs[slug].every((r) => passed.has(r))) mark(plan, slug, 'ready');
+      }
     }
   }
   return { at: Date.now(), byPlan };
@@ -672,7 +696,7 @@ async function handleStats(env, request, url) {
   const courses = {};
   for (const slug of Object.keys(p.courses)) {
     const c = p.courses[slug];
-    courses[slug] = { passed: hide(c.passed), now: hide(c.now), planned: hide(c.planned) };
+    courses[slug] = { passed: hide(c.passed), now: hide(c.now), planned: hide(c.planned), ready: hide(c.ready || 0) };
   }
   return json({ ok: true, students: n, courses, asOf: statsCache.at }, 200, env, request);
 }

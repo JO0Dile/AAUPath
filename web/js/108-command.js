@@ -264,7 +264,7 @@
   function noCtl(s){ return Array.prototype.filter.call(s, function(ch){ var c = ch.charCodeAt(0); return c > 31 || c === 9 || c === 10 || c === 13; }).join(''); }
   function xml(s){ return noCtl(String(s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function colName(i){ var s = ''; i++; while(i > 0){ var m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
-  function sheetXml(table, rtl){
+  function sheetXml(table, rtl, widths){
     var body = table.map(function(row, r){
       return '<row r="' + (r + 1) + '">' + row.map(function(v, c){
         var ref = colName(c) + (r + 1);
@@ -273,7 +273,7 @@
         return '<c r="' + ref + '" t="inlineStr"' + style + '><is><t xml:space="preserve">' + xml(v) + '</t></is></c>';
       }).join('') + '</row>';
     }).join('');
-    var widths = [8, 16, 40, 30, 8, 22, 14, 8];
+    widths = widths || [];
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
       '<sheetViews><sheetView workbookViewId="0"' + (rtl ? ' rightToLeft="1"' : '') + '><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>' +
@@ -313,14 +313,18 @@
     }));
     var mn = p.majorName || {}, pick = typeof mn === 'string' ? mn : ((rtl && mn.ar) || mn.en || '');
     if(pick && typeof pick === 'object') pick = [pick.big, pick.small].filter(Boolean).join(' ');
-    var title = plain(pick) || planId;
+    saveXlsx(plain(pick) || planId, L('My plan', 'خطتي'), table, [8, 16, 40, 30, 8, 22, 14, 8], rtl);
+  }
+  // Any table (first row = headings) as a one-sheet .xlsx download. Also used
+  // by the staff page for the official plan (js/110-staff-room.js).
+  function saveXlsx(title, sheetName, table, widths, rtl){
     var blob = zip([
       { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
       { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
-      { name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + xml(L('My plan', 'خطتي')) + '" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+      { name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + xml(String(sheetName).slice(0, 31)) + '" sheetId="1" r:id="rId1"/></sheets></workbook>' },
       { name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
       { name: 'xl/styles.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>' },
-      { name: 'xl/worksheets/sheet1.xml', data: sheetXml(table, rtl) }
+      { name: 'xl/worksheets/sheet1.xml', data: sheetXml(table, rtl, widths) }
     ]);
     var file = (title.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'plan') + '.xlsx';
     var url = URL.createObjectURL(blob);
@@ -335,5 +339,5 @@
   }
 
   window.AAUP_COMMAND = { open: open, close: close };
-  window.AAUP_EXPORT = { xlsx: exportXlsx };
+  window.AAUP_EXPORT = { xlsx: exportXlsx, saveXlsx: saveXlsx };
 })();

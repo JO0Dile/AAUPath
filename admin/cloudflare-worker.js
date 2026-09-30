@@ -1348,6 +1348,11 @@ async function contentDb(env) {
       `CREATE TABLE IF NOT EXISTS staff_dates (id TEXT PRIMARY KEY, uni TEXT NOT NULL, college TEXT NOT NULL,
         label TEXT NOT NULL, date TEXT NOT NULL, by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL)`,
     ]) await db.prepare(sql).run();
+    // Round 10, idea 18: a change remembers the value it replaced, so a dean
+    // can put it back. Added to a staff_log made before that.
+    for (const col of ['undo TEXT', 'undone INTEGER NOT NULL DEFAULT 0']) {
+      try { await db.prepare(`ALTER TABLE staff_log ADD COLUMN ${col}`).run(); } catch { /* already there */ }
+    }
     contentTablesReady = true;
   }
   return db;
@@ -1402,16 +1407,18 @@ async function mayWriteCourse(env, me, course) {
 }
 
 const FIELD_LABEL = { about: 'About this course', revise: 'Revise first', offered: 'Offered in', prereqNote: 'Prerequisite note', note: 'Pinned note', sections: 'Sections' };
-async function applyContent(db, env, uni, college, course, field, value, by) {
+async function applyContent(db, env, uni, college, course, field, value, by, how) {
   const now = Math.floor(Date.now() / 1000);
+  const was = await db.prepare('SELECT value FROM staff_content WHERE uni = ? AND course = ? AND field = ?').bind(uni, course, field).first();
   if (value === '') await db.prepare('DELETE FROM staff_content WHERE uni = ? AND course = ? AND field = ?').bind(uni, course, field).run();
   else {
     await db.prepare(`INSERT INTO staff_content (uni, course, field, value, by, at) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(uni, course, field) DO UPDATE SET value = excluded.value, by = excluded.by, at = excluded.at`)
       .bind(uni, course, field, value, by, now).run();
   }
-  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at) VALUES (?, ?, ?, ?, ?)')
-    .bind(uni, college, `${await courseName(env, uni, course)} · ${FIELD_LABEL[field] || field}${value === '' ? ' removed' : ''}`, by, now).run();
+  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at, undo) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(uni, college, `${await courseName(env, uni, course)} · ${FIELD_LABEL[field] || field}${value === '' ? ' removed' : ''}${how || ''}`, by, now,
+      JSON.stringify({ course, field, value: was ? was.value : '' })).run();
 }
 async function applyCard(db, uni, college, row, card, by) {
   const now = Math.floor(Date.now() / 1000);
@@ -1799,6 +1806,43 @@ async function handleStaffDates(request, env, me, seg) {
   return json({ error: 'not found' }, 404, env, request);
 }
 
+// ---------------------------------------------------------------------------
+// Recent changes, with Put back (round 10, idea 18)
+//
+// What changed in a dean's colleges, newest first, with who did it. A change
+// to what students read about a course keeps the value it replaced, and Put
+// back restores that (itself a change, which can be put back in turn). Plan
+// changes are commits, put back from Edit this major's history instead.
+// ---------------------------------------------------------------------------
+async function handleStaffLog(request, env, me, seg) {
+  if (me.role !== 'dean') return json({ error: 'only a dean can see this' }, 403, env, request);
+  const db = await contentDb(env);
+  const undoOf = (r) => { try { return r.undo ? JSON.parse(r.undo) : null; } catch { return null; } };
+  const mine = async (r, u) => me.college === '*' || (u && u.course ? await mayWriteCourse(env, me, u.course) : !!(r.college && coversCollege(me, r.college)));
+  if (!seg[3] && request.method === 'GET') {
+    const rs = await db.prepare('SELECT id, college, what, by, at, undo, undone FROM staff_log WHERE uni = ? ORDER BY id DESC LIMIT 300').bind(me.uni).all();
+    const out = [];
+    for (const r of rs.results || []) {
+      if (out.length >= 30) break;
+      const u = undoOf(r);
+      if (!(await mine(r, u))) continue;
+      out.push({ id: r.id, what: r.what, by: r.by, at: r.at, canPutBack: !!(u && u.course && CONTENT_FIELDS[u.field]) && !r.undone, undone: !!r.undone });
+    }
+    return json({ ok: true, log: out }, 200, env, request);
+  }
+  if (seg[3] && seg[4] === 'putback' && request.method === 'POST') {
+    const r = await db.prepare('SELECT * FROM staff_log WHERE id = ? AND uni = ?').bind(Number(seg[3]) || 0, me.uni).first();
+    const u = r && undoOf(r);
+    if (!r || !u || !u.course || !CONTENT_FIELDS[u.field] || !(await mine(r, u))) return json({ error: 'not found' }, 404, env, request);
+    if (r.undone) return json({ error: 'that one is already put back' }, 409, env, request);
+    if (!(await mayWriteCourse(env, me, u.course))) return json({ error: 'your login doesn’t cover this course' }, 403, env, request);
+    await applyContent(db, env, me.uni, firstCollege(me), u.course, u.field, String(u.value || ''), me.name || me.username, ' · put back');
+    await db.prepare('UPDATE staff_log SET undone = 1 WHERE id = ?').bind(r.id).run();
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
 async function handleStaffRoutes(request, env, seg, url) {
   if (seg[1] !== 'staff') return null;
   if (seg[2] === 'login' && request.method === 'POST') return await handleStaffLogin(request, env);
@@ -1820,6 +1864,7 @@ async function handleStaffRoutes(request, env, seg, url) {
   if (seg[2] === 'report' && request.method === 'POST') return await handleStaffReport(request, env, me);
   if (seg[2] === 'reported' && request.method === 'GET') return await handleStaffReported(request, env, me);
   if (seg[2] === 'dates') return await handleStaffDates(request, env, me, seg);
+  if (seg[2] === 'log') return await handleStaffLog(request, env, me, seg);
   if (seg[2] === 'card' && request.method === 'POST') return await handleStaffCard(request, env, me);
   if (seg[2] === 'card' && request.method === 'GET') {
     const db = await contentDb(env);
