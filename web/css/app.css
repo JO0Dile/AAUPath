@@ -9828,3 +9828,6 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .apt-pill{padding:2px 10px; border-radius:999px; border:1px solid #e0a13a; color:#e0a13a; font-size:12px; font-weight:800;}
 .apt-date{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-dim);}
 .apt-editing{margin:6px 0 10px; padding:10px 14px; border-radius:12px; border:1px solid #e0a13a; background:color-mix(in srgb, #e0a13a 12%, transparent); font-size:13.5px;}
+
+/* Admin room: a shared class time with its Take it down button */
+.sst-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }

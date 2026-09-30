@@ -170,6 +170,7 @@
     ['assets',        '🖼 Assets'],
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
+    ['classtimes',    '🕒 Shared class times'],
     ['accounts',      '👤 Student accounts'],
     ['staff',         '🎓 Staff logins'],
     ['workers',       '🚀 Workers'],
@@ -181,7 +182,7 @@
   var NAV_GROUPS = [
     [null, ['dashboard']],
     ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'assets']],
-    ['People', ['contributions', 'thoughts', 'accounts', 'staff']],
+    ['People', ['contributions', 'thoughts', 'classtimes', 'accounts', 'staff']],
     ['System', ['workers', 'settings']]
   ];
   function navCount(key){
@@ -1678,6 +1679,87 @@
       });
     });
   }
+  // Class times students typed into their own schedule go to every student of
+  // the course straight away, unchecked. This is where one that is made up
+  // gets taken down (/api/admin/shared-sections). A taken-down time stays
+  // down even if someone sends it again.
+  var CT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function ctUni(){ return state.ctPick || state.uni || 'aaup'; }
+  function loadClassTimes(){
+    var uni = ctUni();
+    state.ctLoading = true; state.ctErr = '';
+    api('GET', '/api/admin/shared-sections?uni=' + encodeURIComponent(uni))
+      .then(function(d){ state.ctItems = d.sections || []; state.ctUni = uni; })
+      .catch(function(e){ state.ctItems = []; state.ctUni = uni; state.ctErr = e.message; })
+      .then(function(){ state.ctLoading = false; if(state.section === 'classtimes') render(); });
+  }
+  function ctTime(t){
+    var m = /^(\d\d):(\d\d)$/.exec(t || '');
+    if(!m) return esc(t || '');
+    var h = +m[1];
+    return (h % 12 || 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
+  }
+  function sectionClassTimes(){
+    var head = '<h2>🕒 Shared class times</h2>' +
+      '<p class="admin-hint">When a student saves class times for a course in My Week, every student of that course sees them as ' +
+      '“From a student”. Nobody checks them first, so take down any that are made up. Taking one down removes it for everyone ' +
+      'and it will not come back, even if it is sent again.</p>';
+    var unis = state.tree || [];
+    var pick = unis.length > 1 ? '<div class="form-field"><label for="ctUni">University</label><select id="ctUni">' +
+      unis.map(function(u){ return '<option value="' + esc(u.slug) + '"' + (u.slug === ctUni() ? ' selected' : '') + '>' + esc(u.name || u.slug) + '</option>'; }).join('') +
+      '</select></div>' : '';
+    var tools = '<div class="form-actions"><button type="button" class="home-btn" id="ctReload">🔄 Refresh</button></div>';
+    if(state.ctLoading || !state.ctItems || state.ctUni !== ctUni()) return head + pick + '<p class="ex-note">Loading…</p>';
+    if(state.ctErr) return head + pick + tools + '<div class="admin-note admin-note-warn">Could not load them: ' + esc(state.ctErr) + '</div>';
+    if(!state.ctItems.length) return head + pick + tools + '<div class="admin-note">No student has shared class times yet.</div>';
+    var q = (state.ctQuery || '').trim().toLowerCase();
+    var list = state.ctItems.filter(function(x){ return !q || (x.courseName + ' ' + x.course).toLowerCase().indexOf(q) !== -1; });
+    var groups = [], by = {};
+    list.forEach(function(x){
+      if(!by[x.course]){ by[x.course] = { course: x.course, name: x.courseName, rows: [] }; groups.push(by[x.course]); }
+      by[x.course].rows.push(x);
+    });
+    return head + pick +
+      '<div class="form-field"><label for="ctFind">Find a course</label><input type="search" id="ctFind" value="' + esc(state.ctQuery || '') + '" placeholder="Name or number" autocomplete="off"></div>' +
+      tools + '<p class="ex-note">' + state.ctItems.length + ' class time' + (state.ctItems.length === 1 ? '' : 's') + ' in ' +
+        Object.keys(state.ctItems.reduce(function(m, x){ m[x.course] = 1; return m; }, {})).length + ' courses.</p>' +
+      groups.map(function(g){
+        return '<h3>' + esc(g.name) + (g.name !== g.course ? ' <small style="opacity:.6;">' + esc(g.course) + '</small>' : '') + '</h3>' +
+          g.rows.map(function(x){
+            var i = state.ctItems.indexOf(x);
+            return '<div class="admin-note sst-row"><span>' +
+              esc((x.days || []).map(function(d){ return CT_DAYS[d] || d; }).join(' · ')) + ' · ' + ctTime(x.s) + ' – ' + ctTime(x.e) +
+              (x.room ? ' · room ' + esc(x.room) : '') +
+              ' <span style="opacity:.65;">· ' + esc(new Date(x.at * 1000).toLocaleDateString()) + '</span></span>' +
+              '<button type="button" class="home-btn admin-danger" data-ct-del="' + i + '">Take it down</button></div>';
+          }).join('');
+      }).join('');
+  }
+  function bindClassTimes(main){
+    on('ctReload', 'click', function(){ state.ctItems = null; loadClassTimes(); render(); });
+    on('ctUni', 'change', function(e){ state.ctPick = e.target.value; state.ctItems = null; loadClassTimes(); render(); });
+    on('ctFind', 'input', function(e){
+      state.ctQuery = e.target.value;
+      var pos = e.target.selectionStart;
+      render();
+      var f = document.getElementById('ctFind');
+      if(f){ f.focus(); try{ f.setSelectionRange(pos, pos); }catch(err){} }
+    });
+    main.querySelectorAll('[data-ct-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var x = state.ctItems[+b.getAttribute('data-ct-del')];
+        if(!x) return;
+        b.disabled = true;
+        api('DELETE', '/api/admin/shared-sections', { uni: state.ctUni, course: x.course, days: x.days, s: x.s, e: x.e, room: x.room })
+          .then(function(){
+            state.ctItems = state.ctItems.filter(function(y){ return y !== x; });
+            toast('Taken down. Students stop seeing it the next time the app checks.');
+            render();
+          })
+          .catch(function(e){ b.disabled = false; toast('Could not take it down: ' + e.message); });
+      });
+    });
+  }
   function sectionThoughts(){
     var head = '<h2>💬 Student Thoughts</h2>';
     return head + reportsHtml() + sectionThoughtsWall().replace(head, '');
@@ -2077,6 +2159,10 @@
       main.innerHTML = sectionWorkers();
       if(!state.workersLoading && !state.workers) loadWorkers();
     }
+    else if(s === 'classtimes'){
+      main.innerHTML = sectionClassTimes();
+      if(!state.ctLoading && (!state.ctItems || state.ctUni !== ctUni())) loadClassTimes();
+    }
     else if(s === 'thoughts'){
       main.innerHTML = sectionThoughts();
       if(!state.thoughtsLoading && !state.thoughtItems) loadThoughts();
@@ -2097,6 +2183,7 @@
     if(state.section === 'thoughts') bindThoughts(main);
     if(state.section === 'accounts') bindAccounts(main);
     if(state.section === 'staff') bindStaff(main);
+    if(state.section === 'classtimes') bindClassTimes(main);
     on('adminWorkersRefresh', 'click', function(){ state.workers = null; render(); });
     main.querySelectorAll('[data-inbox-go]').forEach(function(b){
       b.addEventListener('click', function(){ state.section = b.getAttribute('data-inbox-go'); render(); });

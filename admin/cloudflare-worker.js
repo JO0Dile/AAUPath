@@ -1472,6 +1472,9 @@ async function contentDb(env) {
     for (const col of ["email TEXT NOT NULL DEFAULT ''", "phone TEXT NOT NULL DEFAULT ''", 'phone_ok INTEGER NOT NULL DEFAULT 0']) {
       try { await db.prepare(`ALTER TABLE staff_cards ADD COLUMN ${col}`).run(); } catch { /* already there */ }
     }
+    // A shared class time the admin took down stays as a hidden row, so the
+    // same bad time sent again doesn't come back.
+    try { await db.prepare('ALTER TABLE shared_sections ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0').run(); } catch { /* already there */ }
     contentTablesReady = true;
   }
   return db;
@@ -1682,12 +1685,13 @@ async function handlePublicContent(request, env, uni) {
     }
   }
   // Class times students shared: at most 12 per course, newest first.
-  const sh = await db.prepare('SELECT course, days, s, e, room, at FROM shared_sections WHERE uni = ? ORDER BY at DESC').bind(uni).all();
+  const sh = await db.prepare('SELECT course, days, s, e, room, at, hidden FROM shared_sections WHERE uni = ? ORDER BY at DESC').bind(uni).all();
   for (const r of sh.results || []) {
+    v = Math.max(v, r.at);
+    if (r.hidden) continue;
     const c = courses[r.course] = courses[r.course] || {};
     c.shared = c.shared || [];
     if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room });
-    v = Math.max(v, r.at);
   }
   const res = json({ ok: true, v, courses, cards, replies, dates }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
@@ -1836,10 +1840,43 @@ async function handleShareSections(request, env) {
     saved++;
   }
   if (saved) {
-    await db.prepare(`DELETE FROM shared_sections WHERE uni = ? AND course = ? AND rowid NOT IN
-      (SELECT rowid FROM shared_sections WHERE uni = ? AND course = ? ORDER BY at DESC LIMIT 12)`).bind(uni, course, uni, course).run();
+    await db.prepare(`DELETE FROM shared_sections WHERE uni = ? AND course = ? AND hidden = 0 AND rowid NOT IN
+      (SELECT rowid FROM shared_sections WHERE uni = ? AND course = ? AND hidden = 0 ORDER BY at DESC LIMIT 12)`).bind(uni, course, uni, course).run();
   }
   return json({ ok: true, saved }, 200, env, request);
+}
+
+// The admin's list of shared class times, to take down one a student made up.
+// GET    /api/admin/shared-sections?uni=
+// DELETE /api/admin/shared-sections { uni, course, days, s, e, room }
+// A taken-down time is hidden, not deleted, so sending it again does nothing;
+// its `at` moves to now so phones see the content changed.
+async function handleAdminSharedSections(request, env, url) {
+  if (!env.STAFF_DB) return json({ ok: true, sections: [] }, 200, env, request);
+  const db = await contentDb(env);
+  if (request.method === 'GET') {
+    const uni = String(url.searchParams.get('uni') || 'aaup');
+    if (!SLUG_RE.test(uni)) throw fail('which university?');
+    const rs = await db.prepare('SELECT course, days, s, e, room, at FROM shared_sections WHERE uni = ? AND hidden = 0 ORDER BY course, at DESC').bind(uni).all();
+    const sections = [];
+    for (const r of rs.results || []) {
+      sections.push({ course: r.course, courseName: await courseName(env, uni, r.course), days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, at: r.at });
+    }
+    return json({ ok: true, uni, sections }, 200, env, request);
+  }
+  if (request.method === 'DELETE') {
+    const body = await readJson(request, 1024);
+    const uni = String(body.uni || 'aaup'), course = String(body.course || '');
+    if (!SLUG_RE.test(uni) || !SLUG_RE.test(course)) throw fail('which course?');
+    const days = Array.isArray(body.days) ? JSON.stringify(body.days.map(Number)) : String(body.days || '');
+    const key = [uni, course, days, String(body.s || ''), String(body.e || ''), String(body.room || '')];
+    const WHERE = 'WHERE uni = ? AND course = ? AND days = ? AND s = ? AND e = ? AND room = ?';
+    const row = await db.prepare(`SELECT hidden FROM shared_sections ${WHERE}`).bind(...key).first();
+    if (!row || row.hidden) return json({ error: 'that class time is not there any more' }, 404, env, request);
+    await db.prepare(`UPDATE shared_sections SET hidden = 1, at = ? ${WHERE}`).bind(Math.floor(Date.now() / 1000), ...key).run();
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
 }
 
 // ---------------------------------------------------------------------------
@@ -2220,6 +2257,8 @@ export default {
       if (seg[1] === 'admin' && seg[2] === 'staff') return await handleAdminStaff(request, env, seg);
       // /api/admin/reports  ·  /api/admin/reports/:thought
       if (seg[1] === 'admin' && seg[2] === 'reports') return await handleAdminReports(request, env, seg);
+      // /api/admin/shared-sections
+      if (seg[1] === 'admin' && seg[2] === 'shared-sections') return await handleAdminSharedSections(request, env, url);
 
       // /api/history/:university/:slug
       if (seg[1] === 'history' && seg[2] && seg[3] && request.method === 'GET') {
