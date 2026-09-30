@@ -33,13 +33,19 @@
     return esc(cat.icon || '');
   }
 
+  // The file is kept as it came; staff cards are laid over a fresh copy each
+  // time, because they arrive separately (js/111-staff-content.js) and can
+  // land after this list first loaded, or change while the app is open.
+  var raw = null;
   function load(){
-    if(cache) return Promise.resolve(cache);
+    if(raw) return Promise.resolve(cache = withStaffCards(JSON.parse(raw)));
+    if(cache === 'error') return Promise.resolve(cache);
     return fetch('contacts.json').then(function(r){
       if(!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function(data){
-      cache = withStaffCards(data);
+      return r.text();
+    }).then(function(text){
+      raw = text;
+      cache = withStaffCards(JSON.parse(text));
       return cache;
     }).catch(function(){
       cache = 'error';
@@ -60,6 +66,13 @@
         data.contacts.push(hit);
       }
       hit.office = k.office; hit.hours = k.hours; hit.reach = k.contact;
+      if(k.email) hit.email = k.email;
+      // Only there once their dean allowed it (the Worker leaves it out before).
+      if(k.phone) hit.phone = k.phone;
+      if(k.courses && k.courses.length && window.AAUP_STAFF_ROOM){
+        var names = window.AAUP_STAFF_ROOM.courseNames(k.courses, 'aaup');
+        hit.courses = (hit.courses || []).concat(names.filter(function(n){ return (hit.courses || []).indexOf(n) === -1; }));
+      }
     });
     return data;
   }
@@ -70,7 +83,7 @@
     copyEmail: { en: 'Copy email', ar: 'انسخ الإيميل' },
     sendEmail: { en: 'Email', ar: 'راسل' },
     mineNote: { en: 'Green: a course you still have to take.', ar: 'الأخضر: مساق لسا لازم تاخذه.' },
-    emailOnly: { en: 'Email only: phone numbers aren’t listed here.', ar: 'إيميل بس: أرقام الهواتف مش منشورة هون.' },
+    emailOnly: { en: 'A phone number shows only when the professor’s college allows it.', ar: 'رقم الهاتف بيظهر بس لما كلية المحاضر تسمح.' },
     lead: { en: 'Instructors and university offices, straight from the app — no forwarding, no lookup somewhere else.',
             ar: 'المحاضرون ومكاتب الجامعة، مباشرة من التطبيق — بلا تحويل ولا بحث بمكان ثاني.' },
     search: { en: 'Search a name, course, or office…', ar: 'ابحث عن اسم، مساق، أو مكتب…' },
@@ -144,6 +157,7 @@
         '<span class="ct-name">' + esc(c.name) + '</span>' + sub +
         (c.office || c.hours || c.reach
           ? '<span class="ct-staff">' + [c.office, c.hours, c.reach].filter(Boolean).map(esc).join(' · ') + '</span>' : '') +
+        (c.phone ? '<a class="ct-phone" dir="ltr" href="tel:' + esc(String(c.phone).replace(/[^0-9+]/g, '')) + '">' + esc(c.phone) + '</a>' : '') +
         (c.email ? '<span class="ct-email-text" dir="ltr">' + esc(c.email) + '</span>' : '<span class="ct-noemail">' + t('noEmail', rtl) + '</span>') +
       '</div>' +
       (c.email

@@ -1621,8 +1621,9 @@
       .then(function(){ state.staffLoading = false; render(); });
   }
   function staffDraftFrom(s){
-    return s ? { id: s.id, name: s.name, username: s.username, role: s.role, uni: s.uni, college: s.college, courses: (s.courses || []).slice() }
-             : { id: '', name: '', username: '', role: 'professor', uni: 'aaup', college: '', courses: [] };
+    var c = (s && s.card) || {};
+    return s ? { id: s.id, name: s.name, username: s.username, role: s.role, uni: s.uni, college: s.college, courses: (s.courses || []).slice(), email: c.email || '', phone: c.phone || '', phoneShown: !!c.phoneShown }
+             : { id: '', name: '', username: '', role: 'professor', uni: 'aaup', college: '', courses: [], email: '', phone: '', phoneShown: false };
   }
   function staffFormHtml(d){
     var R = window.AAUP_STAFF_ROOM;
@@ -1638,7 +1639,10 @@
           '<option value="professor"' + (d.role === 'professor' ? ' selected' : '') + '>Professor: their own courses</option></select></label>' +
         '<label class="sr-f"><span>University</span><select class="sr-in" id="asUni">' + R.universities().map(function(u){
           return '<option value="' + esc(u.id) + '"' + (u.id === d.uni ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="sr-f"><span>Email (students see it in Find a Professor)</span><input class="sr-in" id="asEmail" type="email" maxlength="200" value="' + esc(d.email || '') + '"></label>' +
+        '<label class="sr-f"><span>Phone (hidden until allowed)</span><input class="sr-in" id="asPhone" type="tel" maxlength="24" value="' + esc(d.phone || '') + '"></label>' +
       '</div>' +
+      '<label class="sr-check"><input type="checkbox" id="asPhoneOk"' + (d.phoneShown ? ' checked' : '') + '> Show the phone to students</label>' +
       '<div class="sr-f"><span>' + (d.role === 'dean' ? 'Colleges they lead' : 'Colleges they teach in') + '</span>' +
         '<div class="sr-chips as-cols">' + chosen.map(function(id){
           return '<span class="sr-chip">' + esc(id === '*' ? 'All colleges' : R.collegeName(id)) +
@@ -1717,6 +1721,9 @@
         d.role = document.getElementById('asRole').value;
         d.uni = document.getElementById('asUni').value;
         if(d.role === 'professor') d.courses = R.pickerValue(form);
+        d.email = document.getElementById('asEmail').value.trim();
+        d.phone = document.getElementById('asPhone').value.trim();
+        d.phoneShown = document.getElementById('asPhoneOk').checked;
         return d;
       };
       ['asRole', 'asUni'].forEach(function(id){ on(id, 'change', function(){
@@ -1741,7 +1748,8 @@
       on('asSave', 'click', function(){
         var d = read();
         if(d.role === 'dean' && !d.college){ toast('Add the college (or All colleges) this dean leads.'); return; }
-        var body = { name: d.name.trim(), role: d.role, uni: d.uni, college: d.college || '*', courses: d.role === 'professor' ? d.courses : [] };
+        var body = { name: d.name.trim(), role: d.role, uni: d.uni, college: d.college || '*', courses: d.role === 'professor' ? d.courses : [],
+                     email: d.email, phone: d.phone, phoneShown: !!(d.phone && d.phoneShown) };
         if(!d.id) body.username = d.username.trim();
         api(d.id ? 'PATCH' : 'POST', '/api/admin/staff' + (d.id ? '/' + d.id : ''), body).then(function(res){
           state.staffDraft = null;

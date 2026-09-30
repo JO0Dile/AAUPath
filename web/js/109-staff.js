@@ -152,19 +152,22 @@
             return '<div class="stf-sem"><h3>' + esc(semName(s.s)) + '<span>' + hours(s.list) + L('H', ' س') + '</span></h3>' +
               s.list.map(function(c){
                 var n = g.opensAll(c.id).length;
-                return '<button type="button" class="stf-c' + (n >= 4 ? ' is-key' : '') + (c.id === openCourse ? ' is-on' : '') + '" data-stf-c="' + esc(c.id) + '">' +
+                return '<button type="button" class="stf-c' + (n >= 4 ? ' is-key' : '') + (c.id === openCourse ? ' is-on' : '') + (picked.indexOf(c.id) !== -1 ? ' is-picked' : '') + '" data-stf-c="' + esc(c.id) + '"' + (picked.indexOf(c.id) !== -1 ? ' aria-pressed="true"' : '') + '>' +
                   '<span>' + esc(courseName(c)) + '</span><small>' + (parseFloat(c.creditHours) || 0) + L('H', ' س') +
                   (n >= 4 ? ' · ' + esc(L('opens ' + n, 'بيفتح ' + n)) : '') + '</small></button>';
               }).join('') + '</div>';
           }).join('') + '</section>';
       }).join('') + '</div>' +
-      (openCourse ? detailHtml(p, g) : (R ? R.panelHtml() : '')) + '</div>' +
+      (picked.length > 1 && R && R.bulkHtml ? R.bulkHtml(p, picked, picking) : openCourse ? detailHtml(p, g) : (R ? R.panelHtml() : '')) + '</div>' +
       (R ? R.dialogHtml() : '');
     if(R) R.afterRender(view);
   }
 
   // ---- 20 · one course, with the counts ----------------------------------------------
   var openCourse = null;
+  // Several courses at once (Ctrl or Cmd + click, or "Pick several" and then
+  // taps on a phone): the panel changes them together (js/110-staff-room.js).
+  var picked = [], picking = false;
   function detailHtml(p, g){
     var c = (p.courses || []).filter(function(x){ return x.id === openCourse; })[0];
     if(!c) return '';
@@ -190,6 +193,8 @@
     }
     return '<aside class="stf-detail"><div class="stf-detail-h"><b>' + esc(courseName(c)) + '</b>' +
         '<button type="button" class="stf-x" data-stf="shut" aria-label="' + esc(L('Close', 'إغلاق')) + '">×</button></div>' +
+      (window.AAUP_STAFF_ROOM && window.AAUP_STAFF_ROOM.signedIn() ? '<button type="button" class="stf-btn stf-pickmany" data-stf="pickmany">' + esc(picking ? L('Tap courses to add them', 'اضغط على المساقات لتضيفها') : L('Pick several courses', 'اختار أكثر من مساق')) + '</button>' +
+        '<small class="stf-muted stf-pickhint">' + esc(L('Or hold Ctrl (⌘ on a Mac) and click courses.', 'أو اضغط Ctrl (⌘ عالماك) وانقر على المساقات.')) + '</small>' : '') +
       '<p class="stf-muted">' + esc((parseFloat(c.creditHours) || 0) + L(' hours', ' ساعات') + (c.yearId ? ' · ' + L('Year ', 'السنة ') + c.yearId.replace(/^y/, '') + ' · ' + semName(c.semester) : '')) + '</p>' +
       '<h4>' + esc(L('Needs', 'بيحتاج')) + '</h4><p>' + (needs.length ? esc(needs.join(L(', ', '، '))) : esc(L('Nothing', 'ولا إشي'))) + '</p>' +
       '<h4>' + esc(L('Opens', 'بيفتح')) + (opens.length ? ' (' + opens.length + ')' : '') + '</h4><p>' + (opens.length ? esc(opens.slice(0, 12).join(L(', ', '، '))) + (opens.length > 12 ? '…' : '') : esc(L('Nothing', 'ولا إشي'))) + '</p>' +
@@ -212,8 +217,22 @@
     var b = e.target.closest('[data-stf], [data-stf-c]');
     if(!b) return;
     var act = b.getAttribute('data-stf');
-    if(b.hasAttribute('data-stf-c')){ openCourse = b.getAttribute('data-stf-c'); loadStats(current); render(); return; }
-    if(act === 'shut'){ openCourse = null; render(); return; }
+    if(b.hasAttribute('data-stf-c')){
+      var cid = b.getAttribute('data-stf-c');
+      if(e.ctrlKey || e.metaKey || picking){
+        if(!picked.length && openCourse && openCourse !== cid) picked = [openCourse];
+        var at = picked.indexOf(cid);
+        if(at === -1) picked.push(cid); else picked.splice(at, 1);
+        openCourse = picked.length ? picked[picked.length - 1] : null;
+        if(!picked.length) picking = false;
+        render(); return;
+      }
+      picked = []; picking = false;
+      openCourse = cid; loadStats(current); render(); return;
+    }
+    if(act === 'pickmany'){ picking = true; picked = openCourse ? [openCourse] : []; render(); return; }
+    if(act === 'pickdone'){ picking = false; picked = []; render(); return; }
+    if(act === 'shut'){ openCourse = null; picked = []; picking = false; render(); return; }
     if(act === 'close'){ close(); return; }
     if(act === 'present'){ present(current); return; }
     if(act === 'lang'){ if(window.AAUP_LANG) window.AAUP_LANG.toggle(); render(); return; }
@@ -294,7 +313,8 @@
     }
     if(view && view.classList.contains('open') && window.AAUP_STAFF_ROOM && window.AAUP_STAFF_ROOM.onKey(e)){ e.preventDefault(); return; }
     if(view && view.classList.contains('open') && e.key === 'Escape'){
-      if(openCourse){ openCourse = null; render(); } else close();
+      if(picked.length || picking){ picked = []; picking = false; render(); }
+      else if(openCourse){ openCourse = null; render(); } else close();
     }
   });
   document.addEventListener('fullscreenchange', function(){ if(!document.fullscreenElement && show && show.classList.contains('open')) show.classList.remove('open'); });
@@ -323,6 +343,10 @@
     nameOf: nameOf, graph: graph, yearsOf: yearsOf, semName: semName,
     // Opens a course (any of its ids), in this major if it has it, else in
     // the first major that does.
+    // The courses picked together, and ending that.
+    picked: function(){ return picked.slice(); },
+    unpick: function(id){ var at = picked.indexOf(id); if(at !== -1) picked.splice(at, 1); if(picked.length < 2 && !picking){ openCourse = picked[0] || null; picked = []; } render(); },
+    endPick: function(){ picked = []; picking = false; render(); },
     openCourse: function(ids){
       var all = plans(), has = function(pid){ var p = all[pid]; return p && (p.courses || []).filter(function(c){ return ids.indexOf(c.id) !== -1; })[0]; };
       var pid = has(current) ? current : majors().map(function(m){ return m.id; }).filter(has)[0];

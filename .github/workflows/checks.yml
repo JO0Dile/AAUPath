@@ -40,7 +40,14 @@ jobs:
         run: npx --yes eslint@9
 
       - name: CSS (Stylelint)
-        run: npx --yes stylelint@16 "web/css/*.css"
+        # ignore@7.0.11 is listed on npm but its file is missing (404), and
+        # stylelint 16 pulls the newest 7.0.x, so a plain `npx stylelint@16`
+        # can't install at all. Installed with that one package held at 7.0.10.
+        run: |
+          mkdir -p /tmp/stylelint && cd /tmp/stylelint
+          echo '{"private":true,"overrides":{"ignore":"7.0.10"}}' > package.json
+          npm install --no-audit --no-fund --silent stylelint@16
+          cd "$GITHUB_WORKSPACE" && /tmp/stylelint/node_modules/.bin/stylelint "web/css/*.css"
 
       - name: HTML (HTMLHint)
         run: npx --yes htmlhint@1 "web/index.html"
