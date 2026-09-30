@@ -819,20 +819,24 @@
     return gsiLoading;
   }
   function mountGoogle(host, rtl, root){
+    renderGoogle(host, rtl, function(r){
+      if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Google sign-in failed.', true); return; }
+      reconcileAfterSignIn(rtl, function(res){
+        startAutoSync();
+        if(res.reload){ location.reload(); return; }
+        render();
+        if(window.__showToast){ window.__showToast(rtl ? 'تم تسجيل الدخول.' : 'Signed in.'); }
+      });
+    });
+  }
+  // The Google button itself; onResult gets the server's answer. Shared with
+  // the first-run wizard's sign-in (js/55-onboarding.js), which had only the
+  // email form, so on a first visit Google was nowhere to be seen.
+  function renderGoogle(host, rtl, onResult){
     loadGsi().then(function(){
       window.google.accounts.id.initialize({
         client_id: window.APP_GOOGLE_CLIENT_ID,
-        callback: function(resp){
-          googleSignIn(resp && resp.credential).then(function(r){
-            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Google sign-in failed.', true); return; }
-            reconcileAfterSignIn(rtl, function(res){
-              startAutoSync();
-              if(res.reload){ location.reload(); return; }
-              render();
-              if(window.__showToast){ window.__showToast(rtl ? 'تم تسجيل الدخول.' : 'Signed in.'); }
-            });
-          });
-        }
+        callback: function(resp){ googleSignIn(resp && resp.credential).then(onResult); }
       });
       window.google.accounts.id.renderButton(host, {
         theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with',
@@ -889,7 +893,16 @@
     signIn: signIn, signUp: signUp, reconcileAfterSignIn: reconcileAfterSignIn, startAutoSync: startAutoSync,
     // Runs the open-time check now (it normally waits a minute between runs).
     checkIn: function(){ lastCheck = 0; checkIn(); },
-    showPendingRecovery: showPendingRecovery
+    showPendingRecovery: showPendingRecovery,
+    // Shows wrap and draws the Google button in host, only when the server
+    // has a Google client id; otherwise wrap stays hidden.
+    googleButton: function(wrap, host, rtl, onResult){
+      googleClientId().then(function(id){
+        if(!id || !wrap.isConnected) return;
+        wrap.hidden = false; wrap.style.display = '';
+        renderGoogle(host, rtl, onResult);
+      });
+    }
   };
   // A recovery code the student has not confirmed saving yet (the app was
   // reloaded or closed first) is shown again.
