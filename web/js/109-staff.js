@@ -21,7 +21,25 @@
   function esc(s){ return window.__escapeHtml ? window.__escapeHtml(String(s == null ? '' : s)) : String(s); }
   var decoder = document.createElement('textarea');
   function plain(s){ decoder.innerHTML = String(s == null ? '' : s); return decoder.value; }
-  function plans(){ return window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {}; }
+  // The published plans (plans.json), never the viewer's own copy: a
+  // student's copy carries their own moves, retakes and placed electives,
+  // and staff must see the plan as the college publishes it. The phone's
+  // copy is only a stand-in for the moment before the file arrives.
+  var official = null, officialAsked = false;
+  function loadOfficial(){
+    if(officialAsked || !window.fetch) return;
+    officialAsked = true;
+    fetch(window.APP_PLANS_FEED_URL || 'plans.json').then(function(r){ return r.json(); }).then(function(d){
+      var m = {};
+      (d.plans || []).forEach(function(p){ if(p && p.id) m[p.id] = p; });
+      official = m;
+      if(view && view.classList.contains('open')) render();
+    }).catch(function(){ officialAsked = false; });
+  }
+  function plans(){
+    loadOfficial();
+    return official || (window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {});
+  }
   function nameOf(p){
     var mn = (p && p.majorName) || {};
     var pick = typeof mn === 'string' ? mn : ((ar() && mn.ar) || mn.en || '');
@@ -176,6 +194,7 @@
       '<h4>' + esc(L('Needs', 'بيحتاج')) + '</h4><p>' + (needs.length ? esc(needs.join(L(', ', '، '))) : esc(L('Nothing', 'ولا إشي'))) + '</p>' +
       '<h4>' + esc(L('Opens', 'بيفتح')) + (opens.length ? ' (' + opens.length + ')' : '') + '</h4><p>' + (opens.length ? esc(opens.slice(0, 12).join(L(', ', '، '))) + (opens.length > 12 ? '…' : '') : esc(L('Nothing', 'ولا إشي'))) + '</p>' +
       (stats ? '<h4>' + esc(L('Students', 'الطلاب')) + '</h4>' + stats : '') +
+      (window.AAUP_STAFF_ROOM ? window.AAUP_STAFF_ROOM.courseEditHtml(c) : '') +
     '</aside>';
   }
   function loadStats(planId){
@@ -297,5 +316,5 @@
 
   window.AAUP_STAFF = { open: open, close: close, present: present,
     refresh: function(){ if(view && view.classList.contains('open')) render(); },
-    current: function(){ return current; } };
+    current: function(){ return current; }, plans: plans };
 })();

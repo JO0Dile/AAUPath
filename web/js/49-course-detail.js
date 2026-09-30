@@ -313,6 +313,7 @@
     var pid = (window.AAUP_GPA && window.AAUP_GPA.primaryId) ? window.AAUP_GPA.primaryId(prefix, slug) : (prefix + '-c-' + slug);
     var hrs = course && course.creditHours != null ? (parseFloat(course.creditHours) || 0) : null;
     var num = info.num || (course && course.courseNumber);
+    var staffCourse = { id: slug, semester: course && course.semester };
 
     // One sentence, then the status buttons (js/21 fills .cd-extras), then
     // the rest folded: prerequisites and what it opens, student thoughts,
@@ -322,12 +323,16 @@
         '<div class="cd-title">' + catChipHTML(course, cats) + '<h3>' + name + '</h3>' +
           '<div class="cd-sub">' +
             [hrs != null ? (rtl ? (hrs === 2 ? 'ساعتين' : hrs + (hrs >= 3 && hrs <= 10 ? ' ساعات' : ' ساعة')) : hrs + (hrs === 1 ? ' hour' : ' hours')) : '', term].filter(Boolean).map(esc).join(' · ') +
+            // Round 10: "Fall only" when the college says so.
+            (window.AAUP_STAFF_CONTENT ? window.AAUP_STAFF_CONTENT.subChipHtml(staffCourse) : '') +
           '</div></div>' +
         moreMenuHTML(prefix, slug, pid, t) +
       '</div>' +
       '<div class="cd-body">' +
         '<div class="cd-main">' +
           leadHTML(prefix, slug, rtl, pid) +
+          // Round 10: what the professor or dean wrote about this course.
+          (window.AAUP_STAFF_CONTENT ? window.AAUP_STAFF_CONTENT.courseHtml(staffCourse) : '') +
           '<div class="cd-extras"></div>' +
           // 52 · The English placement question, asked on the three courses
           // it decides rather than as a gate in front of the whole app.

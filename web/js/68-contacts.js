@@ -39,12 +39,29 @@
       if(!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function(data){
-      cache = data;
+      cache = withStaffCards(data);
       return cache;
     }).catch(function(){
       cache = 'error';
       return cache;
     });
+  }
+
+  // Round 10: a professor's own card (office, hours, how to reach them),
+  // written on the staff page. It joins the listed professor with the same
+  // name, or is added as a new one.
+  function withStaffCards(data){
+    var list = window.AAUP_STAFF_CONTENT ? window.AAUP_STAFF_CONTENT.cards() : [];
+    if(!list.length || !data || !Array.isArray(data.contacts)) return data;
+    list.forEach(function(k){
+      var hit = data.contacts.filter(function(c){ return c.category === 'instructor' && normName(c.name) === normName(k.name); })[0];
+      if(!hit){
+        hit = { name: k.name, category: 'instructor', courses: window.AAUP_STAFF_ROOM ? window.AAUP_STAFF_ROOM.courseNames(k.courses, 'aaup') : [] };
+        data.contacts.push(hit);
+      }
+      hit.office = k.office; hit.hours = k.hours; hit.reach = k.contact;
+    });
+    return data;
   }
 
   var TX = {
@@ -125,6 +142,8 @@
       '<span class="ct-avatar' + (isPerson ? ' ct-avatar-initials' : '') + '">' + avatar + '</span>' +
       '<div class="ct-card-main">' +
         '<span class="ct-name">' + esc(c.name) + '</span>' + sub +
+        (c.office || c.hours || c.reach
+          ? '<span class="ct-staff">' + [c.office, c.hours, c.reach].filter(Boolean).map(esc).join(' · ') + '</span>' : '') +
         (c.email ? '<span class="ct-email-text" dir="ltr">' + esc(c.email) + '</span>' : '<span class="ct-noemail">' + t('noEmail', rtl) + '</span>') +
       '</div>' +
       (c.email
