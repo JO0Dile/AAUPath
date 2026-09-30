@@ -107,12 +107,13 @@
     }
     // F · this semester's sections. "Put it in My Week" makes the section's
     // days, times and room this course's class times.
-    if(Array.isArray(c.sections) && c.sections.length){
+    var secs = sectionsOf(c);
+    if(secs.length){
       var picked = window.AAUP_TIMETABLE && course.plan ? window.AAUP_TIMETABLE.pickedSection(course.plan, course.id) : '';
       out += '<div class="sc-secs"><div class="sc-lbl">' + esc(L('Sections this semester', 'شعب هالفصل')) + '</div>' +
-        c.sections.map(function(x, i){
+        secs.map(function(x, i){
           var on = picked && picked === String(x.n);
-          return '<div class="sc-sec"><div class="sc-sec-t"><b>' + esc(L('Section ', 'شعبة ') + x.n) + '</b><small>' +
+          return '<div class="sc-sec"><div class="sc-sec-t"><b>' + esc(x.fromStudent ? L('From a student', 'من طالب') : L('Section ', 'شعبة ') + x.n) + '</b><small>' +
               esc([secDays(x.days), fmt(x.s) + '–' + fmt(x.e), x.room, x.prof].filter(Boolean).join(' · ')) + '</small></div>' +
             (course.plan ? '<button type="button" class="sc-pick' + (on ? ' is-on' : '') + '" data-sc-pick="' + esc(course.plan + '|' + course.id + '|' + i) + '">' +
               esc(on ? L('In My Week ✓', 'بأسبوعي ✓') : L('Put it in My Week', 'حطها بأسبوعي')) + '</button>' : '') +
@@ -135,7 +136,7 @@
     var b = e.target.closest && e.target.closest('[data-sc-pick]');
     if(!b || !window.AAUP_TIMETABLE) return;
     var parts = b.getAttribute('data-sc-pick').split('|');
-    var c = forCourse(parts[1]), sec = c && c.sections && c.sections[+parts[2]];
+    var c = forCourse(parts[1]), sec = c && sectionsOf(c)[+parts[2]];
     if(!sec) return;
     window.AAUP_TIMETABLE.pickSection(parts[0], parts[1], sec);
     var box = b.closest('.sc-secs');
@@ -144,8 +145,18 @@
       x.classList.toggle('is-on', on);
       x.textContent = on ? L('In My Week ✓', 'بأسبوعي ✓') : L('Put it in My Week', 'حطها بأسبوعي');
     });
-    if(window.__showToast) window.__showToast(L('Section ' + sec.n + ' is in My Week', 'الشعبة ' + sec.n + ' صارت بأسبوعي'));
+    if(window.__showToast) window.__showToast(sec.fromStudent ? L('Those times are in My Week', 'هالأوقات صارت بأسبوعي') : L('Section ' + sec.n + ' is in My Week', 'الشعبة ' + sec.n + ' صارت بأسبوعي'));
   });
+  // The college's sections, then class times students shared (from their own
+  // schedules, unchecked), minus any that match a college section.
+  function sectionsOf(c){
+    var own = Array.isArray(c.sections) ? c.sections : [];
+    var seen = {};
+    own.forEach(function(x){ seen[JSON.stringify([x.days, x.s, x.e])] = true; });
+    var shared = (Array.isArray(c.shared) ? c.shared : []).filter(function(x){ return !seen[JSON.stringify([x.days, x.s, x.e])]; })
+      .map(function(x, i){ return { n: 'st' + (i + 1), days: x.days, s: x.s, e: x.e, room: x.room, fromStudent: true }; });
+    return own.concat(shared);
+  }
   function cardChipHtml(course, done){
     var c = course && forCourse(course.id);
     if(!c || !c.offered || done) return '';
