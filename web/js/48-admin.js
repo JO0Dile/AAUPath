@@ -1604,7 +1604,14 @@
                 '<button type="button" class="home-btn admin-mini" data-as-link="' + esc(s.id) + '">New link</button> ' +
                 '<button type="button" class="home-btn admin-mini admin-danger" data-as-del="' + esc(s.id) + '">Remove</button></td></tr>' +
               // The link just made for this login, right under its row.
-              (state.staffLink && state.staffLink.id === s.id ? '<tr class="as-linkrow"><td colspan="5">' + R.linkBoxHtml(state.staffLink.who, state.staffLink.link) + '</td></tr>' : '');
+              (state.staffLink && state.staffLink.id === s.id ? '<tr class="as-linkrow"><td colspan="5">' + R.linkBoxHtml(state.staffLink.who, state.staffLink.link) + '</td></tr>' : '') +
+              // New link for someone who already has a password: asked here in
+              // the page, not in a browser pop-up (a browser can block those,
+              // and then the button seemed to do nothing).
+              (state.staffAsk === s.id ? '<tr class="as-linkrow"><td colspan="5"><div class="sr-link"><b>Make a new link for ' + esc(s.name || s.username) + '?</b>' +
+                '<p>It signs them out until they open it and choose a new password. Their old link stops working.</p>' +
+                '<div class="sr-link-row"><button type="button" class="home-btn admin-primary" data-as-linkgo="' + esc(s.id) + '">Make the new link</button>' +
+                '<button type="button" class="home-btn" data-as-linkno>Cancel</button></div></div></td></tr>' : '');
           }).join('') + '</tbody></table>'
         : '<p class="admin-hint">No staff logins yet.</p>');
   }
@@ -1671,17 +1678,25 @@
           .then(function(){ state.staffItems = null; render(); }).catch(err);
       });
     });
-    main.querySelectorAll('[data-as-link]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var s = byId(b.getAttribute('data-as-link'));
-        if(s && s.hasPassword && !confirm('A new link signs ' + (s.name || s.username) + ' out until they use it to choose a new password. Make one?')) return;
-        api('PATCH', '/api/admin/staff/' + s.id, { newSetupCode: true }).then(function(res){
+    var makeLink = function(id){
+        state.staffAsk = null;
+        api('PATCH', '/api/admin/staff/' + id, { newSetupCode: true }).then(function(res){
           state.staffLink = { id: res.staff.id, who: res.staff.name || res.staff.username, link: R.setupLink(res.staff.username, res.setupCode) };
           toast('New link made. Copy it under ' + (res.staff.name || res.staff.username) + '.');
           state.staffItems = null; render();
-        }).catch(err);
+        }).catch(function(e){ toast('Couldn\'t make a new link: ' + e.message); render(); });
+    };
+    main.querySelectorAll('[data-as-link]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var s = byId(b.getAttribute('data-as-link'));
+        if(!s) return;
+        state.staffLink = null;
+        if(s.hasPassword){ state.staffAsk = s.id; render(); return; }
+        makeLink(s.id);
       });
     });
+    main.querySelectorAll('[data-as-linkgo]').forEach(function(b){ b.addEventListener('click', function(){ makeLink(b.getAttribute('data-as-linkgo')); }); });
+    main.querySelectorAll('[data-as-linkno]').forEach(function(b){ b.addEventListener('click', function(){ state.staffAsk = null; render(); }); });
     main.querySelectorAll('[data-as-del]').forEach(function(b){
       b.addEventListener('click', function(){
         var s = byId(b.getAttribute('data-as-del'));
