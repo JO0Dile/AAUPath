@@ -9794,3 +9794,27 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .stf-pickmany{margin:0 0 4px;}
 .stf-pickhint{display:block; margin-bottom:8px;}
 .sr-bulk-chips{margin:4px 0 8px;}
+
+/* Elective tracks in the plan (js/28-imported.js, round 10, idea 8). */
+.imp-tracks{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:4px 0 10px;}
+.imp-tracks-l{font-size:12px; font-weight:800; color:var(--text-dim);}
+.imp-track{padding:5px 12px; border-radius:999px; border:1px solid var(--line); background:transparent; color:inherit; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.imp-track small{font-weight:600; color:var(--text-dim); font-variant-numeric:tabular-nums;}
+.imp-track.is-on{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 16%, transparent);}
+.imp-track-note{flex-basis:100%; margin:2px 0 0; font-size:12px; color:var(--text-dim);}
+.course.in-track{outline:2px solid var(--accent); outline-offset:-2px;}
+.cm-track{display:inline-block; margin-inline-end:6px; padding:0 7px; border-radius:999px; background:var(--accent); color:#fff; font-size:10.5px; font-weight:800; line-height:1.6;}
+
+/* Plan tools in the admin editor (js/48-admin.js, round 10, ideas 7 and 8). */
+.apt-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:14px; margin:6px 0 4px;}
+.apt-card{border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:var(--panel);}
+.apt-card h3{margin:0 0 4px;}
+.apt-add{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.apt-add .sr-in{flex:1 1 140px; min-width:0;}
+.apt-track{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line);}
+.apt-track > div{flex:1; min-width:0;}
+.apt-count{font-size:12px; color:var(--text-dim); white-space:nowrap;}
+.apt-trform{margin-top:8px;}
+.apt-checks{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 12px; max-height:260px; overflow:auto; margin:8px 0; font-size:13px;}
+.apt-checks label{display:flex; gap:6px; align-items:flex-start;}
+.apt-save{margin-bottom:14px;}

@@ -1994,6 +1994,41 @@
       '<span class="imp-pool-num">' + line + '</span></div>';
   }
 
+  // Round 10, idea 8 · elective tracks. The college groups electives into
+  // tracks (Robotics, Data…); a student can follow one. Its courses come
+  // first among the electives, marked, with how many are done.
+  var TRACK_KEY = 'aaup_planTrack';
+  function trackOf(planId, plan){
+    var pick = window.AAUP_STORAGE ? (window.AAUP_STORAGE.getJSON(TRACK_KEY, {}) || {})[planId] : '';
+    return (plan.tracks || []).filter(function(t){ return t.id === pick; })[0] || null;
+  }
+  // Track names arrive already made safe by the feed sanitizer (js/30-sync.js).
+  function tracksHtml(planId, plan, rtl){
+    var list = plan.tracks || [];
+    if(!list.length) return '';
+    var cur = trackOf(planId, plan);
+    var doneOf = function(t){ return t.courses.filter(function(id){ return isDone(planId, id); }).length; };
+    return '<div class="imp-tracks"><span class="imp-tracks-l">' + (rtl ? 'مسارات:' : 'Tracks:') + '</span>' +
+      list.map(function(t){
+        var on = cur && cur.id === t.id;
+        return '<button type="button" class="imp-track' + (on ? ' is-on' : '') + '" aria-pressed="' + (on ? 'true' : 'false') + '" data-imp-track="' + window.__escapeHtml(planId + '|' + t.id) + '">' +
+          (rtl && t.name.ar ? t.name.ar : t.name.en) + ' <small>' + doneOf(t) + '/' + t.courses.length + '</small></button>';
+      }).join('') +
+      (cur ? '<p class="imp-track-note">' + (rtl ? 'بتتبع مسار ' + (cur.name.ar || cur.name.en) + ': مواده أول ومعلّمة. اضغط عليه كمان مرة لتلغيه.'
+        : 'Following the ' + cur.name.en + ' track: its courses come first, marked. Tap it again to stop.') + '</p>'
+        : '<p class="imp-track-note">' + (rtl ? 'اختار مسار لتشوف مواده أول.' : 'Pick a track to see its courses first.') + '</p>') +
+    '</div>';
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-imp-track]');
+    if(!b || !window.AAUP_STORAGE) return;
+    var parts = b.getAttribute('data-imp-track').split('|');
+    var all = window.AAUP_STORAGE.getJSON(TRACK_KEY, {}) || {};
+    if(all[parts[0]] === parts[1]) delete all[parts[0]]; else all[parts[0]] = parts[1];
+    window.AAUP_STORAGE.setJSON(TRACK_KEY, all);
+    render(parts[0]);
+  });
+
   function unscheduledHtml(planId, plan, editing, rtl){
     var pairs = pairContinuations(planId);
     // Two sources feed one pool: courses the plan never scheduled, and every
@@ -2018,7 +2053,11 @@
       (rtl
         ? 'الخطة لا تحدد لها فصلًا — ضعها في الفصل الذي تأخذها فيه.'
         : 'The plan does not schedule these — put each one where you take it.') +
-      '</p>';
+      '</p>' + tracksHtml(planId, plan, rtl);
+    var tr = trackOf(planId, plan), inTrack = {};
+    (tr ? tr.courses : []).forEach(function(id){ inTrack[id] = true; });
+    // Already made safe by the feed sanitizer (see tracksHtml).
+    var trName = tr ? (rtl && tr.name.ar ? tr.name.ar : tr.name.en) : '';
 
     order.forEach(function(k){
       if(!groups[k]) return;
@@ -2030,7 +2069,10 @@
         ' <span class="imp-elective-count">' + groups[k].length + '</span></div>' +
         poolMeterHtml(planId, plan, k, rtl) +
         '<div class="course-row" id="' + planId + '-elective-' + k + '">' +
-        groups[k].map(function(c){ return courseCardHtml(planId, c, rtl, null, pairs, whereTx); }).join('') +
+        groups[k].slice().sort(function(a, b){ return (inTrack[b.id] ? 1 : 0) - (inTrack[a.id] ? 1 : 0); }).map(function(c){
+          var card = courseCardHtml(planId, c, rtl, null, pairs, whereTx);
+          return inTrack[c.id] ? card.replace('<div class="course ', '<div class="course in-track ').replace('<div class="course-meta">', '<div class="course-meta"><span class="cm-track">' + trName + '</span>') : card;
+        }).join('') +
         '</div></div>';
     });
     return html + '</div>';

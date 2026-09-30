@@ -78,7 +78,65 @@
     return changed;
   }
   window.__migrateCourseIds = run;
+
+  // Round 10, idea 7 · replaced courses. When a college says an old course now
+  // counts as a new one, what a student saved under "<plan>-c-<old>" (ticked,
+  // grade, status, notes, class times) moves to "<plan>-c-<new>". Only those
+  // saved ids move: the plan's own copy is updated through the feed. Where the
+  // new one already has something, the new one wins. Does nothing once
+  // nothing old is left.
+  window.__carryReplaced = function(plan, map){
+    if(!plan || !map) return 0;
+    var re = new RegExp('(^|[^A-Za-z0-9_-])' + reEsc(plan) + '-c-([A-Za-z0-9_-]+)', 'g');
+    var mark = plan + '-c-';
+    function str(v){ return v.indexOf(mark) === -1 ? v : v.replace(re, function(m, pre, slug){ return pre + mark + (map[slug] || slug); }); }
+    function w(v){
+      if(typeof v === 'string') return str(v);
+      if(Array.isArray(v)) return v.map(w);
+      if(!v || typeof v !== 'object') return v;
+      var out = {};
+      Object.keys(v).forEach(function(k){
+        var nk = str(k);
+        if(Object.prototype.hasOwnProperty.call(out, nk) && nk !== k) return;
+        out[nk] = w(v[k]);
+      });
+      return out;
+    }
+    var changed = 0;
+    try{
+      var keys = [];
+      for(var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      keys.forEach(function(k){
+        if(k.indexOf('aaup') !== 0 || k === 'aaup_importedPlans') return;
+        var raw = localStorage.getItem(k);
+        if(!raw || raw.indexOf(mark) === -1) return;
+        var val;
+        try{ val = JSON.parse(raw); }catch(e){ return; }
+        var next = JSON.stringify(w(val));
+        if(next !== raw){ localStorage.setItem(k, next); changed++; }
+      });
+    }catch(e){ /* storage blocked */ }
+    return changed;
+  };
+  // Every official plan on this phone that names replaced courses, carried at
+  // once. Runs here at start, before any script reads storage, so what the app
+  // loads is already under the new ids.
+  window.__carryAllReplaced = function(){
+    var plans = {}, n = 0;
+    try{ plans = JSON.parse(localStorage.getItem('aaup_importedPlans') || '{}') || {}; }catch(e){ return 0; }
+    Object.keys(plans).forEach(function(id){
+      var pl = plans[id];
+      if(!pl || !pl.official || !Array.isArray(pl.replaced) || !pl.replaced.length) return;
+      var has = {}, map = {}, any = false;
+      (pl.courses || []).forEach(function(c){ has[c.id] = true; });
+      // Not while the old course is still in this student's own copy.
+      pl.replaced.forEach(function(r){ if(r && !has[r[0]] && has[r[1]]){ map[r[0]] = r[1]; any = true; } });
+      if(any) n += window.__carryReplaced(id, map);
+    });
+    return n;
+  };
   // Old tag -> new id for one major (for anything that still meets an old id).
   window.__renamedId = function(plan, id){ return (RENAMES[plan] && RENAMES[plan][id]) || id; };
   run();
+  window.__carryAllReplaced();
 })();
