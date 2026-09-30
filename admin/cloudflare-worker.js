@@ -1457,6 +1457,10 @@ async function contentDb(env) {
         at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'open', decided_at INTEGER)`,
       `CREATE TABLE IF NOT EXISTS staff_dates (id TEXT PRIMARY KEY, uni TEXT NOT NULL, college TEXT NOT NULL,
         label TEXT NOT NULL, date TEXT NOT NULL, by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL)`,
+      // Class times students typed into their own schedule, shared with every
+      // student of the course (not checked: there is no one else to ask).
+      `CREATE TABLE IF NOT EXISTS shared_sections (uni TEXT NOT NULL, course TEXT NOT NULL, days TEXT NOT NULL, s TEXT NOT NULL,
+        e TEXT NOT NULL, room TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL, PRIMARY KEY (uni, course, days, s, e, room))`,
     ]) await db.prepare(sql).run();
     // Round 10, idea 18: a change remembers the value it replaced, so a dean
     // can put it back. Added to a staff_log made before that.
@@ -1677,6 +1681,14 @@ async function handlePublicContent(request, env, uni) {
       dates.push({ id: r.id, college: r.college, label: r.label, date: r.date, majors });
     }
   }
+  // Class times students shared: at most 12 per course, newest first.
+  const sh = await db.prepare('SELECT course, days, s, e, room, at FROM shared_sections WHERE uni = ? ORDER BY at DESC').bind(uni).all();
+  for (const r of sh.results || []) {
+    const c = courses[r.course] = courses[r.course] || {};
+    c.shared = c.shared || [];
+    if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room });
+    v = Math.max(v, r.at);
+  }
   const res = json({ ok: true, v, courses, cards, replies, dates }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
   return res;
@@ -1796,6 +1808,40 @@ async function handleStaffPrereqs(request, env, me) {
 
 // Routes a signed-in staff member can use. Returns a Response, or null when
 // the path is not one of them.
+// ---------------------------------------------------------------------------
+// Shared class times. A student's class times for a course (day, start, end,
+// room) are shared with every student of that course, straight away and
+// unchecked, because nobody else has the sections to give. Only the shape is
+// checked, and each course keeps its 12 newest.
+// POST /api/public/sections { uni, course, meetings: [{ d: [0-6], s, e, r }] }
+// ---------------------------------------------------------------------------
+async function handleShareSections(request, env) {
+  if (!env.STAFF_DB) return json({ ok: true, saved: 0 }, 200, env, request);
+  const body = await readJson(request, 4096);
+  const uni = String(body.uni || 'aaup'), course = String(body.course || '');
+  if (!SLUG_RE.test(uni) || !SLUG_RE.test(course)) throw fail('which course?');
+  const list = Array.isArray(body.meetings) ? body.meetings.slice(0, 6) : [];
+  const T = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const db = await contentDb(env);
+  const now = Math.floor(Date.now() / 1000);
+  let saved = 0;
+  for (const m of list) {
+    const days = Array.isArray(m && m.d) ? [...new Set(m.d.map(Number))].filter((x) => x >= 0 && x <= 6).sort() : [];
+    const st = String((m && m.s) || ''), en = String((m && m.e) || '');
+    if (!days.length || !T.test(st) || !T.test(en) || en <= st) continue;
+    const room = str(m.r, 40).trim();
+    await db.prepare(`INSERT INTO shared_sections (uni, course, days, s, e, room, at) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(uni, course, days, s, e, room) DO UPDATE SET at = excluded.at`)
+      .bind(uni, course, JSON.stringify(days), st, en, room, now).run();
+    saved++;
+  }
+  if (saved) {
+    await db.prepare(`DELETE FROM shared_sections WHERE uni = ? AND course = ? AND rowid NOT IN
+      (SELECT rowid FROM shared_sections WHERE uni = ? AND course = ? ORDER BY at DESC LIMIT 12)`).bind(uni, course, uni, course).run();
+  }
+  return json({ ok: true, saved }, 200, env, request);
+}
+
 // ---------------------------------------------------------------------------
 // What students said (round 10, ideas 13 and 14)
 //
@@ -2128,6 +2174,7 @@ export default {
       // routes, checked by verifyStaff() — never by the admin gate below.
       if (seg[0] === 'api' && seg[1] === 'staff') return await handleStaffRoutes(request, env, seg, url);
       // What staff wrote, for every student (no sign-in).
+      if (seg[1] === 'public' && seg[2] === 'sections' && request.method === 'POST') return await handleShareSections(request, env);
       if (seg[1] === 'public' && seg[2] === 'content' && request.method === 'GET') {
         return await handlePublicContent(request, env, url.searchParams.get('uni') || 'aaup');
       }

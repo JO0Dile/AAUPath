@@ -36,7 +36,41 @@
 
   function all(){ var m = window.AAUP_STORAGE ? window.AAUP_STORAGE.getJSON(KEY, {}) : {}; return (m && typeof m === 'object') ? m : {}; }
   function forPlan(planId){ var m = all()[planId]; return (m && typeof m === 'object') ? m : {}; }
-  function savePlan(planId, map){ var m = all(); m[planId] = map; if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, m); }
+  function savePlan(planId, map){ var m = all(); m[planId] = map; if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, m); shareLater(planId); }
+
+  // Shared class times. The day, time and room a student sets for one of their
+  // plan's courses are shared with every student of that course (the admin
+  // Worker's /api/public/sections), and show in its window as "From a
+  // student" (js/111-staff-content.js). Sent a few seconds after the last
+  // change, once per change; a section picked from that list isn't sent back.
+  var SHARED_KEY = 'aaup_ttShared', shareTimer = null;
+  function shareLater(planId){
+    clearTimeout(shareTimer);
+    shareTimer = setTimeout(function(){ shareNow(planId); }, 4000);
+  }
+  function shareNow(planId){
+    var base = String(window.APP_ADMIN_URL || '').replace(/\/+$/, '');
+    if(!base || !window.fetch || navigator.onLine === false || !window.AAUP_STORAGE || !window.AAUP_IMPORTED) return;
+    var plan = window.AAUP_IMPORTED.loadImportedPlans()[planId];
+    if(!plan) return;
+    var ids = {};
+    (plan.courses || []).forEach(function(c){ ids[c.id] = true; });
+    var map = forPlan(planId), sent = window.AAUP_STORAGE.getJSON(SHARED_KEY, {}) || {};
+    Object.keys(map).forEach(function(key){
+      if(!ids[key]) return;
+      var ms = (map[key] || []).filter(function(m){ return !m.sec && m.d && m.d.length && m.s && m.e; })
+        .map(function(m){ return { d: m.d, s: m.s, e: m.e, r: m.r || '' }; });
+      var k = planId + '|' + key, sig = JSON.stringify(ms);
+      if(!ms.length || sent[k] === sig) return;
+      sent[k] = sig;
+      fetch(base + '/api/public/sections', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uni: plan.university || 'aaup', course: key, meetings: ms }) }).catch(function(){
+        var again = window.AAUP_STORAGE.getJSON(SHARED_KEY, {}) || {};
+        delete again[k]; window.AAUP_STORAGE.setJSON(SHARED_KEY, again);
+      });
+    });
+    window.AAUP_STORAGE.setJSON(SHARED_KEY, sent);
+  }
   function hasAny(planId){ var m = forPlan(planId); return Object.keys(m).some(function(k){ return Array.isArray(m[k]) && m[k].length; }); }
 
   function mins(hhmm){ var p = String(hhmm || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
