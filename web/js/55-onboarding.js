@@ -219,6 +219,7 @@
           : '') +
         '</div>' +
         '<div id="wizCloudMsg"></div>' +
+        '<div id="wizGoogleWrap" hidden><div class="cloud-or"><span>or</span></div><div id="wizGoogleBtn" class="cloud-google"></div></div>' +
         '<button type="button" class="wiz-switch" id="wizCloudToggleSignUp">' +
           (mode === 'up' ? 'I already have an account' : 'Create one instead') +
         '</button>',
@@ -321,6 +322,18 @@
   }
 
   function bindCloudStep(){
+    var gWrap = document.getElementById('wizGoogleWrap');
+    if(gWrap && window.AAUP_CLOUD && window.AAUP_CLOUD.googleButton){
+      window.AAUP_CLOUD.googleButton(gWrap, document.getElementById('wizGoogleBtn'), false, function(r){
+        if(!r.ok){ showCloudMsg((r.data && r.data.error) || 'Google sign-in failed.', true); return; }
+        if(window.AAUP_STUDENT && window.AAUP_STUDENT.markSeen){ window.AAUP_STUDENT.markSeen(); }
+        window.AAUP_CLOUD.reconcileAfterSignIn(false, function(res){
+          window.AAUP_CLOUD.startAutoSync();
+          if(res.reload){ location.reload(); return; }
+          finish(true);
+        });
+      });
+    }
     var toggle = document.getElementById('wizCloudToggleSignUp');
     if(toggle){
       toggle.addEventListener('click', function(){

@@ -468,6 +468,10 @@
       return Promise.all([live, latest]).then(function(x){ return { w: w, live: x[0], latest: x[1] }; });
     }))).then(function(all){
       state.deployRun = all[0];
+      return (window.APP_CLOUD_URL ? getJson(String(window.APP_CLOUD_URL).replace(/\/+$/, '') + '/api/google/config')
+        .then(function(d){ return d && d.clientId ? 'on' : 'off'; }).catch(function(e){ return e && /HTTP 404/.test(e.message) ? 'old' : 'down'; })
+        : Promise.resolve('down')).then(function(g){ state.googleSignIn = g; return all; });
+    }).then(function(all){
       state.workers = all.slice(1).map(function(r){
         var st = 'unknown';
         if(r.live === null) st = 'down';
@@ -505,8 +509,20 @@
           '<td>' + (w.latest ? '<code>' + esc(w.latest.sha.slice(0, 7)) + '</code> <span class="admin-sub">' + esc(agoTx(w.latest.at)) + '</span>' : '—') + '</td>' +
           '<td>' + badge[w.status] + (w.status === 'behind' || w.status === 'unknown' ? '<br><a class="admin-sub" href="' + esc(fileUrl) + '" target="_blank" rel="noopener">the code to paste</a>' : '') + '</td></tr>';
       }).join('') + '</tbody></table>' +
+      googleNoteHtml() +
       '<p class="admin-hint">“Version unknown” means that Worker was pasted by hand, so it can\'t say which commit it is. The first automatic deploy fixes that.</p>' +
       '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn" id="adminWorkersRefresh">Check again</button></div>';
+  }
+
+  // Whether students get the "Continue with Google" button: it shows only
+  // when studyplan-cloud answers /api/google/config with a client id.
+  function googleNoteHtml(){
+    var g = state.googleSignIn;
+    if(g === 'on') return '<div class="admin-note">Sign in with Google: <span class="adm-ok">✓ on</span>. Students see “Continue with Google” when they sign in.</div>';
+    if(g === 'off') return '<div class="admin-note admin-note-warn"><strong>Sign in with Google is off:</strong> studyplan-cloud has no Google client ID, so students don\'t see the button. In Cloudflare → Workers → <strong>studyplan-cloud</strong> → Settings → Variables and Secrets, add <code>GOOGLE_CLIENT_ID</code> (type Text) with the client ID from Google Cloud → Credentials, then Deploy. Check that the name is spelled exactly like that and that it is on studyplan-cloud, not another Worker.</div>';
+    if(g === 'old') return '<div class="admin-note admin-note-warn"><strong>Sign in with Google:</strong> studyplan-cloud is running old code that can\'t say whether Google is set up. Run Actions → Deploy workers → Run workflow.</div>';
+    if(g === 'down') return '<div class="admin-note admin-note-warn"><strong>Sign in with Google:</strong> couldn\'t reach studyplan-cloud to check.</div>';
+    return '';
   }
 
   // ---------- Waiting for you (round 7, idea 30) ----------
@@ -521,6 +537,7 @@
       var behind = state.workers.filter(function(w){ return w.status === 'behind' || w.status === 'down'; });
       if(behind.length) row('🚀 ' + behind.length + ' Worker' + (behind.length === 1 ? '' : 's') + ' behind or not reachable: ' + esc(behind.map(function(w){ return w.name; }).join(', ')), 'workers', 'Open');
       if(!state.deployRun) row('🚀 Automatic Worker deploys aren\'t set up yet', 'workers', 'How');
+      if(state.googleSignIn === 'off' || state.googleSignIn === 'old') row('🔑 Sign in with Google is off, so students don\'t see the button', 'workers', 'Fix');
     }
     if(contribSecret() && state.contribItems){
       var pend = state.contribItems.filter(function(c){ return (c.status || 'pending') === 'pending'; });
