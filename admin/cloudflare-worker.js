@@ -591,6 +591,16 @@ function validMajor(m) {
     if (olds.has(old)) throw fail(`replaced course ${old} is listed twice`);
     olds.add(old);
   }
+  // Idea 5 · next year's draft: a whole set of courses and prerequisites,
+  // checked by the very same rules as the plan itself.
+  let draft = null;
+  if (m.draft) {
+    if (!DATE_RE.test(String(m.draft.goesLive || ''))) throw fail('next year’s plan needs the date it goes live');
+    try {
+      const x = validMajor({ slug: m.slug, name: m.name, university: m.university, years: m.years, courses: m.draft.courses, prerequisites: m.draft.prerequisites });
+      draft = { goesLive: String(m.draft.goesLive), courses: x.courses, prerequisites: x.prerequisites };
+    } catch (e) { throw fail(`next year’s plan: ${e.message}`); }
+  }
   // Idea 8 · elective tracks: named groups of this plan's courses.
   const tracks = Array.isArray(m.tracks) ? m.tracks : [];
   if (tracks.length > 20) throw fail('up to 20 tracks');
@@ -643,6 +653,7 @@ function validMajor(m) {
     prerequisites: prereqs.map((p) => [p[0], p[1]]),
     replaced: replaced.map((r) => ({ old: String(r.old).trim(), oldName: str(r.oldName, 200).trim(), new: r.new })),
     tracks: tracks.map((t) => ({ id: t.id, name: str(t.name, 80).trim(), nameAr: str(t.nameAr, 80).trim(), courses: [...new Set(t.courses)] })),
+    draft,
   };
   return out;
 }
@@ -702,7 +713,19 @@ function toEditable(stored) {
     years: Object.keys(years)
       .sort((a, b) => parseInt(a.slice(1), 10) - parseInt(b.slice(1), 10))
       .map((id) => ({ id, hasSummer: years[id] })),
-    courses: courses.map((c) => ({
+    courses: courses.map(courseToEditable),
+    prerequisites: pairsOf(stored.prerequisites),
+    replaced: Array.isArray(stored.replaced) ? stored.replaced : [],
+    tracks: Array.isArray(stored.tracks) ? stored.tracks : [],
+    draft: stored.draft ? { goesLive: stored.draft.goesLive,
+      courses: (stored.draft.courses || []).map(courseToEditable), prerequisites: pairsOf(stored.draft.prerequisites) } : null,
+  };
+}
+function pairsOf(list) {
+  return (Array.isArray(list) ? list : []).map((p) => [p.requires, p.forCourse]).filter((p) => p[0] && p[1]);
+}
+function courseToEditable(c) {
+  return ({
       id: c.slug,
       courseNumber: c.code == null ? '' : String(c.code),
       name: c.name || '',
@@ -716,13 +739,7 @@ function toEditable(stored) {
       yearId: c.year == null ? '' : `y${c.year}`,
       semester: c.semester == null ? '' : `s${c.semester}`,
       description: c.description || '',
-    })),
-    prerequisites: (Array.isArray(stored.prerequisites) ? stored.prerequisites : [])
-      .map((p) => [p.requires, p.forCourse])
-      .filter((p) => p[0] && p[1]),
-    replaced: Array.isArray(stored.replaced) ? stored.replaced : [],
-    tracks: Array.isArray(stored.tracks) ? stored.tracks : [],
-  };
+    });
 }
 
 // `original` is the file as it sits in data/. Every course field the dashboard
@@ -732,7 +749,12 @@ function toEditable(stored) {
 // rest, and lab pairing and the assessment breakdown depend on them.
 function toStored(edited, original) {
   const prev = {};
-  for (const c of (original && original.courses) || []) prev[c.slug] = c;
+  // Hidden fields are carried over by id, from any of the plan's versions.
+  for (const list of [original && original.draft && original.draft.courses, original && original.courses]) {
+    for (const c of list || []) prev[c.slug] = c;
+  }
+  const courseOut = (c) => courseToStored(c, prev);
+  const pairsOut = (list) => list.map(([requires, forCourse]) => ({ requires, forCourse }));
 
   return {
     ...original,
@@ -752,7 +774,17 @@ function toStored(edited, original) {
     degreeHours: edited.degreeHours,
     sortOrder: edited.sortOrder,
     freeElectiveSuggestions: edited.freeElectiveSuggestions,
-    courses: edited.courses.map((c) => ({
+    courses: edited.courses.map(courseOut),
+    prerequisites: pairsOut(edited.prerequisites),
+    // Left out when empty, so a plan without them keeps its file unchanged.
+    ...(edited.replaced && edited.replaced.length ? { replaced: edited.replaced } : { replaced: undefined }),
+    ...(edited.tracks && edited.tracks.length ? { tracks: edited.tracks } : { tracks: undefined }),
+    draft: edited.draft ? { goesLive: edited.draft.goesLive,
+      courses: edited.draft.courses.map(courseOut), prerequisites: pairsOut(edited.draft.prerequisites) } : undefined,
+  };
+}
+function courseToStored(c, prev) {
+  return ({
       ...(prev[c.id] || {}),
       slug: c.id,
       code: c.courseNumber || null,
@@ -764,12 +796,7 @@ function toStored(edited, original) {
       category: CATEGORY_TO_DATA[c.category] || 'CORE',
       year: c.yearId ? parseInt(c.yearId.slice(1), 10) : null,
       semester: c.semester ? parseInt(c.semester.slice(1), 10) : null,
-    })),
-    prerequisites: edited.prerequisites.map(([requires, forCourse]) => ({ requires, forCourse })),
-    // Left out when empty, so a plan without them keeps its file unchanged.
-    ...(edited.replaced && edited.replaced.length ? { replaced: edited.replaced } : { replaced: undefined }),
-    ...(edited.tracks && edited.tracks.length ? { tracks: edited.tracks } : { tracks: undefined }),
-  };
+    });
 }
 
 // ---------------------------------------------------------------------------

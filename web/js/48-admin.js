@@ -1004,10 +1004,80 @@
     var c = (state.major.courses || []).filter(function(x){ return x.id === id; })[0];
     return c ? (c.name || id) + (c.courseNumber ? ' · ' + c.courseNumber : '') : id;
   }
+  // ---------- Next year's plan (idea 5) ----------
+  // A major can hold, beside today's plan, next year's draft, which goes live
+  // on its date by itself (tools/promote-drafts.py). The course list below
+  // edits whichever one is picked:
+  // its courses and prerequisites are swapped into state.major while it is
+  // shown, and put back into place for saving (canonicalMajor).
+  function variantReset(){
+    if(state.variantFor !== state.major){ state.variantFor = state.major; state.variant = ''; state.mainLists = null; }
+  }
+  function variantHome(m, key){
+    return key === 'draft' ? m.draft : null;
+  }
+  function switchVariant(to){
+    variantReset(); harvestCourses();
+    var m = state.major, cur = state.variant || '';
+    if(to === cur) return;
+    if(cur === '') state.mainLists = { courses: m.courses, prerequisites: m.prerequisites };
+    else { var h = variantHome(m, cur); if(h){ h.courses = m.courses; h.prerequisites = m.prerequisites; } }
+    var t = to === '' ? state.mainLists : variantHome(m, to);
+    m.courses = t.courses; m.prerequisites = t.prerequisites;
+    if(to === '') state.mainLists = null;
+    state.variant = to;
+    state.variantFor = m;
+    render();
+  }
+  // What is saved: today's plan in place, every other version in its own.
+  function canonicalMajor(){
+    variantReset(); harvestCourses();
+    var m = state.major, cur = state.variant || '';
+    if(cur === '') return m;
+    var out = clone(m), h = variantHome(out, cur);
+    if(h){ h.courses = out.courses; h.prerequisites = out.prerequisites; }
+    out.courses = clone(state.mainLists.courses); out.prerequisites = clone(state.mainLists.prerequisites);
+    return out;
+  }
+  function mainLists(){ variantReset(); return state.variant ? state.mainLists : { courses: state.major.courses, prerequisites: state.major.prerequisites }; }
+  function fmtDay(iso){ var d = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return d ? new Date(+d[1], +d[2] - 1, +d[3]).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' }) : iso; }
+  function versionsHtml(){
+    variantReset();
+    var m = state.major, v = state.variant || '', d = m.draft;
+    return (v === 'draft' ? '<div class="apt-editing">✏️ You’re editing <b>next year’s plan</b> (goes live ' + esc(fmtDay(d && d.goesLive)) + '). The course list, Prerequisites and Study Plan all show it. <button type="button" class="home-btn admin-mini" data-variant="">Back to today’s plan</button></div>' : '') +
+      '<section class="apt-card apt-wide apt-draft">' +
+        (d
+          ? '<div class="apt-row"><span class="apt-pill">Draft</span><div class="apt-grow"><b>Next year’s plan</b>' +
+              '<p class="admin-hint">Students see today’s plan until the date below. Then this one replaces it for everyone, by itself.</p></div>' +
+              '<label class="apt-date">Goes live on <input type="date" class="sr-in" id="dfDate" value="' + esc(d.goesLive || '') + '"></label></div>' +
+            '<div class="form-actions" style="justify-content:flex-start;">' +
+              (v === 'draft' ? '<button type="button" class="home-btn" data-variant="">Back to today’s plan</button>' : '<button type="button" class="home-btn admin-primary" data-variant="draft">Edit next year’s plan</button>') +
+              ' <button type="button" class="home-btn admin-danger" id="dfDel">Remove the draft</button></div>'
+          : '<div class="apt-row"><div class="apt-grow"><b>Next year’s plan</b><p class="admin-hint">Prepare next year’s plan now: students keep seeing today’s until the date you pick, then it goes live by itself.</p></div>' +
+              '<button type="button" class="home-btn admin-primary" id="dfStart">Start next year’s plan</button></div>') +
+      '</section>';
+  }
+  function bindVersions(){
+    var m = state.major;
+    document.querySelectorAll('[data-variant]').forEach(function(b){ b.addEventListener('click', function(){ switchVariant(b.getAttribute('data-variant')); }); });
+    on('dfStart', 'click', function(){
+      harvestCourses();
+      var y = new Date().getFullYear() + (new Date().getMonth() >= 8 ? 1 : 0);
+      m.draft = { goesLive: y + '-09-01', courses: clone(m.courses), prerequisites: clone(m.prerequisites) };
+      markDirty(); switchVariant('draft');
+    });
+    on('dfDate', 'change', function(e){ if(m.draft){ m.draft.goesLive = e.target.value; markDirty(); render(); } });
+    on('dfDel', 'click', function(){
+      if(!confirm('Remove next year’s plan? Its changes are lost once you save.')) return;
+      if(state.variant === 'draft') switchVariant('');
+      m.draft = null; markDirty(); render();
+    });
+  }
+
   function planToolsHtml(){
     var m = state.major;
     var rp = m.replaced || [], tr = m.tracks || [];
-    var opts = (m.courses || []).slice().sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); })
+    var opts = (mainLists().courses || []).slice().sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); })
       .map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(courseLabel(c.id)) + '</option>'; }).join('');
     var te = state.trackEdit;
     var draft = te == null ? null : (te === 'new' ? state.trackDraft : state.trackDraft);
@@ -1115,7 +1185,7 @@
       'and it moves to the matching group immediately. Type straight into the cells; ' +
       'Enter or ↓ goes to the next row, and a changed cell is marked until you save.</p>' +
       '<div class="form-field"><label for="acFilter">Search this plan</label><input type="text" id="acFilter" placeholder="Filter by name or code…"></div>' +
-      planToolsHtml() + coursePicker() + pasteToolHtml() + whereUsedHtml() + historyHtml() +
+      versionsHtml() + planToolsHtml() + coursePicker() + pasteToolHtml() + whereUsedHtml() + historyHtml() +
       '<div id="acBody">' + buckets.map(function(b){
         var ch = b.rows.reduce(function(n, r){ return n + (Number(r.c.creditHours) || 0); }, 0);
         return '<section class="admin-termgroup' + (b.warn ? ' is-orphan' : '') + '">' +
@@ -2491,6 +2561,7 @@
   }
 
   function bindCourses(){
+    bindVersions();
     bindPlanTools();
     document.querySelectorAll('[data-course] input').forEach(function(i){
       i.addEventListener('change', markDirty);
@@ -2631,7 +2702,7 @@
   function bindMajorSave(){
     on('amSave', 'click', function(){
       harvestCourses(); harvestMajorMeta();
-      var lines = diffMajors(state.majorOrig, state.major);
+      var lines = diffMajors(state.majorOrig, canonicalMajor());
       if(state.majorOrig && !lines.length){ setMsg('Nothing has changed since this major was opened.', 'ok'); return; }
       var el = document.getElementById('adminMsg');
       if(!el){ doSaveMajor(); return; }
@@ -2651,7 +2722,7 @@
   function doSaveMajor(){
       setMsg('Saving…', 'ok');
       api('PUT', '/api/major/' + state.uni + '/' + state.majorSlug,
-          { major: state.major, baseSha: state.majorSha || '' })
+          { major: canonicalMajor(), baseSha: state.majorSha || '' })
         .then(function(res){
           state.major = res.major;
           state.majorSha = res.sha || '';
@@ -2769,6 +2840,14 @@
       else if(JSON.stringify(o) !== JSON.stringify(t)) push('chg', 'Track ' + t.name + ' changed (' + t.courses.map(nm).join(', ') + ')');
     });
     Object.keys(ta).forEach(function(id){ if(!tb[id]) push('del', 'Track removed: ' + ta[id].name); });
+    // Next year's plan (idea 5).
+    var da = a.draft, db = b.draft;
+    if(db && !da) push('add', 'Next year’s plan, going live ' + db.goesLive);
+    else if(da && !db) push('del', 'Next year’s plan removed');
+    else if(da && db){
+      if(da.goesLive !== db.goesLive) push('chg', 'Next year’s plan goes live ' + da.goesLive + ' → ' + db.goesLive);
+      if(JSON.stringify([da.courses, da.prerequisites]) !== JSON.stringify([db.courses, db.prerequisites])) push('chg', 'Next year’s plan: courses or prerequisites changed');
+    }
     var yrs = function(m){ return (m.years || []).map(function(y){ return y.id + (y.hasSummer ? '+summer' : ''); }).join(', '); };
     if(yrs(a) !== yrs(b)) push('chg', 'Years: ' + (yrs(a) || 'none') + ' → ' + (yrs(b) || 'none'));
     [['name', 'Name'], ['nameAr', 'Arabic name'], ['subtitle', 'Subtitle'], ['college', 'Faculty'], ['degreeHours', 'Degree hours'],
