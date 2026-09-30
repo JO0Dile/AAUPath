@@ -9818,3 +9818,13 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .apt-checks{display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:4px 12px; max-height:260px; overflow:auto; margin:8px 0; font-size:13px;}
 .apt-checks label{display:flex; gap:6px; align-items:flex-start;}
 .apt-save{margin-bottom:14px;}
+
+
+/* Next year's plan (js/48-admin.js, idea 5). */
+.apt-wide{margin:6px 0 10px;}
+.apt-row{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px;}
+.apt-grow{flex:1 1 260px; min-width:0;}
+.apt-grow p{margin:2px 0 0;}
+.apt-pill{padding:2px 10px; border-radius:999px; border:1px solid #e0a13a; color:#e0a13a; font-size:12px; font-weight:800;}
+.apt-date{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-dim);}
+.apt-editing{margin:6px 0 10px; padding:10px 14px; border-radius:12px; border:1px solid #e0a13a; background:color-mix(in srgb, #e0a13a 12%, transparent); font-size:13.5px;}

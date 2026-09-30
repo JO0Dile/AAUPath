@@ -119,8 +119,39 @@
   // ---------------------------------------------------------------------
   // Only structural facts are listed. "Something changed" is not a decision
   // anyone can make, and a raw JSON diff is not either.
+  // What an update must not take from a student: a course they added, or one
+  // they ticked, graded or gave a status (Leadership taken as a university
+  // elective, say), and where they placed an elective the plan leaves open.
+  function keptByStudent(planId, c){
+    if(c.own) return true;
+    var pid = planId + '-c-' + c.id;
+    var prog = window.__getProgress ? window.__getProgress() : {};
+    var st = window.AAUP_GPA && window.AAUP_GPA.loadStatuses ? window.AAUP_GPA.loadStatuses() : {};
+    var gr = window.AAUP_GPA && window.AAUP_GPA.loadGrades ? window.AAUP_GPA.loadGrades() : {};
+    return !!(prog[pid] || st[pid] || gr[pid]);
+  }
+  function mergeKept(planId, existing, incoming){
+    var byId = {}, kept = false;
+    (incoming.courses || []).forEach(function(c){ byId[c.id] = c; });
+    (existing.courses || []).forEach(function(c){
+      var n = byId[c.id];
+      if(n){
+        if(!n.yearId && c.yearId){ n.yearId = c.yearId; n.semester = c.semester; kept = true; }
+        return;
+      }
+      if(keptByStudent(planId, c)){ incoming.courses.push(c); byId[c.id] = c; kept = true; }
+    });
+    // Their prerequisites come along when both ends are still in the plan.
+    var have = {};
+    (incoming.prerequisites || []).forEach(function(p){ have[p[0] + '>' + p[1]] = true; });
+    (existing.prerequisites || []).forEach(function(p){
+      if(byId[p[0]] && byId[p[1]] && !have[p[0] + '>' + p[1]] && (byId[p[0]].own || byId[p[1]].own)){ incoming.prerequisites.push(p); kept = true; }
+    });
+    return kept;
+  }
   function diffPlans(oldP, newP){
     var out = [];
+    var planId = oldP.id || newP.id;
     var byId = function(list){
       var m = {};
       (list || []).forEach(function(c){ m[c.id] = c; });
@@ -130,7 +161,7 @@
     var label = function(c){ return (c.courseNumber ? c.courseNumber + ' · ' : '') + (c.name || c.id); };
 
     Object.keys(b).forEach(function(id){ if(!a[id]) out.push({ kind: 'add', text: 'Adds ' + label(b[id])}); });
-    Object.keys(a).forEach(function(id){ if(!b[id]) out.push({ kind: 'remove', text: 'Removes ' + label(a[id])}); });
+    Object.keys(a).forEach(function(id){ if(!b[id] && !keptByStudent(planId, a[id])) out.push({ kind: 'remove', text: 'Removes ' + label(a[id])}); });
 
     Object.keys(b).forEach(function(id){
       if(!a[id]) return;
@@ -138,8 +169,9 @@
       if(o.creditHours !== n.creditHours){
         out.push({ kind: 'change', text: label(n) + ': credit hours ' + o.creditHours + ' → ' + n.creditHours });
       }
-      if(o.yearId !== n.yearId || o.semester !== n.semester){
-        out.push({ kind: 'move', text: label(n) + ': moved to ' + n.yearId + ' ' + semLabel(n.semester) });
+      // An elective the plan leaves open, placed by the student: theirs, kept.
+      if(n.yearId && (o.yearId !== n.yearId || o.semester !== n.semester)){
+        out.push({ kind: 'move', text: label(n) + ': moved to Year ' + String(n.yearId).replace(/^y/, '') + ' · ' + semLabel(n.semester) });
       }
       if(o.name !== n.name){ out.push({ kind: 'rename', text: 'Renamed “' + o.name + '” → “' + n.name + '”' }); }
     });
@@ -308,8 +340,8 @@
 
     var warn = document.createElement('p');
     warn.className = 'sync-consent-warn';
-    warn.textContent = 'Applying replaces this plan\'s courses and prerequisites with the official version. ' +
-      'Your completed-course ticks, grades and notes are kept.';
+    warn.textContent = 'Applying takes the official version of this plan. Courses you added or already took, ' +
+      'where you placed your electives, and your ticks, grades and notes are all kept.';
     box.appendChild(warn);
 
     var actions = document.createElement('div');
@@ -344,7 +376,8 @@
         // the plan definition does not touch it — a course that survives the
         // update keeps its tick, its grade and its notes.
         var incoming = item.incoming;
-        incoming.wasEdited = false;
+        // Still theirs if an added course or a placement was kept.
+        incoming.wasEdited = mergeKept(item.id, existing, incoming);
         plans[item.id] = incoming;
       } else {
         // Record that this version was declined, so the same dialog does not

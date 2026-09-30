@@ -152,6 +152,8 @@ def shape_plan(major, scales_by_college, colleges):
         **({'replaced': [[r['old'], r['new']] for r in major['replaced']]} if major.get('replaced') else {}),
         **({'tracks': [{'id': t['id'], 'name': {'en': t['name'], 'ar': t.get('nameAr') or ''}, 'courses': t['courses']}
                        for t in major['tracks']]} if major.get('tracks') else {}),
+        # Next year's draft (idea 5) is not published: tools/promote-drafts.py
+        # swaps it in on its date.
         'gradingScale': scale,
         'structure': structure,
         'courses': courses,

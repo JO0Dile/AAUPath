@@ -133,6 +133,9 @@ window.__sanitizeImportedPlan = function(p){
       // would drop it along with everything else it does not know, and the
       // card would go back to claiming the department chose that semester.
       if(c.termSuggested){ out.termSuggested = true; }
+      // Added by the student: an official update keeps it (js/30-sync.js).
+      if(c.own){ out.own = true; }
+      if(c.keepInSemester){ out.keepInSemester = true; }
       return out;
     }).filter(function(c){ return !!c; });
   }

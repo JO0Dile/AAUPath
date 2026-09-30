@@ -560,8 +560,10 @@
       if(window.__showToast){ window.__showToast('A course with that ID already exists in this plan.'); }
       return;
     }
+    // own: the student added it, so an official update never takes it away
+    // (js/30-sync.js).
     p.courses.push({ id: id, name: nameEn, ar: nameAr, creditHours: credits, category: category, yearId: yearId, semester: semester,
-      keepInSemester: !(parseFloat(credits) || 0) || undefined });
+      keepInSemester: !(parseFloat(credits) || 0) || undefined, own: true });
     p.wasEdited = true;
     p.prerequisites = p.prerequisites || [];
     // Only draw a direct arrow from whichever selected prereqs are NOT
@@ -3119,7 +3121,7 @@
           p.courses.push({
             id: course.slug, name: course.name, ar: srcInfo.ar || course.name,
             creditHours: parseFloat(course.cr) || 0, category: srcInfo.category || inferCategoryFromCard(course.prefix, course.slug),
-            yearId: parts[0], semester: parts[1]
+            yearId: parts[0], semester: parts[1], own: true
           });
           p.wasEdited = true;
           p.prerequisites = p.prerequisites || [];
