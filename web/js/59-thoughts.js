@@ -438,6 +438,7 @@
         (t.courseName && !courseView ? '<span class="th-course-tag">' + esc(t.courseName) + '</span>' : '') +
         (t.plan && t.plan !== currentPrefix && majorName(t.plan) ? '<span class="th-course-tag th-major-tag">' + esc(majorName(t.plan)) + '</span>' : '') +
         '<p class="th-bubble">' + esc(t.text) + '</p>' +
+        replyHTML(t, rtl) +
         (endpoint() ? '<div class="th-react">' +
           '<button type="button" class="th-react-btn' + (myReaction === 'up' ? ' active' : '') + '" data-th-react="up" data-th-id="' + esc(t.id) + '">' + window.AAUP_ICONS.preview('chevronUp', 13) + '<span>' + (t.up || 0) + '</span></button>' +
           '<button type="button" class="th-react-btn' + (myReaction === 'down' ? ' active' : '') + '" data-th-react="down" data-th-id="' + esc(t.id) + '">' + window.AAUP_ICONS.preview('chevron', 13) + '<span>' + (t.down || 0) + '</span></button>' +
@@ -446,6 +447,15 @@
           (rtl ? 'حذف' : 'Delete') + '</button>' : '') +
       '</div>' +
       '</div>';
+  }
+
+  // The professor's (or dean's) reply under a thought (round 10, idea 13),
+  // from js/111-staff-content.js. Their name shows; the student's never
+  // reaches them.
+  function replyHTML(t, rtl){
+    var r = window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.replyFor ? window.AAUP_STAFF_CONTENT.replyFor(t) : null;
+    if(!r) return '';
+    return '<div class="th-reply"><b>' + esc((rtl ? 'رد ' : 'Reply from ') + r.by) + '</b><p>' + esc(r.text) + '</p></div>';
   }
 
   function render(prefix, refreshFailed){
@@ -737,7 +747,7 @@
   window.AAUP_THOUGHTS = {
     serverUrl: endpoint, storedUrl: storedUrl, setServerUrl: setServerUrl,
     settingsSectionHtml: settingsSectionHtml, bindSettingsSection: bindSettingsSection,
-    open: open, close: close, publish: publish, wallFor: wallFor, forCourse: forCourse,
+    open: open, close: close, publish: publish, wallFor: wallFor, forCourse: forCourse, aboutCourse: aboutCourse,
     flushQueue: flushQueue, count: function(prefix){ return wallFor(prefix).length; }
   };
 })();

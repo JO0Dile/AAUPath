@@ -1338,6 +1338,15 @@ async function contentDb(env) {
         decided_by TEXT, decided_at INTEGER)`,
       `CREATE TABLE IF NOT EXISTS staff_log (id INTEGER PRIMARY KEY AUTOINCREMENT, uni TEXT NOT NULL, college TEXT NOT NULL DEFAULT '',
         what TEXT NOT NULL, by TEXT NOT NULL, at INTEGER NOT NULL)`,
+      // Round 10, ideas 13, 14 and 11: replies under students' thoughts,
+      // thoughts reported to the admin, and a college's dates on Home.
+      `CREATE TABLE IF NOT EXISTS staff_replies (thought TEXT PRIMARY KEY, uni TEXT NOT NULL, course TEXT NOT NULL,
+        text TEXT NOT NULL, by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL)`,
+      `CREATE TABLE IF NOT EXISTS staff_reports (thought TEXT PRIMARY KEY, uni TEXT NOT NULL, plan TEXT NOT NULL DEFAULT '',
+        course TEXT NOT NULL DEFAULT '', text TEXT NOT NULL, by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '',
+        at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'open', decided_at INTEGER)`,
+      `CREATE TABLE IF NOT EXISTS staff_dates (id TEXT PRIMARY KEY, uni TEXT NOT NULL, college TEXT NOT NULL,
+        label TEXT NOT NULL, date TEXT NOT NULL, by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL)`,
     ]) await db.prepare(sql).run();
     contentTablesReady = true;
   }
@@ -1505,7 +1514,7 @@ async function decidePending(request, env, me, id) {
 // Everything students see, for one university. Public and cacheable.
 async function handlePublicContent(request, env, uni) {
   if (!SLUG_RE.test(uni)) throw fail('bad university');
-  if (!env.STAFF_DB) return json({ ok: true, courses: {}, cards: [] }, 200, env, request);
+  if (!env.STAFF_DB) return json({ ok: true, courses: {}, cards: [], replies: {}, dates: [] }, 200, env, request);
   const db = await contentDb(env);
   const courses = {};
   const rs = await db.prepare('SELECT course, field, value, at FROM staff_content WHERE uni = ?').bind(uni).all();
@@ -1522,7 +1531,29 @@ async function handlePublicContent(request, env, uni) {
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
     return { name: r.name, office: r.office, hours: r.hours, contact: r.contact, courses: list };
   });
-  const res = json({ ok: true, v, courses, cards }, 200, env, request);
+  // Replies under students' thoughts, by the thought's id.
+  const replies = {};
+  const rr = await db.prepare('SELECT thought, course, text, by_name, at FROM staff_replies WHERE uni = ?').bind(uni).all();
+  for (const r of rr.results || []) {
+    replies[r.thought] = { course: r.course, text: r.text, by: r.by_name, at: r.at };
+    v = Math.max(v, r.at);
+  }
+  // A college's dates, from yesterday on, each with the majors whose
+  // students see it (all of the university's for '*').
+  const dates = [];
+  const dr = await db.prepare('SELECT id, college, label, date, at FROM staff_dates WHERE uni = ? AND date >= ? ORDER BY date')
+    .bind(uni, isoDay(-1)).all();
+  if ((dr.results || []).length) {
+    let ix = null;
+    try { ix = await plansIndex(env); } catch { ix = null; }
+    for (const r of dr.results) {
+      v = Math.max(v, r.at);
+      if (!ix) continue;
+      const majors = Object.keys(ix.majorCollege).filter((id) => ix.majorCollege[id].uni === uni && (r.college === '*' || ix.majorCollege[id].college === r.college));
+      dates.push({ id: r.id, college: r.college, label: r.label, date: r.date, majors });
+    }
+  }
+  const res = json({ ok: true, v, courses, cards, replies, dates }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
   return res;
 }
@@ -1641,6 +1672,133 @@ async function handleStaffPrereqs(request, env, me) {
 
 // Routes a signed-in staff member can use. Returns a Response, or null when
 // the path is not one of them.
+// ---------------------------------------------------------------------------
+// What students said (round 10, ideas 13 and 14)
+//
+// Thoughts live in their own Worker (workers/thoughts-worker.js), which staff
+// never write to. A reply is kept here under the thought's id and the course
+// it answers for, and the app shows it under that thought. A report waits in
+// the admin room, and only the admin takes a thought down: staff can't
+// delete anything.
+// ---------------------------------------------------------------------------
+const THOUGHT_ID_RE = /^[A-Za-z0-9_-]{1,60}$/;
+function isoDay(offset) { return new Date(Date.now() + (offset || 0) * 86400000).toISOString().slice(0, 10); }
+
+// POST /api/staff/reply { thought, course, text } · an empty text takes it down.
+async function handleStaffReply(request, env, me) {
+  const body = await readJson(request, 8192);
+  const thought = String(body.thought || ''), course = String(body.course || '');
+  if (!THOUGHT_ID_RE.test(thought)) throw fail('which thought?');
+  if (!SLUG_RE.test(course)) throw fail('pick a course');
+  if (!(await mayWriteCourse(env, me, course))) return json({ error: 'your login doesn’t cover this course' }, 403, env, request);
+  const text = str(body.text, 600).trim();
+  const db = await contentDb(env);
+  // A reply given for another course stays theirs.
+  const had = await db.prepare('SELECT course FROM staff_replies WHERE thought = ?').bind(thought).first();
+  if (had && had.course !== course && !(await mayWriteCourse(env, me, had.course))) {
+    return json({ error: 'someone already answered this one for another course' }, 403, env, request);
+  }
+  const now = Math.floor(Date.now() / 1000);
+  if (!text) await db.prepare('DELETE FROM staff_replies WHERE thought = ?').bind(thought).run();
+  else {
+    await db.prepare(`INSERT INTO staff_replies (thought, uni, course, text, by, by_name, at) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(thought) DO UPDATE SET course = excluded.course, text = excluded.text, by = excluded.by, by_name = excluded.by_name, at = excluded.at`)
+      .bind(thought, me.uni, course, text, me.username, me.name || me.username, now).run();
+  }
+  await staffLog(env, me, firstCollege(me), `${await courseName(env, me.uni, course)} · reply to what a student said${text ? '' : ' removed'}`);
+  return json({ ok: true }, 200, env, request);
+}
+
+// POST /api/staff/report { thought, course, plan, text } · text is a copy, so
+// the admin sees what was reported even if the wall changes.
+async function handleStaffReport(request, env, me) {
+  const body = await readJson(request, 8192);
+  const thought = String(body.thought || ''), course = String(body.course || ''), plan = String(body.plan || '');
+  if (!THOUGHT_ID_RE.test(thought)) throw fail('which thought?');
+  if (!SLUG_RE.test(course)) throw fail('pick a course');
+  if (plan && !SLUG_RE.test(plan)) throw fail('bad major');
+  if (!(await mayWriteCourse(env, me, course))) return json({ error: 'your login doesn’t cover this course' }, 403, env, request);
+  const db = await contentDb(env);
+  await db.prepare(`INSERT INTO staff_reports (thought, uni, plan, course, text, by, by_name, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(thought) DO NOTHING`)
+    .bind(thought, me.uni, plan, course, str(body.text, 300).trim(), me.username, me.name || me.username, Math.floor(Date.now() / 1000)).run();
+  await staffLog(env, me, firstCollege(me), `${await courseName(env, me.uni, course)} · reported what a student said to the admin`);
+  return json({ ok: true }, 200, env, request);
+}
+
+// GET /api/staff/reported · the thoughts this login reported, and what the
+// admin did with each.
+async function handleStaffReported(request, env, me) {
+  const db = await contentDb(env);
+  const rs = await db.prepare('SELECT thought, status FROM staff_reports WHERE by = ? AND uni = ?').bind(me.username, me.uni).all();
+  return json({ ok: true, reported: (rs.results || []).map((r) => ({ thought: r.thought, status: r.status })) }, 200, env, request);
+}
+
+// /api/admin/reports · the admin's list, and closing one.
+async function handleAdminReports(request, env, seg) {
+  const db = await contentDb(env);
+  if (!seg[3] && request.method === 'GET') {
+    const rs = await db.prepare("SELECT * FROM staff_reports WHERE status = 'open' ORDER BY at DESC").all();
+    const reports = [];
+    for (const r of rs.results || []) {
+      reports.push({ thought: r.thought, uni: r.uni, plan: r.plan, course: r.course, courseName: await courseName(env, r.uni, r.course),
+        text: r.text, byName: r.by_name, at: r.at });
+    }
+    return json({ ok: true, reports }, 200, env, request);
+  }
+  if (seg[3] && request.method === 'POST') {
+    const body = await readJson(request, 1024);
+    const status = String(body.status || '');
+    if (!['removed', 'kept'].includes(status)) throw fail('status must be removed or kept');
+    await db.prepare('UPDATE staff_reports SET status = ?, decided_at = ? WHERE thought = ?')
+      .bind(status, Math.floor(Date.now() / 1000), seg[3]).run();
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
+// ---------------------------------------------------------------------------
+// College dates on Home (round 10, idea 11)
+//
+// A dean's dates (midterm week, a deadline) show on Home next to the
+// university's own, for students of that college only. '*' is every college.
+// ---------------------------------------------------------------------------
+async function handleStaffDates(request, env, me, seg) {
+  if (me.role !== 'dean') return json({ error: 'only a dean can add college dates' }, 403, env, request);
+  const db = await contentDb(env);
+  const mine = (college) => me.college === '*' || (college !== '*' && coversCollege(me, college));
+  if (!seg[3] && request.method === 'GET') {
+    const rs = await db.prepare('SELECT id, college, label, date, by_name FROM staff_dates WHERE uni = ? AND date >= ? ORDER BY date')
+      .bind(me.uni, isoDay(-1)).all();
+    return json({ ok: true, dates: (rs.results || []).filter((r) => mine(r.college)).map((r) => ({ id: r.id, college: r.college, label: r.label, date: r.date, byName: r.by_name })) }, 200, env, request);
+  }
+  if (!seg[3] && request.method === 'POST') {
+    const body = await readJson(request, 4096);
+    const label = str(body.label, 60).trim();
+    const date = String(body.date || '');
+    const college = String(body.college || firstCollege(me) || '*');
+    if (!label) throw fail('write what the date is');
+    if (!DATE_RE.test(date) || date < isoDay(0)) throw fail('pick a date from today on');
+    if (college !== '*' && !SLUG_RE.test(college)) throw fail('pick a college');
+    if (!mine(college)) return json({ error: 'that college isn’t yours' }, 403, env, request);
+    const n = await db.prepare('SELECT COUNT(*) AS n FROM staff_dates WHERE uni = ? AND college = ? AND date >= ?').bind(me.uni, college, isoDay(0)).first();
+    if (n && n.n >= 30) throw fail('that college already has 30 dates coming up');
+    const id = crypto.randomUUID();
+    await db.prepare('INSERT INTO staff_dates (id, uni, college, label, date, by, by_name, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(id, me.uni, college, label, date, me.username, me.name || me.username, Math.floor(Date.now() / 1000)).run();
+    await staffLog(env, me, college === '*' ? '' : college, `College date · ${label} · ${date}`);
+    return json({ ok: true, id }, 200, env, request);
+  }
+  if (seg[3] && request.method === 'DELETE') {
+    const row = await db.prepare('SELECT * FROM staff_dates WHERE id = ? AND uni = ?').bind(seg[3], me.uni).first();
+    if (!row || !mine(row.college)) return json({ error: 'not found' }, 404, env, request);
+    await db.prepare('DELETE FROM staff_dates WHERE id = ?').bind(row.id).run();
+    await staffLog(env, me, row.college === '*' ? '' : row.college, `College date removed · ${row.label} · ${row.date}`);
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
 async function handleStaffRoutes(request, env, seg, url) {
   if (seg[1] !== 'staff') return null;
   if (seg[2] === 'login' && request.method === 'POST') return await handleStaffLogin(request, env);
@@ -1658,6 +1816,10 @@ async function handleStaffRoutes(request, env, seg, url) {
   if (seg[2] === 'content' && request.method === 'POST') return await handleStaffContent(request, env, me);
   if (seg[2] === 'prereqs' && request.method === 'POST') return await handleStaffPrereqs(request, env, me);
   if (['majors', 'major', 'history', 'status', 'tree', 'university'].includes(seg[2])) return await handleStaffMajors(request, env, me, seg, url);
+  if (seg[2] === 'reply' && request.method === 'POST') return await handleStaffReply(request, env, me);
+  if (seg[2] === 'report' && request.method === 'POST') return await handleStaffReport(request, env, me);
+  if (seg[2] === 'reported' && request.method === 'GET') return await handleStaffReported(request, env, me);
+  if (seg[2] === 'dates') return await handleStaffDates(request, env, me, seg);
   if (seg[2] === 'card' && request.method === 'POST') return await handleStaffCard(request, env, me);
   if (seg[2] === 'card' && request.method === 'GET') {
     const db = await contentDb(env);
@@ -1837,6 +1999,8 @@ export default {
 
       // /api/admin/staff  ·  /api/admin/staff/:id
       if (seg[1] === 'admin' && seg[2] === 'staff') return await handleAdminStaff(request, env, seg);
+      // /api/admin/reports  ·  /api/admin/reports/:thought
+      if (seg[1] === 'admin' && seg[2] === 'reports') return await handleAdminReports(request, env, seg);
 
       // /api/history/:university/:slug
       if (seg[1] === 'history' && seg[2] && seg[3] && request.method === 'GET') {
