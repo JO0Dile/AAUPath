@@ -219,10 +219,10 @@
           : '') +
         '</div>' +
         '<div id="wizCloudMsg"></div>' +
-        '<div id="wizGoogleWrap" hidden><div class="cloud-or"><span>or</span></div><div id="wizGoogleBtn" class="cloud-google"></div></div>' +
         '<button type="button" class="wiz-switch" id="wizCloudToggleSignUp">' +
           (mode === 'up' ? 'I already have an account' : 'Create one instead') +
-        '</button>',
+        '</button>' +
+        '<div id="wizGoogleWrap" hidden><div class="cloud-or"><span>or</span></div><div id="wizGoogleBtn" class="cloud-google"></div></div>',
       primary: mode === 'up' ? 'Create account' : 'Sign in',
       secondary: 'Not now'
     };
