@@ -195,6 +195,11 @@
           '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('download', 20) + '</span>' +
           '<span class="cp-choice-text"><b>' + (r ? 'إلى ملف' : 'To a file') + '</b>' +
           '<span>' + (r ? 'ينزل على جهازك — للنسخ الاحتياطي أو للمشاركة' : 'Downloads to your device — to keep or to pass on') + '</span></span></button>' +
+        // Round 8, idea 18: the plan as a spreadsheet (js/108-command.js).
+        (window.AAUP_EXPORT ? '<button type="button" class="cp-choice-btn" id="spExcel">' +
+          '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('chart', 20) + '</span>' +
+          '<span class="cp-choice-text"><b>' + (r ? 'كجدول (Excel)' : 'As a spreadsheet (Excel)') + '</b>' +
+          '<span>' + (r ? 'كل مساق: السنة والفصل والساعات والحالة والعلامة' : 'Every course with its year, semester, hours, status and grade') + '</span></span></button>' : '') +
         '<button type="button" class="cp-choice-btn" id="spMaintainer">' +
           '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('mail', 20) + '</span>' +
           '<span class="cp-choice-text"><b>' + (r ? 'إلى القائم على التطبيق' : 'To the maintainer') + '</b>' +
@@ -205,6 +210,8 @@
     document.getElementById('spFile').addEventListener('click', function(){
       close(); window.AAUP_IMPORTED.exportPlan(prefix);
     });
+    var xl = document.getElementById('spExcel');
+    if(xl) xl.addEventListener('click', function(){ close(); window.AAUP_EXPORT.xlsx(prefix); });
     document.getElementById('spMaintainer').addEventListener('click', function(){
       close(); window.AAUP_IMPORTED.submitPlan(prefix);
     });

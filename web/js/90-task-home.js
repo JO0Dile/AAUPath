@@ -1150,7 +1150,23 @@
     show();
   }
 
-  window.AAUP_TASK_HOME = { show: show, render: render, openSheet: openSheet, go: go, visible: visible, thisSemester: thisSemester };
+  window.AAUP_TASK_HOME = { show: show, render: render, openSheet: openSheet, go: go, visible: visible, thisSemester: thisSemester,
+    // The same search and answers, for the Ctrl+K box (js/108-command.js),
+    // without touching what is typed in Home's own search box.
+    search: function(q){
+      var was = state.q;
+      state.q = String(q || '');
+      var out = { answer: answerFor(state.q), results: results() };
+      state.q = was;
+      return out;
+    },
+    runResult: function(code, q){
+      var was = state.q;
+      state.q = String(q || '');
+      try{ runResult(code); } finally { state.q = was; }
+    },
+    selected: selected
+  };
   if(document.readyState === 'complete'){ init(); }
   else { window.addEventListener('load', init); }
 })();

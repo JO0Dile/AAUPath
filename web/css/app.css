@@ -9384,3 +9384,60 @@ body.has-sidebar.ep-browse-open:has(.sheet-plan.editing) .sheet-plan{margin-inli
 .ep-drop-veil > div{display:flex; flex-direction:column; gap:6px; align-items:center; padding:34px 48px; border:2px dashed var(--accent); border-radius:20px; background:var(--header-bg); color:var(--text);}
 .ep-drop-veil b{font-size:20px;}
 .ep-drop-veil span{font-size:13px; color:var(--text-dim);}
+
+/* Round 8, idea 15: grades as a table you type into (js/51-gpa-studio.js),
+   with a Table | List switch beside the title. Laptops only. */
+.gs-lbl-row{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px;}
+.gs-lbl-row .gs-lbl{margin-bottom:0;}
+.gs-view{display:inline-flex; padding:3px; gap:2px; border-radius:10px; background:var(--search-bg); border:1px solid var(--line);}
+.gs-view button{font:inherit; font-size:12px; font-weight:700; padding:5px 12px; border-radius:7px; border:0; background:none; color:var(--text-dim); cursor:pointer;}
+.gs-view button[aria-pressed="true"]{background:var(--accent); color:var(--on-accent);}
+.gs-view button:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+.gs-tbl-hint{margin-top:6px;}
+.gs-tbl{width:100%; border-collapse:collapse; font-size:13.5px;}
+.gs-tbl td{padding:5px 8px; border-top:1px solid var(--line); vertical-align:middle;}
+.gs-tbl tr:first-child td{border-top:0;}
+.gs-tbl-name{width:100%;}
+.gs-tbl-h{color:var(--text-dim); white-space:nowrap; font-variant-numeric:tabular-nums;}
+.gs-tbl-g{width:64px;}
+.gs-tbl-c{width:1%; white-space:nowrap;}
+.gs-tbl tr.gs-row-excluded{opacity:.6;}
+.gs-tbl-in{
+  width:56px; font:inherit; font-weight:800; text-align:center; text-transform:uppercase;
+  padding:5px 4px; border-radius:8px; border:1px solid var(--line); background:var(--search-bg); color:var(--text);
+}
+.gs-tbl-in:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);}
+.gs-tbl-in.is-fail{color:var(--prereq, #e2596b);}
+.gs-tbl-in.is-bad{border-color:var(--prereq, #e2596b); box-shadow:0 0 0 3px color-mix(in srgb, #e2596b 25%, transparent);}
+
+/* Round 8, idea 14: the Ctrl+K box (js/108-command.js). */
+.cmdk{position:fixed; inset:0; z-index:9700; display:none; align-items:flex-start; justify-content:center; padding:12vh 16px 16px; background:rgba(5,8,15,.55);}
+.cmdk.open{display:flex;}
+.cmdk-card{width:min(620px, 100%); max-height:70vh; display:flex; flex-direction:column; border-radius:16px; overflow:hidden; background:var(--header-bg); border:1px solid color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow:0 24px 60px rgba(0,0,0,.6); color:var(--text);}
+.cmdk-in{font:inherit; font-size:16px; font-weight:600; padding:16px 18px; border:0; border-bottom:1px solid var(--line); background:none; color:var(--text);}
+.cmdk-in:focus{outline:none;}
+.cmdk-list{overflow-y:auto; padding:6px;}
+.cmdk-h{font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim); padding:10px 10px 4px;}
+.cmdk-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer;}
+.cmdk-row.is-on{background:color-mix(in srgb, var(--accent) 16%, transparent);}
+.cmdk-row.is-sub{padding-inline-start:28px;}
+.cmdk-row.is-sub b{font-weight:600; color:var(--text-dim);}
+.cmdk-row.is-sub.is-on b{color:var(--text);}
+.cmdk-row.is-ask b{color:var(--accent);}
+.cmdk-t{display:flex; flex-direction:column; min-width:0;}
+.cmdk-t b{font-size:14px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cmdk-t span{font-size:12px; color:var(--text-dim); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.cmdk kbd, .cmdk-foot kbd{font:700 11px ui-monospace, Menlo, monospace; padding:1px 6px; border-radius:5px; border:1px solid var(--line); border-bottom-width:2px; background:var(--panel); color:var(--text); flex:none;}
+.cmdk-foot{display:flex; gap:16px; padding:9px 14px; border-top:1px solid var(--line); font-size:12px; color:var(--text-dim);}
+.cmdk-foot span{display:inline-flex; gap:4px; align-items:center;}
+.cmdk-none{margin:14px 12px; color:var(--text-dim); font-size:13.5px;}
+@media (hover:none){ .cmdk-foot{display:none;} }
+
+/* Round 8, idea 16: drag down a day on the week grid to add a class time
+   (js/104-week.js). Mouse only; the column shows it can be drawn on. */
+.wk-tip{font-size:12px; color:var(--text-dim);}
+.wk-drag .wk-col{cursor:crosshair;}
+.wk-drag .wk-col:hover{background-color:color-mix(in srgb, var(--accent) 5%, transparent);}
+.wk-blk.wk-ghost{background:color-mix(in srgb, var(--accent) 22%, transparent); outline:1.5px dashed var(--accent); outline-offset:-1.5px; display:flex; align-items:flex-start; justify-content:center; font-size:10px; pointer-events:none; inset-inline:1px;}
+.wk-pick{max-height:60vh; overflow-y:auto;}
+.wk-pick-none{margin:6px 10px; font-size:12.5px; color:var(--text-dim); max-width:230px;}

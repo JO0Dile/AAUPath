@@ -328,5 +328,19 @@
     if(b) open();
   });
 
-  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny };
+  // Round 8, idea 16: a time dragged out on the week grid (js/104-week.js).
+  // The same start and end already on another day of that course joins it
+  // (Mon & Wed 10:00–11:15 stays one line) instead of becoming a new one.
+  function addMeeting(planId, key, day, s, e){
+    var map = forPlan(planId);
+    map[key] = map[key] || [];
+    var same = map[key].filter(function(x){ return x.s === s && x.e === e; })[0];
+    if(same){ if(same.d.indexOf(day) === -1) same.d.push(day); }
+    else map[key].push({ d: [day], s: s, e: e, r: '' });
+    savePlan(planId, map);
+    var el = document.getElementById('ttOverlay');
+    if(el && el.classList.contains('open') && openFor === planId) render();
+  }
+
+  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny, addMeeting: addMeeting };
 })();

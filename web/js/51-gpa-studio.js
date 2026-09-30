@@ -59,6 +59,9 @@
       notStarted: 'not started', later: 'Later semesters', courses: function(n){ return n + (n === 1 ? ' course' : ' courses'); },
       gradedHoursShort: function(n){ return n + ' graded hours'; },
       clearShort: 'Clear',
+      viewTable: 'Table', viewList: 'List', viewLabel: 'Show grades as',
+      tableHint: 'Type a grade (A, B+, C-…) and press Enter or Tab for the next one.',
+      badGrade: 'Not a grade. Try A, B+, C- or F.', gradeFor: function(n){ return 'Grade for ' + n; },
       faNote: 'FA is an absence fail and counts as an F. W is a withdrawal and is not counted at all.'
     },
     ar: {
@@ -85,6 +88,9 @@
       notStarted: 'ما بلّش', later: 'الفصول الجاية', courses: function(n){ return n + ' مساق'; },
       gradedHoursShort: function(n){ return n + ' ساعة عليها علامة'; },
       clearShort: 'امسح',
+      viewTable: 'جدول', viewList: 'قائمة', viewLabel: 'اعرض العلامات كـ',
+      tableHint: 'اكتب العلامة (A، B+، C-…) واضغط Enter أو Tab للي بعدها.',
+      badGrade: 'هاي مش علامة. جرّب A أو B+ أو C- أو F.', gradeFor: function(n){ return 'علامة ' + n; },
       faNote: 'FA رسوب بسبب الغياب وبتحتسب زي F. أما W فهي انسحاب وما بتتحسب أبدًا.'
     }
   };
@@ -197,8 +203,33 @@
   // keypad should be open when it comes back — the next one without a grade.
   var openNext = null;
 
+  // Round 8, idea 15: on a laptop the grades are a table you type into
+  // (A, Tab, B+, Tab…); a Table | List switch goes back to the list with
+  // chips, and the choice is remembered on this device. Phones keep the list.
+  var VIEW_KEY = 'aaup_gradesView';
+  function canTable(){ return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 900px)').matches); }
+  function tableView(){
+    if(!canTable()) return false;
+    try{ var v = localStorage.getItem(VIEW_KEY); if(v) return v === 'table'; }catch(e){}
+    return true;
+  }
+  function gradeFromText(v){
+    v = String(v || '').trim().toUpperCase().replace(/\s+/g, '');
+    if(!v) return '';
+    var hit = window.AAUP_GPA.GRADE_ORDER.filter(function(g){
+      return String(g).toUpperCase() === v || String(window.AAUP_GPA.gradeShort(g)).toUpperCase() === v;
+    })[0];
+    return hit || null;
+  }
+  function viewSwitchHTML(t, table){
+    return '<div class="gs-view" role="group" aria-label="' + esc(t.viewLabel) + '">' +
+      '<button type="button" data-gs-view="table" aria-pressed="' + table + '">' + esc(t.viewTable) + '</button>' +
+      '<button type="button" data-gs-view="list" aria-pressed="' + !table + '">' + esc(t.viewList) + '</button></div>';
+  }
+
   function tableHTML(prefix, rtl){
     var t = T[rtl ? 'ar' : 'en'];
+    var asTable = tableView();
     var rows = gradedRows(prefix);
     if(!rows.length){
       // Grades are entered from a course, not from here, so with none entered
@@ -282,6 +313,18 @@
           chipsFor(r.pid, r.grade) + '</div>' +
       '</div>';
     };
+    var tblRowHtml = function(r){
+      var name = rtl && r.nameAr ? r.nameAr : r.name;
+      var has = r.grade != null && r.grade !== '';
+      return '<tr class="' + (r.excluded ? 'gs-row-excluded' : '') + '">' +
+        '<td class="gs-tbl-name">' + name + (r.excluded ? ' <span class="gs-code">· ' + t.excluded + '</span>' : '') + '</td>' +
+        '<td class="gs-tbl-h">' + r.cr + 'H</td>' +
+        '<td class="gs-tbl-g"><input type="text" class="gs-tbl-in' + (has && window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(r.grade) ? ' is-fail' : '') +
+          '" data-gs-in="' + esc(r.pid) + '" value="' + (has ? esc(window.AAUP_GPA.gradeShort(r.grade)) : '') + '" maxlength="3" autocomplete="off" spellcheck="false" dir="ltr"' +
+          ' aria-label="' + esc(t.gradeFor(String(name).replace(/<[^>]*>/g, ''))) + '" placeholder="—"></td>' +
+        '<td class="gs-tbl-c">' + (changed[r.pid] ? '<span class="gs-head-changed">' + esc(t.changed) + '</span>' : '') + '</td>' +
+      '</tr>';
+    };
     // BY SEMESTER. One flat list of every finished course read as a chore;
     // grouped, each semester is a small job with its own GPA at the top,
     // and the rest of the degree sits folded underneath.
@@ -300,7 +343,7 @@
       return '<div class="gs-sem">' +
         '<div class="gs-sem-h"><span class="gs-sem-name">' + esc(termLabel(g.term, rtl)) + '</span>' +
           '<span class="gs-sem-meta">' + esc(t.semGpa) + ' <b>' + gpa + '</b> · ' + esc(t.ofGraded(graded, g.rows.length)) + '</span></div>' +
-        g.rows.map(rowHtml).join('') +
+        (asTable ? '<table class="gs-tbl"><tbody>' + g.rows.map(tblRowHtml).join('') + '</tbody></table>' : g.rows.map(rowHtml).join('')) +
       '</div>';
     }).join('');
     var later = unstartedTerms(prefix, byTerm);
@@ -321,9 +364,10 @@
       '<div class="gs-summary"><div><b>' + cum.gpa.toFixed(2) + '</b><span>' + esc(t.cumulative) + ' GPA</span></div>' +
         '<div class="gs-summary-r"><b>' + (rtl ? standing.ar : standing.label) + '</b><span>' + esc(t.gradedHoursShort(cum.credits || 0)) + '</span></div></div>';
     return '<div class="gs-block">' +
-      '<div class="gs-lbl">' + t.title + '</div>' +
+      '<div class="gs-lbl-row"><div class="gs-lbl">' + t.title + '</div>' + (canTable() ? viewSwitchHTML(t, asTable) : '') + '</div>' +
       summary +
-      '<div class="gs-list">' + body + '</div>' +
+      (asTable ? '<p class="gs-hint gs-tbl-hint">' + esc(t.tableHint) + '</p>' : '') +
+      '<div class="gs-list' + (asTable ? ' gs-list-table' : '') + '">' + body + '</div>' +
       // Said once, under the list, instead of inside every FA and W chip on
       // every course.
       '<p class="gs-foot">' + t.faNote + '</p></div>';
@@ -550,6 +594,71 @@
       var nextHead = document.querySelector('[data-gs-toggle="' + (window.CSS && window.CSS.escape ? window.CSS.escape(openNext) : openNext) + '"]');
       openNext = null;
       if(nextHead) nextHead.click();
+    }
+    // Table | List.
+    document.querySelectorAll('[data-gs-view]').forEach(function(b){
+      b.addEventListener('click', function(){
+        try{ localStorage.setItem(VIEW_KEY, b.getAttribute('data-gs-view')); }catch(e){}
+        if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
+      });
+    });
+    // The typed table. A grade is saved when you leave its box (Enter, Tab,
+    // an arrow, a click elsewhere); the GPA figures redraw once you leave the
+    // table altogether, so typing a run of grades isn't interrupted.
+    var inputs = Array.prototype.slice.call(document.querySelectorAll('[data-gs-in]'));
+    var dirty = false;
+    var rtlNow = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var tt = T[rtlNow ? 'ar' : 'en'];
+    var commit = function(inp){
+      var val = gradeFromText(inp.value);
+      if(val === null){
+        inp.classList.add('is-bad');
+        inp.setAttribute('aria-invalid', 'true');
+        if(window.__showToast) window.__showToast(tt.badGrade);
+        return false;
+      }
+      inp.classList.remove('is-bad');
+      inp.removeAttribute('aria-invalid');
+      var pid = inp.getAttribute('data-gs-in');
+      var grades = window.AAUP_GPA.loadGrades();
+      if((grades[pid] || '') === val){ if(val) inp.value = window.AAUP_GPA.gradeShort(val); return true; }
+      if(val) grades[pid] = val; else delete grades[pid];
+      window.AAUP_GPA.saveGrades(grades);
+      changed[pid] = true;
+      dirty = true;
+      inp.value = val ? window.AAUP_GPA.gradeShort(val) : '';
+      inp.classList.toggle('is-fail', !!(val && window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(val)));
+      return true;
+    };
+    var go = function(from, step){
+      var i = inputs.indexOf(from) + step;
+      if(inputs[i]){ inputs[i].focus(); inputs[i].select(); }
+    };
+    inputs.forEach(function(inp){
+      inp.dataset.was = inp.value;
+      inp.addEventListener('focus', function(){ inp.dataset.was = inp.value; inp.select(); });
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === 'ArrowDown'){ e.preventDefault(); if(commit(inp)) go(inp, 1); }
+        else if(e.key === 'ArrowUp'){ e.preventDefault(); if(commit(inp)) go(inp, -1); }
+        else if(e.key === 'Escape'){ e.stopPropagation(); inp.value = inp.dataset.was || ''; inp.classList.remove('is-bad'); inp.blur(); }
+      });
+      inp.addEventListener('change', function(){ commit(inp); });
+    });
+    var tbl = document.querySelector('.gs-list-table');
+    if(tbl){
+      tbl.addEventListener('focusout', function(e){
+        if(e.relatedTarget && tbl.contains(e.relatedTarget)) return;
+        if(!dirty) return;
+        // A moment later, and only if the window is still open: redrawing at
+        // once would swallow the click that took focus away (Close, say).
+        setTimeout(function(){
+          var ov = document.getElementById('auditModalOverlay');
+          if(!dirty || !ov || !ov.classList.contains('open')) return;
+          if(document.activeElement && tbl.contains(document.activeElement)) return;
+          dirty = false;
+          if(window.AAUP_AUDIT && window.AAUP_AUDIT.open) window.AAUP_AUDIT.open(prefix);
+        }, 350);
+      });
     }
     document.querySelectorAll('[data-gs-goplan]').forEach(function(btn){
       btn.addEventListener('click', function(){

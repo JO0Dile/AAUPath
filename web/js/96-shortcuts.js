@@ -102,13 +102,19 @@
   }
 
   // -------------------------------------------------------------------- help
+  var MOD = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl';
   var ROWS = [
+    [MOD + ' K', 'Search and do anything', 'ابحث ونفّذ أي إشي'],
     ['/', 'Search', 'بحث'],
     ['E', 'Edit Mode on My Plan', 'وضع التعديل في خطتي'],
     ['← ↑ → ↓', 'Move between courses', 'تنقّل بين المواد'],
     ['Space', 'Tick the course', 'علّم المادة'],
     ['Enter', 'Open the course', 'افتح المادة'],
     ['Esc', 'Close', 'إغلاق'],
+    // Edit Mode only (js/107-edit-power.js).
+    [MOD + ' Z', 'Undo, in Edit Mode', 'تراجع، بوضع التعديل'],
+    [MOD + ' C ' + MOD + ' V', 'Copy and paste a course, in Edit Mode', 'انسخ والصق مساق، بوضع التعديل'],
+    [MOD + '-click', 'Select several courses, in Edit Mode', 'اختار كذا مساق، بوضع التعديل'],
     ['?', 'Show this list', 'اعرض هاي القائمة']
   ];
 
