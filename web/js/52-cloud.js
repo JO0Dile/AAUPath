@@ -840,7 +840,7 @@
       });
       window.google.accounts.id.renderButton(host, {
         theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with',
-        locale: rtl ? 'ar' : 'en', width: Math.min(320, host.clientWidth || 320)
+        locale: rtl ? 'ar' : 'en', width: Math.max(200, Math.min(400, host.clientWidth || 320))
       });
     }).catch(function(){
       host.innerHTML = '<p class="form-note">' + (rtl ? 'تسجيل الدخول بجوجل مش متاح هلأ.' : 'Sign in with Google is not available right now.') + '</p>';
