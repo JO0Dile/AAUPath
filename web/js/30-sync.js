@@ -91,6 +91,14 @@
       structure: { years: years },
       courses: courses,
       prerequisites: prerequisites,
+      // Round 10, idea 8: named groups of electives a student can follow.
+      tracks: Array.isArray(fp.tracks) ? fp.tracks.slice(0, 20).map(function(t){
+        return { id: safeId(t && t.id), name: { en: esc(t && t.name && t.name.en), ar: esc(t && t.name && t.name.ar) },
+                 courses: (Array.isArray(t && t.courses) ? t.courses : []).slice(0, 60).map(function(c){ return safeId(c); }).filter(Boolean) };
+      }).filter(function(t){ return t.id && t.name.en && t.courses.length; }) : [],
+      // Idea 7: an old course that now counts as one of this plan's.
+      replaced: Array.isArray(fp.replaced) ? fp.replaced.slice(0, 100).map(function(r){ return [safeId(r && r[0]), safeId(r && r[1])]; })
+        .filter(function(r){ return r[0] && r[1] && r[0] !== r[1]; }) : [],
       requirementHours: window.__cleanRequirementHours
         ? window.__cleanRequirementHours(fp.requirementHours) : {},
       official: true,
@@ -161,7 +169,7 @@
   // even on a customized plan, with no prompt. This is what keeps a rebranded
   // icon from being held hostage by an unrelated pending decision about
   // courses.
-  var COSMETIC = ['icon', 'iconKey', 'imageUrl', 'bio', 'college', 'majorName', 'sortOrder', 'feedVersion'];
+  var COSMETIC = ['icon', 'iconKey', 'imageUrl', 'bio', 'college', 'majorName', 'sortOrder', 'feedVersion', 'tracks', 'replaced'];
   function applyCosmetic(existing, sanitized){
     var changed = false;
     COSMETIC.forEach(function(f){
@@ -195,7 +203,10 @@
         // Not ours to touch at all.
         return;
       }
-      if((existing.feedVersion || 0) >= sanitized.feedVersion) return;
+      // Any different version is a new one. The version is a hash of the
+      // plan's content (tools/build-catalogue.py), not a counter, so "only a
+      // bigger number" threw away about half of all real updates.
+      if((existing.feedVersion || 0) === sanitized.feedVersion) return;
 
       if(!existing.wasEdited){
         local[sanitized.id] = sanitized;
@@ -219,6 +230,14 @@
 
     if(result.added || result.updated || result.cosmetic || result.pending){
       window.AAUP_IMPORTED.saveImportedPlans(local);
+    }
+    // A passed old course now counts as its replacement (js/02-id-renames.js).
+    // The app already read what was saved, so it has to start again to see the
+    // move: at once while it is still opening, otherwise when the student says.
+    if(window.__carryAllReplaced && window.__carryAllReplaced()){
+      var fresh = window.performance && performance.now ? performance.now() < 15000 : false;
+      if(fresh) location.reload();
+      else if(window.__showActionToast) window.__showActionToast('A course in your plan was replaced; your progress moved to the new one.', 'Reload', function(){ location.reload(); });
     }
     if(awaiting.length) queueConsent(awaiting);
     return result;

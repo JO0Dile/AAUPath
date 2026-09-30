@@ -147,6 +147,11 @@ def shape_plan(major, scales_by_college, colleges):
         'degreeHoursDiscrepancy': major.get('degreeHoursDiscrepancy') or None,
         'sortOrder': sort_order_of(major.get('sortOrder')),
         'freeElectiveSuggestions': major.get('freeElectiveSuggestions') or [],
+        # Round 10, ideas 7 and 8. Only on plans that have them, so every
+        # other plan keeps its version and nobody re-downloads it for nothing.
+        **({'replaced': [[r['old'], r['new']] for r in major['replaced']]} if major.get('replaced') else {}),
+        **({'tracks': [{'id': t['id'], 'name': {'en': t['name'], 'ar': t.get('nameAr') or ''}, 'courses': t['courses']}
+                       for t in major['tracks']]} if major.get('tracks') else {}),
         'gradingScale': scale,
         'structure': structure,
         'courses': courses,

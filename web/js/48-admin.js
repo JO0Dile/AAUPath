@@ -995,6 +995,97 @@
   // scan the right row. Grouping by the structure the plan actually has makes
   // a misplaced course obvious, and gives the credit-hour total per term for
   // free. Unscheduled courses get their own group instead of being scattered.
+  // ---------- Plan tools (round 10, ideas 7 and 8) ----------
+  // Replaced courses: a student who passed the old course keeps it under the
+  // new one (their tick, grade and hours move on their phone). Elective
+  // tracks: named groups of this plan's courses that students can follow.
+  // Both are saved with the plan, like everything else on this page.
+  function courseLabel(id){
+    var c = (state.major.courses || []).filter(function(x){ return x.id === id; })[0];
+    return c ? (c.name || id) + (c.courseNumber ? ' · ' + c.courseNumber : '') : id;
+  }
+  function planToolsHtml(){
+    var m = state.major;
+    var rp = m.replaced || [], tr = m.tracks || [];
+    var opts = (m.courses || []).slice().sort(function(a, b){ return String(a.name).localeCompare(String(b.name)); })
+      .map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(courseLabel(c.id)) + '</option>'; }).join('');
+    var te = state.trackEdit;
+    var draft = te == null ? null : (te === 'new' ? state.trackDraft : state.trackDraft);
+    var pickable = (m.courses || []).filter(function(c){ return !c.yearId || c.category === 'dept' || c.category === 'free'; });
+    return '<div class="apt-grid">' +
+      '<section class="apt-card"><h3>Replaced courses</h3>' +
+        '<p class="admin-hint">A student who passed the old course keeps the hours under the new one. Their tick, grade and status move on their phone.</p>' +
+        (rp.length ? '<table class="admin-table"><thead><tr><th>Old course</th><th></th><th>Counts as</th><th></th></tr></thead><tbody>' +
+          rp.map(function(r, i){
+            return '<tr><td>' + esc(r.oldName || r.old) + (r.oldName ? '<br><span class="admin-sub">' + esc(r.old) + '</span>' : '') + '</td><td>→</td><td>' + esc(courseLabel(r.new)) + '</td>' +
+              '<td><button type="button" class="home-btn admin-mini admin-danger" data-rp-del="' + i + '">×</button></td></tr>';
+          }).join('') + '</tbody></table>' : '<p class="admin-hint">None yet.</p>') +
+        '<div class="apt-add">' +
+          '<input class="sr-in" id="rpOld" placeholder="Old course number" maxlength="50">' +
+          '<input class="sr-in" id="rpName" placeholder="Old name (optional)" maxlength="200">' +
+          '<select class="sr-in" id="rpNew"><option value="">Counts as…</option>' + opts + '</select>' +
+          '<button type="button" class="home-btn" id="rpAdd">+ Add a pair</button>' +
+        '</div></section>' +
+      '<section class="apt-card"><h3>Elective tracks</h3>' +
+        '<p class="admin-hint">Groups of electives students can follow. They show as a choice above the plan\'s electives.</p>' +
+        tr.map(function(t, i){
+          return '<div class="apt-track"><div><b>' + esc(t.name) + '</b>' + (t.nameAr ? ' <span class="admin-sub">' + esc(t.nameAr) + '</span>' : '') +
+            '<br><span class="admin-sub">' + esc(t.courses.map(courseLabel).join(', ')) + '</span></div>' +
+            '<span class="apt-count">' + t.courses.length + ' course' + (t.courses.length === 1 ? '' : 's') + '</span>' +
+            '<button type="button" class="home-btn admin-mini" data-tr-edit="' + i + '">Change</button>' +
+            '<button type="button" class="home-btn admin-mini admin-danger" data-tr-del="' + i + '">×</button></div>';
+        }).join('') +
+        (draft
+          ? '<div class="apt-trform">' +
+              '<div class="apt-add"><input class="sr-in" id="trName" placeholder="Track name, e.g. Robotics" maxlength="80" value="' + esc(draft.name || '') + '">' +
+              '<input class="sr-in" id="trNameAr" placeholder="Arabic name (optional)" maxlength="80" dir="rtl" value="' + esc(draft.nameAr || '') + '"></div>' +
+              '<div class="apt-checks">' + (pickable.length ? pickable : (m.courses || [])).map(function(c){
+                return '<label><input type="checkbox" data-tr-course="' + esc(c.id) + '"' + (draft.courses.indexOf(c.id) !== -1 ? ' checked' : '') + '> ' + esc(courseLabel(c.id)) + '</label>';
+              }).join('') + '</div>' +
+              '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="trSave">' + (te === 'new' ? 'Add the track' : 'Keep changes') + '</button> ' +
+              '<button type="button" class="home-btn" id="trCancel">Cancel</button></div></div>'
+          : '<button type="button" class="home-btn" id="trNew">+ New track</button>') +
+      '</section></div>' +
+      '<p class="admin-hint apt-save">These are saved with the plan: press Save when you\'re done.</p>';
+  }
+  function bindPlanTools(){
+    var m = state.major, redraw = function(){ markDirty(); render(); };
+    on('rpAdd', 'click', function(){
+      harvestCourses();
+      var old = document.getElementById('rpOld').value.trim(), nw = document.getElementById('rpNew').value;
+      if(!/^[a-z0-9][a-z0-9-]{1,48}$/.test(old)){ toast('Type the old course number (or its id).'); return; }
+      if(!nw){ toast('Pick the course it counts as.'); return; }
+      if(old === nw){ toast('A course can\'t count as itself.'); return; }
+      m.replaced = (m.replaced || []).filter(function(r){ return r.old !== old; });
+      m.replaced.push({ old: old, oldName: document.getElementById('rpName').value.trim(), new: nw });
+      redraw();
+    });
+    document.querySelectorAll('[data-rp-del]').forEach(function(b){ b.addEventListener('click', function(){ harvestCourses(); m.replaced.splice(+b.getAttribute('data-rp-del'), 1); redraw(); }); });
+    on('trNew', 'click', function(){ harvestCourses(); state.trackEdit = 'new'; state.trackDraft = { name: '', nameAr: '', courses: [] }; render(); });
+    document.querySelectorAll('[data-tr-edit]').forEach(function(b){ b.addEventListener('click', function(){
+      harvestCourses(); var i = +b.getAttribute('data-tr-edit'); state.trackEdit = i; state.trackDraft = JSON.parse(JSON.stringify(m.tracks[i])); render(); }); });
+    document.querySelectorAll('[data-tr-del]').forEach(function(b){ b.addEventListener('click', function(){ harvestCourses(); m.tracks.splice(+b.getAttribute('data-tr-del'), 1); state.trackEdit = null; redraw(); }); });
+    on('trCancel', 'click', function(){ harvestCourses(); state.trackEdit = null; render(); });
+    on('trSave', 'click', function(){
+      harvestCourses();
+      var d = state.trackDraft;
+      d.name = document.getElementById('trName').value.trim();
+      d.nameAr = document.getElementById('trNameAr').value.trim();
+      d.courses = [].map.call(document.querySelectorAll('[data-tr-course]:checked'), function(x){ return x.getAttribute('data-tr-course'); });
+      if(!d.name){ toast('Give the track a name.'); return; }
+      if(!d.courses.length){ toast('Tick the courses in this track.'); return; }
+      m.tracks = m.tracks || [];
+      if(state.trackEdit === 'new'){
+        var base = d.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'track', id = base, n = 2;
+        while(m.tracks.some(function(t){ return t.id === id; })) id = base + '-' + (n++);
+        d.id = id.length < 2 ? 'track-' + id : id;
+        m.tracks.push(d);
+      } else m.tracks[state.trackEdit] = d;
+      state.trackEdit = null;
+      redraw();
+    });
+  }
+
   function sectionCourses(){
     var m = state.major;
     var years = m.years || [];
@@ -1024,7 +1115,7 @@
       'and it moves to the matching group immediately. Type straight into the cells; ' +
       'Enter or ↓ goes to the next row, and a changed cell is marked until you save.</p>' +
       '<div class="form-field"><label for="acFilter">Search this plan</label><input type="text" id="acFilter" placeholder="Filter by name or code…"></div>' +
-      coursePicker() + pasteToolHtml() + whereUsedHtml() + historyHtml() +
+      planToolsHtml() + coursePicker() + pasteToolHtml() + whereUsedHtml() + historyHtml() +
       '<div id="acBody">' + buckets.map(function(b){
         var ch = b.rows.reduce(function(n, r){ return n + (Number(r.c.creditHours) || 0); }, 0);
         return '<section class="admin-termgroup' + (b.warn ? ' is-orphan' : '') + '">' +
@@ -2400,6 +2491,7 @@
   }
 
   function bindCourses(){
+    bindPlanTools();
     document.querySelectorAll('[data-course] input').forEach(function(i){
       i.addEventListener('change', markDirty);
     });
@@ -2661,6 +2753,22 @@
     var nm = function(id){ return cName(B[id] || A[id] || { id: id }); };
     Object.keys(pb).forEach(function(k){ if(!pa[k]) push('add', 'New prerequisite: ' + nm(pb[k][0]) + ' → ' + nm(pb[k][1])); });
     Object.keys(pa).forEach(function(k){ if(!pb[k]) push('del', 'Prerequisite removed: ' + nm(pa[k][0]) + ' → ' + nm(pa[k][1])); });
+    // Replaced courses and elective tracks (round 10, ideas 7 and 8).
+    var rk = function(r){ return r.old + '>' + r.new; };
+    var ra = {}, rb = {};
+    (a.replaced || []).forEach(function(r){ ra[rk(r)] = r; });
+    (b.replaced || []).forEach(function(r){ rb[rk(r)] = r; });
+    Object.keys(rb).forEach(function(k){ if(!ra[k]) push('add', 'Replaced course: ' + (rb[k].oldName || rb[k].old) + ' now counts as ' + nm(rb[k].new)); });
+    Object.keys(ra).forEach(function(k){ if(!rb[k]) push('del', 'Replaced course removed: ' + (ra[k].oldName || ra[k].old) + ' → ' + nm(ra[k].new)); });
+    var ta = {}, tb = {};
+    (a.tracks || []).forEach(function(t){ ta[t.id] = t; });
+    (b.tracks || []).forEach(function(t){ tb[t.id] = t; });
+    Object.keys(tb).forEach(function(id){
+      var t = tb[id], o = ta[id];
+      if(!o) push('add', 'New track: ' + t.name + ' (' + t.courses.map(nm).join(', ') + ')');
+      else if(JSON.stringify(o) !== JSON.stringify(t)) push('chg', 'Track ' + t.name + ' changed (' + t.courses.map(nm).join(', ') + ')');
+    });
+    Object.keys(ta).forEach(function(id){ if(!tb[id]) push('del', 'Track removed: ' + ta[id].name); });
     var yrs = function(m){ return (m.years || []).map(function(y){ return y.id + (y.hasSummer ? '+summer' : ''); }).join(', '); };
     if(yrs(a) !== yrs(b)) push('chg', 'Years: ' + (yrs(a) || 'none') + ' → ' + (yrs(b) || 'none'));
     [['name', 'Name'], ['nameAr', 'Arabic name'], ['subtitle', 'Subtitle'], ['college', 'Faculty'], ['degreeHours', 'Degree hours'],

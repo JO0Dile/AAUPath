@@ -577,6 +577,33 @@ function validMajor(m) {
   };
   for (const n of adj.keys()) if ((colour.get(n) || WHITE) === WHITE) walk(n);
 
+  // Round 10, idea 7 · replaced courses: a student who passed the old course
+  // keeps it under the new one. The old one is usually gone from the plan, so
+  // only its id (its course number) is checked for shape.
+  const replaced = Array.isArray(m.replaced) ? m.replaced : [];
+  if (replaced.length > 100) throw fail('up to 100 replaced courses');
+  const olds = new Set();
+  for (const r of replaced) {
+    const old = String((r && r.old) || '').trim();
+    if (!SLUG_RE.test(old)) throw fail(`replaced course: “${old.slice(0, 40)}” is not a course number or id`);
+    if (!courseIds.has(r.new)) throw fail(`replaced course ${old}: pick the course it counts as`);
+    if (old === r.new) throw fail(`replaced course ${old} can’t count as itself`);
+    if (olds.has(old)) throw fail(`replaced course ${old} is listed twice`);
+    olds.add(old);
+  }
+  // Idea 8 · elective tracks: named groups of this plan's courses.
+  const tracks = Array.isArray(m.tracks) ? m.tracks : [];
+  if (tracks.length > 20) throw fail('up to 20 tracks');
+  const trackIds = new Set();
+  for (const t of tracks) {
+    if (!SLUG_RE.test(String((t && t.id) || ''))) throw fail('a track needs an id');
+    if (trackIds.has(t.id)) throw fail(`two tracks share the id ${t.id}`);
+    trackIds.add(t.id);
+    if (!str(t.name).trim()) throw fail('a track needs a name');
+    if (!Array.isArray(t.courses) || !t.courses.length) throw fail(`track “${str(t.name, 40)}”: pick its courses`);
+    for (const c of t.courses) if (!courseIds.has(c)) throw fail(`track “${str(t.name, 40)}”: unknown course ${c}`);
+  }
+
   const out = {
     schemaVersion: 1,
     slug: m.slug,
@@ -614,6 +641,8 @@ function validMajor(m) {
       description: str(c.description, 2000),
     })),
     prerequisites: prereqs.map((p) => [p[0], p[1]]),
+    replaced: replaced.map((r) => ({ old: String(r.old).trim(), oldName: str(r.oldName, 200).trim(), new: r.new })),
+    tracks: tracks.map((t) => ({ id: t.id, name: str(t.name, 80).trim(), nameAr: str(t.nameAr, 80).trim(), courses: [...new Set(t.courses)] })),
   };
   return out;
 }
@@ -691,6 +720,8 @@ function toEditable(stored) {
     prerequisites: (Array.isArray(stored.prerequisites) ? stored.prerequisites : [])
       .map((p) => [p.requires, p.forCourse])
       .filter((p) => p[0] && p[1]),
+    replaced: Array.isArray(stored.replaced) ? stored.replaced : [],
+    tracks: Array.isArray(stored.tracks) ? stored.tracks : [],
   };
 }
 
@@ -735,6 +766,9 @@ function toStored(edited, original) {
       semester: c.semester ? parseInt(c.semester.slice(1), 10) : null,
     })),
     prerequisites: edited.prerequisites.map(([requires, forCourse]) => ({ requires, forCourse })),
+    // Left out when empty, so a plan without them keeps its file unchanged.
+    ...(edited.replaced && edited.replaced.length ? { replaced: edited.replaced } : { replaced: undefined }),
+    ...(edited.tracks && edited.tracks.length ? { tracks: edited.tracks } : { tracks: undefined }),
   };
 }
 
