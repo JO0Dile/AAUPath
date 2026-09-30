@@ -105,6 +105,9 @@
       if(EXCLUDE_EXACT[k] || k.indexOf(EXCLUDE_PREFIX) === 0) return; // never let a synced blob overwrite this device's own identity
       if(data[k] !== null && data[k] !== undefined){ try{ localStorage.setItem(k, data[k]); }catch(e){} }
     });
+    // A copy saved before some majors switched to course numbers comes back
+    // with the old ids; move it to the new ones (js/02-id-renames.js).
+    if(window.__migrateCourseIds) window.__migrateCourseIds();
   }
 
   // ---------- auth ----------

@@ -8,7 +8,7 @@
   "degreeHours": 134,
   "courses": [
     {
-      "slug": "arabic-language",
+      "slug": "040111001",
       "code": "040111001",
       "name": "Arabic Language",
       "nameAr": "اللغة العربية",
@@ -26,7 +26,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "beginning-english",
+      "slug": "010610014",
       "code": "010610014",
       "name": "Beginning English",
       "nameAr": "اللغة الإنجليزية للمبتدئين",
@@ -44,7 +44,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "calc-1",
+      "slug": "100411010",
       "code": "100411010",
       "name": "Calculus I",
       "nameAr": "التفاضل والتكامل (1)",
@@ -62,7 +62,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "computer-skills",
+      "slug": "110411000",
       "code": "110411000",
       "name": "Computer Skills",
       "nameAr": "مهارات حاسوبية",
@@ -80,7 +80,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "intro-it",
+      "slug": "240221010",
       "code": "240221010",
       "name": "Introduction to Information Technology",
       "nameAr": "مدخل إلى تكنولوجيا المعلومات",
@@ -98,7 +98,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "intro-it-lab",
+      "slug": "110111030",
       "code": "110111030",
       "name": "Introduction to Information Technology Lab",
       "nameAr": "مختبر مدخل إلى تكنولوجيا المعلومات",
@@ -152,7 +152,7 @@
       "requirement": "univElec"
     },
     {
-      "slug": "calc-2",
+      "slug": "100411020",
       "code": "100411020",
       "name": "Calculus II",
       "nameAr": "التفاضل والتكامل (2)",
@@ -170,7 +170,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "digital-logic",
+      "slug": "110411100",
       "code": "110411100",
       "name": "Digital Logic Design",
       "nameAr": "تصميم المنطق الرقمي",
@@ -188,7 +188,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "discrete-math",
+      "slug": "100413750",
       "code": "100413750",
       "name": "Discrete Mathematics",
       "nameAr": "الرياضيات المتقطعة",
@@ -206,7 +206,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "intermediate-english",
+      "slug": "010610025",
       "code": "010610025",
       "name": "Intermediate English",
       "nameAr": "اللغة الإنجليزية المتوسطة",
@@ -224,7 +224,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "intermediate-english-lab",
+      "slug": "010610026",
       "code": "010610026",
       "name": "Intermediate English Lab",
       "nameAr": "مختبر اللغة الإنجليزية المتوسطة",
@@ -242,7 +242,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "progfund1",
+      "slug": "240111011",
       "code": "240111011",
       "name": "Programming Fundamentals (C++)",
       "nameAr": "أساسيات البرمجة (++C)",
@@ -260,7 +260,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "progfund1-lab",
+      "slug": "240111021",
       "code": "240111021",
       "name": "Programming Fundamentals I Lab",
       "nameAr": "مختبر أساسيات البرمجة (1)",
@@ -278,7 +278,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "advanced-english",
+      "slug": "010610035",
       "code": "010610035",
       "name": "Advanced English",
       "nameAr": "اللغة الإنجليزية المتقدمة",
@@ -296,7 +296,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "advanced-english-lab",
+      "slug": "010610036",
       "code": "010610036",
       "name": "Advanced English Lab",
       "nameAr": "مختبر اللغة الإنجليزية المتقدمة",
@@ -332,7 +332,7 @@
       "requirement": "freeElec"
     },
     {
-      "slug": "research-methods",
+      "slug": "040521301",
       "code": "040521301",
       "name": "Fundamentals of Research Methods",
       "nameAr": "أساسيات مناهج البحث",
@@ -350,7 +350,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "comp-org",
+      "slug": "240112111",
       "code": "240112111",
       "name": "Introduction to Computer Organization",
       "nameAr": "مدخل إلى تنظيم الحاسوب",
@@ -368,7 +368,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "math-it",
+      "slug": "100412040",
       "code": "100412040",
       "name": "Mathematics for Information Technology",
       "nameAr": "الرياضيات لتكنولوجيا المعلومات",
@@ -386,7 +386,7 @@
       "requirement": "colgReq"
     },
     {
-      "slug": "progfund2",
+      "slug": "240112003",
       "code": "240112003",
       "name": "Programming Fundamentals II",
       "nameAr": "أساسيات البرمجة (2)",
@@ -404,7 +404,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "progfund2-lab",
+      "slug": "110412120",
       "code": "110412120",
       "name": "Programming Fundamentals II Lab",
       "nameAr": "مختبر أساسيات البرمجة (2)",
@@ -422,7 +422,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "elective-networks-1",
+      "slug": "240223041",
       "code": "240223041",
       "name": "Computer Networks I",
       "nameAr": "شبكات الحاسوب (1)",
@@ -440,7 +440,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "comp-net-lab",
+      "slug": "110113220",
       "code": "110113220",
       "name": "Computer Networks Lab",
       "nameAr": "مختبر شبكات الحاسوب",
@@ -458,7 +458,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "data-struct-lab",
+      "slug": "110412130",
       "code": "110412130",
       "name": "Data Structure Lab",
       "nameAr": "مختبر هياكل البيانات",
@@ -476,7 +476,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "data-structures",
+      "slug": "240112031",
       "code": "240112031",
       "name": "Data Structures",
       "nameAr": "هياكل البيانات",
@@ -494,7 +494,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "intro-db",
+      "slug": "240113121",
       "code": "240113121",
       "name": "Introduction to Database",
       "nameAr": "مدخل إلى قواعد البيانات",
@@ -512,7 +512,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "intro-db-lab",
+      "slug": "240113132",
       "code": "240113132",
       "name": "Introduction to Database Lab",
       "nameAr": "مختبر مدخل إلى قواعد البيانات",
@@ -530,7 +530,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "palestinian-studies",
+      "slug": "040511011",
       "code": "040511011",
       "name": "Palestinian Studies",
       "nameAr": "دراسات فلسطينية",
@@ -548,7 +548,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "speech-comm",
+      "slug": "240213480",
       "code": "240213480",
       "name": "Speech Communication and Technical Writing",
       "nameAr": "التواصل الشفهي والكتابة التقنية",
@@ -584,7 +584,7 @@
       "requirement": "univElec"
     },
     {
-      "slug": "algo-prog-tech",
+      "slug": "240113020",
       "code": "240113020",
       "name": "Algorithms and Programming Techniques",
       "nameAr": "الخوارزميات وتقنيات البرمجة",
@@ -620,7 +620,7 @@
       "requirement": "freeElec"
     },
     {
-      "slug": "intro-os",
+      "slug": "240113311",
       "code": "240113311",
       "name": "Introduction to Operating Systems",
       "nameAr": "مدخل إلى نظم التشغيل",
@@ -638,7 +638,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "oop-principles",
+      "slug": "240212010",
       "code": "240212010",
       "name": "Principles of Object Oriented Programming",
       "nameAr": "مبادئ البرمجة الشيئية",
@@ -656,7 +656,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "web-dev-1",
+      "slug": "240213081",
       "code": "240213081",
       "name": "Web Development I",
       "nameAr": "تطوير الويب (1)",
@@ -674,7 +674,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "advanced-oop",
+      "slug": "240213010",
       "code": "240213010",
       "name": "Advanced Object Oriented Programming",
       "nameAr": "البرمجة الشيئية المتقدمة",
@@ -692,7 +692,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "it-proj-mgmt",
+      "slug": "240114471",
       "code": "240114471",
       "name": "Information Technology Project Management",
       "nameAr": "إدارة مشاريع تكنولوجيا المعلومات",
@@ -710,7 +710,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "intro-se",
+      "slug": "240113171",
       "code": "240113171",
       "name": "Introduction to Software Engineering",
       "nameAr": "مدخل إلى هندسة البرمجيات",
@@ -728,7 +728,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "mobile-prog",
+      "slug": "240113291",
       "code": "240113291",
       "name": "Mobile Programming",
       "nameAr": "برمجة الأجهزة المحمولة",
@@ -764,7 +764,7 @@
       "requirement": "univElec"
     },
     {
-      "slug": "comp-arch",
+      "slug": "240114331",
       "code": "240114331",
       "name": "Computer Architecture",
       "nameAr": "معمارية الحاسوب",
@@ -782,7 +782,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "comp-graphics",
+      "slug": "240212100",
       "code": "240212100",
       "name": "Fundamentals of Computer Graphics",
       "nameAr": "أساسيات الرسوميات الحاسوبية",
@@ -800,7 +800,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "senior-proj-1",
+      "slug": "240114974",
       "code": "240114974",
       "name": "Senior Project I",
       "nameAr": "مشروع التخرج (1)",
@@ -818,7 +818,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "sw-testing",
+      "slug": "240113620",
       "code": "240113620",
       "name": "Software Testing and Validation",
       "nameAr": "اختبار البرمجيات والتحقق منها",
@@ -854,7 +854,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "unix-lab",
+      "slug": "240114341",
       "code": "240114341",
       "name": "Unix Lab",
       "nameAr": "مختبر يونكس",
@@ -872,7 +872,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "visual-prog",
+      "slug": "240213231",
       "code": "240213231",
       "name": "Visual Programming (Basic)",
       "nameAr": "البرمجة المرئية",
@@ -890,7 +890,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "artificial-intelligence",
+      "slug": "240114350",
       "code": "240114350",
       "name": "Artificial Intelligence",
       "nameAr": "الذكاء الاصطناعي",
@@ -908,7 +908,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "senior-proj-2",
+      "slug": "240114982",
       "code": "240114982",
       "name": "Computer Science Senior Project II",
       "nameAr": "مشروع التخرج (2)",
@@ -926,7 +926,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "info-security",
+      "slug": "240113221",
       "code": "240113221",
       "name": "Information Security",
       "nameAr": "أمن المعلومات",
@@ -980,7 +980,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "theory-computation",
+      "slug": "240114081",
       "code": "240114081",
       "name": "Theory of Computation",
       "nameAr": "نظرية الحوسبة",
@@ -998,7 +998,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "elective-adv-os",
+      "slug": "240113321",
       "code": "240113321",
       "name": "Advanced Operating Systems",
       "nameAr": "نظم التشغيل المتقدمة",
@@ -1016,7 +1016,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-business-basics",
+      "slug": "240223202",
       "code": "240223202",
       "name": "Business and Enterprise Basics",
       "nameAr": "أساسيات الأعمال والمؤسسات",
@@ -1034,7 +1034,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-cloud-computing",
+      "slug": "240314800",
       "code": "240314800",
       "name": "Cloud Computing",
       "nameAr": "الحوسبة السحابية",
@@ -1052,7 +1052,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "community-service",
+      "slug": "000011110",
       "code": "000011110",
       "name": "Community Service",
       "nameAr": "الخدمة المجتمعية",
@@ -1070,7 +1070,7 @@
       "requirement": "univReq"
     },
     {
-      "slug": "elective-compiler-design",
+      "slug": "240114550",
       "code": "240114550",
       "name": "Compiler Design",
       "nameAr": "تصميم المترجمات",
@@ -1088,7 +1088,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-data-mining",
+      "slug": "240114610",
       "code": "240114610",
       "name": "Data Mining, Information Extraction and Data Warehousing",
       "nameAr": "التنقيب عن البيانات واستخراج المعلومات ومستودعات البيانات",
@@ -1106,7 +1106,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-distributed-sys",
+      "slug": "240114130",
       "code": "240114130",
       "name": "Distributed Systems",
       "nameAr": "النظم الموزعة",
@@ -1124,7 +1124,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-entrepreneurship",
+      "slug": "240114321",
       "code": "240114321",
       "name": "Enterprise Innovation and Entrepreneurship",
       "nameAr": "الابتكار وريادة الأعمال المؤسسية",
@@ -1142,7 +1142,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "internship",
+      "slug": "240113990",
       "code": "240113990",
       "name": "Internship",
       "nameAr": "التدريب الميداني",
@@ -1160,7 +1160,7 @@
       "requirement": "specReq"
     },
     {
-      "slug": "elective-neural-net",
+      "slug": "240113100",
       "code": "240113100",
       "name": "Introduction to Neural Network and Deep Learning",
       "nameAr": "مدخل إلى الشبكات العصبية والتعلم العميق",
@@ -1178,7 +1178,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-machine-learning",
+      "slug": "240114020",
       "code": "240114020",
       "name": "Machine Learning",
       "nameAr": "تعلم الآلة",
@@ -1196,7 +1196,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-parallel-prog",
+      "slug": "240114780",
       "code": "240114780",
       "name": "Parallel Programming",
       "nameAr": "البرمجة المتوازية",
@@ -1214,7 +1214,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-special-topic-it",
+      "slug": "240114500",
       "code": "240114500",
       "name": "Special Topic in IT",
       "nameAr": "مواضيع خاصة في تكنولوجيا المعلومات",
@@ -1232,7 +1232,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-special-topics-cs",
+      "slug": "240114411",
       "code": "240114411",
       "name": "Special Topics 1 in Computer Science",
       "nameAr": "مواضيع خاصة (1) في علم الحاسوب",
@@ -1250,7 +1250,7 @@
       "requirement": "specElec"
     },
     {
-      "slug": "elective-web-dev-2",
+      "slug": "240214120",
       "code": "240214120",
       "name": "Web Development II",
       "nameAr": "تطوير الويب (2)",
@@ -1270,220 +1270,220 @@
   ],
   "prerequisites": [
     {
-      "requires": "calc-1",
-      "forCourse": "calc-2"
+      "requires": "100411010",
+      "forCourse": "100411020"
     },
     {
-      "requires": "calc-2",
-      "forCourse": "math-it"
+      "requires": "100411020",
+      "forCourse": "100412040"
     },
     {
-      "requires": "elective-networks-1",
-      "forCourse": "comp-net-lab"
+      "requires": "240223041",
+      "forCourse": "110113220"
     },
     {
-      "requires": "discrete-math",
-      "forCourse": "data-struct-lab"
+      "requires": "100413750",
+      "forCourse": "110412130"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "data-struct-lab"
+      "requires": "240112003",
+      "forCourse": "110412130"
     },
     {
-      "requires": "progfund1",
-      "forCourse": "progfund2"
+      "requires": "240111011",
+      "forCourse": "240112003"
     },
     {
-      "requires": "discrete-math",
-      "forCourse": "data-structures"
+      "requires": "100413750",
+      "forCourse": "240112031"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "data-structures"
+      "requires": "240112003",
+      "forCourse": "240112031"
     },
     {
-      "requires": "digital-logic",
-      "forCourse": "comp-org"
+      "requires": "110411100",
+      "forCourse": "240112111"
     },
     {
-      "requires": "data-structures",
-      "forCourse": "algo-prog-tech"
+      "requires": "240112031",
+      "forCourse": "240113020"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "intro-db"
+      "requires": "240112003",
+      "forCourse": "240113121"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "intro-db-lab"
+      "requires": "240112003",
+      "forCourse": "240113132"
     },
     {
-      "requires": "data-structures",
-      "forCourse": "intro-se"
+      "requires": "240112031",
+      "forCourse": "240113171"
     },
     {
-      "requires": "intro-os",
-      "forCourse": "info-security"
+      "requires": "240113311",
+      "forCourse": "240113221"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "mobile-prog"
+      "requires": "240112003",
+      "forCourse": "240113291"
     },
     {
-      "requires": "data-structures",
-      "forCourse": "intro-os"
+      "requires": "240112031",
+      "forCourse": "240113311"
     },
     {
-      "requires": "comp-org",
-      "forCourse": "intro-os"
+      "requires": "240112111",
+      "forCourse": "240113311"
     },
     {
-      "requires": "intro-se",
-      "forCourse": "sw-testing"
+      "requires": "240113171",
+      "forCourse": "240113620"
     },
     {
-      "requires": "algo-prog-tech",
-      "forCourse": "theory-computation"
+      "requires": "240113020",
+      "forCourse": "240114081"
     },
     {
-      "requires": "comp-org",
-      "forCourse": "comp-arch"
+      "requires": "240112111",
+      "forCourse": "240114331"
     },
     {
-      "requires": "intro-os",
-      "forCourse": "unix-lab"
+      "requires": "240113311",
+      "forCourse": "240114341"
     },
     {
-      "requires": "algo-prog-tech",
-      "forCourse": "artificial-intelligence"
+      "requires": "240113020",
+      "forCourse": "240114350"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "it-proj-mgmt"
+      "requires": "240112003",
+      "forCourse": "240114471"
     },
     {
-      "requires": "senior-proj-1",
-      "forCourse": "senior-proj-2"
+      "requires": "240114974",
+      "forCourse": "240114982"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "oop-principles"
+      "requires": "240112003",
+      "forCourse": "240212010"
     },
     {
-      "requires": "math-it",
-      "forCourse": "comp-graphics"
+      "requires": "100412040",
+      "forCourse": "240212100"
     },
     {
-      "requires": "progfund1",
-      "forCourse": "comp-graphics"
+      "requires": "240111011",
+      "forCourse": "240212100"
     },
     {
-      "requires": "oop-principles",
-      "forCourse": "advanced-oop"
+      "requires": "240212010",
+      "forCourse": "240213010"
     },
     {
-      "requires": "intro-db",
-      "forCourse": "web-dev-1"
+      "requires": "240113121",
+      "forCourse": "240213081"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "visual-prog"
+      "requires": "240112003",
+      "forCourse": "240213231"
     },
     {
-      "requires": "beginning-english",
-      "forCourse": "intermediate-english"
+      "requires": "010610014",
+      "forCourse": "010610025"
     },
     {
-      "requires": "beginning-english",
-      "forCourse": "intermediate-english-lab"
+      "requires": "010610014",
+      "forCourse": "010610026"
     },
     {
-      "requires": "intermediate-english",
-      "forCourse": "advanced-english"
+      "requires": "010610025",
+      "forCourse": "010610035"
     },
     {
-      "requires": "intermediate-english-lab",
-      "forCourse": "advanced-english"
+      "requires": "010610026",
+      "forCourse": "010610035"
     },
     {
-      "requires": "intermediate-english",
-      "forCourse": "advanced-english-lab"
+      "requires": "010610025",
+      "forCourse": "010610036"
     },
     {
-      "requires": "intermediate-english-lab",
-      "forCourse": "advanced-english-lab"
+      "requires": "010610026",
+      "forCourse": "010610036"
     },
     {
-      "requires": "advanced-english",
-      "forCourse": "speech-comm"
+      "requires": "010610035",
+      "forCourse": "240213480"
     },
     {
-      "requires": "advanced-english-lab",
-      "forCourse": "speech-comm"
+      "requires": "010610036",
+      "forCourse": "240213480"
     },
     {
-      "requires": "digital-logic",
-      "forCourse": "elective-networks-1"
+      "requires": "110411100",
+      "forCourse": "240223041"
     },
     {
-      "requires": "oop-principles",
-      "forCourse": "elective-neural-net"
+      "requires": "240212010",
+      "forCourse": "240113100"
     },
     {
-      "requires": "intro-os",
-      "forCourse": "elective-adv-os"
+      "requires": "240113311",
+      "forCourse": "240113321"
     },
     {
-      "requires": "algo-prog-tech",
-      "forCourse": "elective-machine-learning"
+      "requires": "240113020",
+      "forCourse": "240114020"
     },
     {
-      "requires": "oop-principles",
-      "forCourse": "elective-machine-learning"
+      "requires": "240212010",
+      "forCourse": "240114020"
     },
     {
-      "requires": "intro-os",
-      "forCourse": "elective-distributed-sys"
+      "requires": "240113311",
+      "forCourse": "240114130"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "elective-special-topic-it"
+      "requires": "240112003",
+      "forCourse": "240114500"
     },
     {
-      "requires": "theory-computation",
-      "forCourse": "elective-compiler-design"
+      "requires": "240114081",
+      "forCourse": "240114550"
     },
     {
-      "requires": "intro-db",
-      "forCourse": "elective-data-mining"
+      "requires": "240113121",
+      "forCourse": "240114610"
     },
     {
-      "requires": "algo-prog-tech",
-      "forCourse": "elective-parallel-prog"
+      "requires": "240113020",
+      "forCourse": "240114780"
     },
     {
-      "requires": "web-dev-1",
-      "forCourse": "elective-web-dev-2"
+      "requires": "240213081",
+      "forCourse": "240214120"
     },
     {
-      "requires": "intro-os",
-      "forCourse": "elective-cloud-computing"
+      "requires": "240113311",
+      "forCourse": "240314800"
     },
     {
-      "requires": "progfund1",
-      "forCourse": "progfund1-lab"
+      "requires": "240111011",
+      "forCourse": "240111021"
     },
     {
-      "requires": "progfund2",
-      "forCourse": "progfund2-lab"
+      "requires": "240112003",
+      "forCourse": "110412120"
     },
     {
-      "requires": "advanced-english",
-      "forCourse": "research-methods"
+      "requires": "010610035",
+      "forCourse": "040521301"
     },
     {
-      "requires": "advanced-english-lab",
-      "forCourse": "research-methods"
+      "requires": "010610036",
+      "forCourse": "040521301"
     }
   ],
   "iconKey": "code",
@@ -1504,5 +1504,68 @@
   },
   "requirementHoursDrift": {
     "specElec": 39.0
+  },
+  "renamedIds": {
+    "arabic-language": "040111001",
+    "beginning-english": "010610014",
+    "calc-1": "100411010",
+    "computer-skills": "110411000",
+    "intro-it": "240221010",
+    "intro-it-lab": "110111030",
+    "calc-2": "100411020",
+    "digital-logic": "110411100",
+    "discrete-math": "100413750",
+    "intermediate-english": "010610025",
+    "intermediate-english-lab": "010610026",
+    "progfund1": "240111011",
+    "progfund1-lab": "240111021",
+    "advanced-english": "010610035",
+    "advanced-english-lab": "010610036",
+    "research-methods": "040521301",
+    "comp-org": "240112111",
+    "math-it": "100412040",
+    "progfund2": "240112003",
+    "progfund2-lab": "110412120",
+    "elective-networks-1": "240223041",
+    "comp-net-lab": "110113220",
+    "data-struct-lab": "110412130",
+    "data-structures": "240112031",
+    "intro-db": "240113121",
+    "intro-db-lab": "240113132",
+    "palestinian-studies": "040511011",
+    "speech-comm": "240213480",
+    "algo-prog-tech": "240113020",
+    "intro-os": "240113311",
+    "oop-principles": "240212010",
+    "web-dev-1": "240213081",
+    "advanced-oop": "240213010",
+    "it-proj-mgmt": "240114471",
+    "intro-se": "240113171",
+    "mobile-prog": "240113291",
+    "comp-arch": "240114331",
+    "comp-graphics": "240212100",
+    "senior-proj-1": "240114974",
+    "sw-testing": "240113620",
+    "unix-lab": "240114341",
+    "visual-prog": "240213231",
+    "artificial-intelligence": "240114350",
+    "senior-proj-2": "240114982",
+    "info-security": "240113221",
+    "theory-computation": "240114081",
+    "elective-adv-os": "240113321",
+    "elective-business-basics": "240223202",
+    "elective-cloud-computing": "240314800",
+    "community-service": "000011110",
+    "elective-compiler-design": "240114550",
+    "elective-data-mining": "240114610",
+    "elective-distributed-sys": "240114130",
+    "elective-entrepreneurship": "240114321",
+    "internship": "240113990",
+    "elective-neural-net": "240113100",
+    "elective-machine-learning": "240114020",
+    "elective-parallel-prog": "240114780",
+    "elective-special-topic-it": "240114500",
+    "elective-special-topics-cs": "240114411",
+    "elective-web-dev-2": "240214120"
   }
 }

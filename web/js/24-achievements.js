@@ -59,10 +59,14 @@
   // progfund/dsa) — try each known sequence and use whichever this plan
   // actually has, rather than assuming one naming convention everywhere.
   var PROG_SEQUENCES = [['intro-cs', 'progfund', 'dsa'], ['progfund1', 'progfund2', 'data-structures']];
+  // Those four majors now name courses by number (js/02-id-renames.js); the
+  // tags above still find them through the rename table.
+  function idIn(prefix, s){ return window.__renamedId ? window.__renamedId(prefix, s) : s; }
   function findProgSequence(prefix){
     var info = (window.__PLAN_DATA[prefix] || {}).courseInfo || {};
     for(var i = 0; i < PROG_SEQUENCES.length; i++){
-      if(PROG_SEQUENCES[i].every(function(s){ return !!info[s]; })){ return PROG_SEQUENCES[i]; }
+      var seq = PROG_SEQUENCES[i].map(function(s){ return idIn(prefix, s); });
+      if(seq.every(function(s){ return !!info[s]; })){ return seq; }
     }
     return null;
   }
@@ -89,7 +93,7 @@
 
   function highSkilledDone(prefix){
     var progress = window.__getProgress();
-    return !!progress[prefix + '-c-computer-skills'] && !!progress[prefix + '-c-research-methods'];
+    return !!progress[prefix + '-c-' + idIn(prefix, 'computer-skills')] && !!progress[prefix + '-c-' + idIn(prefix, 'research-methods')];
   }
 
   function mathholicDone(prefix){
@@ -196,7 +200,7 @@
   function countSlugs(prefix, slugs){
     var progress = window.__getProgress();
     var done = 0;
-    slugs.forEach(function(s){ if(progress[prefix + '-c-' + s]) done++; });
+    slugs.forEach(function(s){ if(progress[prefix + '-c-' + idIn(prefix, s)]) done++; });
     return { done: done, total: slugs.length };
   }
   function creditProgressToward(prefix, targetPct){
