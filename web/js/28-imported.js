@@ -2077,6 +2077,9 @@
             '<span class="edit-donebar-ic" aria-hidden="true">' + window.AAUP_ICONS.preview('pen', 16) + '</span>' +
             '<span class="edit-donebar-text"><b>' + (rtl ? 'وضع التعديل' : 'Editing') + '</b>' +
               '<span>' + (rtl ? 'التغييرات بتنحفظ أول بأول' : 'Changes save as you go') + '</span></span>' +
+            // Round 8, idea 8: on a laptop, Browse Courses opens beside the
+            // plan and its courses drag onto a semester (js/107-edit-power.js).
+            '<button type="button" class="edit-donebar-browse" data-ep-browse>' + (rtl ? 'تصفّح المساقات' : 'Browse Courses') + '</button>' +
             '<button type="button" class="edit-donebar-btn imp-exit-edit-btn" onclick="AAUP_IMPORTED.toggleEdit(\'' + id + '\')">' + (rtl ? 'تم' : 'Done') + '</button>' +
           '</div>'
         : '') +
