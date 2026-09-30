@@ -153,7 +153,8 @@
   // prerequisite course — e.g. CS Senior Project I can only be taken once the
   // student has finished 90 credit hours. slug -> required completed credits.
   var CREDIT_GATES = {
-    cs: { 'senior-proj-1': 90 }
+    // Senior Project I (it was 'senior-proj-1' before CS used course numbers).
+    cs: { '240114974': 90 }
   };
 
   // Total credit-hours the student has actually completed in this plan, used

@@ -56,7 +56,22 @@
   }
 
   function today(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function forCourse(id){ return data().courses[id] || null; }
+  // What was written under a course's old id (before its major switched to
+  // course numbers, js/02-id-renames.js) still belongs to it.
+  var oldIds = null;
+  function oldIdsOf(id){
+    if(!oldIds){
+      oldIds = {};
+      var t = window.APP_ID_RENAMES || {};
+      Object.keys(t).forEach(function(p){ Object.keys(t[p]).forEach(function(o){ (oldIds[t[p][o]] = oldIds[t[p][o]] || []).push(o); }); });
+    }
+    return oldIds[id] || [];
+  }
+  function forCourse(id){
+    var all = data().courses, out = null;
+    oldIdsOf(id).concat([id]).forEach(function(k){ if(all[k]){ out = out || {}; Object.keys(all[k]).forEach(function(f){ out[f] = all[k][f]; }); } });
+    return out;
+  }
   function noteNow(c){ return c && c.note && c.note.text && c.note.until >= today() ? c.note : null; }
   function semTx(s){ return s === 's1' ? L('first semester', 'الفصل الأول') : L('second semester', 'الفصل الثاني'); }
   function chipTx(s){ return s === 's1' ? L('Fall only', 'فصل أول بس') : L('Spring only', 'فصل ثاني بس'); }

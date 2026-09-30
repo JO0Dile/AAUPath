@@ -92,7 +92,7 @@ def main():
     all_js = {p.name for p in JS.glob('*.js')}
     grouped = {name for files in GROUPS.values() for name in files}
     extra = grouped - all_js
-    missing = all_js - grouped - {'00-diagnostics.js', '01-catalogue.js'}
+    missing = all_js - grouped - {'00-diagnostics.js', '01-catalogue.js', '02-id-renames.js'}
     if extra:
         print('build-bundles.py: these are listed in a group but do not exist in web/js/:')
         for f in sorted(extra):

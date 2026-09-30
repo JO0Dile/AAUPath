@@ -8,7 +8,7 @@
   "degreeHours": null,
   "courses": [
     {
-      "slug": "arabic-language",
+      "slug": "040111001",
       "code": "040111001",
       "name": "Arabic Language",
       "nameAr": "اللغة العربية",
@@ -25,7 +25,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "calc-1",
+      "slug": "100411010",
       "code": "100411010",
       "name": "Calculus I",
       "nameAr": "التفاضل والتكامل (1)",
@@ -42,7 +42,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "computer-skills",
+      "slug": "240111000",
       "code": "240111000",
       "name": "Computer Skills",
       "nameAr": "مهارات حاسوبية",
@@ -59,7 +59,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "discrete-math",
+      "slug": "100413750",
       "code": "100413750",
       "name": "Discrete Mathematics",
       "nameAr": "الرياضيات المتقطعة",
@@ -76,7 +76,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "intermediate-english",
+      "slug": "010610025",
       "code": "010610025",
       "name": "Intermediate English",
       "nameAr": "اللغة الإنجليزية المتوسطة",
@@ -93,7 +93,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "intermediate-english-lab",
+      "slug": "010610026",
       "code": "010610026",
       "name": "Intermediate English Lab",
       "nameAr": "مختبر اللغة الإنجليزية المتوسطة",
@@ -110,7 +110,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "intro-cs",
+      "slug": "290311110",
       "code": "290311110",
       "name": "Introduction to Computer Science",
       "nameAr": "مدخل إلى علم الحاسوب",
@@ -127,7 +127,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "intro-cs-lab",
+      "slug": "290311110-lab",
       "code": "290311110",
       "name": "Introduction to Computer Science Lab",
       "nameAr": "مختبر مدخل إلى علم الحاسوب",
@@ -161,7 +161,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "advanced-english",
+      "slug": "010610035",
       "code": "010610035",
       "name": "Advanced English",
       "nameAr": "اللغة الإنجليزية المتقدمة",
@@ -178,7 +178,7 @@
       "prerequisiteText": "Intermediate English (010610025) & Intermediate English Lab (010610026)"
     },
     {
-      "slug": "advanced-english-lab",
+      "slug": "010610036",
       "code": "010610036",
       "name": "Advanced English Lab",
       "nameAr": "مختبر اللغة الإنجليزية المتقدمة",
@@ -195,7 +195,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "calc-2",
+      "slug": "100411020",
       "code": "100411020",
       "name": "Calculus II",
       "nameAr": "التفاضل والتكامل (2)",
@@ -212,7 +212,7 @@
       "prerequisiteText": "Calculus I (100411010)"
     },
     {
-      "slug": "prob-stats",
+      "slug": "250111040",
       "code": "250111040",
       "name": "Elementary Probability & Statistics",
       "nameAr": "مبادئ الاحتمالات والإحصاء",
@@ -229,7 +229,7 @@
       "prerequisiteText": "Calculus I (100411010)"
     },
     {
-      "slug": "progfund",
+      "slug": "290311210",
       "code": "290311210",
       "name": "Programming Fundamentals",
       "nameAr": "أساسيات البرمجة",
@@ -246,7 +246,7 @@
       "prerequisiteText": "Introduction to Computer Science (290311110)"
     },
     {
-      "slug": "progfund-lab",
+      "slug": "290311210-lab",
       "code": "290311210",
       "name": "Programming Fundamentals Lab",
       "nameAr": "مختبر أساسيات البرمجة",
@@ -280,7 +280,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "comp-arch",
+      "slug": "290312130",
       "code": "290312130",
       "name": "Computer Architecture",
       "nameAr": "بنية الحاسوب",
@@ -297,7 +297,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "dsa",
+      "slug": "290312140",
       "code": "290312140",
       "name": "Data Structure and Algorithms",
       "nameAr": "هياكل البيانات والخوارزميات",
@@ -314,7 +314,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "fund-ai",
+      "slug": "290312120",
       "code": "290312120",
       "name": "Fundamentals of Artificial Intelligence",
       "nameAr": "مبادئ الذكاء الاصطناعي",
@@ -331,7 +331,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "db-fund",
+      "slug": "290312110",
       "code": "290312110",
       "name": "Fundamentals of Databases",
       "nameAr": "أساسيات قواعد البيانات",
@@ -348,7 +348,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "db-fund-lab",
+      "slug": "290312110-lab",
       "code": "290312110",
       "name": "Fundamentals of Databases Lab",
       "nameAr": "مختبر أساسيات قواعد البيانات",
@@ -365,7 +365,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "intro-cybersecurity",
+      "slug": "290372210",
       "code": "290372210",
       "name": "Introduction to Cybersecurity",
       "nameAr": "مدخل إلى الأمن السيبراني",
@@ -382,7 +382,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "linear-algebra",
+      "slug": "250223010",
       "code": "250223010",
       "name": "Linear Algebra I",
       "nameAr": "الجبر الخطي",
@@ -399,7 +399,7 @@
       "prerequisiteText": "Calculus II (100411020)"
     },
     {
-      "slug": "palestinian-studies",
+      "slug": "040511011",
       "code": "040511011",
       "name": "Palestinian Studies",
       "nameAr": "دراسات فلسطينية",
@@ -416,7 +416,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "computer-networks",
+      "slug": "290372220",
       "code": "290372220",
       "name": "Computer Networks",
       "nameAr": "شبكات الحاسوب",
@@ -433,7 +433,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "data-sci-analytics",
+      "slug": "290312210",
       "code": "290312210",
       "name": "Data Science and Analytics",
       "nameAr": "علم البيانات والتحليلات",
@@ -450,7 +450,7 @@
       "prerequisiteText": "Elementary Probability & Statistics (250111040)"
     },
     {
-      "slug": "diff-eq",
+      "slug": "290312240",
       "code": "290312240",
       "name": "Differential Equations",
       "nameAr": "المعادلات التفاضلية",
@@ -467,7 +467,7 @@
       "prerequisiteText": "Calculus II (100411020)"
     },
     {
-      "slug": "ai-python",
+      "slug": "290313130",
       "code": "290313130",
       "name": "Fundamental of AI Programming with Python",
       "nameAr": "أساسيات برمجة الذكاء الاصطناعي بلغة بايثون",
@@ -484,7 +484,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "research-methods",
+      "slug": "040521301",
       "code": "040521301",
       "name": "Fundamentals of Research Methods",
       "nameAr": "أساسيات مناهج البحث",
@@ -501,7 +501,7 @@
       "prerequisiteText": "Advanced English (010610035) &amp; Advanced English Lab (010610036)"
     },
     {
-      "slug": "intro-os",
+      "slug": "290312220",
       "code": "290312220",
       "name": "Introduction to Operating Systems",
       "nameAr": "مدخل إلى نظم التشغيل",
@@ -535,7 +535,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "ai-in-cybersecurity",
+      "slug": "290373110",
       "code": "290373110",
       "name": "AI in Cybersecurity",
       "nameAr": "الذكاء الاصطناعي في الأمن السيبراني",
@@ -552,7 +552,7 @@
       "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
     },
     {
-      "slug": "cryptography",
+      "slug": "290373210",
       "code": "290373210",
       "name": "Cryptography",
       "nameAr": "التشفير",
@@ -569,7 +569,7 @@
       "prerequisiteText": "Introduction to Cybersecurity (290372210)"
     },
     {
-      "slug": "cybersecurity-policy",
+      "slug": "290373130",
       "code": "290373130",
       "name": "Cybersecurity Policy and Governance",
       "nameAr": "سياسات وحوكمة الأمن السيبراني",
@@ -603,7 +603,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "machine-learning",
+      "slug": "290312230",
       "code": "290312230",
       "name": "Machine Learning",
       "nameAr": "تعلم الآلة",
@@ -620,7 +620,7 @@
       "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
     },
     {
-      "slug": "digital-forensics",
+      "slug": "290373120",
       "code": "290373120",
       "name": "Digital Forensics",
       "nameAr": "التحقيق الجنائي الرقمي",
@@ -637,7 +637,7 @@
       "prerequisiteText": "Introduction to Cybersecurity (290372210)"
     },
     {
-      "slug": "ethical-hacking",
+      "slug": "290373230",
       "code": "290373230",
       "name": "Ethical Hacking and Penetration Testing",
       "nameAr": "الاختراق الأخلاقي واختبار الاختراق",
@@ -654,7 +654,7 @@
       "prerequisiteText": "Introduction to Cybersecurity (290372210)"
     },
     {
-      "slug": "ethics-ai",
+      "slug": "290314110",
       "code": "290314110",
       "name": "Ethics in AI",
       "nameAr": "أخلاقيات الذكاء الاصطناعي",
@@ -688,7 +688,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "network-security",
+      "slug": "290373220",
       "code": "290373220",
       "name": "Network Security",
       "nameAr": "أمن الشبكات",
@@ -705,7 +705,7 @@
       "prerequisiteText": "Computer Networks (290372220)"
     },
     {
-      "slug": "blockchain-security",
+      "slug": "290374120",
       "code": "290374120",
       "name": "Blockchain and Security",
       "nameAr": "سلسلة الكتل والأمن",
@@ -756,7 +756,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "software-security",
+      "slug": "290374110",
       "code": "290374110",
       "name": "Software Security",
       "nameAr": "أمن البرمجيات",
@@ -773,7 +773,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "capstone-project",
+      "slug": "290354230",
       "code": "290354230",
       "name": "Capstone Project",
       "nameAr": "مشروع التخرج",
@@ -790,7 +790,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "cyber-physical-security",
+      "slug": "290374210",
       "code": "290374210",
       "name": "Cyber-Physical Systems Security",
       "nameAr": "أمن النظم السيبرانية الفيزيائية",
@@ -824,7 +824,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "elective-advanced-ethical-hacking",
+      "slug": "290373160",
       "code": "290373160",
       "name": "Advanced Ethical Hacking",
       "nameAr": "الاختراق الأخلاقي المتقدم",
@@ -841,7 +841,7 @@
       "prerequisiteText": "Ethical Hacking and Penetration Testing (290373230)"
     },
     {
-      "slug": "elective-computer-vision",
+      "slug": "290313210",
       "code": "290313210",
       "name": "Computer Vision",
       "nameAr": "الرؤية الحاسوبية",
@@ -858,7 +858,7 @@
       "prerequisiteText": "Machine Learning (290312230)"
     },
     {
-      "slug": "elective-fund-se",
+      "slug": "250223040",
       "code": "250223040",
       "name": "Fundamentals of Software Engineering",
       "nameAr": "أساسيات هندسة البرمجيات",
@@ -875,7 +875,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "internship",
+      "slug": "290313250",
       "code": "290313250",
       "name": "Internship",
       "nameAr": "التدريب الميداني",
@@ -892,7 +892,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "elective-nlp",
+      "slug": "290313120",
       "code": "290313120",
       "name": "Natural Language Processing",
       "nameAr": "معالجة اللغات الطبيعية",
@@ -909,7 +909,7 @@
       "prerequisiteText": "Machine Learning (290312230)"
     },
     {
-      "slug": "elective-robotics-foundation",
+      "slug": "290313110",
       "code": "290313110",
       "name": "Robotics Foundation",
       "nameAr": "أساسيات الروبوتات",
@@ -926,7 +926,7 @@
       "prerequisiteText": "Programming Fundamentals (290311210)"
     },
     {
-      "slug": "elective-special-topics-cyber",
+      "slug": "290373150",
       "code": "290373150",
       "name": "Special Topics in Cybersecurity",
       "nameAr": "مواضيع خاصة في الأمن السيبراني",
@@ -943,7 +943,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "elective-web-dev",
+      "slug": "290373140",
       "code": "290373140",
       "name": "Web Development",
       "nameAr": "تطوير الويب",
@@ -960,7 +960,7 @@
       "prerequisiteText": "-"
     },
     {
-      "slug": "elective-wireless-networks",
+      "slug": "290373170",
       "code": "290373170",
       "name": "Wireless Networks Management and Security",
       "nameAr": "إدارة وأمن الشبكات اللاسلكية",
@@ -979,167 +979,218 @@
   ],
   "prerequisites": [
     {
-      "requires": "intro-cs",
-      "forCourse": "progfund"
+      "requires": "290311110",
+      "forCourse": "290311210"
     },
     {
-      "requires": "calc-1",
-      "forCourse": "prob-stats"
+      "requires": "100411010",
+      "forCourse": "250111040"
     },
     {
-      "requires": "discrete-math",
-      "forCourse": "prob-stats"
+      "requires": "100413750",
+      "forCourse": "250111040"
     },
     {
-      "requires": "calc-1",
-      "forCourse": "calc-2"
+      "requires": "100411010",
+      "forCourse": "100411020"
     },
     {
-      "requires": "calc-2",
-      "forCourse": "diff-eq"
+      "requires": "100411020",
+      "forCourse": "290312240"
     },
     {
-      "requires": "calc-2",
-      "forCourse": "linear-algebra"
+      "requires": "100411020",
+      "forCourse": "250223010"
     },
     {
-      "requires": "linear-algebra",
-      "forCourse": "machine-learning"
+      "requires": "250223010",
+      "forCourse": "290312230"
     },
     {
-      "requires": "intermediate-english",
-      "forCourse": "advanced-english"
+      "requires": "010610025",
+      "forCourse": "010610035"
     },
     {
-      "requires": "intermediate-english-lab",
-      "forCourse": "advanced-english"
+      "requires": "010610026",
+      "forCourse": "010610035"
     },
     {
-      "requires": "intermediate-english",
-      "forCourse": "advanced-english-lab"
+      "requires": "010610025",
+      "forCourse": "010610036"
     },
     {
-      "requires": "intermediate-english-lab",
-      "forCourse": "advanced-english-lab"
+      "requires": "010610026",
+      "forCourse": "010610036"
     },
     {
-      "requires": "progfund",
-      "forCourse": "dsa"
+      "requires": "290311210",
+      "forCourse": "290312140"
     },
     {
-      "requires": "progfund",
-      "forCourse": "fund-ai"
+      "requires": "290311210",
+      "forCourse": "290312120"
     },
     {
-      "requires": "progfund",
-      "forCourse": "comp-arch"
+      "requires": "290311210",
+      "forCourse": "290312130"
     },
     {
-      "requires": "progfund",
-      "forCourse": "db-fund"
+      "requires": "290311210",
+      "forCourse": "290312110"
     },
     {
-      "requires": "progfund",
-      "forCourse": "ai-python"
+      "requires": "290311210",
+      "forCourse": "290313130"
     },
     {
-      "requires": "progfund",
-      "forCourse": "intro-cybersecurity"
+      "requires": "290311210",
+      "forCourse": "290372210"
     },
     {
-      "requires": "progfund",
-      "forCourse": "computer-networks"
+      "requires": "290311210",
+      "forCourse": "290372220"
     },
     {
-      "requires": "progfund",
-      "forCourse": "software-security"
+      "requires": "290311210",
+      "forCourse": "290374110"
     },
     {
-      "requires": "progfund",
-      "forCourse": "elective-fund-se"
+      "requires": "290311210",
+      "forCourse": "250223040"
     },
     {
-      "requires": "progfund",
-      "forCourse": "elective-robotics-foundation"
+      "requires": "290311210",
+      "forCourse": "290313110"
     },
     {
-      "requires": "comp-arch",
-      "forCourse": "intro-os"
+      "requires": "290312130",
+      "forCourse": "290312220"
     },
     {
-      "requires": "fund-ai",
-      "forCourse": "machine-learning"
+      "requires": "290312120",
+      "forCourse": "290312230"
     },
     {
-      "requires": "fund-ai",
-      "forCourse": "ethics-ai"
+      "requires": "290312120",
+      "forCourse": "290314110"
     },
     {
-      "requires": "fund-ai",
-      "forCourse": "ai-in-cybersecurity"
+      "requires": "290312120",
+      "forCourse": "290373110"
     },
     {
-      "requires": "prob-stats",
-      "forCourse": "data-sci-analytics"
+      "requires": "250111040",
+      "forCourse": "290312210"
     },
     {
-      "requires": "data-sci-analytics",
-      "forCourse": "machine-learning"
+      "requires": "290312210",
+      "forCourse": "290312230"
     },
     {
-      "requires": "machine-learning",
-      "forCourse": "elective-nlp"
+      "requires": "290312230",
+      "forCourse": "290313120"
     },
     {
-      "requires": "machine-learning",
-      "forCourse": "elective-computer-vision"
+      "requires": "290312230",
+      "forCourse": "290313210"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "digital-forensics"
+      "requires": "290372210",
+      "forCourse": "290373120"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "cybersecurity-policy"
+      "requires": "290372210",
+      "forCourse": "290373130"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "cryptography"
+      "requires": "290372210",
+      "forCourse": "290373210"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "ethical-hacking"
+      "requires": "290372210",
+      "forCourse": "290373230"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "blockchain-security"
+      "requires": "290372210",
+      "forCourse": "290374120"
     },
     {
-      "requires": "intro-cybersecurity",
-      "forCourse": "cyber-physical-security"
+      "requires": "290372210",
+      "forCourse": "290374210"
     },
     {
-      "requires": "computer-networks",
-      "forCourse": "network-security"
+      "requires": "290372220",
+      "forCourse": "290373220"
     },
     {
-      "requires": "computer-networks",
-      "forCourse": "elective-wireless-networks"
+      "requires": "290372220",
+      "forCourse": "290373170"
     },
     {
-      "requires": "ethical-hacking",
-      "forCourse": "elective-advanced-ethical-hacking"
+      "requires": "290373230",
+      "forCourse": "290373160"
     },
     {
-      "requires": "advanced-english",
-      "forCourse": "research-methods"
+      "requires": "010610035",
+      "forCourse": "040521301"
     },
     {
-      "requires": "advanced-english-lab",
-      "forCourse": "research-methods"
+      "requires": "010610036",
+      "forCourse": "040521301"
     }
   ],
   "iconKey": "shield",
   "icon": "🔐",
-  "imageUrl": null
+  "imageUrl": null,
+  "renamedIds": {
+    "arabic-language": "040111001",
+    "calc-1": "100411010",
+    "computer-skills": "240111000",
+    "discrete-math": "100413750",
+    "intermediate-english": "010610025",
+    "intermediate-english-lab": "010610026",
+    "intro-cs": "290311110",
+    "intro-cs-lab": "290311110-lab",
+    "advanced-english": "010610035",
+    "advanced-english-lab": "010610036",
+    "calc-2": "100411020",
+    "prob-stats": "250111040",
+    "progfund": "290311210",
+    "progfund-lab": "290311210-lab",
+    "comp-arch": "290312130",
+    "dsa": "290312140",
+    "fund-ai": "290312120",
+    "db-fund": "290312110",
+    "db-fund-lab": "290312110-lab",
+    "intro-cybersecurity": "290372210",
+    "linear-algebra": "250223010",
+    "palestinian-studies": "040511011",
+    "computer-networks": "290372220",
+    "data-sci-analytics": "290312210",
+    "diff-eq": "290312240",
+    "ai-python": "290313130",
+    "research-methods": "040521301",
+    "intro-os": "290312220",
+    "ai-in-cybersecurity": "290373110",
+    "cryptography": "290373210",
+    "cybersecurity-policy": "290373130",
+    "machine-learning": "290312230",
+    "digital-forensics": "290373120",
+    "ethical-hacking": "290373230",
+    "ethics-ai": "290314110",
+    "network-security": "290373220",
+    "blockchain-security": "290374120",
+    "software-security": "290374110",
+    "capstone-project": "290354230",
+    "cyber-physical-security": "290374210",
+    "elective-advanced-ethical-hacking": "290373160",
+    "elective-computer-vision": "290313210",
+    "elective-fund-se": "250223040",
+    "internship": "290313250",
+    "elective-nlp": "290313120",
+    "elective-robotics-foundation": "290313110",
+    "elective-special-topics-cyber": "290373150",
+    "elective-web-dev": "290373140",
+    "elective-wireless-networks": "290373170"
+  }
 }
