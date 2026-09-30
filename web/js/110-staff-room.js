@@ -264,8 +264,12 @@
       (d.reported || []).forEach(function(x){ reported[x.thought] = x.status; });
       refresh();
     }).catch(function(){});
-    if(me.role === 'dean') loadDates();
+    if(me.role === 'dean'){ loadDates(); loadLog(); }
     loadSaid();
+  }
+  var slog = null, logAll = false;
+  function loadLog(){
+    api('GET', '/api/staff/log').then(function(d){ slog = d.log || []; refresh(); }).catch(function(e){ slog = { error: e.message }; refresh(); });
   }
   function loadDates(){
     api('GET', '/api/staff/dates').then(function(d){ cdates = d.dates || []; refresh(); }).catch(function(e){ cdates = { error: e.message }; refresh(); });
@@ -336,7 +340,7 @@
       return '<aside class="stf-detail sr-panel">' +
         '<div class="stf-detail-h"><b>' + esc(collegeIds(me.college).length === 1 ? L('Your college', 'كليتك') : L('Your colleges', 'كلياتك')) + '</b></div>' +
         '<p class="stf-muted">' + esc(collegeLabel(me.college) + ' · ' + L(majorsN + ' majors', majorsN + ' تخصص')) + '</p>' +
-        waitingHtml() + datesHtml() +
+        glanceHtml() + waitingHtml() + logHtml() + datesHtml() +
         '<h4>' + esc(L('Professors', 'الأساتذة')) + '</h4>' + rows +
         (lastLink ? linkBoxHtml(lastLink.who, lastLink.link) : '') +
         '<button type="button" class="stf-btn stf-pri sr-give" data-sr="give">' + esc(L('Give a professor a login', 'اعطِ أستاذ حساب')) + '</button>' +
@@ -584,6 +588,147 @@
     }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
   }
 
+  // ---- numbers for the dean (round 10, ideas 15 to 18) ----------------------------------
+  // For the major on screen, when it is one of the dean's: where students get
+  // stuck, how many plan each course next semester, the plan as a PDF or a
+  // spreadsheet, and (for the whole college) recent changes with Put back.
+  // Counts come from the cloud worker (/api/stats/plan): counts only, never
+  // names, and under 5 is hidden.
+  var SEC_KEY = 'aaup_staffSectionSize';
+  function secSize(){ var n = 35; try{ n = +localStorage.getItem(SEC_KEY) || 35; }catch(e){} return Math.min(200, Math.max(5, n)); }
+  function myMajorNow(){
+    var pn = plansNow();
+    return pn.p && me && me.role === 'dean' && plansIn(me.uni, me.college).some(function(p){ return p.id === pn.id; }) ? pn : null;
+  }
+  function glanceHtml(){
+    var pn = myMajorNow();
+    if(!pn) return '';
+    var S = window.AAUP_STAFF, pl = pn.p, name = S && S.nameOf ? S.nameOf(pl) : pn.id;
+    var st = window.APP_CLOUD_URL && S && S.stats ? S.stats(pn.id) : undefined;
+    var byId = {};
+    (pl.courses || []).forEach(function(c){ byId[c.id] = c; });
+    var cname = function(id){ var c = byId[id]; return c ? plain(ar() && c.ar ? c.ar : c.name) : id; };
+    var out = '<h4>' + esc(L(name + ' at a glance', name + ' بلمحة')) + '</h4>';
+    var nums = '';
+    if(st === undefined) nums = '';
+    else if(!st) nums = '<p class="stf-muted">' + esc(L('Counting…', 'عم نعدّ…')) + '</p>';
+    else if(st.error) nums = '<p class="stf-muted">' + esc(L('Couldn’t reach the counts right now.', 'ما قدرنا نجيب الأعداد هلق.')) + '</p>';
+    else if(st.tooFew) nums = '<p class="stf-muted">' + esc(L('Fewer than 5 students of this major use AAUPath yet, so there are no counts to show.', 'أقل من 5 طلاب من هالتخصص بيستعملوا AAUPath لهلق، فما في أعداد نعرضها.')) + '</p>';
+    else {
+      var cs = st.courses || {}, g = S.graph(pl);
+      var stuck = Object.keys(cs).filter(function(id){ return byId[id] && cs[id].ready != null && (g.prev[id] || []).length; })
+        .map(function(id){ return { id: id, n: cs[id].ready, blocks: g.opensAll(id).length }; })
+        .sort(function(a, b){ return b.n - a.n || b.blocks - a.blocks; }).slice(0, 4);
+      var most = stuck.length ? stuck[0].n : 1;
+      var planned = Object.keys(cs).filter(function(id){ return byId[id] && cs[id].planned != null; })
+        .map(function(id){ return { id: id, n: cs[id].planned }; }).sort(function(a, b){ return b.n - a.n; });
+      var fewer = Object.keys(cs).filter(function(id){ return byId[id] && cs[id].planned == null; }).length;
+      var size = secSize();
+      nums = '<p class="stf-muted">' + esc(L(st.students + ' students of this major use AAUPath. Counts only, never names; under 5 is hidden.',
+          st.students + ' طالب من هالتخصص بيستعملوا AAUPath. أعداد بس، بدون أسماء، وأقل من 5 ما بيبين.')) + '</p>' +
+        '<div class="sr-sub">' + esc(L('Where students get stuck', 'وين الطلاب بيعلقوا')) + '</div>' +
+        (stuck.length ? stuck.map(function(x){
+          return '<div class="sr-stuck"><div class="sr-stuck-t"><b>' + esc(cname(x.id)) + '</b><span>' + esc(L(x.n + ' waiting', x.n + ' مستنّيين')) + '</span></div>' +
+            '<small>' + esc(x.blocks ? L('blocks ' + x.blocks + (x.blocks === 1 ? ' course' : ' courses'), 'بيسكّر ' + x.blocks + ' مساق') : L('the last step before graduating', 'آخر خطوة قبل التخرج')) + '</small>' +
+            '<div class="sr-bar"><i style="width:' + Math.max(4, Math.round(100 * x.n / most)) + '%"></i></div></div>';
+        }).join('') + '<p class="stf-muted sr-small">' + esc(L('Waiting: they have passed everything the course needs, but not the course, and aren’t taking it now.', 'مستنّيين: نجحوا بكل اللي بيحتاجه المساق، بس لسا ما نجحوا فيه ومش آخذينه هلق.')) + '</p>'
+          : '<p class="stf-muted">' + esc(L('No course has 5 or more students waiting on it.', 'ما في مساق مستنّيه 5 طلاب أو أكثر.')) + '</p>') +
+        '<div class="sr-sub">' + esc(L('Planned for next semester', 'مخططين إلها الفصل الجاي')) + '</div>' +
+        (planned.length
+          ? '<table class="sr-tbl"><thead><tr><th>' + esc(L('Course', 'المساق')) + '</th><th>' + esc(L('Students', 'طلاب')) + '</th><th>' +
+              '<label>' + esc(L('Sections of ', 'شعب من ')) + '<input type="number" min="5" max="200" id="srSecSize" value="' + size + '" aria-label="' + esc(L('Students per section', 'طلاب بالشعبة')) + '"></label></th></tr></thead><tbody>' +
+            planned.slice(0, 8).map(function(x){ return '<tr><td>' + esc(cname(x.id)) + '</td><td>' + x.n + '</td><td>' + Math.ceil(x.n / size) + '</td></tr>'; }).join('') + '</tbody></table>' +
+            (planned.length > 8 || fewer ? '<p class="stf-muted sr-small">' + esc([planned.length > 8 ? L((planned.length - 8) + ' more with 5 or more', (planned.length - 8) + ' كمان فيهم 5 أو أكثر') : '', fewer ? L(fewer + ' with fewer than 5', fewer + ' فيهم أقل من 5') : ''].filter(Boolean).join(' · ')) + '</p>' : '')
+          : '<p class="stf-muted">' + esc(L('No course is planned by 5 or more students yet.', 'ما في مساق مخططله 5 طلاب أو أكثر لهلق.')) + '</p>');
+    }
+    return out +
+      '<div class="sr-exports"><button type="button" class="stf-btn" data-sr="pdf">PDF</button><button type="button" class="stf-btn" data-sr="xlsx">Excel</button>' +
+        '<small>' + esc(L('The plan, for meetings and accreditation', 'الخطة، للاجتماعات والاعتماد')) + '</small></div>' + nums;
+  }
+  function logHtml(){
+    if(!me || me.role !== 'dean') return '';
+    var head = '<h4>' + esc(L('Recent changes', 'آخر التغييرات')) + '</h4>';
+    if(slog === null) return head + '<p class="stf-muted">' + esc(L('Loading…', 'عم نحمّل…')) + '</p>';
+    if(slog.error) return head + '<p class="stf-muted">' + esc(slog.error) + '</p>';
+    if(!slog.length) return head + '<p class="stf-muted">' + esc(L('Nothing yet.', 'لسا ولا إشي.')) + '</p>';
+    var list = logAll ? slog : slog.slice(0, 6);
+    return head +
+      list.map(function(x){
+        return '<div class="sr-row sr-row-line' + (x.undone ? ' is-off' : '') + '"><div class="sr-grow"><b>' + esc(x.what) + '</b><small>' + esc(x.by + ' · ' + agoTx(x.at) + (x.undone ? L(' · put back', ' · رجعت') : '')) + '</small></div>' +
+          (x.canPutBack ? '<button type="button" class="stf-btn" data-sr="putback" data-id="' + esc(x.id) + '">' + esc(L('Put back', 'رجّعها')) + '</button>' : '') + '</div>';
+      }).join('') +
+      (slog.length > 6 ? '<button type="button" class="stf-btn sr-more" data-sr="logall">' + esc(logAll ? L('Show fewer', 'أقل') : L('Show all ' + slog.length, 'اعرض الكل (' + slog.length + ')')) + '</button>' : '') +
+      '<p class="stf-muted sr-small">' + esc(L('Put back restores what students read about a course before that change. Plan changes are put back from Edit this major → History.', 'رجّعها بترجّع اللي كان الطلاب بيقروه عن المساق قبل هالتغيير. تغييرات الخطة بترجع من "عدّل هالتخصص" ← السجل.')) + '</p>';
+  }
+  // The plan on paper (or as a PDF from the print window): year by year,
+  // each course with its number, hours and what it needs.
+  function printPlan(){
+    var pn = plansNow(), pl = pn.p, S = window.AAUP_STAFF;
+    if(!pl || !S || !S.yearsOf) return;
+    var byId = {};
+    (pl.courses || []).forEach(function(c){ byId[c.id] = c; });
+    var cname = function(c){ return plain(ar() && c.ar ? c.ar : c.name); };
+    var g = S.graph(pl), hrs = function(list){ return list.reduce(function(n, c){ return n + (parseFloat(c.creditHours) || 0); }, 0); };
+    var years = S.yearsOf(pl), total = hrs(pl.courses || []);
+    var col = planCollege(pl);
+    var html = '<div class="sp-head"><h1>' + esc(S.nameOf(pl)) + '</h1>' +
+      '<p>' + esc([uniName(pl.university || 'aaup'), col ? collegeName(col) : '', L(total + ' hours', total + ' ساعة'), L(years.length + ' years', years.length + ' سنوات')].filter(Boolean).join(' · ')) + '</p>' +
+      '<p class="sp-note">' + esc(L('Official study plan · printed ', 'الخطة الدراسية الرسمية · انطبعت ') + new Date().toLocaleDateString(ar() ? 'ar' : 'en', { day: 'numeric', month: 'long', year: 'numeric' }) + L(' from AAUPath', ' من AAUPath')) + '</p></div>' +
+      years.map(function(y){
+        return '<section class="sp-year"><h2>' + esc(L('Year ' + y.n, 'السنة ' + y.n)) + '</h2>' + y.sems.map(function(sm){
+          return '<h3>' + esc(S.semName(sm.s) + ' · ' + L(hrs(sm.list) + ' hours', hrs(sm.list) + ' ساعة')) + '</h3>' +
+            '<table><thead><tr><th>' + esc(L('Number', 'الرقم')) + '</th><th>' + esc(L('Course', 'المساق')) + '</th><th>' + esc(L('Hours', 'الساعات')) + '</th><th>' + esc(L('Needs', 'بيحتاج')) + '</th></tr></thead><tbody>' +
+            sm.list.map(function(c){
+              return '<tr><td>' + esc(c.courseNumber || '') + '</td><td>' + esc(cname(c)) + '</td><td>' + (parseFloat(c.creditHours) || 0) + '</td><td>' +
+                esc((g.prev[c.id] || []).map(function(id){ return byId[id] ? cname(byId[id]) : id; }).join(L(', ', '، '))) + '</td></tr>';
+            }).join('') + '</tbody></table>';
+        }).join('') + '</section>';
+      }).join('');
+    // Elective options sit in no semester: students choose among them.
+    var picks = (pl.courses || []).filter(function(c){ return !c.yearId || !c.semester; });
+    if(picks.length){
+      html += '<section class="sp-year"><h2>' + esc(L('Electives to choose from', 'مواد اختيارية للاختيار منها')) + '</h2>' +
+        '<table><thead><tr><th>' + esc(L('Number', 'الرقم')) + '</th><th>' + esc(L('Course', 'المساق')) + '</th><th>' + esc(L('Hours', 'الساعات')) + '</th><th>' + esc(L('Needs', 'بيحتاج')) + '</th></tr></thead><tbody>' +
+        picks.map(function(c){
+          return '<tr><td>' + esc(c.courseNumber || '') + '</td><td>' + esc(cname(c)) + '</td><td>' + (parseFloat(c.creditHours) || 0) + '</td><td>' +
+            esc((g.prev[c.id] || []).map(function(id){ return byId[id] ? cname(byId[id]) : id; }).join(L(', ', '، '))) + '</td></tr>';
+        }).join('') + '</tbody></table></section>';
+    }
+    var root = document.getElementById('staffPrintRoot');
+    if(!root){ root = document.createElement('div'); root.id = 'staffPrintRoot'; document.body.appendChild(root); }
+    root.setAttribute('dir', ar() ? 'rtl' : 'ltr');
+    root.innerHTML = html;
+    document.body.classList.add('printing-staff');
+    var done = function(){ document.body.classList.remove('printing-staff'); window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    setTimeout(function(){ window.print(); }, 60);
+  }
+  function exportPlan(){
+    var pn = plansNow(), pl = pn.p, S = window.AAUP_STAFF, X = window.AAUP_EXPORT;
+    if(!pl || !S || !X || !X.saveXlsx) return;
+    var byId = {};
+    (pl.courses || []).forEach(function(c){ byId[c.id] = c; });
+    var g = S.graph(pl);
+    var table = [[L('Year', 'السنة'), L('Semester', 'الفصل'), L('Number', 'الرقم'), L('Course', 'المساق'), L('Other name', 'الاسم الآخر'), L('Hours', 'الساعات'), L('Needs', 'بيحتاج'), L('Opens', 'بيفتح')]];
+    S.yearsOf(pl).forEach(function(y){
+      y.sems.forEach(function(sm){
+        sm.list.forEach(function(c){
+          table.push([y.n, S.semName(sm.s), c.courseNumber || '', plain(ar() && c.ar ? c.ar : c.name), plain(ar() ? c.name : (c.ar || '')),
+            parseFloat(c.creditHours) || 0,
+            (g.prev[c.id] || []).map(function(id){ return byId[id] ? plain(byId[id].name) : id; }).join(', '),
+            g.opensAll(c.id).length]);
+        });
+      });
+    });
+    (pl.courses || []).filter(function(c){ return !c.yearId || !c.semester; }).forEach(function(c){
+      table.push(['', L('Elective (choose)', 'اختياري (للاختيار)'), c.courseNumber || '', plain(ar() && c.ar ? c.ar : c.name), plain(ar() ? c.name : (c.ar || '')),
+        parseFloat(c.creditHours) || 0,
+        (g.prev[c.id] || []).map(function(id){ return byId[id] ? plain(byId[id].name) : id; }).join(', '),
+        g.opensAll(c.id).length]);
+    });
+    X.saveXlsx(S.nameOf(pl), L('Study plan', 'الخطة'), table, [6, 18, 12, 40, 34, 7, 40, 7], ar());
+  }
+
   // ---- college dates on Home (round 10, idea 11) ----------------------------------------
   function dateTx(iso){
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
@@ -751,7 +896,7 @@
     if(act === 'signin'){ dlg = 'signin'; dlgMsg = ''; refresh(); return true; }
     if(act === 'dlgclose'){ dlg = null; dlgMsg = ''; refresh(); return true; }
     if(act === 'give'){ dlg = 'give'; dlgMsg = ''; lastLink = null; refresh(); return true; }
-    if(act === 'signout'){ if(me && me.admin) adminOff = true; setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = cdates = null; replies = {}; reported = {}; refresh(); return true; }
+    if(act === 'signout'){ if(me && me.admin) adminOff = true; setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = cdates = slog = null; replies = {}; reported = {}; refresh(); return true; }
     if(act === 'savecourse'){ saveCourse(b.getAttribute('data-course')); return true; }
     var cid = b.getAttribute('data-course'), si = +b.getAttribute('data-i');
     if(act === 'secadd'){ var dl = draftFor(cid); dl.push({ n: String(dl.length + 1), days: [], s: '08:00', e: '09:00', room: '', prof: me.role === 'professor' ? (me.name || '') : '' }); secOpen[cid] = dl.length - 1; refresh(); return true; }
@@ -785,6 +930,20 @@
         busy = false; reported[id] = 'open';
         if(window.__showToast) window.__showToast(L('Reported. The admin will look at it.', 'تبلّغ عنها. الإدارة رح تشوفها.'));
         refresh();
+      }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+      return true;
+    }
+    if(act === 'pdf'){ printPlan(); return true; }
+    if(act === 'xlsx'){ exportPlan(); return true; }
+    if(act === 'logall'){ logAll = !logAll; refresh(); return true; }
+    if(act === 'putback'){
+      if(busy) return true;
+      busy = true;
+      api('POST', '/api/staff/log/' + id + '/putback', {}).then(function(){
+        busy = false;
+        if(window.__showToast) window.__showToast(L('Put back. Students see the earlier version.', 'رجعت. الطلاب بيشوفوا النسخة القديمة.'));
+        if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+        loadWork();
       }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
       return true;
     }
@@ -884,6 +1043,12 @@
     return false;
   }
 
+  // Students per section, for "Planned for next semester" (kept on this device).
+  document.addEventListener('change', function(e){
+    if(!e.target || e.target.id !== 'srSecSize') return;
+    try{ localStorage.setItem(SEC_KEY, String(Math.min(200, Math.max(5, +e.target.value || 35)))); }catch(err){}
+    refresh();
+  });
   // Section fields write straight into the draft, so a redraw keeps them.
   document.addEventListener('input', function(e){
     var f = e.target && e.target.getAttribute && e.target.getAttribute('data-sec');

@@ -317,6 +317,10 @@
   window.AAUP_STAFF = { open: open, close: close, present: present,
     refresh: function(){ if(view && view.classList.contains('open')) render(); },
     current: function(){ return current; }, plans: plans,
+    // This major's counts from the cloud worker (null while they load).
+    stats: function(planId){ loadStats(planId); return statsFor[planId]; },
+    // For the dean's numbers and the printed plan (js/110-staff-room.js).
+    nameOf: nameOf, graph: graph, yearsOf: yearsOf, semName: semName,
     // Opens a course (any of its ids), in this major if it has it, else in
     // the first major that does.
     openCourse: function(ids){
