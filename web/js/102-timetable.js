@@ -96,6 +96,44 @@
       }).join('') +
       '</section>';
   }
+  // Round 9, idea 2: one slim line under the search on Home, only on a day
+  // with classes still to come. What's on now, what's next and where, and
+  // the next date on the calendar. A tap opens My Week.
+  function lineHtml(planId){
+    if(!planId || !hasAny(planId)) return '';
+    var now = new Date(), nowM = now.getHours() * 60 + now.getMinutes();
+    var list = meetingsOn(planId, now.getDay()).filter(function(x){ return mins(x.e) > nowM; });
+    if(!list.length) return '';
+    var on = list.filter(function(x){ return mins(x.s) <= nowM; })[0];
+    var next = list.filter(function(x){ return mins(x.s) > nowM; })[0];
+    var parts = [];
+    if(on){
+      parts.push('<span class="td-part td-now"><i aria-hidden="true"></i><b>' + esc(L('Now:', 'هلق:')) + '</b><span class="td-name">' + esc(courseName(on.c)) + '</span>' +
+        '<em>' + esc(L('until ', 'لحد ') + window.__fmtTime(on.e)) + '</em></span>');
+    }
+    if(next){
+      parts.push('<span class="td-part"><b>' + esc(L('Next:', 'الجاي:')) + '</b><span class="td-name">' + esc(courseName(next.c)) + '</span>' +
+        '<em>' + esc(window.__fmtTime(next.s)) + (next.r ? '<span class="td-room"> · ' + esc(next.r) + '</span>' : '') + '</em></span>');
+    }
+    var d = window.AAUP_DATES && window.AAUP_DATES.upcoming ? window.AAUP_DATES.upcoming(planId)[0] : null;
+    if(d && d.days <= 30){
+      var when = d.days === 0 ? L('today', 'اليوم') : d.days === 1 ? L('tomorrow', 'بكرا')
+        : L('in ' + d.days + ' days', 'بعد ' + d.days + (d.days <= 10 ? ' أيام' : ' يوم'));
+      parts.push('<span class="td-part td-date"><b class="td-name">' + esc(d.label) + '</b><em>' + esc(when) + '</em></span>');
+    }
+    return '<button type="button" class="td-line" id="hmTodayLine" data-tt-open data-plan="' + esc(planId) + '">' +
+      parts.join('<span class="td-sep" aria-hidden="true"></span>') + '</button>';
+  }
+  // Keeps the line true as the day goes on (Now becomes Next becomes gone),
+  // without redrawing the rest of Home.
+  setInterval(function(){
+    var el = document.getElementById('hmTodayLine');
+    if(!el || document.hidden) return;
+    var html = lineHtml(el.getAttribute('data-plan'));
+    if(!html){ el.remove(); return; }
+    var t = document.createElement('div'); t.innerHTML = html;
+    if(t.firstChild.innerHTML !== el.innerHTML) el.replaceWith(t.firstChild);
+  }, 60000);
   // For the This semester card: one quiet line that leads here. It stays
   // once times are added (it used to vanish, taking the way back with it)
   // and then reads as the way to see or change them.
@@ -342,5 +380,5 @@
     if(el && el.classList.contains('open') && openFor === planId) render();
   }
 
-  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny, addMeeting: addMeeting };
+  window.AAUP_TIMETABLE = { courses: courses, open: open, todayHtml: todayHtml, lineHtml: lineHtml, promptHtml: promptHtml, meetingsOn: meetingsOn, forPlan: forPlan, hasAny: hasAny, addMeeting: addMeeting };
 })();

@@ -9582,3 +9582,31 @@ tr.adm-paste-same td{color:var(--text-dim);}
 #auditModalOverlay.is-docked .gs-swipe-dots{display:none;}
 #auditModalOverlay.is-docked .gs-summary{display:flex;}
 html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-width:none;}
+
+/* Round 9, idea 2: the Today line under the search on Home (js/102-timetable.js). */
+.td-line{
+  display:inline-flex; align-items:center; gap:10px; max-width:100%; margin-top:12px;
+  padding:7px 14px; border-radius:999px; font:inherit; font-size:13px; color:var(--text); text-align:start;
+  background:color-mix(in srgb, var(--accent) 9%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  white-space:nowrap; overflow:hidden; cursor:pointer;
+}
+.td-line:hover{background:color-mix(in srgb, var(--accent) 15%, transparent);}
+.td-line:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.td-line b{font-weight:800;}
+.td-line em{font-style:normal; color:var(--text-dim);}
+.td-part{display:inline-flex; align-items:center; gap:5px; min-width:0; flex:0 1 auto;}
+.td-date{flex-shrink:100;}
+.td-name{min-width:0; overflow:hidden; text-overflow:ellipsis;}
+.td-line em{flex:none;}
+.td-now{gap:6px;}
+.td-now i{flex:none; width:8px; height:8px; border-radius:50%; background:#3fb07a; box-shadow:0 0 0 4px rgba(63,176,122,.18);}
+.td-sep{flex:none; width:1px; height:14px; background:var(--line);}
+.hm.hm-has-q .td-line{display:none;}
+/* On a laptop it may run past the search box's width (not into the plan card on the side). */
+@media (min-width:901px){ .td-line{width:max-content; max-width:min(960px, calc(100vw - 480px));} }
+/* A phone keeps now and next only, so the line stays one line. */
+@media (max-width:600px){
+  .td-line{gap:7px; padding:6px 11px; font-size:12px;}
+  .td-date, .td-room, .td-date + .td-sep, .td-sep:has(+ .td-date){display:none;}
+}
