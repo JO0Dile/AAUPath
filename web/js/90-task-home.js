@@ -683,6 +683,7 @@
           '<div class="hm-try"><span>' + esc(L('Try', 'جرّب')) + '</span>' +
             CHIPS[rtl ? 'ar' : 'en'].map(function(c){ return '<button type="button" class="hm-chip" data-hm-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') +
           '</div>' +
+          (window.AAUP_TIMETABLE && window.AAUP_TIMETABLE.lineHtml ? window.AAUP_TIMETABLE.lineHtml(id) : '') +
         '</div>' +
       '</section>' +
       '<div class="hm-body">' +
