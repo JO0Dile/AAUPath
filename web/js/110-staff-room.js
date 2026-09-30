@@ -252,13 +252,23 @@
   }
   // What is live for students now (fresh, not the phone's copy), what is
   // waiting for a dean, and the professor's own card.
-  var live = null, pending = null, myCard = null;
+  var live = null, pending = null, myCard = null, replies = {}, reported = {}, cdates = null;
   function loadWork(){
     if(!me) return;
     fetch(base() + '/api/public/content?uni=' + encodeURIComponent(me.uni) + '&_=' + Date.now(), { cache: 'no-store' })
-      .then(function(r){ return r.json(); }).then(function(j){ live = (j && j.courses) || {}; refresh(); }).catch(function(){ live = {}; });
+      .then(function(r){ return r.json(); }).then(function(j){ live = (j && j.courses) || {}; replies = (j && j.replies) || {}; refresh(); }).catch(function(){ live = {}; });
     api('GET', '/api/staff/pending').then(function(d){ pending = d.pending || []; refresh(); }).catch(function(){ pending = []; });
     api('GET', '/api/staff/card').then(function(d){ myCard = d.card || {}; refresh(); }).catch(function(){ myCard = {}; });
+    api('GET', '/api/staff/reported').then(function(d){
+      reported = {};
+      (d.reported || []).forEach(function(x){ reported[x.thought] = x.status; });
+      refresh();
+    }).catch(function(){});
+    if(me.role === 'dean') loadDates();
+    loadSaid();
+  }
+  function loadDates(){
+    api('GET', '/api/staff/dates').then(function(d){ cdates = d.dates || []; refresh(); }).catch(function(e){ cdates = { error: e.message }; refresh(); });
   }
   function signedIn(d){
     setToken(d.token); me = d.me; team = null; dlg = null; dlgMsg = '';
@@ -326,7 +336,7 @@
       return '<aside class="stf-detail sr-panel">' +
         '<div class="stf-detail-h"><b>' + esc(collegeIds(me.college).length === 1 ? L('Your college', 'كليتك') : L('Your colleges', 'كلياتك')) + '</b></div>' +
         '<p class="stf-muted">' + esc(collegeLabel(me.college) + ' · ' + L(majorsN + ' majors', majorsN + ' تخصص')) + '</p>' +
-        waitingHtml() +
+        waitingHtml() + datesHtml() +
         '<h4>' + esc(L('Professors', 'الأساتذة')) + '</h4>' + rows +
         (lastLink ? linkBoxHtml(lastLink.who, lastLink.link) : '') +
         '<button type="button" class="stf-btn stf-pri sr-give" data-sr="give">' + esc(L('Give a professor a login', 'اعطِ أستاذ حساب')) + '</button>' +
@@ -493,7 +503,112 @@
       '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="' + k('noteText') + '" data-keep placeholder="' + esc(L('e.g. Midterm moved to Thursday, room B-05.', 'مثلاً: النصفي انتقل للخميس، قاعة B-05.')) + '">' + esc(note.text || '') + '</textarea></label>' +
       '<label class="sr-f sr-f-row"><span>' + esc(L('Show it until', 'اعرضها لحد')) + '</span><input class="sr-in" type="date" id="' + k('noteUntil') + '" data-keep value="' + esc(note.until || '') + '"></label>' +
       '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecourse" data-course="' + esc(id) + '">' + esc(dean ? L('Save for students', 'احفظ للطلاب') : L('Send to my dean', 'ابعت للعميد')) + '</button>' +
+    '</div>' + saidHtml(course);
+  }
+
+  // ---- what students said (round 10, ideas 13 and 14) ----------------------------------
+  // The thoughts wall (workers/thoughts-worker.js) is public; it is read here
+  // straight from its Worker, and the students' names are never drawn. A
+  // reply or a report goes through the staff Worker, which checks the course
+  // is this login's.
+  var said = null, saidAt = 0, replyOpen = {};
+  function loadSaid(force){
+    var url = String(window.APP_THOUGHTS_URL || '').replace(/\/+$/, '');
+    if(!url){ said = []; return; }
+    if(!force && said && !said.error && Date.now() - saidAt < 2 * 60 * 1000) return;
+    fetch(url + '/thoughts?all=1', { cache: 'no-store' }).then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(j){
+        said = ((j && j.thoughts) || []).slice(0, 400).map(function(t){
+          return { id: String(t.id || '').slice(0, 60), plan: String(t.plan || '').slice(0, 60), text: String(t.text || '').slice(0, 300),
+                   at: Number(t.at) || 0, course: String(t.course || '').slice(0, 80) };
+        }).filter(function(t){ return t.id && t.text; });
+        saidAt = Date.now(); refresh();
+      }, function(){ said = { error: true }; refresh(); });
+  }
+  // Every id this course has: the same name in the other majors, and the
+  // tags it had before its major used course numbers.
+  function idsOfCourse(id){
+    var name = courseName2(id), out = [id];
+    coursesIn(me.uni, '').forEach(function(c){ if(c.name === name) c.ids.forEach(function(x){ if(out.indexOf(x) === -1) out.push(x); }); });
+    var sc = window.AAUP_STAFF_CONTENT;
+    out.slice().forEach(function(x){ ((sc && sc.oldIds && sc.oldIds(x)) || []).forEach(function(o){ if(out.indexOf(o) === -1) out.push(o); }); });
+    return out;
+  }
+  function saidAbout(course){
+    if(!said || said.error) return [];
+    var ids = idsOfCourse(course.id), th = window.AAUP_THOUGHTS;
+    var pl = plansNow().p, c = pl && (pl.courses || []).filter(function(x){ return x.id === course.id; })[0];
+    var probe = { slug: '', name: c ? plain(c.name) : '', ar: c ? plain(c.ar || '') : '', num: c ? String(c.courseNumber || '') : '' };
+    return said.filter(function(t){
+      if(t.course) return ids.indexOf(t.course) !== -1;
+      return !!(th && th.aboutCourse && probe.name && th.aboutCourse(t, probe));
+    }).sort(function(a, b){ return b.at - a.at; });
+  }
+  function saidHtml(course){
+    var list = saidAbout(course), dean = me.role === 'dean', cid = course.id;
+    var head = '<h4>' + esc(L('What students said about ', 'شو حكوا الطلاب عن ') + courseName2(cid)) + '</h4>';
+    if(said === null) return '<div class="sr-said">' + head + '<p class="stf-muted">' + esc(L('Loading…', 'عم نحمّل…')) + '</p></div>';
+    if(said.error) return '<div class="sr-said">' + head + '<p class="stf-muted">' + esc(L('Couldn’t load what students said. Check the connection.', 'ما قدرنا نجيب شو حكوا الطلاب. تأكد من الإنترنت.')) + '</p></div>';
+    if(!list.length) return '<div class="sr-said">' + head + '<p class="stf-muted">' + esc(L('Nothing yet. Students write about a course from its window in the app.', 'لسا ولا إشي. الطلاب بيكتبوا عن المساق من نافذته بالتطبيق.')) + '</p></div>';
+    return '<div class="sr-said">' + head +
+      '<p class="stf-muted">' + esc(L(list.length + (list.length === 1 ? ' thought' : ' thoughts') + '. Names are never shown. You can reply, or report one that is rude or names someone; only the admin can take it down.',
+        list.length + ' فكرة. الأسماء ما بتبين أبداً. بتقدر ترد، أو تبلّغ عن وحدة فيها إساءة أو اسم حدا، والإدارة بس بتقدر تشيلها.')) + '</p>' +
+      list.slice(0, 25).map(function(t){
+        var r = replies[t.id], editing = replyOpen[t.id] || !r, rep = reported[t.id];
+        var tag = 'srRe-' + t.id;
+        return '<div class="sr-th">' +
+          '<p class="sr-th-q">“' + esc(t.text) + '”<small>' + esc(agoTx(Math.floor(t.at / 1000))) + '</small></p>' +
+          (r && !replyOpen[t.id] ? '<div class="sr-th-reply"><b>' + esc(r.by === (me.name || me.username) ? L('Your reply: ', 'ردّك: ') : L('Reply from ', 'رد ') + r.by + ': ') + '</b>' + esc(r.text) +
+            '<div class="sr-th-acts"><button type="button" class="stf-btn" data-sr="replyedit" data-id="' + esc(t.id) + '">' + esc(L('Change', 'غيّر')) + '</button>' +
+            '<button type="button" class="stf-btn" data-sr="replydel" data-id="' + esc(t.id) + '" data-course="' + esc(r.course || cid) + '">' + esc(L('Remove', 'احذف')) + '</button></div></div>' : '') +
+          (editing ? '<textarea class="sr-in" rows="2" maxlength="600" id="' + tag + '" data-keep placeholder="' + esc(dean ? L('Reply as the dean…', 'رد كعميد…') : L('Reply as the professor…', 'رد كأستاذ…')) + '">' + esc(r && replyOpen[t.id] ? r.text : '') + '</textarea>' : '') +
+          '<div class="sr-th-acts">' +
+            (editing ? '<button type="button" class="stf-btn stf-pri" data-sr="reply" data-id="' + esc(t.id) + '" data-course="' + esc(cid) + '">' + esc(L('Reply', 'رد')) + '</button>' : '') +
+            (editing && r ? '<button type="button" class="stf-btn" data-sr="replyno" data-id="' + esc(t.id) + '">' + esc(L('Cancel', 'إلغاء')) + '</button>' : '') +
+            (rep ? '<small class="sr-th-rep">' + esc(rep === 'removed' ? L('Reported · the admin took it down', 'تبلّغ عنها · الإدارة شالتها') : rep === 'kept' ? L('Reported · the admin kept it', 'تبلّغ عنها · الإدارة خلّتها') : L('Reported to the admin ✓', 'تبلّغ عنها للإدارة ✓')) + '</small>'
+                 : '<button type="button" class="stf-btn sr-bad" data-sr="report" data-id="' + esc(t.id) + '" data-course="' + esc(cid) + '">' + esc(L('Report to admin', 'بلّغ الإدارة')) + '</button>') +
+          '</div></div>';
+      }).join('') +
+      (list.length > 25 ? '<p class="stf-muted">' + esc(L('Showing the newest 25.', 'هاي أحدث 25.')) + '</p>' : '') +
     '</div>';
+  }
+  function sendReply(id, courseId, text){
+    busy = true;
+    return api('POST', '/api/staff/reply', { thought: id, course: courseId, text: text }).then(function(){
+      busy = false; dropKept = true; delete replyOpen[id];
+      if(text) replies[id] = { course: courseId, text: text, by: me.name || me.username };
+      else delete replies[id];
+      if(window.__showToast) window.__showToast(text ? L('Replied. Students see it under the thought.', 'انبعت. الطلاب بيشوفوه تحت الفكرة.') : L('Reply removed', 'انحذف الرد'));
+      if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+      refresh();
+    }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+  }
+
+  // ---- college dates on Home (round 10, idea 11) ----------------------------------------
+  function dateTx(iso){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(ar() ? 'ar' : 'en', { weekday: 'short', day: 'numeric', month: 'short' }) : iso;
+  }
+  function datesHtml(){
+    if(!me || me.role !== 'dean') return '';
+    var many = me.college === '*' || collegeIds(me.college).length > 1;
+    var opts = me.college === '*' ? [{ id: '*', name: L('All colleges', 'كل الكليات') }].concat(colleges(me.uni))
+      : collegeIds(me.college).map(function(id){ return { id: id, name: collegeName(id) }; });
+    var list = cdates === null ? '<p class="stf-muted">' + esc(L('Loading…', 'عم نحمّل…')) + '</p>'
+      : cdates.error ? '<p class="stf-muted">' + esc(cdates.error) + '</p>'
+      : !cdates.length ? '<p class="stf-muted">' + esc(L('None coming up.', 'ما في إشي جاي.')) + '</p>'
+      : cdates.map(function(d){
+          return '<div class="sr-row sr-row-line"><div class="sr-grow"><b>' + esc(d.label) + '</b><small>' + esc(dateTx(d.date) + (many ? ' · ' + (d.college === '*' ? L('All colleges', 'كل الكليات') : collegeName(d.college)) : '')) + '</small></div>' +
+            '<button type="button" class="stf-btn sr-bad" data-sr="datedel" data-id="' + esc(d.id) + '">' + esc(L('Remove', 'احذف')) + '</button></div>';
+        }).join('');
+    return '<h4>' + esc(L('College dates on Home', 'تواريخ الكلية بالرئيسية')) + '</h4>' +
+      '<p class="stf-muted">' + esc(L('Students of your college see them on Home, next to the university’s dates, counting down.', 'طلاب كليتك بيشوفوها بالرئيسية جنب تواريخ الجامعة، مع عدّ الأيام.')) + '</p>' + list +
+      '<div class="sr-date-add">' +
+        '<input class="sr-in" id="srDateLabel" data-keep maxlength="60" placeholder="' + esc(L('e.g. Midterm week', 'مثلاً: أسبوع النصفي')) + '">' +
+        '<input class="sr-in" id="srDateDay" data-keep type="date" min="' + todayIso() + '">' +
+        (many ? '<select class="sr-in" id="srDateCollege" data-keep>' + opts.map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select>' : '') +
+        '<button type="button" class="stf-btn stf-pri" data-sr="dateadd">' + esc(L('Add', 'ضيف')) + '</button>' +
+      '</div>';
   }
   function cleanSections(list){
     return (list || []).map(function(x, i){ return { n: String(x.n || i + 1), days: (x.days || []).slice().sort(), s: x.s || '', e: x.e || '', room: x.room || '', prof: x.prof || '' }; });
@@ -636,7 +751,7 @@
     if(act === 'signin'){ dlg = 'signin'; dlgMsg = ''; refresh(); return true; }
     if(act === 'dlgclose'){ dlg = null; dlgMsg = ''; refresh(); return true; }
     if(act === 'give'){ dlg = 'give'; dlgMsg = ''; lastLink = null; refresh(); return true; }
-    if(act === 'signout'){ if(me && me.admin) adminOff = true; setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = null; refresh(); return true; }
+    if(act === 'signout'){ if(me && me.admin) adminOff = true; setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = cdates = null; replies = {}; reported = {}; refresh(); return true; }
     if(act === 'savecourse'){ saveCourse(b.getAttribute('data-course')); return true; }
     var cid = b.getAttribute('data-course'), si = +b.getAttribute('data-i');
     if(act === 'secadd'){ var dl = draftFor(cid); dl.push({ n: String(dl.length + 1), days: [], s: '08:00', e: '09:00', room: '', prof: me.role === 'professor' ? (me.name || '') : '' }); secOpen[cid] = dl.length - 1; refresh(); return true; }
@@ -653,6 +768,51 @@
       return true;
     }
     if(act === 'savecard'){ saveCard(); return true; }
+    if(act === 'reply'){
+      var rt = val('srRe-' + id).trim();
+      if(!rt){ if(window.__showToast) window.__showToast(L('Write the reply first.', 'اكتب الرد أول.')); return true; }
+      if(!busy) sendReply(id, cid, rt);
+      return true;
+    }
+    if(act === 'replyedit'){ replyOpen[id] = true; refresh(); return true; }
+    if(act === 'replyno'){ delete replyOpen[id]; dropKept = true; refresh(); return true; }
+    if(act === 'replydel'){ if(!busy) sendReply(id, cid, ''); return true; }
+    if(act === 'report'){
+      var th = (said && !said.error ? said : []).filter(function(x){ return x.id === id; })[0];
+      if(!th || busy) return true;
+      busy = true;
+      api('POST', '/api/staff/report', { thought: id, course: cid, plan: th.plan, text: th.text }).then(function(){
+        busy = false; reported[id] = 'open';
+        if(window.__showToast) window.__showToast(L('Reported. The admin will look at it.', 'تبلّغ عنها. الإدارة رح تشوفها.'));
+        refresh();
+      }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+      return true;
+    }
+    if(act === 'dateadd'){
+      var dl0 = val('srDateLabel').trim(), dd0 = val('srDateDay');
+      if(!dl0 || !dd0){ if(window.__showToast) window.__showToast(L('Write what it is and pick the date.', 'اكتب شو هو واختار التاريخ.')); return true; }
+      if(busy) return true;
+      busy = true;
+      var dBody = { label: dl0, date: dd0 };
+      if(document.getElementById('srDateCollege')) dBody.college = val('srDateCollege');
+      api('POST', '/api/staff/dates', dBody).then(function(){
+        busy = false; dropKept = true;
+        if(window.__showToast) window.__showToast(L('Added. Your students see it on Home.', 'انضاف. طلابك بيشوفوه بالرئيسية.'));
+        if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+        loadDates();
+      }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+      return true;
+    }
+    if(act === 'datedel'){
+      if(busy) return true;
+      busy = true;
+      api('DELETE', '/api/staff/dates/' + id).then(function(){
+        busy = false;
+        if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+        loadDates();
+      }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+      return true;
+    }
     if(act === 'accept' || act === 'refuse'){
       busy = true;
       api('POST', '/api/staff/pending/' + id, { decision: act }).then(function(){

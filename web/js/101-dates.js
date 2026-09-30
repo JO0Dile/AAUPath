@@ -1,10 +1,13 @@
 // ==========================
 // DATES THAT MATTER — counting down on Home (idea 16).
 //
-// Two sources, shown together:
+// Three sources, shown together:
 //   - the university's own dates (add/drop, midterms, finals…), set by the
 //     maintainer in the Developer panel's university editor and shipped in
 //     plans.json with the rest of the university record;
+//   - the college's dates (midterm week, a deadline), added by its dean on
+//     the staff page, for students of that college only (round 10, idea 11;
+//     js/111-staff-content.js);
 //   - the student's own dates (a quiz, a project deadline), kept on this
 //     phone through AAUP_STORAGE, so they follow the profile and Cloud Sync.
 //
@@ -56,6 +59,12 @@
       if(n === null || n < 0) return;
       out.push({ label: ar() && d.ar ? d.ar : d.en, date: d.date, days: n, own: false });
     });
+    var sc = window.AAUP_STAFF_CONTENT;
+    (sc && sc.collegeDates && planId ? sc.collegeDates(planId) : []).forEach(function(d){
+      var n = daysLeft(d.date);
+      if(n === null || n < 0) return;
+      out.push({ label: d.label, date: d.date, days: n, own: false, college: d.college || '' });
+    });
     mine().forEach(function(d){
       var n = daysLeft(d.date);
       if(n === null || n < 0) return;
@@ -84,9 +93,10 @@
         (window.AAUP_ICONS ? window.AAUP_ICONS.preview('calendar', 16) : '') + esc(L('Add a date to count down to', 'ضيف تاريخ تعدّ الأيام عليه')) + '</button>';
     }
     return '<div class="hm-dates" role="list">' + list.slice(0, 2).map(function(d){
-      return '<button type="button" class="hm-date' + (d.days <= 3 ? ' is-soon' : '') + '" role="listitem" data-dates-open>' +
+      return '<button type="button" class="hm-date' + (d.days <= 3 ? ' is-soon' : '') + (d.college ? ' is-college' : '') + '" role="listitem" data-dates-open>' +
         '<span class="hm-date-what">' + esc(d.label) + '</span>' +
-        '<b class="hm-date-n">' + esc(whenTx(d.days)) + '</b></button>';
+        '<span class="hm-date-row"><b class="hm-date-n">' + esc(whenTx(d.days)) + '</b>' +
+          (d.college ? '<span class="hm-date-tag" title="' + esc(d.college) + '">' + esc(L('Your college', 'كليتك')) + '</span>' : '') + '</span></button>';
     }).join('') + '</div>';
   }
 
@@ -136,7 +146,7 @@
       (list.length
         ? '<div class="dates-list">' + list.map(function(d){
             return '<div class="dates-row' + (d.days <= 3 ? ' is-soon' : '') + '">' +
-              '<div class="dates-tx"><b>' + esc(d.label) + '</b><span>' + esc(dateTx(d.date)) + (d.own ? ' · ' + esc(L('yours', 'إلك')) : '') + '</span></div>' +
+              '<div class="dates-tx"><b>' + esc(d.label) + '</b><span>' + esc(dateTx(d.date)) + (d.own ? ' · ' + esc(L('yours', 'إلك')) : '') + (d.college ? ' · ' + esc(d.college) : '') + '</span></div>' +
               '<b class="dates-n">' + esc(whenTx(d.days)) + '</b>' +
               (d.own ? '<button type="button" class="dates-del" data-date-del="' + esc(d.id) + '" aria-label="' + esc(L('Remove', 'احذف')) + '">×</button>' : '') +
               '</div>';

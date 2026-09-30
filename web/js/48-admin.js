@@ -188,9 +188,9 @@
     if(key === 'contributions' && state.contribItems){
       return state.contribItems.filter(function(c){ return (c.status || 'pending') === 'pending'; }).length;
     }
-    if(key === 'thoughts' && state.thoughtItems){
+    if(key === 'thoughts' && (state.thoughtItems || state.reports)){
       var seen = 0; try{ seen = +localStorage.getItem(SEEN_THOUGHTS_KEY) || 0; }catch(e){}
-      return state.thoughtItems.filter(function(t){ return (t.at || 0) > seen; }).length;
+      return (state.thoughtItems || []).filter(function(t){ return (t.at || 0) > seen; }).length + (state.reports || []).length;
     }
     if(key === 'workers' && state.workers){
       return state.workers.filter(function(w){ return w.status === 'behind' || w.status === 'down'; }).length;
@@ -576,6 +576,7 @@
       var fresh = state.thoughtItems.filter(function(t){ return (t.at || 0) > seen; });
       if(fresh.length) row('💬 ' + fresh.length + ' new student thought' + (fresh.length === 1 ? '' : 's') + ' since you last looked', 'thoughts', 'Read');
     }
+    if(state.reports && state.reports.length) row('🚩 ' + state.reports.length + ' thought' + (state.reports.length === 1 ? '' : 's') + ' reported by staff', 'thoughts', 'Review');
     var today = new Date().toISOString().slice(0, 10);
     (state.tree || []).filter(function(u){ return u.published; }).forEach(function(u){
       var d = ((window.APP_UNIVERSITIES || {})[u.slug] || {}).dates || [];
@@ -589,6 +590,7 @@
     if(!state.workers && !state.workersLoading) setTimeout(loadWorkers, 0);
     if(contribSecret() && !state.contribItems && !state.contribLoading) setTimeout(loadContributions, 0);
     if(thoughtsSecret() && !state.thoughtItems && !state.thoughtsLoading) setTimeout(loadThoughts, 0);
+    if(!state.reports && !state.reportsLoading) setTimeout(loadReports, 0);
     var unis = state.tree || [];
     var majorCount = unis.reduce(function(n, u){ return n + (u.majors || []).length; }, 0);
     var published = unis.filter(function(u){ return u.published; });
@@ -1467,7 +1469,59 @@
     var en = p && p.majorName && p.majorName.en;
     return (en && (np ? np(en).big : en)) || prefix;
   }
+  // Thoughts a dean or professor reported from the staff page (round 10,
+  // idea 14). Staff can't delete anything; the admin takes it down here, or
+  // keeps it. The list lives in the admin Worker (/api/admin/reports).
+  function loadReports(){
+    if(staffMode) return;
+    state.reportsLoading = true;
+    api('GET', '/api/admin/reports').then(function(d){ state.reports = d.reports || []; })
+      .catch(function(){ state.reports = []; })
+      .then(function(){ state.reportsLoading = false; render(); });
+  }
+  function reportsHtml(){
+    if(!state.reports){ if(!state.reportsLoading) setTimeout(loadReports, 0); return ''; }
+    if(!state.reports.length) return '';
+    return '<h3>🚩 Reported by staff · ' + state.reports.length + '</h3>' +
+      '<p class="admin-hint">A dean or professor thought these shouldn\'t stay up. Only you can take one down.' +
+        (thoughtsSecret() ? '' : ' Taking one down needs the thoughts Worker\'s secret, entered below.') + '</p>' +
+      state.reports.map(function(r){
+        return '<div class="admin-note admin-note-warn">' +
+          '<div>“' + esc(r.text) + '”</div>' +
+          '<span style="opacity:.75;">' + esc([r.courseName, r.plan ? majorLabel(r.plan) : '', 'reported by ' + r.byName, new Date(r.at * 1000).toLocaleString()].filter(Boolean).join(' · ')) + '</span>' +
+          '<div class="form-actions"><button type="button" class="home-btn admin-danger" data-report-down="' + esc(r.thought) + '">Take it down</button> ' +
+            '<button type="button" class="home-btn" data-report-keep="' + esc(r.thought) + '">Keep it</button></div>' +
+        '</div>';
+      }).join('') + '<h3>Every thought</h3>';
+  }
+  function bindReports(main){
+    var close = function(id, status){
+      return api('POST', '/api/admin/reports/' + encodeURIComponent(id), { status: status }).then(function(){
+        toast(status === 'removed' ? 'Taken down.' : 'Kept. The report is closed.');
+        state.reports = null; loadReports();
+      });
+    };
+    main.querySelectorAll('[data-report-keep]').forEach(function(b){
+      b.addEventListener('click', function(){ close(b.getAttribute('data-report-keep'), 'kept').catch(function(e){ toast(e.message); }); });
+    });
+    main.querySelectorAll('[data-report-down]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.getAttribute('data-report-down');
+        if(!thoughtsSecret()){ toast('Enter the thoughts Worker\'s ADMIN_SECRET below first.'); var i = document.getElementById('thoughtsSecretInput'); if(i) i.focus(); return; }
+        if(!confirm('Take this thought down for everyone? This cannot be undone.')) return;
+        fetch(thoughtsUrl() + '/thoughts/' + encodeURIComponent(id), { method: 'DELETE', headers: thoughtsHeaders(), body: JSON.stringify({}) })
+          .then(thoughtsRes)
+          .then(function(){ return close(id, 'removed'); })
+          .then(function(){ if(thoughtsSecret()) loadThoughts(); })
+          .catch(function(e){ toast('Could not take it down: ' + e.message); if(!thoughtsSecret()) render(); });
+      });
+    });
+  }
   function sectionThoughts(){
+    var head = '<h2>💬 Student Thoughts</h2>';
+    return head + reportsHtml() + sectionThoughtsWall().replace(head, '');
+  }
+  function sectionThoughtsWall(){
     var head = '<h2>💬 Student Thoughts</h2>';
     if(!thoughtsUrl()){
       return head + '<div class="admin-note">APP_THOUGHTS_URL is not set in web/js/01-catalogue.js, so thoughts only live on each student\'s own phone.</div>';
@@ -1500,6 +1554,7 @@
       }).join('');
   }
   function bindThoughts(main){
+    bindReports(main);
     var unlock = document.getElementById('thoughtsUnlock');
     if(unlock){
       var input = document.getElementById('thoughtsSecretInput');

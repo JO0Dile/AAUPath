@@ -1,14 +1,16 @@
 // Round 10, part B: what deans and professors wrote, shown to students.
 //
 // GET <admin Worker>/api/public/content?uni= gives, per course: About this
-// course, Revise first, the semester it is offered in, a note on its
-// prerequisites, and a note pinned until a date; plus professors' cards for
-// Find a Professor. The last copy is kept on the phone, so all of it still
-// shows offline, and it is asked for again at most every half hour.
+// course, the semester it is offered in, this semester's sections and a note
+// pinned until a date; professors' cards for Find a Professor; staff replies
+// under students' thoughts; and colleges' dates. The last copy is kept on the
+// phone, so all of it still shows offline, and it is asked for again at most
+// every half hour.
 //
 // Used by the course window (js/49-course-detail.js), the plan cards
-// (js/28-imported.js: the "Fall only" warning) and Find a Professor
-// (js/68-contacts.js). The editing side is js/110-staff-room.js.
+// (js/28-imported.js: the "Fall only" warning), Find a Professor
+// (js/68-contacts.js), the thoughts wall (js/59-thoughts.js) and Home's
+// dates (js/101-dates.js). The editing side is js/110-staff-room.js.
 (function(){
   'use strict';
 
@@ -29,7 +31,7 @@
   }
   function data(){
     var d = stored();
-    return d && d.uni === uniNow() && d.data ? d.data : { courses: {}, cards: [] };
+    return d && d.uni === uniNow() && d.data ? d.data : { courses: {}, cards: [], replies: {}, dates: [] };
   }
 
   var asking = false;
@@ -44,11 +46,13 @@
       .then(function(j){
         if(!j || !j.ok) return;
         var changed = !d || d.uni !== uni || (d.data && d.data.v) !== j.v;
-        if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, { at: Date.now(), uni: uni, data: { v: j.v, courses: j.courses || {}, cards: j.cards || [] } });
+        if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, { at: Date.now(), uni: uni, data: { v: j.v, courses: j.courses || {}, cards: j.cards || [], replies: j.replies || {}, dates: j.dates || [] } });
         if(changed){
           var id = window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected ? window.AAUP_DASHBOARD.getSelected() : '';
           var host = document.getElementById('importedPlanView');
           if(id && host && host.style.display !== 'none' && window.AAUP_IMPORTED && window.AAUP_IMPORTED.refresh) window.AAUP_IMPORTED.refresh(id);
+          // College dates sit on Home.
+          if(window.AAUP_TASK_HOME && window.AAUP_TASK_HOME.visible && window.AAUP_TASK_HOME.visible()) window.AAUP_TASK_HOME.render();
         }
       })
       .catch(function(){})
@@ -149,12 +153,32 @@
   }
   function cards(){ return data().cards || []; }
 
+  // The reply under a thought (idea 13). It is kept by the thought's id and
+  // the course it was given for; a thought filed under another course
+  // doesn't take it.
+  function replyFor(t){
+    var r = t && t.id && (data().replies || {})[t.id];
+    if(!r || !r.text) return null;
+    if(t.course && t.course !== r.course && oldIdsOf(r.course).indexOf(t.course) === -1 && oldIdsOf(t.course).indexOf(r.course) === -1) return null;
+    return r;
+  }
+  // A college's dates for Home (idea 11): the ones for this major's college.
+  function collegeName(id){
+    var c = (window.APP_COLLEGES || {})[id];
+    return c && c.name ? (ar() ? c.name.ar || c.name.en : c.name.en || c.name.ar) : '';
+  }
+  function collegeDates(planId){
+    return (data().dates || []).filter(function(d){ return d && d.label && d.date && Array.isArray(d.majors) && d.majors.indexOf(planId) !== -1; })
+      .map(function(d){ return { label: d.label, date: d.date, college: d.college === '*' ? '' : collegeName(d.college) }; });
+  }
+
   if(document.readyState === 'complete') setTimeout(load, 1500);
   else window.addEventListener('load', function(){ setTimeout(load, 1500); });
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) load(); });
 
   window.AAUP_STAFF_CONTENT = {
     load: load, forCourse: forCourse, offerClash: offerClash, subChipHtml: subChipHtml,
-    courseHtml: courseHtml, cardChipHtml: cardChipHtml, cards: cards, noteNow: noteNow
+    courseHtml: courseHtml, cardChipHtml: cardChipHtml, cards: cards, noteNow: noteNow,
+    replyFor: replyFor, collegeDates: collegeDates, oldIds: oldIdsOf
   };
 })();
