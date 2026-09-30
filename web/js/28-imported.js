@@ -1231,7 +1231,9 @@
     var cls = 'course ' + visualClassFor(c) + (bucket ? ' req-' + bucket : '') +
       (done ? ' completed' : '') + (avail || done ? ' available' : '') +
       (tier ? ' grade-' + tier : '') +
-      (c.isRetake ? ' retake-course' : '') + (superseded ? ' course-superseded' : '');
+      (c.isRetake ? ' retake-course' : '') + (superseded ? ' course-superseded' : '') +
+      // Round 10: offered in one semester only, and placed in the other.
+      (!done && window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.offerClash(c) ? ' offer-warn' : '');
     var displayName = (rtl && c.ar) ? c.ar : c.name;
     // 43: the other language, underneath. Lectures, slides and the registrar
     // all use the English title, so a student reading Arabic still has to be
@@ -1343,6 +1345,8 @@
       metaParts.push('<span class="cm-attempt' + (superseded ? ' cm-replaced' : ' cm-counts') + '">' +
         window.__escapeHtml(attemptTx) + '</span>');
     }
+    var offerChip = window.AAUP_STAFF_CONTENT ? window.AAUP_STAFF_CONTENT.cardChipHtml(c, done) : '';
+    if(offerChip) metaParts.push(offerChip);
     var meta = metaParts.join('<span class="cm-sep"> · </span>');
     // Focusable so the plan can be worked from a keyboard: the card itself is
     // a button (Enter opens the details) and the tick inside it is its own

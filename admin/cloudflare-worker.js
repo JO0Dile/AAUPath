@@ -1059,6 +1059,22 @@ const STAFF_SETUP_TTL = 14 * 24 * 60 * 60;       // a setup link lasts two weeks
 const STAFF_PBKDF2_TOTAL = 600000;
 const STAFF_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
+// A login's `college` is '*' (every college of its university), or one or
+// more college ids separated by commas: a dean can lead several colleges,
+// and a professor can teach in several.
+function collegeList(v) { return String(v || '').split(',').map((x) => x.trim()).filter(Boolean); }
+function coversCollege(row, college) {
+  if (row.college === '*') return true;
+  return collegeList(row.college).includes(college);
+}
+// Whether two logins share a college (a dean and one of their professors).
+function sharesCollege(a, b) {
+  if (a.college === '*' || b.college === '*') return true;
+  const bl = collegeList(b.college);
+  return collegeList(a.college).some((c) => bl.includes(c));
+}
+function firstCollege(row) { return row.college === '*' ? '' : (collegeList(row.college)[0] || ''); }
+
 let staffTableReady = false;
 async function staffDb(env) {
   if (!env.STAFF_DB) {
@@ -1142,8 +1158,25 @@ function staffOut(r) {
 function staffFields(body, forDean) {
   const out = {};
   if (body.name !== undefined) out.name = str(body.name, 80);
+  const cleanColleges = (v) => {
+    if (Array.isArray(v)) v = v.join(',');
+    v = String(v || '').trim();
+    if (v === '' || v === '*') return v;
+    const list = collegeList(v);
+    for (const c of list) if (!SLUG_RE.test(c)) throw fail('pick a college');
+    return [...new Set(list)].join(',');
+  };
   if (forDean) {
-    out.role = 'professor'; out.uni = forDean.uni; out.college = forDean.college;
+    out.role = 'professor'; out.uni = forDean.uni;
+    // A dean may give a professor any of the dean's own colleges, and no other.
+    let want = body.college !== undefined ? cleanColleges(body.college) : forDean.college;
+    if (!want) want = forDean.college;
+    if (forDean.college !== '*') {
+      if (want === '*') want = forDean.college;
+      const mine = collegeList(forDean.college);
+      if (collegeList(want).some((c) => !mine.includes(c))) throw fail('you can only choose your own colleges');
+    }
+    out.college = want;
   } else {
     if (body.role !== undefined) {
       if (!STAFF_ROLES.includes(body.role)) throw fail('role must be dean or professor');
@@ -1153,10 +1186,7 @@ function staffFields(body, forDean) {
       if (!SLUG_RE.test(String(body.uni))) throw fail('pick a university');
       out.uni = String(body.uni);
     }
-    if (body.college !== undefined) {
-      if (body.college !== '' && !SLUG_RE.test(String(body.college))) throw fail('pick a college');
-      out.college = String(body.college);
-    }
+    if (body.college !== undefined) out.college = cleanColleges(body.college);
   }
   if (body.courses !== undefined) {
     if (!Array.isArray(body.courses) || body.courses.length > 60) throw fail('courses must be a list of up to 60 course ids');
@@ -1195,7 +1225,7 @@ async function createStaff(env, body, createdBy, forDean) {
 async function updateStaff(env, row, body, forDean) {
   const db = await staffDb(env);
   const f = staffFields(body, forDean);
-  if (forDean) { delete f.role; delete f.uni; delete f.college; }
+  if (forDean) { delete f.role; delete f.uni; if (body.college === undefined) delete f.college; }
   const sets = []; const vals = [];
   for (const k of ['name', 'role', 'uni', 'college', 'courses']) {
     if (f[k] !== undefined) { sets.push(`${k} = ?`); vals.push(f[k]); }
@@ -1250,6 +1280,238 @@ async function handleStaffSetup(request, env) {
   return json({ ok: true, token: await issueStaffToken(fresh, env), me: staffOut(fresh) }, 200, env, request);
 }
 
+// ---------------------------------------------------------------------------
+// Staff course content (round 10, part B)
+//
+// What a dean or professor writes for students: a course's "About this course"
+// and "Revise first", which semester it is offered in, a note on its
+// prerequisites, and a note pinned to the course until a date. Plus each
+// professor's card for Find a Professor. Kept in STAFF_DB, served to every
+// student from GET /api/public/content (the app keeps its last copy, so it
+// still shows offline).
+//
+// A professor's change waits for their dean (staff_pending); a dean's goes
+// live at once. Every live change is written to staff_log with who made it.
+// Which college a course belongs to comes from the published plans.json.
+// ---------------------------------------------------------------------------
+
+const CONTENT_FIELDS = {
+  about: (v) => str(v, 1200),
+  revise: (v) => str(v, 400),
+  offered: (v) => { if (!['', 's1', 's2'].includes(v || '')) throw fail('offered must be s1, s2 or empty'); return v || ''; },
+  prereqNote: (v) => str(v, 300),
+  note: (v) => {
+    if (!v || !String(v.text || '').trim()) return '';
+    if (!DATE_RE.test(String(v.until || ''))) throw fail('a pinned note needs an end date');
+    return JSON.stringify({ text: str(v.text, 300), until: String(v.until) });
+  },
+};
+const CARD_FIELDS = ['office', 'hours', 'contact'];
+
+let contentTablesReady = false;
+async function contentDb(env) {
+  const db = await staffDb(env);
+  if (!contentTablesReady) {
+    for (const sql of [
+      `CREATE TABLE IF NOT EXISTS staff_content (uni TEXT NOT NULL, course TEXT NOT NULL, field TEXT NOT NULL,
+        value TEXT NOT NULL, by TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (uni, course, field))`,
+      `CREATE TABLE IF NOT EXISTS staff_cards (uni TEXT NOT NULL, username TEXT NOT NULL, name TEXT NOT NULL DEFAULT '',
+        office TEXT NOT NULL DEFAULT '', hours TEXT NOT NULL DEFAULT '', contact TEXT NOT NULL DEFAULT '',
+        courses TEXT NOT NULL DEFAULT '[]', at INTEGER NOT NULL, PRIMARY KEY (uni, username))`,
+      `CREATE TABLE IF NOT EXISTS staff_pending (id TEXT PRIMARY KEY, uni TEXT NOT NULL, college TEXT NOT NULL DEFAULT '',
+        kind TEXT NOT NULL, course TEXT NOT NULL DEFAULT '', field TEXT NOT NULL DEFAULT '', value TEXT NOT NULL,
+        by TEXT NOT NULL, by_name TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'waiting',
+        decided_by TEXT, decided_at INTEGER)`,
+      `CREATE TABLE IF NOT EXISTS staff_log (id INTEGER PRIMARY KEY AUTOINCREMENT, uni TEXT NOT NULL, college TEXT NOT NULL DEFAULT '',
+        what TEXT NOT NULL, by TEXT NOT NULL, at INTEGER NOT NULL)`,
+    ]) await db.prepare(sql).run();
+    contentTablesReady = true;
+  }
+  return db;
+}
+
+// Which colleges each course is taught in, and which college each major is
+// in, from the published plans.json (too big for the contents API, so raw).
+// Kept for ten minutes per Worker instance.
+let planIndex = null, planIndexAt = 0;
+async function plansIndex(env) {
+  if (planIndex && Date.now() - planIndexAt < 10 * 60 * 1000) return planIndex;
+  const branch = env.REPO_BRANCH || 'main';
+  const r = await fetch(`https://raw.githubusercontent.com/${env.REPO_OWNER}/${env.REPO_NAME}/${branch}/web/plans.json`,
+    { headers: env.GITHUB_TOKEN ? { Authorization: `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'studyplan-admin-worker' } : { 'User-Agent': 'studyplan-admin-worker' } });
+  if (!r.ok) throw new Error(`plans.json: ${r.status}`);
+  const data = await r.json();
+  const courseColleges = {}, majorCollege = {}, courseNames = {};
+  for (const p of data.plans || []) {
+    const uni = p.university || 'aaup';
+    majorCollege[p.id] = { uni, college: p.collegeId || '' };
+    for (const c of p.courses || []) {
+      const k = `${uni}/${c.id}`;
+      (courseColleges[k] = courseColleges[k] || new Set()).add(p.collegeId || '');
+      if (!courseNames[k]) courseNames[k] = c.name || c.id;
+    }
+  }
+  planIndex = { courseColleges, majorCollege, courseNames };
+  planIndexAt = Date.now();
+  return planIndex;
+}
+async function courseInCollege(env, uni, course, college) {
+  const ix = await plansIndex(env);
+  const set = ix.courseColleges[`${uni}/${course}`];
+  return !!(set && set.has(college));
+}
+async function courseName(env, uni, course) {
+  try { return (await plansIndex(env)).courseNames[`${uni}/${course}`] || course; } catch { return course; }
+}
+async function mayWriteCourse(env, me, course) {
+  if (me.role === 'professor') {
+    let mine = [];
+    try { mine = JSON.parse(me.courses || '[]'); } catch { mine = []; }
+    return mine.includes(course);
+  }
+  if (me.college === '*') {
+    const ix = await plansIndex(env);
+    return !!ix.courseColleges[`${me.uni}/${course}`];
+  }
+  for (const c of collegeList(me.college)) if (await courseInCollege(env, me.uni, course, c)) return true;
+  return false;
+}
+
+const FIELD_LABEL = { about: 'About this course', revise: 'Revise first', offered: 'Offered in', prereqNote: 'Prerequisite note', note: 'Pinned note' };
+async function applyContent(db, env, uni, college, course, field, value, by) {
+  const now = Math.floor(Date.now() / 1000);
+  if (value === '') await db.prepare('DELETE FROM staff_content WHERE uni = ? AND course = ? AND field = ?').bind(uni, course, field).run();
+  else {
+    await db.prepare(`INSERT INTO staff_content (uni, course, field, value, by, at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(uni, course, field) DO UPDATE SET value = excluded.value, by = excluded.by, at = excluded.at`)
+      .bind(uni, course, field, value, by, now).run();
+  }
+  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at) VALUES (?, ?, ?, ?, ?)')
+    .bind(uni, college, `${await courseName(env, uni, course)} · ${FIELD_LABEL[field] || field}${value === '' ? ' removed' : ''}`, by, now).run();
+}
+async function applyCard(db, uni, college, row, card, by) {
+  const now = Math.floor(Date.now() / 1000);
+  await db.prepare(`INSERT INTO staff_cards (uni, username, name, office, hours, contact, courses, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(uni, username) DO UPDATE SET name = excluded.name, office = excluded.office, hours = excluded.hours,
+      contact = excluded.contact, courses = excluded.courses, at = excluded.at`)
+    .bind(uni, row.username, row.name || row.username, card.office, card.hours, card.contact, row.courses || '[]', now).run();
+  await db.prepare('INSERT INTO staff_log (uni, college, what, by, at) VALUES (?, ?, ?, ?, ?)')
+    .bind(uni, college, `Card in Find a Professor · ${row.name || row.username}`, by, now).run();
+}
+
+async function handleStaffContent(request, env, me) {
+  const body = await readJson(request, 16384);
+  const course = String(body.course || '');
+  const field = String(body.field || '');
+  if (!SLUG_RE.test(course)) throw fail('pick a course');
+  if (!CONTENT_FIELDS[field]) throw fail('unknown field');
+  if (!(await mayWriteCourse(env, me, course))) return json({ error: 'your login doesn’t cover this course' }, 403, env, request);
+  const value = CONTENT_FIELDS[field](body.value);
+  const db = await contentDb(env);
+  const who = me.name || me.username;
+  if (me.role === 'dean') {
+    await applyContent(db, env, me.uni, firstCollege(me), course, field, value, who);
+    return json({ ok: true, live: true }, 200, env, request);
+  }
+  // A professor's newer change to the same thing replaces their older one.
+  await db.prepare("DELETE FROM staff_pending WHERE status = 'waiting' AND kind = 'content' AND uni = ? AND course = ? AND field = ? AND by = ?")
+    .bind(me.uni, course, field, me.username).run();
+  await db.prepare(`INSERT INTO staff_pending (id, uni, college, kind, course, field, value, by, by_name, at) VALUES (?, ?, ?, 'content', ?, ?, ?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), me.uni, me.college || '', course, field, value, me.username, who, Math.floor(Date.now() / 1000)).run();
+  return json({ ok: true, waiting: true }, 200, env, request);
+}
+
+async function handleStaffCard(request, env, me) {
+  const body = await readJson(request, 8192);
+  const card = {};
+  for (const k of CARD_FIELDS) card[k] = str(body[k], 200);
+  const db = await contentDb(env);
+  if (me.role === 'dean') {
+    await applyCard(db, me.uni, firstCollege(me), me, card, me.name || me.username);
+    return json({ ok: true, live: true }, 200, env, request);
+  }
+  await db.prepare("DELETE FROM staff_pending WHERE status = 'waiting' AND kind = 'card' AND uni = ? AND by = ?").bind(me.uni, me.username).run();
+  await db.prepare(`INSERT INTO staff_pending (id, uni, college, kind, value, by, by_name, at) VALUES (?, ?, ?, 'card', ?, ?, ?, ?)`)
+    .bind(crypto.randomUUID(), me.uni, me.college || '', JSON.stringify(card), me.username, me.name || me.username, Math.floor(Date.now() / 1000)).run();
+  return json({ ok: true, waiting: true }, 200, env, request);
+}
+
+// What waits: for a dean, everything from their college's professors (a
+// course change counts when the course is taught in the dean's college); for
+// a professor, their own. Each item carries what is live now, for the diff.
+async function listPending(env, me) {
+  const db = await contentDb(env);
+  const rs = me.role === 'dean'
+    ? await db.prepare("SELECT * FROM staff_pending WHERE status = 'waiting' AND uni = ? ORDER BY at").bind(me.uni).all()
+    : await db.prepare("SELECT * FROM staff_pending WHERE status = 'waiting' AND uni = ? AND by = ? ORDER BY at").bind(me.uni, me.username).all();
+  const out = [];
+  for (const p of rs.results || []) {
+    if (me.role === 'dean') {
+      const ok = p.kind === 'card' ? sharesCollege(me, { college: p.college })
+        : await mayWriteCourse(env, me, p.course);
+      if (!ok) continue;
+    }
+    let now = '';
+    if (p.kind === 'content') {
+      const cur = await db.prepare('SELECT value FROM staff_content WHERE uni = ? AND course = ? AND field = ?').bind(p.uni, p.course, p.field).first();
+      now = cur ? cur.value : '';
+    } else {
+      const cur = await db.prepare('SELECT office, hours, contact FROM staff_cards WHERE uni = ? AND username = ?').bind(p.uni, p.by).first();
+      now = cur ? JSON.stringify({ office: cur.office, hours: cur.hours, contact: cur.contact }) : '';
+    }
+    out.push({ id: p.id, kind: p.kind, course: p.course, courseName: p.course ? await courseName(env, p.uni, p.course) : '',
+               field: p.field, value: p.value, now, by: p.by, byName: p.by_name, at: p.at });
+  }
+  return out;
+}
+
+async function decidePending(request, env, me, id) {
+  if (me.role !== 'dean') return json({ error: 'only a dean can do that' }, 403, env, request);
+  const body = await readJson(request, 1024);
+  const accept = body.decision === 'accept';
+  if (!accept && body.decision !== 'refuse') throw fail('decision must be accept or refuse');
+  const mine = (await listPending(env, me)).find((p) => p.id === id);
+  if (!mine) return json({ error: 'not found' }, 404, env, request);
+  const db = await contentDb(env);
+  const who = me.name || me.username;
+  if (accept) {
+    if (mine.kind === 'content') {
+      await applyContent(db, env, me.uni, firstCollege(me), mine.course, mine.field, mine.value, `${mine.byName}, accepted by ${who}`);
+    } else {
+      const prof = await db.prepare('SELECT * FROM staff WHERE username = ?').bind(mine.by).first();
+      if (prof) await applyCard(db, me.uni, firstCollege(me), prof, JSON.parse(mine.value), `${mine.byName}, accepted by ${who}`);
+    }
+  }
+  await db.prepare('UPDATE staff_pending SET status = ?, decided_by = ?, decided_at = ? WHERE id = ?')
+    .bind(accept ? 'accepted' : 'refused', me.username, Math.floor(Date.now() / 1000), id).run();
+  return json({ ok: true }, 200, env, request);
+}
+
+// Everything students see, for one university. Public and cacheable.
+async function handlePublicContent(request, env, uni) {
+  if (!SLUG_RE.test(uni)) throw fail('bad university');
+  if (!env.STAFF_DB) return json({ ok: true, courses: {}, cards: [] }, 200, env, request);
+  const db = await contentDb(env);
+  const courses = {};
+  const rs = await db.prepare('SELECT course, field, value, at FROM staff_content WHERE uni = ?').bind(uni).all();
+  let v = 0;
+  for (const r of rs.results || []) {
+    const c = courses[r.course] = courses[r.course] || {};
+    c[r.field] = r.field === 'note' ? JSON.parse(r.value) : r.value;
+    v = Math.max(v, r.at);
+  }
+  const cs = await db.prepare('SELECT username, name, office, hours, contact, courses, at FROM staff_cards WHERE uni = ?').bind(uni).all();
+  const cards = (cs.results || []).map((r) => {
+    v = Math.max(v, r.at);
+    let list = [];
+    try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
+    return { name: r.name, office: r.office, hours: r.hours, contact: r.contact, courses: list };
+  });
+  const res = json({ ok: true, v, courses, cards }, 200, env, request);
+  res.headers.set('Cache-Control', 'public, max-age=120');
+  return res;
+}
+
 // Routes a signed-in staff member can use. Returns a Response, or null when
 // the path is not one of them.
 async function handleStaffRoutes(request, env, seg) {
@@ -1259,23 +1521,32 @@ async function handleStaffRoutes(request, env, seg) {
   const me = await verifyStaff(request, env);
   if (!me) return json({ error: 'unauthorized' }, 401, env, request);
   if (seg[2] === 'me' && request.method === 'GET') return json({ ok: true, me: staffOut(me) }, 200, env, request);
+  if (seg[2] === 'content' && request.method === 'POST') return await handleStaffContent(request, env, me);
+  if (seg[2] === 'card' && request.method === 'POST') return await handleStaffCard(request, env, me);
+  if (seg[2] === 'card' && request.method === 'GET') {
+    const db = await contentDb(env);
+    const c = await db.prepare('SELECT office, hours, contact FROM staff_cards WHERE uni = ? AND username = ?').bind(me.uni, me.username).first();
+    return json({ ok: true, card: c || null }, 200, env, request);
+  }
+  if (seg[2] === 'pending' && !seg[3] && request.method === 'GET') return json({ ok: true, pending: await listPending(env, me) }, 200, env, request);
+  if (seg[2] === 'pending' && seg[3] && request.method === 'POST') return await decidePending(request, env, me, seg[3]);
 
   // /api/staff/team — a dean's professors (same university and college).
   if (seg[2] === 'team') {
     if (me.role !== 'dean') return json({ error: 'only a dean can do that' }, 403, env, request);
     const db = await staffDb(env);
     if (!seg[3] && request.method === 'GET') {
-      const rs = await db.prepare("SELECT * FROM staff WHERE role = 'professor' AND uni = ? AND college = ? ORDER BY created_at")
-        .bind(me.uni, me.college).all();
-      return json({ ok: true, staff: (rs.results || []).map(staffOut) }, 200, env, request);
+      const rs = await db.prepare("SELECT * FROM staff WHERE role = 'professor' AND uni = ? ORDER BY created_at").bind(me.uni).all();
+      return json({ ok: true, staff: (rs.results || []).filter((r) => sharesCollege(me, r)).map(staffOut) }, 200, env, request);
     }
     if (!seg[3] && request.method === 'POST') {
       const res = await createStaff(env, await readJson(request, 16384), me.username, me);
       return json({ ok: true, ...res }, 200, env, request);
     }
     if (seg[3]) {
-      const row = await db.prepare("SELECT * FROM staff WHERE id = ? AND role = 'professor' AND uni = ? AND college = ?")
-        .bind(seg[3], me.uni, me.college).first();
+      const found = await db.prepare("SELECT * FROM staff WHERE id = ? AND role = 'professor' AND uni = ?")
+        .bind(seg[3], me.uni).first();
+      const row = found && sharesCollege(me, found) ? found : null;
       if (!row) return json({ error: 'not found' }, 404, env, request);
       if (request.method === 'PATCH') {
         const res = await updateStaff(env, row, await readJson(request, 16384), me);
@@ -1386,6 +1657,10 @@ export default {
       // Staff (deans and professors) sign in and work through their own
       // routes, checked by verifyStaff() — never by the admin gate below.
       if (seg[0] === 'api' && seg[1] === 'staff') return await handleStaffRoutes(request, env, seg);
+      // What staff wrote, for every student (no sign-in).
+      if (seg[1] === 'public' && seg[2] === 'content' && request.method === 'GET') {
+        return await handlePublicContent(request, env, url.searchParams.get('uni') || 'aaup');
+      }
 
       // Everything past this line requires a valid session. One gate, checked
       // before the route is even chosen, so no handler can be reached unguarded.

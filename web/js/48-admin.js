@@ -1544,23 +1544,32 @@
   }
   function staffFormHtml(d){
     var R = window.AAUP_STAFF_ROOM;
-    var cols = R.colleges(d.uni);
-    if(d.college && !cols.some(function(c){ return c.id === d.college; })) d.college = '';
-    return '<div class="admin-note" id="asForm" style="border-color:var(--accent);">' +
-      '<strong>' + (d.id ? 'Change ' + esc(d.name || d.username) : 'New staff login') + '</strong>' +
-      '<div class="form-field"><label for="asName">Name (what you and their dean see)</label><input id="asName" maxlength="80" value="' + esc(d.name) + '"></div>' +
-      '<div class="form-field"><label for="asUser">Username (what they sign in with)</label><input id="asUser" maxlength="32" autocapitalize="off" spellcheck="false" placeholder="dean.ai" value="' + esc(d.username) + '"' + (d.id ? ' disabled' : '') + '></div>' +
-      '<div class="form-field"><label for="asRole">Role</label><select id="asRole">' +
-        '<option value="dean"' + (d.role === 'dean' ? ' selected' : '') + '>Dean — changes for their college, and gives professors logins</option>' +
-        '<option value="professor"' + (d.role === 'professor' ? ' selected' : '') + '>Professor — their own courses</option></select></div>' +
-      '<div class="form-field"><label for="asUni">University</label><select id="asUni">' + R.universities().map(function(u){
-        return '<option value="' + esc(u.id) + '"' + (u.id === d.uni ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="form-field"><label for="asCollege">College</label><select id="asCollege"><option value="">' + (d.role === 'dean' ? 'Pick a college' : 'Any college') + '</option>' + cols.map(function(c){
-        return '<option value="' + esc(c.id) + '"' + (c.id === d.college ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('') + '</select></div>' +
+    var chosen = d.college === '*' ? ['*'] : R.collegeIds(d.college);
+    var left = R.colleges(d.uni).filter(function(c){ return chosen.indexOf(c.id) === -1; });
+    return '<div class="as-form" id="asForm">' +
+      '<h3>' + (d.id ? 'Change ' + esc(d.name || d.username) : 'New staff login') + '</h3>' +
+      '<div class="as-grid">' +
+        '<label class="sr-f"><span>Name (what you and their dean see)</span><input class="sr-in" id="asName" maxlength="80" placeholder="Dr. …" value="' + esc(d.name) + '"></label>' +
+        '<label class="sr-f"><span>Username (what they sign in with)</span><input class="sr-in" id="asUser" maxlength="32" autocapitalize="off" spellcheck="false" placeholder="dean.ai" value="' + esc(d.username) + '"' + (d.id ? ' disabled' : '') + '></label>' +
+        '<label class="sr-f"><span>Role</span><select class="sr-in" id="asRole">' +
+          '<option value="dean"' + (d.role === 'dean' ? ' selected' : '') + '>Dean: their colleges, and gives professors logins</option>' +
+          '<option value="professor"' + (d.role === 'professor' ? ' selected' : '') + '>Professor: their own courses</option></select></label>' +
+        '<label class="sr-f"><span>University</span><select class="sr-in" id="asUni">' + R.universities().map(function(u){
+          return '<option value="' + esc(u.id) + '"' + (u.id === d.uni ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select></label>' +
+      '</div>' +
+      '<div class="sr-f"><span>' + (d.role === 'dean' ? 'Colleges they lead' : 'Colleges they teach in') + '</span>' +
+        '<div class="sr-chips as-cols">' + chosen.map(function(id){
+          return '<span class="sr-chip">' + esc(id === '*' ? 'All colleges' : R.collegeName(id)) +
+            '<button type="button" data-as-uncol="' + esc(id) + '" aria-label="Remove">×</button></span>'; }).join('') + '</div>' +
+        (chosen[0] === '*' ? '' :
+          '<div class="as-add"><select class="sr-in" id="asColPick"><option value="*">All colleges</option>' + left.map(function(c){
+            return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select>' +
+          '<button type="button" class="home-btn" id="asColAdd">+ Add</button></div>') +
+      '</div>' +
       (d.role === 'professor'
-        ? '<div class="form-field"><label>Their courses</label>' + R.pickerHtml(d.uni, d.college, d.courses) + '</div>'
+        ? '<div class="sr-f"><span>Their courses</span>' + R.pickerHtml(d.uni, d.college, d.courses) + '</div>'
         : '') +
-      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="asSave">' + (d.id ? 'Save' : 'Make the login') + '</button> ' +
+      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="asSave">' + (d.id ? 'Save' : 'Make the login') + '</button> ' +
         '<button type="button" class="home-btn" id="asCancel">Cancel</button></div></div>';
   }
   function sectionStaff(){
@@ -1573,13 +1582,13 @@
     if(!state.staffItems) return head + '<p class="admin-hint">Loading…</p>';
     var list = state.staffItems;
     var covers = function(s){
-      var where = R.uniName(s.uni) + (s.college ? ' · ' + R.collegeName(s.college) : '');
+      var where = R.uniName(s.uni) + ' · ' + R.collegeLabel(s.college);
       if(s.role === 'dean') return esc(where);
       var names = R.courseNames(s.courses, s.uni);
       return esc(where) + '<br><span class="admin-sub">' + esc(names.length ? names.join(', ') : 'No courses yet') + '</span>';
     };
     return head +
-      (state.staffLink ? R.linkBoxHtml(state.staffLink.who, state.staffLink.link) : '') +
+      (state.staffLink && !state.staffLink.id ? R.linkBoxHtml(state.staffLink.who, state.staffLink.link) : '') +
       (state.staffDraft ? staffFormHtml(state.staffDraft)
         : '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="asNew">+ New staff login</button></div>') +
       (list.length
@@ -1593,7 +1602,9 @@
                 '<button type="button" class="home-btn admin-mini" data-as-edit="' + esc(s.id) + '">Change</button> ' +
                 '<button type="button" class="home-btn admin-mini" data-as-status="' + esc(s.id) + '" data-to="' + (s.status === 'paused' ? 'active' : 'paused') + '">' + (s.status === 'paused' ? 'Turn back on' : 'Pause') + '</button> ' +
                 '<button type="button" class="home-btn admin-mini" data-as-link="' + esc(s.id) + '">New link</button> ' +
-                '<button type="button" class="home-btn admin-mini admin-danger" data-as-del="' + esc(s.id) + '">Remove</button></td></tr>';
+                '<button type="button" class="home-btn admin-mini admin-danger" data-as-del="' + esc(s.id) + '">Remove</button></td></tr>' +
+              // The link just made for this login, right under its row.
+              (state.staffLink && state.staffLink.id === s.id ? '<tr class="as-linkrow"><td colspan="5">' + R.linkBoxHtml(state.staffLink.who, state.staffLink.link) + '</td></tr>' : '');
           }).join('') + '</tbody></table>'
         : '<p class="admin-hint">No staff logins yet.</p>');
   }
@@ -1605,6 +1616,8 @@
     on('asRetry', 'click', function(){ state.staffErr = ''; render(); });
     on('asNew', 'click', function(){ state.staffDraft = staffDraftFrom(null); state.staffLink = null; render(); });
     main.querySelectorAll('[data-sr-copy]').forEach(function(b){ b.addEventListener('click', function(){ R.copy(b.getAttribute('data-sr-copy')); }); });
+    var fresh = main.querySelector('.as-linkrow');
+    if(fresh && fresh.scrollIntoView) fresh.scrollIntoView({ block: 'nearest' });
     var form = document.getElementById('asForm');
     if(form){
       R.bindPickers(form);
@@ -1614,15 +1627,32 @@
         if(!d.id) d.username = document.getElementById('asUser').value;
         d.role = document.getElementById('asRole').value;
         d.uni = document.getElementById('asUni').value;
-        d.college = document.getElementById('asCollege').value;
         if(d.role === 'professor') d.courses = R.pickerValue(form);
         return d;
       };
-      ['asRole', 'asUni', 'asCollege'].forEach(function(id){ on(id, 'change', function(){ read(); render(); }); });
+      ['asRole', 'asUni'].forEach(function(id){ on(id, 'change', function(){
+        var before = state.staffDraft.uni;
+        read();
+        if(state.staffDraft.uni !== before) state.staffDraft.college = '';
+        render();
+      }); });
+      on('asColAdd', 'click', function(){
+        var d = read(), pick = document.getElementById('asColPick').value;
+        d.college = pick === '*' ? '*' : R.collegeIds(d.college).concat(pick).join(',');
+        render();
+      });
+      form.querySelectorAll('[data-as-uncol]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var d = read(), id = b.getAttribute('data-as-uncol');
+          d.college = id === '*' ? '' : R.collegeIds(d.college).filter(function(x){ return x !== id; }).join(',');
+          render();
+        });
+      });
       on('asCancel', 'click', function(){ state.staffDraft = null; render(); });
       on('asSave', 'click', function(){
         var d = read();
-        var body = { name: d.name.trim(), role: d.role, uni: d.uni, college: d.college, courses: d.role === 'professor' ? d.courses : [] };
+        if(d.role === 'dean' && !d.college){ toast('Add the college (or All colleges) this dean leads.'); return; }
+        var body = { name: d.name.trim(), role: d.role, uni: d.uni, college: d.college || '*', courses: d.role === 'professor' ? d.courses : [] };
         if(!d.id) body.username = d.username.trim();
         api(d.id ? 'PATCH' : 'POST', '/api/admin/staff' + (d.id ? '/' + d.id : ''), body).then(function(res){
           state.staffDraft = null;
@@ -1646,7 +1676,8 @@
         var s = byId(b.getAttribute('data-as-link'));
         if(s && s.hasPassword && !confirm('A new link signs ' + (s.name || s.username) + ' out until they use it to choose a new password. Make one?')) return;
         api('PATCH', '/api/admin/staff/' + s.id, { newSetupCode: true }).then(function(res){
-          state.staffLink = { who: res.staff.name || res.staff.username, link: R.setupLink(res.staff.username, res.setupCode) };
+          state.staffLink = { id: res.staff.id, who: res.staff.name || res.staff.username, link: R.setupLink(res.staff.username, res.setupCode) };
+          toast('New link made. Copy it under ' + (res.staff.name || res.staff.username) + '.');
           state.staffItems = null; render();
         }).catch(err);
       });

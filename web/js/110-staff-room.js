@@ -38,7 +38,10 @@
       .map(function(id){ return { id: id, name: collegeName(id) }; })
       .sort(function(a, b){ return a.name.localeCompare(b.name); });
   }
-  function plans(){ return window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {}; }
+  function plans(){
+    if(window.AAUP_STAFF && window.AAUP_STAFF.plans) return window.AAUP_STAFF.plans();
+    return window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {};
+  }
   // A plan as stored on the phone keeps its college's name, not its id, so the
   // id is found by name among the university's colleges.
   function planCollege(p){
@@ -51,65 +54,101 @@
       return c.university === (p.university || 'aaup') && c.name && (c.name.en || c.name) === name;
     })[0] || '';
   }
+  // college: '' or '*' for every college, else one id or several joined by commas.
+  function collegeIds(college){ return String(college || '').split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x && x !== '*'; }); }
+  function collegeLabel(college, short){
+    if(!college || college === '*') return L('All colleges', 'كل الكليات');
+    var ids = collegeIds(college);
+    return ids.length > (short ? 1 : 2) ? L(ids.length + ' colleges', ids.length + ' كليات') : ids.map(collegeName).join(L(' and ', ' و'));
+  }
   function plansIn(uni, college){
-    var all = plans();
+    var all = plans(), ids = collegeIds(college);
     return Object.keys(all).map(function(k){ return all[k]; }).filter(function(p){
-      return p && (p.university || 'aaup') === uni && (!college || planCollege(p) === college);
+      return p && (p.university || 'aaup') === uni && (!ids.length || ids.indexOf(planCollege(p)) !== -1);
     });
   }
-  // Every course taught in a college (or a whole university), once each.
+  // Every course taught in a college (or a whole university), once each by
+  // name. The same course can carry a different id in each major (Advanced
+  // English is 010610035 in one and advanced-english in another), so a name
+  // stands for all of its ids, and picking it covers the course everywhere.
   function coursesIn(uni, college){
-    var seen = {}, out = [];
+    var byName = {}, out = [];
     plansIn(uni, college).forEach(function(p){
       (p.courses || []).forEach(function(c){
-        if(!c || !c.id || seen[c.id]) return;
-        seen[c.id] = true;
-        out.push({ id: c.id, name: plain(ar() && c.ar ? c.ar : c.name) });
+        if(!c || !c.id) return;
+        var name = plain(ar() && c.ar ? c.ar : c.name);
+        var key = name.toLowerCase().replace(/\s+/g, ' ').trim();
+        var e = byName[key];
+        if(!e){ e = byName[key] = { name: name, ids: [] }; out.push(e); }
+        if(e.ids.indexOf(c.id) === -1) e.ids.push(c.id);
       });
     });
+    out.forEach(function(e){ e.id = e.ids[0]; });
     return out.sort(function(a, b){ return a.name.localeCompare(b.name); });
   }
   function courseNames(ids, uni){
-    var byId = {};
-    coursesIn(uni, '').forEach(function(c){ byId[c.id] = c.name; });
-    return (ids || []).map(function(id){ return byId[id] || id; });
+    var byId = {}, seen = {}, out = [];
+    coursesIn(uni, '').forEach(function(c){ c.ids.forEach(function(id){ byId[id] = c.name; }); });
+    (ids || []).forEach(function(id){ var n = byId[id] || id; if(!seen[n]){ seen[n] = 1; out.push(n); } });
+    return out;
   }
   function setupLink(username, code){
     return location.origin + location.pathname + '#staff-setup=' + encodeURIComponent(username) + '~' + code;
   }
 
-  // A search box over the courses of a college; each pick becomes a chip.
+  // A search box over the courses of a college: type part of a name, pick it
+  // from the list, and it becomes a chip. Names only, each once.
   function pickerHtml(uni, college, selected){
     var list = coursesIn(uni, college);
-    var names = {};
-    list.forEach(function(c){ names[c.id] = c.name; });
-    var dl = 'srPickList' + Math.random().toString(36).slice(2, 8);
-    return '<div class="sr-pick" data-sr-pick>' +
-      '<div class="sr-chips">' + (selected || []).map(function(id){ return chipHtml(id, names[id] || id); }).join('') + '</div>' +
-      '<input type="text" list="' + dl + '" class="sr-in" placeholder="' + esc(L('Type a course name, then pick it', 'اكتب اسم المساق واختاره')) + '" aria-label="' + esc(L('Add a course', 'ضيف مساق')) + '">' +
-      '<datalist id="' + dl + '">' + list.map(function(c){ return '<option value="' + esc(c.name + ' · ' + c.id) + '">'; }).join('') + '</datalist>' +
+    var sel = {};
+    (selected || []).forEach(function(id){ sel[id] = 1; });
+    var chips = list.filter(function(c){ return c.ids.some(function(id){ return sel[id]; }); });
+    return '<div class="sr-pick" data-sr-pick data-uni="' + esc(uni) + '" data-college="' + esc(college || '') + '">' +
+      '<div class="sr-chips">' + chips.map(chipHtml).join('') + '</div>' +
+      '<div class="sr-pick-in"><input type="text" class="sr-in" autocomplete="off" placeholder="' + esc(L('Type part of a course name…', 'اكتب جزء من اسم المساق…')) + '" aria-label="' + esc(L('Add a course', 'ضيف مساق')) + '">' +
+      '<div class="sr-opts" role="listbox" hidden></div></div>' +
     '</div>';
   }
-  function chipHtml(id, name){
-    return '<span class="sr-chip" data-id="' + esc(id) + '">' + esc(name) +
-      '<button type="button" data-sr-unchip aria-label="' + esc(L('Remove ', 'شيل ') + name) + '">×</button></span>';
+  function chipHtml(c){
+    return '<span class="sr-chip" data-ids="' + esc(c.ids.join(',')) + '">' + esc(c.name) +
+      '<button type="button" data-sr-unchip aria-label="' + esc(L('Remove ', 'شيل ') + c.name) + '">×</button></span>';
   }
+  function norm(t){ return String(t || '').toLowerCase().replace(/[ً-ْ]/g, '').replace(/[أإآ]/g, 'ا').replace(/\s+/g, ' ').trim(); }
   function bindPickers(root){
     root.querySelectorAll('[data-sr-pick]').forEach(function(box){
       if(box._srBound) return;
       box._srBound = true;
-      var inp = box.querySelector('input');
-      var add = function(){
-        var m = / · ([a-z0-9][a-z0-9-]*)$/.exec(inp.value || '');
-        if(!m) return;
-        var id = m[1];
-        if(!box.querySelector('.sr-chip[data-id="' + id + '"]')){
-          box.querySelector('.sr-chips').insertAdjacentHTML('beforeend', chipHtml(id, inp.value.replace(/ · [^·]*$/, '')));
-        }
-        inp.value = '';
+      var inp = box.querySelector('input'), opts = box.querySelector('.sr-opts');
+      var all = coursesIn(box.getAttribute('data-uni'), box.getAttribute('data-college'));
+      var hits = [], at = 0;
+      var chosen = function(){ var m = {}; box.querySelectorAll('.sr-chip').forEach(function(c){ m[c.textContent.replace(/×$/, '')] = 1; }); return m; };
+      var draw = function(){
+        var q = norm(inp.value), have = chosen();
+        hits = all.filter(function(c){ return !have[c.name] && (!q || norm(c.name).indexOf(q) !== -1); }).slice(0, 8);
+        at = 0;
+        opts.innerHTML = hits.length ? hits.map(function(c, i){
+          return '<button type="button" role="option" class="sr-opt' + (i === 0 ? ' is-on' : '') + '" data-i="' + i + '">' + esc(c.name) + '</button>';
+        }).join('') : '<p class="sr-opt-none">' + esc(L('No course by that name here.', 'ما في مساق بهالاسم هون.')) + '</p>';
+        opts.hidden = false;
       };
-      inp.addEventListener('change', add);
-      inp.addEventListener('input', function(){ if(/ · [a-z0-9-]+$/.test(inp.value)) add(); });
+      var add = function(c){
+        if(!c) return;
+        box.querySelector('.sr-chips').insertAdjacentHTML('beforeend', chipHtml(c));
+        inp.value = ''; opts.hidden = true; inp.focus();
+      };
+      inp.addEventListener('input', draw);
+      inp.addEventListener('focus', draw);
+      inp.addEventListener('blur', function(){ setTimeout(function(){ opts.hidden = true; }, 150); });
+      inp.addEventListener('keydown', function(e){
+        if(opts.hidden || !hits.length) return;
+        if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+          e.preventDefault();
+          at = (at + (e.key === 'ArrowDown' ? 1 : hits.length - 1)) % hits.length;
+          opts.querySelectorAll('.sr-opt').forEach(function(b, i){ b.classList.toggle('is-on', i === at); });
+        } else if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(hits[at]); }
+        else if(e.key === 'Escape'){ e.stopPropagation(); opts.hidden = true; }
+      });
+      opts.addEventListener('mousedown', function(e){ var b = e.target.closest('.sr-opt'); if(b){ e.preventDefault(); add(hits[+b.getAttribute('data-i')]); } });
       box.addEventListener('click', function(e){
         var x = e.target.closest('[data-sr-unchip]');
         if(x){ x.parentElement.remove(); inp.focus(); }
@@ -117,8 +156,11 @@
     });
   }
   function pickerValue(root){
-    var box = root.querySelector('[data-sr-pick]');
-    return box ? [].map.call(box.querySelectorAll('.sr-chip'), function(c){ return c.getAttribute('data-id'); }) : [];
+    var box = root.querySelector('[data-sr-pick]'), out = [];
+    if(box) box.querySelectorAll('.sr-chip').forEach(function(c){
+      c.getAttribute('data-ids').split(',').forEach(function(id){ if(id && out.indexOf(id) === -1) out.push(id); });
+    });
+    return out;
   }
   function linkBoxHtml(who, link){
     return '<div class="sr-link">' +
@@ -166,7 +208,18 @@
       });
     });
   }
-  function refresh(){ if(window.AAUP_STAFF && window.AAUP_STAFF.refresh) window.AAUP_STAFF.refresh(); }
+  // Redraws the staff page. Whatever is being typed in a form (fields marked
+  // data-keep) survives the redraw, unless a save just replaced it.
+  var dropKept = false;
+  function refresh(){
+    if(!(window.AAUP_STAFF && window.AAUP_STAFF.refresh)) return;
+    var kept = {}, focus = document.activeElement && document.activeElement.id;
+    if(!dropKept) document.querySelectorAll('#staffView [data-keep]').forEach(function(e){ kept[e.id] = e.value; });
+    dropKept = false;
+    window.AAUP_STAFF.refresh();
+    Object.keys(kept).forEach(function(id){ var e = document.getElementById(id); if(e) e.value = kept[id]; });
+    if(focus){ var f = document.getElementById(focus); if(f && f.focus) f.focus(); }
+  }
   // Once signed in, the page moves to a major of their own (a dean's college,
   // or a major that has the professor's first course), unless it already
   // shows one or the link named a major.
@@ -180,8 +233,19 @@
     if(mine.some(function(p){ return p.id === cur; })) return;
     window.AAUP_STAFF.open(mine[0].id);
   }
+  // What is live for students now (fresh, not the phone's copy), what is
+  // waiting for a dean, and the professor's own card.
+  var live = null, pending = null, myCard = null;
+  function loadWork(){
+    if(!me) return;
+    fetch(base() + '/api/public/content?uni=' + encodeURIComponent(me.uni) + '&_=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); }).then(function(j){ live = (j && j.courses) || {}; refresh(); }).catch(function(){ live = {}; });
+    api('GET', '/api/staff/pending').then(function(d){ pending = d.pending || []; refresh(); }).catch(function(){ pending = []; });
+    api('GET', '/api/staff/card').then(function(d){ myCard = d.card || {}; refresh(); }).catch(function(){ myCard = {}; });
+  }
   function signedIn(d){
     setToken(d.token); me = d.me; team = null; dlg = null; dlgMsg = '';
+    live = pending = myCard = null; loadWork();
     if(me.role === 'dean') loadTeam();
     goHome();
     refresh();
@@ -191,6 +255,7 @@
     if(!token() || me || !base()) return;
     api('GET', '/api/staff/me').then(function(d){
       me = d.me;
+      loadWork();
       if(me.role === 'dean') loadTeam();
       if(!/^#staff=/.test(location.hash)) goHome();
       refresh();
@@ -205,7 +270,7 @@
   function pillHtml(){
     if(!me) return '';
     return me.role === 'dean'
-      ? '<span class="sr-role sr-dean">' + esc(L('Dean · ', 'عميد · ') + collegeName(me.college)) + '</span>'
+      ? '<span class="sr-role sr-dean">' + esc(L('Dean · ', 'عميد · ') + collegeLabel(me.college, true)) + '</span>'
       : '<span class="sr-role sr-prof">' + esc(L('Professor', 'أستاذ')) + '</span>';
   }
   function actionsHtml(){
@@ -234,9 +299,10 @@
           '</div></div>';
       }).join('');
       return '<aside class="stf-detail sr-panel">' +
-        '<div class="stf-detail-h"><b>' + esc(L('Your college', 'كليتك')) + '</b></div>' +
-        '<p class="stf-muted">' + esc(collegeName(me.college) + ' · ' + L(majorsN + ' majors', majorsN + ' تخصص')) + '</p>' +
-        '<h4>' + esc(L('Professors in your college', 'أساتذة كليتك')) + '</h4>' + rows +
+        '<div class="stf-detail-h"><b>' + esc(collegeIds(me.college).length === 1 ? L('Your college', 'كليتك') : L('Your colleges', 'كلياتك')) + '</b></div>' +
+        '<p class="stf-muted">' + esc(collegeLabel(me.college) + ' · ' + L(majorsN + ' majors', majorsN + ' تخصص')) + '</p>' +
+        waitingHtml() +
+        '<h4>' + esc(L('Professors', 'الأساتذة')) + '</h4>' + rows +
         (lastLink ? linkBoxHtml(lastLink.who, lastLink.link) : '') +
         '<button type="button" class="stf-btn stf-pri sr-give" data-sr="give">' + esc(L('Give a professor a login', 'اعطِ أستاذ حساب')) + '</button>' +
         '<p class="stf-muted sr-foot">' + esc(L('Click a course on the left to see its details and counts.', 'اضغط على أي مساق لتشوف تفاصيله وأعداده.')) + '</p>' +
@@ -248,9 +314,121 @@
       '<p class="stf-muted">' + esc(L('Signed in as ', 'داخل كـ ') + (me.name || me.username)) + '</p>' +
       (names.length ? '<ul class="sr-list">' + names.map(function(n){ return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>'
                     : '<p class="stf-muted">' + esc(L('Your login doesn’t cover any courses yet. Ask your dean to add them.', 'حسابك لسا ما فيه مساقات. اطلب من العميد يضيفها.')) + '</p>') +
+      waitingHtml() + cardFormHtml() +
       '<p class="stf-muted sr-foot">' + esc(L('Click a course on the left to see its details and counts.', 'اضغط على أي مساق لتشوف تفاصيله وأعداده.')) + '</p>' +
     '</aside>';
   }
+  // ---- writing for students (part B) ------------------------------------------------
+  var FIELD_TX = {
+    about: ['About this course', 'عن المساق'], revise: ['Revise first', 'راجع قبل'], offered: ['Offered in', 'بتنعطى بـ'],
+    prereqNote: ['Prerequisite note', 'ملاحظة عن المتطلبات'], note: ['Pinned note', 'ملاحظة مثبّتة']
+  };
+  function fieldTx(f){ var x = FIELD_TX[f] || [f, f]; return L(x[0], x[1]); }
+  function offeredTx(v){ return v === 's1' ? L('First semester only', 'الفصل الأول بس') : v === 's2' ? L('Second semester only', 'الفصل الثاني بس') : L('Both semesters', 'الفصلين'); }
+  function valueTx(field, v){
+    if(field === 'offered') return offeredTx(v);
+    if(field === 'note'){
+      if(!v) return '';
+      try{ var n = typeof v === 'string' ? JSON.parse(v) : v; return n.text + L(' (until ', ' (لحد ') + n.until + ')'; }catch(e){ return String(v); }
+    }
+    if(field === 'card'){
+      try{ var c = JSON.parse(v); return [c.office, c.hours, c.contact].filter(Boolean).join(' · '); }catch(e){ return ''; }
+    }
+    return v || '';
+  }
+  function mayWrite(courseId){
+    if(!me) return false;
+    if(me.role === 'professor') return (me.courses || []).indexOf(courseId) !== -1;
+    return plansIn(me.uni, me.college).some(function(p){ return (p.courses || []).some(function(c){ return c.id === courseId; }); });
+  }
+  // What the form starts from: my own waiting change if there is one, else
+  // what students see now.
+  function current(courseId, field){
+    var w = (pending || []).filter(function(p){ return p.kind === 'content' && p.course === courseId && p.field === field && p.by === me.username; })[0];
+    if(w) return w.field === 'note' && w.value ? JSON.parse(w.value) : w.value;
+    var c = (live || {})[courseId] || {};
+    return c[field] || '';
+  }
+  function courseEditHtml(course){
+    if(!me || !course || !mayWrite(course.id)) return '';
+    if(live === null || pending === null) return '<h4>' + esc(L('Write for students', 'اكتب للطلاب')) + '</h4><p class="stf-muted">' + esc(L('Loading…', 'عم نحمّل…')) + '</p>';
+    var id = course.id, k = function(f){ return 'srC-' + f + '-' + id; };
+    var note = current(id, 'note') || {};
+    var waits = (pending || []).filter(function(p){ return p.kind === 'content' && p.course === id && (me.role === 'dean' || p.by === me.username); });
+    var offered = current(id, 'offered');
+    return '<div class="sr-edit">' +
+      '<h4>' + esc(L('Write for students', 'اكتب للطلاب')) + '</h4>' +
+      '<p class="stf-muted">' + esc(me.role === 'dean'
+        ? L('Students see it in this course’s window as soon as you save.', 'الطلاب بيشوفوه بنافذة المساق أول ما تحفظ.')
+        : L('Your dean checks it first, then students see it in this course’s window.', 'العميد بيراجعه أول، وبعدين بيشوفه الطلاب بنافذة المساق.')) + '</p>' +
+      (waits.length && me.role !== 'dean' ? '<p class="sr-wait">' + esc(L('Waiting for your dean: ', 'بستنّى العميد: ') + waits.map(function(w){ return fieldTx(w.field); }).join(L(', ', '، '))) + '</p>' : '') +
+      '<label class="sr-f"><span>' + esc(fieldTx('about')) + '</span><textarea class="sr-in" rows="3" maxlength="1200" id="' + k('about') + '" data-keep>' + esc(current(id, 'about')) + '</textarea></label>' +
+      '<label class="sr-f"><span>' + esc(fieldTx('revise')) + '</span><input class="sr-in" maxlength="400" id="' + k('revise') + '" data-keep value="' + esc(current(id, 'revise')) + '"></label>' +
+      '<label class="sr-f"><span>' + esc(fieldTx('offered')) + '</span><select class="sr-in" id="' + k('offered') + '" data-keep>' +
+        ['', 's1', 's2'].map(function(v){ return '<option value="' + v + '"' + (v === offered ? ' selected' : '') + '>' + esc(offeredTx(v)) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="sr-f"><span>' + esc(fieldTx('prereqNote')) + '</span><input class="sr-in" maxlength="300" id="' + k('prereqNote') + '" data-keep placeholder="' + esc(L('e.g. or with the instructor’s permission', 'مثلاً: أو بموافقة المدرّس')) + '" value="' + esc(current(id, 'prereqNote')) + '"></label>' +
+      '<label class="sr-f"><span>' + esc(fieldTx('note')) + '</span><textarea class="sr-in" rows="2" maxlength="300" id="' + k('noteText') + '" data-keep placeholder="' + esc(L('e.g. The lab moves to B-203 this semester.', 'مثلاً: المختبر انتقل لـ B-203 هالفصل.')) + '">' + esc(note.text || '') + '</textarea></label>' +
+      '<label class="sr-f sr-f-row"><span>' + esc(L('Show it until', 'اعرضها لحد')) + '</span><input class="sr-in" type="date" id="' + k('noteUntil') + '" data-keep value="' + esc(note.until || '') + '"></label>' +
+      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecourse" data-course="' + esc(id) + '">' + esc(me.role === 'dean' ? L('Save for students', 'احفظ للطلاب') : L('Send to my dean', 'ابعت للعميد')) + '</button>' +
+    '</div>';
+  }
+  function saveCourse(courseId){
+    var k = function(f){ var e = document.getElementById('srC-' + f + '-' + courseId); return e ? e.value : ''; };
+    var noteText = k('noteText').trim(), noteUntil = k('noteUntil');
+    if(noteText && !noteUntil){ if(window.__showToast) window.__showToast(L('Pick the date the pinned note ends.', 'اختار لإيمتى الملاحظة المثبّتة.')); return; }
+    var want = { about: k('about').trim(), revise: k('revise').trim(), offered: k('offered'), prereqNote: k('prereqNote').trim(),
+                 note: noteText ? { text: noteText, until: noteUntil } : '' };
+    var sends = Object.keys(want).filter(function(f){
+      var cur = current(courseId, f);
+      if(f === 'note') return JSON.stringify(want.note || '') !== JSON.stringify(cur && cur.text ? { text: cur.text, until: cur.until } : '');
+      return (want[f] || '') !== (cur || '');
+    });
+    if(!sends.length){ if(window.__showToast) window.__showToast(L('Nothing changed', 'ما تغيّر إشي')); return; }
+    busy = true;
+    var chain = Promise.resolve();
+    sends.forEach(function(f){ chain = chain.then(function(){ return api('POST', '/api/staff/content', { course: courseId, field: f, value: want[f] }); }); });
+    chain.then(function(){
+      busy = false; dropKept = true;
+      if(window.__showToast) window.__showToast(me.role === 'dean' ? L('Saved — students see it now', 'انحفظ — الطلاب بيشوفوه هلق') : L('Sent to your dean', 'انبعت للعميد'));
+      if(window.AAUP_STAFF_CONTENT) window.AAUP_STAFF_CONTENT.load(true);
+      loadWork();
+    }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+  }
+  function waitingHtml(){
+    if(!pending || !pending.length) return '';
+    var dean = me.role === 'dean';
+    return '<h4>' + esc(dean ? L('Waiting for you · ', 'بستنّوك · ') + pending.length : L('Waiting for your dean', 'بستنّى العميد')) + '</h4>' +
+      pending.map(function(p){
+        var what = p.kind === 'card' ? L('Card in Find a Professor', 'البطاقة بـ"ابحث عن محاضر"') : p.courseName + ' · ' + fieldTx(p.field);
+        var was = valueTx(p.kind === 'card' ? 'card' : p.field, p.now), now = valueTx(p.kind === 'card' ? 'card' : p.field, p.value);
+        return '<div class="sr-row sr-pend">' +
+          '<div class="sr-grow"><b>' + esc(what) + '</b>' + (dean ? '<small>' + esc(L('From ', 'من ') + p.byName) + '</small>' : '') +
+            (was ? '<small class="sr-was">' + esc(was) + '</small>' : '') +
+            '<small class="sr-now">' + esc(now || L('(removed)', '(انحذف)')) + '</small></div>' +
+          (dean ? '<div class="sr-acts"><button type="button" class="stf-btn stf-pri" data-sr="accept" data-id="' + esc(p.id) + '">' + esc(L('Accept', 'اقبل')) + '</button>' +
+            '<button type="button" class="stf-btn" data-sr="refuse" data-id="' + esc(p.id) + '">' + esc(L('Refuse', 'ارفض')) + '</button></div>' : '') +
+        '</div>';
+      }).join('');
+  }
+  function cardFormHtml(){
+    if(myCard === null) return '';
+    var v = function(f){ return esc(myCard[f] || ''); };
+    return '<h4>' + esc(L('Your card in Find a Professor', 'بطاقتك بـ"ابحث عن محاضر"')) + '</h4>' +
+      '<p class="stf-muted">' + esc(L('Students see it when they look you up, under the name “', 'الطلاب بيشوفوها لما يدوروا عليك، تحت اسم "') + (me.name || me.username) + L('”.', '".')) + '</p>' +
+      '<label class="sr-f"><span>' + esc(L('Office', 'المكتب')) + '</span><input class="sr-in" id="srCardOffice" data-keep maxlength="200" value="' + v('office') + '"></label>' +
+      '<label class="sr-f"><span>' + esc(L('Office hours', 'الساعات المكتبية')) + '</span><input class="sr-in" id="srCardHours" data-keep maxlength="200" value="' + v('hours') + '"></label>' +
+      '<label class="sr-f"><span>' + esc(L('Best way to reach you', 'أحسن طريقة للتواصل')) + '</span><input class="sr-in" id="srCardContact" data-keep maxlength="200" value="' + v('contact') + '"></label>' +
+      '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="savecard">' + esc(me.role === 'dean' ? L('Save my card', 'احفظ بطاقتي') : L('Send to my dean', 'ابعت للعميد')) + '</button>';
+  }
+  function saveCard(){
+    busy = true;
+    api('POST', '/api/staff/card', { office: val('srCardOffice'), hours: val('srCardHours'), contact: val('srCardContact') }).then(function(d){
+      busy = false; dropKept = true;
+      if(window.__showToast) window.__showToast(d.live ? L('Saved', 'انحفظ') : L('Sent to your dean', 'انبعت للعميد'));
+      loadWork();
+    }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+  }
+
   function dialogHtml(){
     if(!dlg) return '';
     var body;
@@ -269,7 +447,11 @@
         '<button type="button" class="stf-btn stf-pri sr-wide" data-sr="dosetup">' + esc(L('Save and sign in', 'احفظ وادخل')) + '</button>';
     } else if(dlg === 'give'){
       body = '<h2>' + esc(L('Give a professor a login', 'اعطِ أستاذ حساب')) + '</h2>' +
-        '<p class="stf-muted">' + esc(L('For ', 'لـ ') + collegeName(me.college) + L('. You’ll get a link to send them.', '. رح يطلعلك رابط تبعتله إياه.')) + '</p>' +
+        '<p class="stf-muted">' + esc(L('You’ll get a link to send them.', 'رح يطلعلك رابط تبعتله إياه.')) + '</p>' +
+        (collegeIds(me.college).length === 1 ? '' :
+          '<label class="sr-f"><span>' + esc(L('Their college', 'كليته')) + '</span><select class="sr-in" id="srGCollege">' +
+            (me.college === '*' ? colleges(me.uni) : collegeIds(me.college).map(function(id){ return { id: id, name: collegeName(id) }; }))
+              .map(function(c){ return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('') + '</select></label>') +
         '<label class="sr-f"><span>' + esc(L('Name (what you’ll see)', 'الاسم (اللي رح تشوفه)')) + '</span><input class="sr-in" id="srGName" maxlength="80"></label>' +
         '<label class="sr-f"><span>' + esc(L('Username (what they sign in with)', 'اسم المستخدم (للدخول)')) + '</span><input class="sr-in" id="srGUser" maxlength="32" autocapitalize="off" spellcheck="false" placeholder="calc.prof"></label>' +
         '<div class="sr-f"><span>' + esc(L('Their courses', 'مساقاته')) + '</span>' + pickerHtml(me.uni, me.college, []) + '</div>' +
@@ -309,7 +491,18 @@
     if(act === 'signin'){ dlg = 'signin'; dlgMsg = ''; refresh(); return true; }
     if(act === 'dlgclose'){ dlg = null; dlgMsg = ''; refresh(); return true; }
     if(act === 'give'){ dlg = 'give'; dlgMsg = ''; lastLink = null; refresh(); return true; }
-    if(act === 'signout'){ setToken(''); me = null; team = null; lastLink = null; refresh(); return true; }
+    if(act === 'signout'){ setToken(''); me = null; team = null; lastLink = null; live = pending = myCard = null; refresh(); return true; }
+    if(act === 'savecourse'){ saveCourse(b.getAttribute('data-course')); return true; }
+    if(act === 'savecard'){ saveCard(); return true; }
+    if(act === 'accept' || act === 'refuse'){
+      busy = true;
+      api('POST', '/api/staff/pending/' + id, { decision: act }).then(function(){
+        busy = false;
+        if(window.__showToast) window.__showToast(act === 'accept' ? L('Accepted — students see it now', 'انقبل — الطلاب بيشوفوه هلق') : L('Refused', 'انرفض'));
+        loadWork();
+      }, function(e){ busy = false; if(window.__showToast) window.__showToast(e.message); });
+      return true;
+    }
     if(act === 'dosignin'){
       busy = true;
       api('POST', '/api/staff/login', { username: val('srUser').trim(), password: val('srPass') })
@@ -328,7 +521,9 @@
       var dlgEl = b.closest('.sr-dlg');
       var who = val('srGName').trim() || val('srGUser').trim();
       busy = true;
-      api('POST', '/api/staff/team', { name: val('srGName').trim(), username: val('srGUser').trim(), courses: pickerValue(dlgEl) })
+      var gBody = { name: val('srGName').trim(), username: val('srGUser').trim(), courses: pickerValue(dlgEl) };
+      if(document.getElementById('srGCollege')) gBody.college = val('srGCollege');
+      api('POST', '/api/staff/team', gBody)
         .then(function(d){ busy = false; dlg = null; dlgMsg = ''; lastLink = { who: who, link: setupLink(d.staff.username, d.setupCode) }; loadTeam(); }, fail);
       return true;
     }
@@ -383,11 +578,11 @@
 
   window.AAUP_STAFF_ROOM = {
     // the staff page
-    loadMe: loadMe, pillHtml: pillHtml, actionsHtml: actionsHtml, panelHtml: panelHtml,
+    loadMe: loadMe, pillHtml: pillHtml, actionsHtml: actionsHtml, panelHtml: panelHtml, courseEditHtml: courseEditHtml,
     dialogHtml: dialogHtml, afterRender: afterRender, onClick: onClick, onKey: onKey,
     signedIn: function(){ return !!me; },
     // shared with the admin room
-    universities: universities, colleges: colleges, uniName: uniName, collegeName: collegeName,
+    universities: universities, colleges: colleges, uniName: uniName, collegeName: collegeName, collegeLabel: collegeLabel, collegeIds: collegeIds,
     coursesIn: coursesIn, courseNames: courseNames, pickerHtml: pickerHtml, bindPickers: bindPickers,
     pickerValue: pickerValue, setupLink: setupLink, linkBoxHtml: linkBoxHtml, copy: copy, stateTx: stateTx
   };
