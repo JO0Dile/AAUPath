@@ -219,11 +219,14 @@
     if(!feed || !Array.isArray(feed.plans) || !window.AAUP_IMPORTED) return result;
     var local = window.AAUP_IMPORTED.loadImportedPlans();
     var awaiting = [];
+    // Plans this user removed in the Developer Panel stay removed for them.
+    var removed = (window.AAUP_STORAGE && window.AAUP_STORAGE.getJSON('aaup_removedPlans', [])) || [];
 
     feed.plans.forEach(function(fp){
       var sanitized = sanitizePlan(fp);
       if(!sanitized) return;
       var existing = local[sanitized.id];
+      if(!existing && removed.indexOf(sanitized.id) !== -1) return;
 
       if(!existing){
         local[sanitized.id] = sanitized;

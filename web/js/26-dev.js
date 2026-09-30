@@ -72,11 +72,21 @@
     if(obj.college){ entry.college = obj.college; }
     plans[id] = entry;
     saveImportedPlans(plans);
+    // Imported again: no longer one this user removed.
+    var gone = window.AAUP_STORAGE.getJSON('aaup_removedPlans', []) || [];
+    if(gone.indexOf(id) !== -1) window.AAUP_STORAGE.setJSON('aaup_removedPlans', gone.filter(function(x){ return x !== id; }));
     if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
     return { ok: true, id: id };
   }
+  // Only on this user's phone (and their own synced account): nobody else's
+  // app changes. An official plan is remembered as removed, or the next
+  // plans update would put it straight back (js/30-sync.js).
   function removePlan(id){
     var plans = loadImportedPlans();
+    if(plans[id] && plans[id].official){
+      var gone = window.AAUP_STORAGE.getJSON('aaup_removedPlans', []) || [];
+      if(gone.indexOf(id) === -1){ gone.push(id); window.AAUP_STORAGE.setJSON('aaup_removedPlans', gone); }
+    }
     delete plans[id];
     saveImportedPlans(plans);
     if(window.AAUP_IMPORTED){ window.AAUP_IMPORTED.plansChanged(); }
@@ -153,6 +163,8 @@
       (rtl ? 'استيراد' : 'Import') + '</button></div><div id="devPlanImportMsg"></div></div>' +
 
       '<div class="dev-panel-section"><h3>📋 ' + (rtl ? 'الخطط المستوردة' : 'Imported Study Plans') + '</h3>' +
+      '<p class="ex-note">' + (rtl ? 'اللي بتستورده أو بتحذفه أو بتضيفه هون بس إلك: على جهازك وحسابك، وما بيتغيّر إشي عند حدا ثاني.'
+        : 'What you import, remove or add here is only for you: your phone and your own account. Nobody else’s app changes.') + '</p>' +
       '<div id="devPlanList">' + planListHtml(rtl) + '</div>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="devRefreshBtn">🔄 ' + (rtl ? 'تحديث الصفحة الرئيسية' : 'Refresh Study Plans') + '</button></div></div>' +
 
@@ -397,6 +409,6 @@
     // Shared with js/72-share.js: importing a plan someone sent via a share
     // link goes through this exact same validate-and-store path a pasted
     // JSON does in the Developer Panel, not a second copy of it.
-    importPlan: importPlan
+    importPlan: importPlan, removePlan: removePlan
   };
 })();
