@@ -1475,6 +1475,8 @@ async function contentDb(env) {
     // A shared class time the admin took down stays as a hidden row, so the
     // same bad time sent again doesn't come back.
     try { await db.prepare('ALTER TABLE shared_sections ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0').run(); } catch { /* already there */ }
+    // The section number a student typed with the time, when they knew it.
+    try { await db.prepare("ALTER TABLE shared_sections ADD COLUMN sec TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
     contentTablesReady = true;
   }
   return db;
@@ -1685,13 +1687,13 @@ async function handlePublicContent(request, env, uni) {
     }
   }
   // Class times students shared: at most 12 per course, newest first.
-  const sh = await db.prepare('SELECT course, days, s, e, room, at, hidden FROM shared_sections WHERE uni = ? ORDER BY at DESC').bind(uni).all();
+  const sh = await db.prepare('SELECT course, days, s, e, room, at, hidden, sec FROM shared_sections WHERE uni = ? ORDER BY at DESC').bind(uni).all();
   for (const r of sh.results || []) {
     v = Math.max(v, r.at);
     if (r.hidden) continue;
     const c = courses[r.course] = courses[r.course] || {};
     c.shared = c.shared || [];
-    if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room });
+    if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, sec: r.sec || '' });
   }
   const res = json({ ok: true, v, courses, cards, replies, dates }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
@@ -1817,7 +1819,7 @@ async function handleStaffPrereqs(request, env, me) {
 // room) are shared with every student of that course, straight away and
 // unchecked, because nobody else has the sections to give. Only the shape is
 // checked, and each course keeps its 12 newest.
-// POST /api/public/sections { uni, course, meetings: [{ d: [0-6], s, e, r }] }
+// POST /api/public/sections { uni, course, meetings: [{ d: [0-6], s, e, r, n? }] }  (n: section number)
 // ---------------------------------------------------------------------------
 async function handleShareSections(request, env) {
   if (!env.STAFF_DB) return json({ ok: true, saved: 0 }, 200, env, request);
@@ -1834,9 +1836,11 @@ async function handleShareSections(request, env) {
     const st = String((m && m.s) || ''), en = String((m && m.e) || '');
     if (!days.length || !T.test(st) || !T.test(en) || en <= st) continue;
     const room = str(m.r, 40).trim();
-    await db.prepare(`INSERT INTO shared_sections (uni, course, days, s, e, room, at) VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(uni, course, days, s, e, room) DO UPDATE SET at = excluded.at`)
-      .bind(uni, course, JSON.stringify(days), st, en, room, now).run();
+    const sec = /^[A-Za-z0-9-]{1,6}$/.test(String((m && m.n) || '')) ? String(m.n) : '';
+    await db.prepare(`INSERT INTO shared_sections (uni, course, days, s, e, room, at, sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(uni, course, days, s, e, room) DO UPDATE SET at = excluded.at,
+        sec = CASE WHEN excluded.sec <> '' THEN excluded.sec ELSE shared_sections.sec END`)
+      .bind(uni, course, JSON.stringify(days), st, en, room, now, sec).run();
     saved++;
   }
   if (saved) {
@@ -1857,10 +1861,10 @@ async function handleAdminSharedSections(request, env, url) {
   if (request.method === 'GET') {
     const uni = String(url.searchParams.get('uni') || 'aaup');
     if (!SLUG_RE.test(uni)) throw fail('which university?');
-    const rs = await db.prepare('SELECT course, days, s, e, room, at FROM shared_sections WHERE uni = ? AND hidden = 0 ORDER BY course, at DESC').bind(uni).all();
+    const rs = await db.prepare('SELECT course, days, s, e, room, at, sec FROM shared_sections WHERE uni = ? AND hidden = 0 ORDER BY course, at DESC').bind(uni).all();
     const sections = [];
     for (const r of rs.results || []) {
-      sections.push({ course: r.course, courseName: await courseName(env, uni, r.course), days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, at: r.at });
+      sections.push({ course: r.course, courseName: await courseName(env, uni, r.course), days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, sec: r.sec || '', at: r.at });
     }
     return json({ ok: true, uni, sections }, 200, env, request);
   }

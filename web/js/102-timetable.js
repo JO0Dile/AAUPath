@@ -58,8 +58,8 @@
     var map = forPlan(planId), sent = window.AAUP_STORAGE.getJSON(SHARED_KEY, {}) || {};
     Object.keys(map).forEach(function(key){
       if(!ids[key]) return;
-      var ms = (map[key] || []).filter(function(m){ return !m.sec && m.d && m.d.length && m.s && m.e; })
-        .map(function(m){ return { d: m.d, s: m.s, e: m.e, r: m.r || '' }; });
+      var ms = (map[key] || []).filter(function(m){ return m.real && !m.sec && m.d && m.d.length && m.s && m.e; })
+        .map(function(m){ var o = { d: m.d, s: m.s, e: m.e, r: m.r || '' }; if(m.sn) o.n = m.sn; return o; });
       var k = planId + '|' + key, sig = JSON.stringify(ms);
       if(!ms.length || sent[k] === sig) return;
       sent[k] = sig;
@@ -71,6 +71,13 @@
     });
     window.AAUP_STORAGE.setJSON(SHARED_KEY, sent);
   }
+  // Only times the student marked as real (from their registration, not a
+  // try-out) are sent. Every plan's real times are also offered once when the
+  // app opens, for any that never got out (offline at the time); the
+  // signature check above keeps it to times not sent already.
+  setTimeout(function(){
+    try{ Object.keys(all()).forEach(shareNow); }catch(e){ /* sharing is best effort */ }
+  }, 8000);
   function hasAny(planId){ var m = forPlan(planId); return Object.keys(m).some(function(k){ return Array.isArray(m[k]) && m[k].length; }); }
 
   function mins(hhmm){ var p = String(hhmm || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); }
@@ -224,7 +231,7 @@
   function dayLabel(d){ return ar() ? DAY_AR[d] : DAY_EN[d]; }
   // Days in the reading direction; the time range and room always left to right.
   function meetingHtml(x){
-    return esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
+    return (x.sn ? esc(L('Sec ', 'شعبة ') + x.sn) + ' · ' : '') + esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
       ' · <bdi dir="ltr">' + esc(window.__fmtTime(x.s) + '–' + window.__fmtTime(x.e)) + '</bdi>' + (x.r ? ' · <bdi dir="ltr">' + esc(x.r) + '</bdi>' : '');
   }
   function render(){
@@ -247,6 +254,8 @@
             '<button type="button" class="cloud-link" data-tt-add="' + esc(c.id) + '">+ ' + esc(L('Add a time', 'ضيف وقت')) + '</button></div>' +
           rows.map(function(x, i){
             return '<div class="tt-meet"><span>' + meetingHtml(x) + '</span>' +
+              (x.sec ? '' : '<button type="button" class="tt-real-btn' + (x.real ? ' is-on' : '') + '" data-tt-real="' + esc(c.id) + '" data-tt-i="' + i + '" aria-pressed="' + (x.real ? 'true' : 'false') + '">' +
+                esc(x.real ? L('✓ Real · shared', '✓ حقيقي · منشور') : L('Real? Share it', 'حقيقي؟ شاركه')) + '</button>') +
               '<button type="button" class="dates-del" data-tt-del="' + esc(c.id) + '" data-tt-i="' + i + '" aria-label="' + esc(L('Remove', 'احذف')) + '">×</button></div>';
           }).join('') +
           (editing === c.id ? formHtml(c.id) : '') +
@@ -293,8 +302,23 @@
     picked = key; adding = false; editing = key;
     render();
   }
+  // Times this course already has in the app (the college's sections and
+  // ones other students shared). Tapping one uses it instead of typing.
+  function knownFor(slug){
+    return window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.sectionsOf && slug.indexOf('x:') !== 0 ? window.AAUP_STAFF_CONTENT.sectionsOf(slug) : [];
+  }
+  function knownHtml(slug){
+    var list = knownFor(slug);
+    if(!list.length) return '';
+    return '<div class="tt-known"><div class="tt-known-l">' + esc(L('Already in the app · tap yours', 'موجودة بالتطبيق · اضغط على تبعتك')) + '</div>' +
+      list.map(function(x, i){
+        return '<button type="button" class="tt-known-row" data-tt-known="' + i + '"><b>' + esc(window.AAUP_STAFF_CONTENT.secLabel(x)) + '</b>' +
+          '<span>' + meetingHtml({ d: x.days, s: x.s, e: x.e, r: x.room }) + '</span></button>';
+      }).join('') +
+      '<div class="tt-known-or">' + esc(L('Or type it:', 'أو اكتبها:')) + '</div></div>';
+  }
   function formHtml(slug){
-    return '<div class="tt-form" data-tt-form="' + esc(slug) + '">' +
+    return '<div class="tt-form" data-tt-form="' + esc(slug) + '">' + knownHtml(slug) +
       '<div class="tt-days" role="group" aria-label="' + esc(L('Days', 'الأيام')) + '">' + WEEK.map(function(d){
         return '<button type="button" class="tt-day" data-tt-day="' + d + '" aria-pressed="false">' + esc(dayLabel(d)) + '</button>';
       }).join('') + '</div>' +
@@ -302,7 +326,10 @@
         '<label>' + esc(L('From', 'من')) + '<input type="time" class="tt-s" value="08:00"></label>' +
         '<label>' + esc(L('To', 'لـ')) + '<input type="time" class="tt-e" value="09:15"></label>' +
         '<label class="tt-room">' + esc(L('Room', 'القاعة')) + '<input type="text" class="tt-r" maxlength="20" placeholder="B-203"></label>' +
+        '<label class="tt-sec">' + esc(L('Section (optional)', 'الشعبة (اختياري)')) + '<input type="text" class="tt-sn" maxlength="6" inputmode="numeric" placeholder="' + esc(L('e.g. 2', 'مثلًا 2')) + '"></label>' +
       '</div>' +
+      '<label class="tt-real"><input type="checkbox" class="tt-rl"><span>' + esc(L('These are my real class times from the university. Share them with my classmates.',
+        'هاي أوقاتي الحقيقية من الجامعة. شاركها مع زملائي.')) + '</span></label>' +
       '<p class="dev-error-msg tt-err" hidden></p>' +
       // No Save button (round 7, idea 10): the time is kept as soon as it has
       // a day and a start and end, and "Saved" says so. Cancel takes it back.
@@ -335,6 +362,16 @@
       return;
     }
     if(t.closest('[data-tt-more]')){ adding = true; editing = null; render(); return; }
+    if((b = t.closest('[data-tt-known]'))){
+      var kf = b.closest('.tt-form'), kk = kf.getAttribute('data-tt-form');
+      var ks = knownFor(kk)[+b.getAttribute('data-tt-known')];
+      if(!ks) return;
+      editing = null; picked = null;
+      pickSection(openFor, kk, ks);
+      render();
+      if(window.__showToast) window.__showToast(L('Added to My Week', 'انضافت لأسبوعي'));
+      return;
+    }
     if((b = t.closest('[data-tt-pick]'))){ startTimes(b.getAttribute('data-tt-pick')); return; }
     if(t.closest('[data-tt-own]')){
       var nm = document.getElementById('ttPick').value.trim().replace(/\s+/g, ' ').slice(0, 60);
@@ -342,6 +379,14 @@
       return;
     }
     if((b = t.closest('[data-tt-day]'))){ b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); autoSave(b.closest('.tt-form')); return; }
+    if((b = t.closest('[data-tt-real]'))){
+      var rm = forPlan(openFor), rk = b.getAttribute('data-tt-real'), rx = (rm[rk] || [])[+b.getAttribute('data-tt-i')];
+      if(!rx) return;
+      if(rx.real) delete rx.real; else rx.real = true;
+      savePlan(openFor, rm); render();
+      if(rx.real && window.__showToast) window.__showToast(L('Shared with your classmates', 'انشاركت مع زملائك'));
+      return;
+    }
     if((b = t.closest('[data-tt-del]'))){
       var m = forPlan(openFor), slug = b.getAttribute('data-tt-del'), i = +b.getAttribute('data-tt-i');
       (m[slug] || []).splice(i, 1);
@@ -354,13 +399,17 @@
   function readForm(form){
     var days = Array.prototype.map.call(form.querySelectorAll('[data-tt-day][aria-pressed="true"]'), function(x){ return +x.getAttribute('data-tt-day'); });
     var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
+    var sn = (form.querySelector('.tt-sn').value || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 6);
     var problem = '';
     if(!days.length) problem = L('Pick at least one day.', 'اختار يوم واحد على الأقل.');
     else if(!s || !en || mins(en) <= mins(s)) problem = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.');
     // A class before 6 in the morning is almost always 12:15 PM entered as AM
     // on a phone's 12-hour clock.
     else if(mins(s) < 6 * 60) problem = L('That is ' + s + ' at night. Did you mean PM? (e.g. 12:15 PM)', 'هاد ' + s + ' بالليل. قصدك بعد الظهر؟ (مثلًا 12:15 م)');
-    return { v: { d: days, s: s, e: en, r: r }, problem: problem };
+    var v = { d: days, s: s, e: en, r: r };
+    if(sn) v.sn = sn;
+    if(form.querySelector('.tt-rl').checked) v.real = true;
+    return { v: v, problem: problem };
   }
   // The first write adds the time; later ones update the same time.
   function writeForm(form, v){

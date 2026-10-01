@@ -113,7 +113,7 @@
       out += '<div class="sc-secs"><div class="sc-lbl">' + esc(L('Sections this semester', 'شعب هالفصل')) + '</div>' +
         secs.map(function(x, i){
           var on = picked && picked === String(x.n);
-          return '<div class="sc-sec"><div class="sc-sec-t"><b>' + esc(x.fromStudent ? L('From a student', 'من طالب') : L('Section ', 'شعبة ') + x.n) + '</b><small>' +
+          return '<div class="sc-sec"><div class="sc-sec-t"><b>' + esc(secLabel(x)) + '</b><small>' +
               esc([secDays(x.days), fmt(x.s) + '–' + fmt(x.e), x.room, x.prof].filter(Boolean).join(' · ')) + '</small></div>' +
             (course.plan ? '<button type="button" class="sc-pick' + (on ? ' is-on' : '') + '" data-sc-pick="' + esc(course.plan + '|' + course.id + '|' + i) + '">' +
               esc(on ? L('In My Week ✓', 'بأسبوعي ✓') : L('Put it in My Week', 'حطها بأسبوعي')) + '</button>' : '') +
@@ -154,8 +154,14 @@
     var seen = {};
     own.forEach(function(x){ seen[JSON.stringify([x.days, x.s, x.e])] = true; });
     var shared = (Array.isArray(c.shared) ? c.shared : []).filter(function(x){ return !seen[JSON.stringify([x.days, x.s, x.e])]; })
-      .map(function(x, i){ return { n: 'st' + (i + 1), days: x.days, s: x.s, e: x.e, room: x.room, fromStudent: true }; });
+      .map(function(x, i){ return { n: x.sec || ('st' + (i + 1)), sec: x.sec || '', days: x.days, s: x.s, e: x.e, room: x.room, fromStudent: true }; });
     return own.concat(shared);
+  }
+  // "Section 3", "Section 3 · from a student" (it typed the number), or just
+  // "From a student".
+  function secLabel(x){
+    if(!x.fromStudent) return L('Section ', 'شعبة ') + x.n;
+    return x.sec ? L('Section ' + x.sec + ' · from a student', 'شعبة ' + x.sec + ' · من طالب') : L('From a student', 'من طالب');
   }
   function cardChipHtml(course, done){
     var c = course && forCourse(course.id);
@@ -190,6 +196,7 @@
   window.AAUP_STAFF_CONTENT = {
     load: load, forCourse: forCourse, offerClash: offerClash, subChipHtml: subChipHtml,
     courseHtml: courseHtml, cardChipHtml: cardChipHtml, cards: cards, noteNow: noteNow,
-    replyFor: replyFor, collegeDates: collegeDates, oldIds: oldIdsOf
+    replyFor: replyFor, collegeDates: collegeDates, oldIds: oldIdsOf,
+    sectionsOf: function(id){ var c = forCourse(id); return c ? sectionsOf(c) : []; }, secLabel: secLabel
   };
 })();

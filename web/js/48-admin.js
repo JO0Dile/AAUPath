@@ -1727,7 +1727,7 @@
         return '<h3>' + esc(g.name) + (g.name !== g.course ? ' <small style="opacity:.6;">' + esc(g.course) + '</small>' : '') + '</h3>' +
           g.rows.map(function(x){
             var i = state.ctItems.indexOf(x);
-            return '<div class="admin-note sst-row"><span>' +
+            return '<div class="admin-note sst-row"><span>' + (x.sec ? 'Section ' + esc(x.sec) + ' · ' : '') +
               esc((x.days || []).map(function(d){ return CT_DAYS[d] || d; }).join(' · ')) + ' · ' + ctTime(x.s) + ' – ' + ctTime(x.e) +
               (x.room ? ' · room ' + esc(x.room) : '') +
               ' <span style="opacity:.65;">· ' + esc(new Date(x.at * 1000).toLocaleDateString()) + '</span></span>' +
