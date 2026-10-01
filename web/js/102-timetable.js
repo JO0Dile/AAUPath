@@ -341,6 +341,8 @@
       // No Save button (round 7, idea 10): the time is kept as soon as it has
       // a day and a start and end, and "Saved" says so. Cancel takes it back.
       '<div class="form-actions" style="justify-content:flex-start;align-items:center;">' +
+        // Editing a saved time gets a Save button: it saves and closes.
+        (x ? '<button type="button" class="home-btn btn-sm btn-pri" data-tt-save>' + esc(L('Save', 'احفظ')) + '</button>' : '') +
         '<span class="tt-saved" hidden>' + esc(L('✓ Saved', '✓ انحفظ')) + '</span>' +
         '<button type="button" class="home-btn btn-quiet btn-sm" data-tt-cancel>' + esc(L('Cancel', 'إلغاء')) + '</button>' +
       '</div></div>';
@@ -350,6 +352,13 @@
     var t = e.target, b;
     if(t === el || t.closest('[data-tt-close]')){ close(); return; }
     if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); editIdx = null; render(); return; }
+    if((b = t.closest('[data-tt-save]'))){
+      if(saveForm(b.closest('.tt-form'))){
+        render();
+        if(window.__showToast) window.__showToast(L('Saved', 'انحفظ'));
+      }
+      return;
+    }
     if((b = t.closest('[data-tt-edit]'))){
       var em = forPlan(openFor), ek = b.getAttribute('data-tt-edit'), ei = +b.getAttribute('data-tt-i');
       if(!(em[ek] || [])[ei]) return;
