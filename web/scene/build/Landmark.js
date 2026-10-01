@@ -259,11 +259,18 @@ export class Landmark {
 
     // ---- the book, on its angled plinth ----------------------------------
     const ridgeY = eavesY + 0.2 + 1.15;
-    const wedge = new Mesh(this._wedgePlinth(1.05, 0.95, 1.4), M('limestone'));
+    const WEDGE = { half: 1.05, lift: 0.95, depth: 1.4 };
+    const wedge = new Mesh(this._wedgePlinth(WEDGE.half, WEDGE.lift, WEDGE.depth), M('limestone'));
     wedge.position.y = ridgeY - 0.1;
     this.group.add(shadowed(wedge));
-    const book = this._book(ridgeY + 1.25);
-    book.rotation.z = -0.2;
+    // The book lies ON the wedge's sloping top. It is built around its own
+    // origin and then placed: it used to be built at its full height and
+    // rotated about the ground, which at that height swung it about three
+    // units sideways, so it hung in the air beside the tower.
+    const frontY = WEDGE.lift * 0.35, backY = WEDGE.lift;
+    const book = this._book(0);
+    book.position.y = ridgeY - 0.1 + (frontY + backY) / 2 + 0.04;
+    book.rotation.x = Math.atan2(backY - frontY, WEDGE.depth);
     book.name = 'book';
     this.group.add(shadowed(book));
     this.height = ridgeY + 2.4;
