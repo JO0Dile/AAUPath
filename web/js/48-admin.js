@@ -1729,7 +1729,7 @@
             var i = state.ctItems.indexOf(x);
             return '<div class="admin-note sst-row"><span>' + (x.sec ? 'Section ' + esc(x.sec) + ' · ' : '') +
               esc((x.days || []).map(function(d){ return CT_DAYS[d] || d; }).join(' · ')) + ' · ' + ctTime(x.s) + ' – ' + ctTime(x.e) +
-              (x.room ? ' · room ' + esc(x.room) : '') +
+              (x.room ? ' · room ' + esc(x.room) : '') + (x.prof ? ' · ' + esc(x.prof) : '') +
               ' <span style="opacity:.65;">· ' + esc(new Date(x.at * 1000).toLocaleDateString()) + '</span></span>' +
               '<button type="button" class="home-btn admin-danger" data-ct-del="' + i + '">Take it down</button></div>';
           }).join('');

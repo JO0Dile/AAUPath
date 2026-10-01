@@ -59,7 +59,7 @@
     Object.keys(map).forEach(function(key){
       if(!ids[key]) return;
       var ms = (map[key] || []).filter(function(m){ return m.real && !m.sec && m.d && m.d.length && m.s && m.e; })
-        .map(function(m){ var o = { d: m.d, s: m.s, e: m.e, r: m.r || '' }; if(m.sn) o.n = m.sn; return o; });
+        .map(function(m){ var o = { d: m.d, s: m.s, e: m.e, r: m.r || '' }; if(m.sn) o.n = m.sn; if(m.pf) o.p = m.pf; return o; });
       var k = planId + '|' + key, sig = JSON.stringify(ms);
       if(!ms.length || sent[k] === sig) return;
       sent[k] = sig;
@@ -189,6 +189,7 @@
   // ---- the window -----------------------------------------------------------
   var openFor = null, editing = null;   // editing: course slug with its add form open
   var adding = false, picked = null;   // the "Add another class" picker, and the class it picked
+  var editIdx = null, editOrig = null; // the saved time being edited, and what it was, for Cancel
   function overlayEl(){
     var el = document.getElementById('ttOverlay');
     if(el) return el;
@@ -231,7 +232,7 @@
   function dayLabel(d){ return ar() ? DAY_AR[d] : DAY_EN[d]; }
   // Days in the reading direction; the time range and room always left to right.
   function meetingHtml(x){
-    return (x.sn ? esc(L('Sec ', 'شعبة ') + x.sn) + ' · ' : '') + esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
+    return (x.sn ? esc(L('Sec ', 'شعبة ') + x.sn) + ' · ' : '') + (x.pf ? esc(x.pf) + ' · ' : '') + esc((x.d || []).slice().sort(function(a, b){ return WEEK.indexOf(a) - WEEK.indexOf(b); }).map(dayLabel).join(' ')) +
       ' · <bdi dir="ltr">' + esc(window.__fmtTime(x.s) + '–' + window.__fmtTime(x.e)) + '</bdi>' + (x.r ? ' · <bdi dir="ltr">' + esc(x.r) + '</bdi>' : '');
   }
   function render(){
@@ -256,9 +257,10 @@
             return '<div class="tt-meet"><span>' + meetingHtml(x) + '</span>' +
               (x.sec ? '' : '<button type="button" class="tt-real-btn' + (x.real ? ' is-on' : '') + '" data-tt-real="' + esc(c.id) + '" data-tt-i="' + i + '" aria-pressed="' + (x.real ? 'true' : 'false') + '">' +
                 esc(x.real ? L('✓ Real · shared', '✓ حقيقي · منشور') : L('Real? Share it', 'حقيقي؟ شاركه')) + '</button>') +
+              '<button type="button" class="dates-del tt-edit" data-tt-edit="' + esc(c.id) + '" data-tt-i="' + i + '" aria-label="' + esc(L('Edit', 'عدّل')) + '">✎</button>' +
               '<button type="button" class="dates-del" data-tt-del="' + esc(c.id) + '" data-tt-i="' + i + '" aria-label="' + esc(L('Remove', 'احذف')) + '">×</button></div>';
           }).join('') +
-          (editing === c.id ? formHtml(c.id) : '') +
+          (editing === c.id ? formHtml(c.id, editIdx === null ? null : rows[editIdx], editIdx) : '') +
           '</div>';
       }).join('') : '<p class="form-note">' + esc(L('No courses for this semester yet.', 'ما في مساقات لهالفصل بعد.')) + '</p>') +
       (adding ? pickerHtml() : editing ? '' : '<button type="button" class="home-btn btn-quiet btn-sm tt-more" data-tt-more>+ ' + esc(L('Add another class', 'ضيف محاضرة ثانية')) + '</button>');
@@ -313,22 +315,27 @@
     return '<div class="tt-known"><div class="tt-known-l">' + esc(L('Already in the app · tap yours', 'موجودة بالتطبيق · اضغط على تبعتك')) + '</div>' +
       list.map(function(x, i){
         return '<button type="button" class="tt-known-row" data-tt-known="' + i + '"><b>' + esc(window.AAUP_STAFF_CONTENT.secLabel(x)) + '</b>' +
-          '<span>' + meetingHtml({ d: x.days, s: x.s, e: x.e, r: x.room }) + '</span></button>';
+          '<span>' + meetingHtml({ d: x.days, s: x.s, e: x.e, r: x.room, pf: x.prof }) + '</span></button>';
       }).join('') +
       '<div class="tt-known-or">' + esc(L('Or type it:', 'أو اكتبها:')) + '</div></div>';
   }
-  function formHtml(slug){
-    return '<div class="tt-form" data-tt-form="' + esc(slug) + '">' + knownHtml(slug) +
+  // x: a saved time being edited (idx is its place), or none for a new one.
+  function formHtml(slug, x, idx){
+    x = x || null;
+    var sn = x ? (x.sn || (x.sec && !/^st/.test(x.sec) ? x.sec : '')) : '';
+    return '<div class="tt-form" data-tt-form="' + esc(slug) + '"' + (x ? ' data-idx="' + idx + '" data-edit="1"' : '') + '>' + (x ? '' : knownHtml(slug)) +
       '<div class="tt-days" role="group" aria-label="' + esc(L('Days', 'الأيام')) + '">' + WEEK.map(function(d){
-        return '<button type="button" class="tt-day" data-tt-day="' + d + '" aria-pressed="false">' + esc(dayLabel(d)) + '</button>';
+        var on = !!(x && (x.d || []).indexOf(d) !== -1);
+        return '<button type="button" class="tt-day" data-tt-day="' + d + '" aria-pressed="' + on + '">' + esc(dayLabel(d)) + '</button>';
       }).join('') + '</div>' +
       '<div class="tt-times">' +
-        '<label>' + esc(L('From', 'من')) + '<input type="time" class="tt-s" value="08:00"></label>' +
-        '<label>' + esc(L('To', 'لـ')) + '<input type="time" class="tt-e" value="09:15"></label>' +
-        '<label class="tt-room">' + esc(L('Room', 'القاعة')) + '<input type="text" class="tt-r" maxlength="20" placeholder="B-203"></label>' +
-        '<label class="tt-sec">' + esc(L('Section (optional)', 'الشعبة (اختياري)')) + '<input type="text" class="tt-sn" maxlength="6" inputmode="numeric" placeholder="' + esc(L('e.g. 2', 'مثلًا 2')) + '"></label>' +
+        '<label>' + esc(L('From', 'من')) + '<input type="time" class="tt-s" value="' + esc(x ? x.s : '08:00') + '"></label>' +
+        '<label>' + esc(L('To', 'لـ')) + '<input type="time" class="tt-e" value="' + esc(x ? x.e : '09:15') + '"></label>' +
+        '<label class="tt-room">' + esc(L('Room', 'القاعة')) + '<input type="text" class="tt-r" maxlength="20" placeholder="B-203" value="' + esc(x ? x.r || '' : '') + '"></label>' +
+        '<label class="tt-sec">' + esc(L('Section (optional)', 'الشعبة (اختياري)')) + '<input type="text" class="tt-sn" maxlength="6" inputmode="numeric" placeholder="' + esc(L('e.g. 2', 'مثلًا 2')) + '" value="' + esc(sn) + '"></label>' +
+        '<label class="tt-prof">' + esc(L('Doctor (optional)', 'الدكتور (اختياري)')) + '<input type="text" class="tt-pf" maxlength="40" placeholder="' + esc(L('e.g. Dr. Sami', 'مثلًا د. سامي')) + '" value="' + esc(x ? x.pf || x.prof || '' : '') + '"></label>' +
       '</div>' +
-      '<label class="tt-real"><input type="checkbox" class="tt-rl"><span>' + esc(L('These are my real class times from the university. Share them with my classmates.',
+      '<label class="tt-real"><input type="checkbox" class="tt-rl"' + (x && x.real ? ' checked' : '') + '><span>' + esc(L('These are my real class times from the university. Share them with my classmates.',
         'هاي أوقاتي الحقيقية من الجامعة. شاركها مع زملائي.')) + '</span></label>' +
       '<p class="dev-error-msg tt-err" hidden></p>' +
       // No Save button (round 7, idea 10): the time is kept as soon as it has
@@ -342,14 +349,25 @@
     var el = document.getElementById('ttOverlay');
     var t = e.target, b;
     if(t === el || t.closest('[data-tt-close]')){ close(); return; }
-    if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); render(); return; }
+    if((b = t.closest('[data-tt-add]'))){ editing = b.getAttribute('data-tt-add'); editIdx = null; render(); return; }
+    if((b = t.closest('[data-tt-edit]'))){
+      var em = forPlan(openFor), ek = b.getAttribute('data-tt-edit'), ei = +b.getAttribute('data-tt-i');
+      if(!(em[ek] || [])[ei]) return;
+      editing = ek; editIdx = ei; editOrig = JSON.parse(JSON.stringify(em[ek][ei])); adding = false;
+      render(); return;
+    }
     if(t.closest('[data-tt-cancel]')){
       var cf = t.closest('.tt-form');
-      if(cf && cf.getAttribute('data-idx')){
+      if(cf && cf.getAttribute('data-edit')){
+        // Editing a saved time: Cancel puts it back the way it was.
+        var om = forPlan(openFor), ok2 = cf.getAttribute('data-tt-form');
+        if(om[ok2] && editOrig){ om[ok2][+cf.getAttribute('data-idx')] = editOrig; savePlan(openFor, om); }
+      }
+      else if(cf && cf.getAttribute('data-idx')){
         var cm = forPlan(openFor), ck = cf.getAttribute('data-tt-form');
         if(cm[ck]){ cm[ck].splice(+cf.getAttribute('data-idx'), 1); if(!cm[ck].length) delete cm[ck]; savePlan(openFor, cm); }
       }
-      editing = null; adding = false; picked = null; render(); return;
+      editing = null; adding = false; picked = null; editIdx = null; editOrig = null; render(); return;
     }
     if(t.closest('[data-tt-cal]')){
       var dm = document.getElementById('devModalOverlay');
@@ -400,6 +418,7 @@
     var days = Array.prototype.map.call(form.querySelectorAll('[data-tt-day][aria-pressed="true"]'), function(x){ return +x.getAttribute('data-tt-day'); });
     var s = form.querySelector('.tt-s').value, en = form.querySelector('.tt-e').value, r = form.querySelector('.tt-r').value.trim().slice(0, 20);
     var sn = (form.querySelector('.tt-sn').value || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 6);
+    var pf = (form.querySelector('.tt-pf').value || '').replace(/\s+/g, ' ').trim().slice(0, 40);
     var problem = '';
     if(!days.length) problem = L('Pick at least one day.', 'اختار يوم واحد على الأقل.');
     else if(!s || !en || mins(en) <= mins(s)) problem = L('The end time has to be after the start.', 'وقت النهاية لازم يكون بعد البداية.');
@@ -408,6 +427,7 @@
     else if(mins(s) < 6 * 60) problem = L('That is ' + s + ' at night. Did you mean PM? (e.g. 12:15 PM)', 'هاد ' + s + ' بالليل. قصدك بعد الظهر؟ (مثلًا 12:15 م)');
     var v = { d: days, s: s, e: en, r: r };
     if(sn) v.sn = sn;
+    if(pf) v.pf = pf;
     if(form.querySelector('.tt-rl').checked) v.real = true;
     return { v: v, problem: problem };
   }
@@ -434,13 +454,13 @@
     var err = form.querySelector('.tt-err'), f = readForm(form);
     if(f.problem){ err.textContent = f.problem; err.hidden = false; return false; }
     writeForm(form, f.v);
-    editing = null; picked = null;
+    editing = null; picked = null; editIdx = null; editOrig = null;
     return true;
   }
   function open(planId){
     openFor = planId || (window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected && window.AAUP_DASHBOARD.getSelected());
     if(!openFor) return;
-    editing = null; adding = false; picked = null;
+    editing = null; adding = false; picked = null; editIdx = null; editOrig = null;
     overlayEl().classList.add('open');
     render();
   }
@@ -456,7 +476,7 @@
   // times and room become this course's class times, replacing any others.
   function pickSection(planId, key, sec){
     var map = forPlan(planId);
-    map[key] = [{ d: (sec.days || []).slice(), s: sec.s, e: sec.e, r: sec.room || '', sec: String(sec.n || '') }];
+    map[key] = [{ d: (sec.days || []).slice(), s: sec.s, e: sec.e, r: sec.room || '', sec: String(sec.n || ''), pf: sec.prof || '' }];
     savePlan(planId, map);
     var el = document.getElementById('ttOverlay');
     if(el && el.classList.contains('open') && openFor === planId) render();

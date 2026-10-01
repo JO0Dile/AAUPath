@@ -154,7 +154,7 @@
     var seen = {};
     own.forEach(function(x){ seen[JSON.stringify([x.days, x.s, x.e])] = true; });
     var shared = (Array.isArray(c.shared) ? c.shared : []).filter(function(x){ return !seen[JSON.stringify([x.days, x.s, x.e])]; })
-      .map(function(x, i){ return { n: x.sec || ('st' + (i + 1)), sec: x.sec || '', days: x.days, s: x.s, e: x.e, room: x.room, fromStudent: true }; });
+      .map(function(x, i){ return { n: x.sec || ('st' + (i + 1)), sec: x.sec || '', days: x.days, s: x.s, e: x.e, room: x.room, prof: x.prof || '', fromStudent: true }; });
     return own.concat(shared);
   }
   // "Section 3", "Section 3 · from a student" (it typed the number), or just
