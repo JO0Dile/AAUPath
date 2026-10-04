@@ -38,14 +38,14 @@
   // land after this list first loaded, or change while the app is open.
   var raw = null;
   function load(){
-    if(raw) return Promise.resolve(cache = withStaffCards(JSON.parse(raw)));
+    if(raw) return Promise.resolve(cache = withPeople(withStaffCards(JSON.parse(raw))));
     if(cache === 'error') return Promise.resolve(cache);
     return fetch('contacts.json').then(function(r){
       if(!r.ok) throw new Error('HTTP ' + r.status);
       return r.text();
     }).then(function(text){
       raw = text;
-      cache = withStaffCards(JSON.parse(text));
+      cache = withPeople(withStaffCards(JSON.parse(text)));
       return cache;
     }).catch(function(){
       cache = 'error';
@@ -73,6 +73,33 @@
         var names = window.AAUP_STAFF_ROOM.courseNames(k.courses, 'aaup');
         hit.courses = (hit.courses || []).concat(names.filter(function(n){ return (hit.courses || []).indexOf(n) === -1; }));
       }
+    });
+    return data;
+  }
+
+  // Contacts the admin added or edited in the admin room. An edit names the
+  // contacts.json entry it replaces ("base"); a hidden one takes that entry
+  // out; anything else is added. The phone is only there when the admin set
+  // it to show (the Worker leaves it out otherwise).
+  function withPeople(data){
+    var list = window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.people ? window.AAUP_STAFF_CONTENT.people() : [];
+    if(!list.length || !data || !Array.isArray(data.contacts)) return data;
+    list.forEach(function(p){
+      var at = p.base ? data.contacts.findIndex(function(c){ return normName(c.name) === normName(p.base); }) : -1;
+      if(p.hidden){ if(at !== -1) data.contacts.splice(at, 1); return; }
+      var card = { name: p.name, category: data.categories[p.category] ? p.category : 'instructor' };
+      if(p.role) card.role = p.role;
+      if(p.courses && p.courses.length) card.courses = p.courses.slice();
+      if(p.email) card.email = p.email;
+      if(p.office) card.office = p.office;
+      if(p.phone) card.phone = p.phone;
+      if(at !== -1){
+        // Keep what the staff card added (hours, how to reach them).
+        var old = data.contacts[at];
+        ['hours', 'reach'].forEach(function(k){ if(old[k]) card[k] = old[k]; });
+        if(!card.phone && old.phone) card.phone = old.phone;
+        data.contacts[at] = card;
+      } else data.contacts.push(card);
     });
     return data;
   }
