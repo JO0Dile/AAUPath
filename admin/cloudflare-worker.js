@@ -1461,6 +1461,13 @@ async function contentDb(env) {
       // student of the course (not checked: there is no one else to ask).
       `CREATE TABLE IF NOT EXISTS shared_sections (uni TEXT NOT NULL, course TEXT NOT NULL, days TEXT NOT NULL, s TEXT NOT NULL,
         e TEXT NOT NULL, room TEXT NOT NULL DEFAULT '', at INTEGER NOT NULL, PRIMARY KEY (uni, course, days, s, e, room))`,
+      // Contacts the admin adds or edits in the admin room. "base" is the name
+      // of the contacts.json entry an edit replaces ('' for a new contact).
+      // The phone stays here; it reaches students only when phone_ok.
+      `CREATE TABLE IF NOT EXISTS people (id TEXT PRIMARY KEY, uni TEXT NOT NULL, base TEXT NOT NULL DEFAULT '',
+        name TEXT NOT NULL, category TEXT NOT NULL, role TEXT NOT NULL DEFAULT '', courses TEXT NOT NULL DEFAULT '[]',
+        email TEXT NOT NULL DEFAULT '', office TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '',
+        phone_ok INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0, at INTEGER NOT NULL)`,
     ]) await db.prepare(sql).run();
     // Round 10, idea 18: a change remembers the value it replaced, so a dean
     // can put it back. Added to a staff_log made before that.
@@ -1666,6 +1673,16 @@ async function handlePublicContent(request, env, uni) {
     cards.push({ name: r.name || r.username, office: r.office || '', hours: r.hours || '', contact: r.contact || '', email: r.email || '',
       phone: r.phone_ok ? (r.phone || '') : '', courses: list });
   }
+  // Contacts from the admin room. The phone only when it was set to show.
+  const people = [];
+  const pr = await db.prepare('SELECT * FROM people WHERE uni = ? ORDER BY name').bind(uni).all();
+  for (const r of pr.results || []) {
+    v = Math.max(v, r.at);
+    let list = [];
+    try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
+    people.push({ base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+      office: r.office, phone: r.phone_ok ? r.phone : '', hidden: !!r.hidden });
+  }
   // Replies under students' thoughts, by the thought's id.
   const replies = {};
   const rr = await db.prepare('SELECT thought, course, text, by_name, at FROM staff_replies WHERE uni = ?').bind(uni).all();
@@ -1700,7 +1717,7 @@ async function handlePublicContent(request, env, uni) {
     if (c.shared.some((x) => JSON.stringify(x.days) === r.days && x.s === r.s && x.e === r.e)) continue;
     if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, sec: r.sec || '', prof: r.prof || '' });
   }
-  const res = json({ ok: true, v, courses, cards, replies, dates }, 200, env, request);
+  const res = json({ ok: true, v, courses, cards, replies, dates, people }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
   return res;
 }
@@ -1855,6 +1872,56 @@ async function handleShareSections(request, env) {
       (SELECT rowid FROM shared_sections WHERE uni = ? AND course = ? AND hidden = 0 ORDER BY at DESC LIMIT 12)`).bind(uni, course, uni, course).run();
   }
   return json({ ok: true, saved }, 200, env, request);
+}
+
+// The admin's contacts (admin room → Contacts).
+// GET    /api/admin/people?uni=          every row, phone included
+// PUT    /api/admin/people               { id?, uni, base?, name, category, role, courses[], email, office, phone, phoneOk, hidden }
+// DELETE /api/admin/people/:id
+async function handleAdminPeople(request, env, seg, url) {
+  if (!env.STAFF_DB) throw fail('the staff database is not set up');
+  const db = await contentDb(env);
+  const out = (r) => {
+    let list = [];
+    try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
+    return { id: r.id, base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+      office: r.office, phone: r.phone, phoneOk: !!r.phone_ok, hidden: !!r.hidden, at: r.at };
+  };
+  if (request.method === 'GET' && !seg[3]) {
+    const uni = String(url.searchParams.get('uni') || 'aaup');
+    if (!SLUG_RE.test(uni)) throw fail('which university?');
+    const rs = await db.prepare('SELECT * FROM people WHERE uni = ? ORDER BY name').bind(uni).all();
+    return json({ ok: true, people: (rs.results || []).map(out) }, 200, env, request);
+  }
+  if (request.method === 'PUT' && !seg[3]) {
+    const b = await readJson(request, 8192);
+    const uni = String(b.uni || 'aaup');
+    if (!SLUG_RE.test(uni)) throw fail('which university?');
+    const name = str(b.name, 100).replace(/\s+/g, ' ').trim();
+    const category = str(b.category, 40).trim();
+    if (!name) throw fail('the name is missing');
+    if (!/^[a-z_]{2,40}$/.test(category)) throw fail('pick a category');
+    const email = str(b.email, 120).trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw fail('that email does not look right');
+    const phone = str(b.phone, 30).trim();
+    if (phone && !PHONE_RE.test(phone)) throw fail('that phone number does not look right');
+    const courses = (Array.isArray(b.courses) ? b.courses : []).map((c) => str(c, 80).trim()).filter(Boolean).slice(0, 30);
+    const id = /^[a-z0-9-]{6,40}$/.test(String(b.id || '')) ? String(b.id) : crypto.randomUUID();
+    await db.prepare(`INSERT INTO people (id, uni, base, name, category, role, courses, email, office, phone, phone_ok, hidden, at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET base = excluded.base, name = excluded.name, category = excluded.category, role = excluded.role,
+        courses = excluded.courses, email = excluded.email, office = excluded.office, phone = excluded.phone,
+        phone_ok = excluded.phone_ok, hidden = excluded.hidden, at = excluded.at`)
+      .bind(id, uni, str(b.base, 100).trim(), name, category, str(b.role, 100).trim(), JSON.stringify(courses), email,
+        str(b.office, 100).trim(), phone, b.phoneOk && phone ? 1 : 0, b.hidden ? 1 : 0, Math.floor(Date.now() / 1000)).run();
+    const row = await db.prepare('SELECT * FROM people WHERE id = ?').bind(id).first();
+    return json({ ok: true, person: out(row) }, 200, env, request);
+  }
+  if (request.method === 'DELETE' && seg[3]) {
+    await db.prepare('DELETE FROM people WHERE id = ?').bind(seg[3]).run();
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
 }
 
 // The admin's list of shared class times, to take down one a student made up.
@@ -2268,6 +2335,8 @@ export default {
       if (seg[1] === 'admin' && seg[2] === 'staff') return await handleAdminStaff(request, env, seg);
       // /api/admin/reports  ·  /api/admin/reports/:thought
       if (seg[1] === 'admin' && seg[2] === 'reports') return await handleAdminReports(request, env, seg);
+      // /api/admin/people  ·  /api/admin/people/:id
+      if (seg[1] === 'admin' && seg[2] === 'people') return await handleAdminPeople(request, env, seg, url);
       // /api/admin/shared-sections
       if (seg[1] === 'admin' && seg[2] === 'shared-sections') return await handleAdminSharedSections(request, env, url);
 

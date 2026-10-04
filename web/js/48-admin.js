@@ -171,6 +171,7 @@
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
     ['classtimes',    '🕒 Shared class times'],
+    ['contacts',      '📇 Contacts'],
     ['accounts',      '👤 Student accounts'],
     ['staff',         '🎓 Staff logins'],
     ['workers',       '🚀 Workers'],
@@ -182,7 +183,7 @@
   var NAV_GROUPS = [
     [null, ['dashboard']],
     ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'assets']],
-    ['People', ['contributions', 'thoughts', 'classtimes', 'accounts', 'staff']],
+    ['People', ['contributions', 'thoughts', 'classtimes', 'contacts', 'accounts', 'staff']],
     ['System', ['workers', 'settings']]
   ];
   function navCount(key){
@@ -1679,6 +1680,139 @@
       });
     });
   }
+  // Contacts (Find a Professor and the university offices). The list students
+  // see is contacts.json plus what is set here; this saves to the admin
+  // Worker (/api/admin/people), not the repository, so a phone number never
+  // lands in a public file. It reaches students only when "Show number to
+  // students" is on. Editing a listed contact saves a copy that replaces it
+  // (by its original name); a new one is added; Hide takes a listed one out.
+  function peNorm(n){ return String(n || '').toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ').trim(); }
+  function loadContacts(){
+    state.peLoading = true; state.peErr = '';
+    Promise.all([
+      api('GET', '/api/admin/people?uni=aaup'),
+      state.peBase ? Promise.resolve(state.peBase) : fetch('contacts.json', { cache: 'no-store' }).then(function(r){ return r.json(); })
+    ]).then(function(a){ state.peItems = a[0].people || []; state.peBase = a[1]; })
+      .catch(function(e){ state.peItems = []; state.peErr = e.message; })
+      .then(function(){ state.peLoading = false; if(state.section === 'contacts') render(); });
+  }
+  // Every contact as students will see it, with where it comes from.
+  function peList(){
+    var base = (state.peBase && state.peBase.contacts) || [], rows = state.peItems || [], used = {};
+    var list = base.map(function(c){
+      var row = rows.filter(function(r){ return r.base && peNorm(r.base) === peNorm(c.name); })[0];
+      if(row) used[row.id] = true;
+      return row ? { src: row.hidden ? 'hidden' : 'edited', row: row, base: c, v: row } : { src: 'listed', base: c, v: c };
+    });
+    rows.forEach(function(r){ if(!used[r.id] && !r.base) list.push({ src: 'added', row: r, v: r }); });
+    return list;
+  }
+  function peCat(k){
+    var c = state.peBase && state.peBase.categories && state.peBase.categories[k];
+    return c ? c.en : k;
+  }
+  function peFormHtml(f){
+    var cats = (state.peBase && state.peBase.categories) || { instructor: { en: 'Instructors' } };
+    var field = function(id, label, val, extra){
+      return '<div class="form-field"><label for="' + id + '">' + label + '</label><input type="text" id="' + id + '" value="' + esc(val || '') + '"' + (extra || '') + '></div>';
+    };
+    return '<div class="admin-note pe-form">' +
+      '<h3 style="margin-top:0;">' + (f.id || f.base ? 'Edit ' + esc(f.name || f.base) : 'Add a contact') + '</h3>' +
+      (f.base ? '<p class="admin-hint">This replaces “' + esc(f.base) + '” from the built-in list. Remove the edit to bring the original back.</p>' : '') +
+      field('peName', 'Name', f.name, ' maxlength="100" autocomplete="off"') +
+      '<div class="form-field"><label for="peCat">Category</label><select id="peCat">' + Object.keys(cats).map(function(k){
+        return '<option value="' + esc(k) + '"' + (k === (f.category || 'instructor') ? ' selected' : '') + '>' + esc(cats[k].en) + '</option>';
+      }).join('') + '</select></div>' +
+      field('peRole', 'Role or title <span class="admin-hint">(for offices, e.g. “Registrar”)</span>', f.role, ' maxlength="100"') +
+      field('peCourses', 'Courses <span class="admin-hint">(comma between them)</span>', (f.courses || []).join(', '), ' maxlength="600"') +
+      field('peEmail', 'Email', f.email, ' maxlength="120" inputmode="email" autocomplete="off"') +
+      field('peOffice', 'Office <span class="admin-hint">(optional)</span>', f.office, ' maxlength="100"') +
+      field('pePhone', 'Phone number <span class="admin-hint">(optional)</span>', f.phone, ' maxlength="30" inputmode="tel" autocomplete="off"') +
+      '<label class="pe-switch"><input type="checkbox" id="pePhoneOk"' + (f.phoneOk ? ' checked' : '') + '><span>Show number to students</span></label>' +
+      '<p class="admin-hint">Off: the number is kept here only, and students don’t see it.</p>' +
+      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="peSave">Save</button> ' +
+        '<button type="button" class="home-btn" id="peCancel">Cancel</button></div>' +
+    '</div>';
+  }
+  function sectionContacts(){
+    var head = '<h2>📇 Contacts</h2><p class="admin-hint">Everyone in Find a Professor and the university offices. Changes reach students the next time their app checks. Phone numbers are kept on the server, not in the public list, and are shown only when you switch them on.</p>';
+    if(state.peLoading || !state.peItems) return head + '<p class="ex-note">Loading…</p>';
+    if(state.peErr) return head + '<div class="admin-note admin-note-warn">Could not load them: ' + esc(state.peErr) + '</div>';
+    if(state.peEdit) return head + peFormHtml(state.peEdit);
+    var q = peNorm(state.peQuery || '');
+    var all = peList();
+    var list = all.filter(function(x){ return !q || peNorm([x.v.name, x.v.email, x.v.role, (x.v.courses || []).join(' ')].join(' ')).indexOf(q) !== -1; });
+    var TAG = { edited: 'Edited', added: 'Added', hidden: 'Hidden' };
+    return head +
+      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="peAdd">+ Add a contact</button></div>' +
+      '<div class="form-field"><label for="peFind">Find</label><input type="search" id="peFind" value="' + esc(state.peQuery || '') + '" placeholder="Name, email or course" autocomplete="off"></div>' +
+      '<p class="ex-note">' + all.length + ' contacts</p>' +
+      list.map(function(x){
+        var i = all.indexOf(x), v = x.v;
+        var phone = x.row && x.row.phone ? (x.row.phoneOk ? '<span class="pe-pill is-on">📞 ' + esc(x.row.phone) + ' · shown</span>' : '<span class="pe-pill">📞 ' + esc(x.row.phone) + ' · hidden</span>') : '';
+        return '<div class="admin-note sst-row pe-row' + (x.src === 'hidden' ? ' is-hidden' : '') + '"><span class="pe-main"><b>' + esc(v.name) + '</b>' +
+            (TAG[x.src] ? ' <span class="pe-tag">' + TAG[x.src] + '</span>' : '') +
+            '<small>' + esc([peCat(v.category), v.role, v.email].filter(Boolean).join(' · ')) + '</small>' + phone + '</span>' +
+          '<span class="pe-acts">' +
+            (x.src === 'hidden' ? '' : '<button type="button" class="home-btn" data-pe-edit="' + i + '">Edit</button>') +
+            (x.src === 'added' ? '<button type="button" class="home-btn admin-danger" data-pe-del="' + i + '">Remove</button>' : '') +
+            (x.src === 'edited' ? '<button type="button" class="home-btn" data-pe-del="' + i + '">Undo edit</button>' : '') +
+            (x.src === 'listed' ? '<button type="button" class="home-btn" data-pe-hide="' + i + '">Hide</button>' : '') +
+            (x.src === 'hidden' ? '<button type="button" class="home-btn" data-pe-del="' + i + '">Show again</button>' : '') +
+          '</span></div>';
+      }).join('');
+  }
+  function peSave(body, msg){
+    return api('PUT', '/api/admin/people', body).then(function(){
+      state.peEdit = null; state.peItems = null; toast(msg); loadContacts(); render();
+    });
+  }
+  function bindContacts(main){
+    var all = state.peItems ? peList() : [];
+    on('peAdd', 'click', function(){ state.peEdit = { category: 'instructor' }; render(); });
+    on('peCancel', 'click', function(){ state.peEdit = null; render(); });
+    on('peFind', 'input', function(e){
+      state.peQuery = e.target.value; var pos = e.target.selectionStart; render();
+      var f = document.getElementById('peFind'); if(f){ f.focus(); try{ f.setSelectionRange(pos, pos); }catch(err){} }
+    });
+    on('peSave', 'click', function(e){
+      var f = state.peEdit, val = function(id){ return (document.getElementById(id).value || '').trim(); };
+      var body = { id: f.id, uni: 'aaup', base: f.base || '', name: val('peName'), category: val('peCat'), role: val('peRole'),
+        courses: val('peCourses').split(/[,،]/).map(function(s){ return s.trim(); }).filter(Boolean),
+        email: val('peEmail'), office: val('peOffice'), phone: val('pePhone'), phoneOk: document.getElementById('pePhoneOk').checked };
+      if(!body.name){ toast('Write the name.'); return; }
+      if(body.phoneOk && !body.phone){ toast('Add the number first, or switch “Show number” off.'); return; }
+      e.target.disabled = true;
+      peSave(body, 'Saved. Students see it the next time their app checks.').catch(function(err){ e.target.disabled = false; toast('Could not save: ' + err.message); });
+    });
+    main.querySelectorAll('[data-pe-edit]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var x = all[+b.getAttribute('data-pe-edit')]; if(!x) return;
+        state.peEdit = x.row ? JSON.parse(JSON.stringify(x.row)) : { base: x.base.name, name: x.base.name, category: x.base.category,
+          role: x.base.role || '', courses: (x.base.courses || []).slice(), email: x.base.email || '' };
+        if(x.base && !state.peEdit.base) state.peEdit.base = x.base.name;
+        render();
+      });
+    });
+    main.querySelectorAll('[data-pe-hide]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var x = all[+b.getAttribute('data-pe-hide')]; if(!x) return;
+        if(!confirm('Hide ' + x.base.name + ' from students?')) return;
+        peSave({ uni: 'aaup', base: x.base.name, name: x.base.name, category: x.base.category, hidden: true }, 'Hidden from students.')
+          .catch(function(err){ toast('Could not hide it: ' + err.message); });
+      });
+    });
+    main.querySelectorAll('[data-pe-del]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var x = all[+b.getAttribute('data-pe-del')]; if(!x || !x.row) return;
+        if(x.src === 'added' && !confirm('Remove ' + x.row.name + ' from the contacts?')) return;
+        api('DELETE', '/api/admin/people/' + encodeURIComponent(x.row.id)).then(function(){
+          state.peItems = null; toast(x.src === 'added' ? 'Removed.' : 'Back to the original.'); loadContacts(); render();
+        }).catch(function(err){ toast('Could not do that: ' + err.message); });
+      });
+    });
+  }
+
   // Class times students typed into their own schedule go to every student of
   // the course straight away, unchecked. This is where one that is made up
   // gets taken down (/api/admin/shared-sections). A taken-down time stays
@@ -2163,6 +2297,10 @@
       main.innerHTML = sectionClassTimes();
       if(!state.ctLoading && (!state.ctItems || state.ctUni !== ctUni())) loadClassTimes();
     }
+    else if(s === 'contacts'){
+      main.innerHTML = sectionContacts();
+      if(!state.peLoading && !state.peItems) loadContacts();
+    }
     else if(s === 'thoughts'){
       main.innerHTML = sectionThoughts();
       if(!state.thoughtsLoading && !state.thoughtItems) loadThoughts();
@@ -2184,6 +2322,7 @@
     if(state.section === 'accounts') bindAccounts(main);
     if(state.section === 'staff') bindStaff(main);
     if(state.section === 'classtimes') bindClassTimes(main);
+    if(state.section === 'contacts') bindContacts(main);
     on('adminWorkersRefresh', 'click', function(){ state.workers = null; render(); });
     main.querySelectorAll('[data-inbox-go]').forEach(function(b){
       b.addEventListener('click', function(){ state.section = b.getAttribute('data-inbox-go'); render(); });
