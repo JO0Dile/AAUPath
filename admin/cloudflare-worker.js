@@ -1468,6 +1468,10 @@ async function contentDb(env) {
         name TEXT NOT NULL, category TEXT NOT NULL, role TEXT NOT NULL DEFAULT '', courses TEXT NOT NULL DEFAULT '[]',
         email TEXT NOT NULL DEFAULT '', office TEXT NOT NULL DEFAULT '', phone TEXT NOT NULL DEFAULT '',
         phone_ok INTEGER NOT NULL DEFAULT 0, hidden INTEGER NOT NULL DEFAULT 0, at INTEGER NOT NULL)`,
+      // Contact categories the admin made (Lost and Found, ...), next to the
+      // ones contacts.json declares.
+      `CREATE TABLE IF NOT EXISTS contact_cats (uni TEXT NOT NULL, key TEXT NOT NULL, en TEXT NOT NULL, ar TEXT NOT NULL DEFAULT '',
+        at INTEGER NOT NULL, PRIMARY KEY (uni, key))`,
     ]) await db.prepare(sql).run();
     // Round 10, idea 18: a change remembers the value it replaced, so a dean
     // can put it back. Added to a staff_log made before that.
@@ -1484,6 +1488,8 @@ async function contentDb(env) {
     try { await db.prepare('ALTER TABLE shared_sections ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0').run(); } catch { /* already there */ }
     // The section number a student typed with the time, when they knew it.
     try { await db.prepare("ALTER TABLE shared_sections ADD COLUMN sec TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
+    // A contact's Arabic name.
+    try { await db.prepare("ALTER TABLE people ADD COLUMN name_ar TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
     // ...and the doctor's name.
     try { await db.prepare("ALTER TABLE shared_sections ADD COLUMN prof TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
     contentTablesReady = true;
@@ -1680,9 +1686,12 @@ async function handlePublicContent(request, env, uni) {
     v = Math.max(v, r.at);
     let list = [];
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
-    people.push({ base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+    people.push({ base: r.base, name: r.name, nameAr: r.name_ar || '', category: r.category, role: r.role, courses: list, email: r.email,
       office: r.office, phone: r.phone_ok ? r.phone : '', hidden: !!r.hidden });
   }
+  const contactCats = [];
+  const cc = await db.prepare('SELECT key, en, ar, at FROM contact_cats WHERE uni = ? ORDER BY at').bind(uni).all();
+  for (const r of cc.results || []) { v = Math.max(v, r.at); contactCats.push({ key: r.key, en: r.en, ar: r.ar }); }
   // Replies under students' thoughts, by the thought's id.
   const replies = {};
   const rr = await db.prepare('SELECT thought, course, text, by_name, at FROM staff_replies WHERE uni = ?').bind(uni).all();
@@ -1717,7 +1726,7 @@ async function handlePublicContent(request, env, uni) {
     if (c.shared.some((x) => JSON.stringify(x.days) === r.days && x.s === r.s && x.e === r.e)) continue;
     if (c.shared.length < 12) c.shared.push({ days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, sec: r.sec || '', prof: r.prof || '' });
   }
-  const res = json({ ok: true, v, courses, cards, replies, dates, people }, 200, env, request);
+  const res = json({ ok: true, v, courses, cards, replies, dates, people, contactCats }, 200, env, request);
   res.headers.set('Cache-Control', 'public, max-age=120');
   return res;
 }
@@ -1884,14 +1893,15 @@ async function handleAdminPeople(request, env, seg, url) {
   const out = (r) => {
     let list = [];
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
-    return { id: r.id, base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+    return { id: r.id, base: r.base, name: r.name, nameAr: r.name_ar || '', category: r.category, role: r.role, courses: list, email: r.email,
       office: r.office, phone: r.phone, phoneOk: !!r.phone_ok, hidden: !!r.hidden, at: r.at };
   };
   if (request.method === 'GET' && !seg[3]) {
     const uni = String(url.searchParams.get('uni') || 'aaup');
     if (!SLUG_RE.test(uni)) throw fail('which university?');
     const rs = await db.prepare('SELECT * FROM people WHERE uni = ? ORDER BY name').bind(uni).all();
-    return json({ ok: true, people: (rs.results || []).map(out) }, 200, env, request);
+    const cs = await db.prepare('SELECT key, en, ar FROM contact_cats WHERE uni = ? ORDER BY at').bind(uni).all();
+    return json({ ok: true, people: (rs.results || []).map(out), cats: cs.results || [] }, 200, env, request);
   }
   if (request.method === 'PUT' && !seg[3]) {
     const b = await readJson(request, 8192);
@@ -1907,18 +1917,48 @@ async function handleAdminPeople(request, env, seg, url) {
     if (phone && !PHONE_RE.test(phone)) throw fail('that phone number does not look right');
     const courses = (Array.isArray(b.courses) ? b.courses : []).map((c) => str(c, 80).trim()).filter(Boolean).slice(0, 30);
     const id = /^[a-z0-9-]{6,40}$/.test(String(b.id || '')) ? String(b.id) : crypto.randomUUID();
-    await db.prepare(`INSERT INTO people (id, uni, base, name, category, role, courses, email, office, phone, phone_ok, hidden, at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET base = excluded.base, name = excluded.name, category = excluded.category, role = excluded.role,
+    await db.prepare(`INSERT INTO people (id, uni, base, name, category, role, courses, email, office, phone, phone_ok, hidden, at, name_ar)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET base = excluded.base, name = excluded.name, name_ar = excluded.name_ar, category = excluded.category, role = excluded.role,
         courses = excluded.courses, email = excluded.email, office = excluded.office, phone = excluded.phone,
         phone_ok = excluded.phone_ok, hidden = excluded.hidden, at = excluded.at`)
       .bind(id, uni, str(b.base, 100).trim(), name, category, str(b.role, 100).trim(), JSON.stringify(courses), email,
-        str(b.office, 100).trim(), phone, b.phoneOk && phone ? 1 : 0, b.hidden ? 1 : 0, Math.floor(Date.now() / 1000)).run();
+        str(b.office, 100).trim(), phone, b.phoneOk && phone ? 1 : 0, b.hidden ? 1 : 0, Math.floor(Date.now() / 1000),
+        str(b.nameAr, 100).replace(/\s+/g, ' ').trim()).run();
     const row = await db.prepare('SELECT * FROM people WHERE id = ?').bind(id).first();
     return json({ ok: true, person: out(row) }, 200, env, request);
   }
   if (request.method === 'DELETE' && seg[3]) {
     await db.prepare('DELETE FROM people WHERE id = ?').bind(seg[3]).run();
+    return json({ ok: true }, 200, env, request);
+  }
+  return json({ error: 'not found' }, 404, env, request);
+}
+
+// The admin's own contact categories.
+// PUT    /api/admin/contact-cats { uni, key?, en, ar }   → { key }
+// DELETE /api/admin/contact-cats/:key?uni=               (only when no contact uses it)
+async function handleAdminContactCats(request, env, seg, url) {
+  if (!env.STAFF_DB) throw fail('the staff database is not set up');
+  const db = await contentDb(env);
+  if (request.method === 'PUT' && !seg[3]) {
+    const b = await readJson(request, 1024);
+    const uni = String(b.uni || 'aaup');
+    if (!SLUG_RE.test(uni)) throw fail('which university?');
+    const en = str(b.en, 60).replace(/\s+/g, ' ').trim(), ar = str(b.ar, 60).replace(/\s+/g, ' ').trim();
+    if (!en && !ar) throw fail('give the category a name');
+    let key = /^[a-z_]{2,40}$/.test(String(b.key || '')) ? String(b.key) : en.toLowerCase().replace(/[^a-z]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+    if (key.length < 2) key = 'cat_' + Math.random().toString(36).replace(/[^a-z]/g, '').slice(0, 8);
+    await db.prepare(`INSERT INTO contact_cats (uni, key, en, ar, at) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(uni, key) DO UPDATE SET en = excluded.en, ar = excluded.ar, at = excluded.at`)
+      .bind(uni, key, en || ar, ar || en, Math.floor(Date.now() / 1000)).run();
+    return json({ ok: true, key }, 200, env, request);
+  }
+  if (request.method === 'DELETE' && seg[3]) {
+    const uni = String(url.searchParams.get('uni') || 'aaup');
+    const used = await db.prepare('SELECT COUNT(*) AS n FROM people WHERE uni = ? AND category = ? AND hidden = 0').bind(uni, seg[3]).first();
+    if (used && used.n) throw fail('move or remove the ' + used.n + ' contact(s) in it first');
+    await db.prepare('DELETE FROM contact_cats WHERE uni = ? AND key = ?').bind(uni, seg[3]).run();
     return json({ ok: true }, 200, env, request);
   }
   return json({ error: 'not found' }, 404, env, request);
@@ -2362,6 +2402,8 @@ export default {
       if (seg[1] === 'admin' && seg[2] === 'reports') return await handleAdminReports(request, env, seg);
       // /api/admin/people  ·  /api/admin/people/:id
       if (seg[1] === 'admin' && seg[2] === 'people') return await handleAdminPeople(request, env, seg, url);
+      // /api/admin/contact-cats  ·  /api/admin/contact-cats/:key
+      if (seg[1] === 'admin' && seg[2] === 'contact-cats') return await handleAdminContactCats(request, env, seg, url);
       // /api/admin/shared-sections
       if (seg[1] === 'admin' && seg[2] === 'shared-sections') return await handleAdminSharedSections(request, env, url);
 

@@ -46,7 +46,7 @@
       .then(function(j){
         if(!j || !j.ok) return;
         var changed = !d || d.uni !== uni || (d.data && d.data.v) !== j.v;
-        if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, { at: Date.now(), uni: uni, data: { v: j.v, courses: j.courses || {}, cards: j.cards || [], replies: j.replies || {}, dates: j.dates || [], people: j.people || [] } });
+        if(window.AAUP_STORAGE) window.AAUP_STORAGE.setJSON(KEY, { at: Date.now(), uni: uni, data: { v: j.v, courses: j.courses || {}, cards: j.cards || [], replies: j.replies || {}, dates: j.dates || [], people: j.people || [], contactCats: j.contactCats || [] } });
         if(changed){
           var id = window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected ? window.AAUP_DASHBOARD.getSelected() : '';
           var host = document.getElementById('importedPlanView');
@@ -171,6 +171,7 @@
   function cards(){ return data().cards || []; }
   // Contacts the admin added or edited in the admin room (js/48-admin.js).
   function people(){ return data().people || []; }
+  function contactCats(){ return data().contactCats || []; }
 
   // The reply under a thought (idea 13). It is kept by the thought's id and
   // the course it was given for; a thought filed under another course
@@ -197,7 +198,7 @@
 
   window.AAUP_STAFF_CONTENT = {
     load: load, forCourse: forCourse, offerClash: offerClash, subChipHtml: subChipHtml,
-    courseHtml: courseHtml, cardChipHtml: cardChipHtml, cards: cards, people: people, noteNow: noteNow,
+    courseHtml: courseHtml, cardChipHtml: cardChipHtml, cards: cards, people: people, contactCats: contactCats, noteNow: noteNow,
     replyFor: replyFor, collegeDates: collegeDates, oldIds: oldIdsOf,
     sectionsOf: function(id){ var c = forCourse(id); return c ? sectionsOf(c) : []; }, secLabel: secLabel
   };

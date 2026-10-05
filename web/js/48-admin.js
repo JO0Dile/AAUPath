@@ -1692,7 +1692,7 @@
     Promise.all([
       api('GET', '/api/admin/people?uni=aaup'),
       state.peBase ? Promise.resolve(state.peBase) : fetch('contacts.json', { cache: 'no-store' }).then(function(r){ return r.json(); })
-    ]).then(function(a){ state.peItems = a[0].people || []; state.peBase = a[1]; })
+    ]).then(function(a){ state.peItems = a[0].people || []; state.peCats = a[0].cats || []; state.peBase = a[1]; })
       .catch(function(e){ state.peItems = []; state.peErr = e.message; })
       .then(function(){ state.peLoading = false; if(state.section === 'contacts') render(); });
   }
@@ -1707,12 +1707,19 @@
     rows.forEach(function(r){ if(!used[r.id] && !r.base) list.push({ src: 'added', row: r, v: r }); });
     return list;
   }
+  // The built-in categories plus the ones made here.
+  function peCats(){
+    var out = {}, base = (state.peBase && state.peBase.categories) || { instructor: { en: 'Instructors' } };
+    Object.keys(base).forEach(function(k){ out[k] = { en: base[k].en, ar: base[k].ar, mine: false }; });
+    (state.peCats || []).forEach(function(c){ if(!out[c.key]) out[c.key] = { en: c.en, ar: c.ar, mine: true }; });
+    return out;
+  }
   function peCat(k){
-    var c = state.peBase && state.peBase.categories && state.peBase.categories[k];
+    var c = peCats()[k];
     return c ? c.en : k;
   }
   function peFormHtml(f){
-    var cats = (state.peBase && state.peBase.categories) || { instructor: { en: 'Instructors' } };
+    var cats = peCats();
     var field = function(id, label, val, extra){
       return '<div class="form-field"><label for="' + id + '">' + label + '</label><input type="text" id="' + id + '" value="' + esc(val || '') + '"' + (extra || '') + '></div>';
     };
@@ -1720,9 +1727,14 @@
       '<h3 style="margin-top:0;">' + (f.id || f.base ? 'Edit ' + esc(f.name || f.base) : 'Add a contact') + '</h3>' +
       (f.base ? '<p class="admin-hint">This replaces “' + esc(f.base) + '” from the built-in list. Remove the edit to bring the original back.</p>' : '') +
       field('peName', 'Name', f.name, ' maxlength="100" autocomplete="off"') +
+      field('peNameAr', 'Arabic name <span class="admin-hint">(optional; students using Arabic see this one)</span>', f.nameAr, ' maxlength="100" dir="rtl" autocomplete="off"') +
       '<div class="form-field"><label for="peCat">Category</label><select id="peCat">' + Object.keys(cats).map(function(k){
         return '<option value="' + esc(k) + '"' + (k === (f.category || 'instructor') ? ' selected' : '') + '>' + esc(cats[k].en) + '</option>';
-      }).join('') + '</select></div>' +
+      }).join('') + '<option value="__new">+ New category…</option></select></div>' +
+      '<div class="pe-newcat" id="peNewCat" hidden><div class="ct-row2">' +
+        '<div class="form-field"><label for="peNewEn">New category (English)</label><input type="text" id="peNewEn" maxlength="60" placeholder="Lost and Found"></div>' +
+        '<div class="form-field"><label for="peNewAr">Arabic name <span class="admin-hint">(optional)</span></label><input type="text" id="peNewAr" maxlength="60" dir="rtl" placeholder="المفقودات"></div>' +
+      '</div></div>' +
       field('peRole', 'Role or title <span class="admin-hint">(for offices, e.g. “Registrar”)</span>', f.role, ' maxlength="100"') +
       field('peCourses', 'Courses <span class="admin-hint">(comma between them)</span>', (f.courses || []).join(', '), ' maxlength="600"') +
       field('peEmail', 'Email', f.email, ' maxlength="120" inputmode="email" autocomplete="off"') +
@@ -1755,11 +1767,16 @@
         '<button type="button" class="home-btn" id="peImportClose">Close</button></div></div>' : '') +
       '<div class="form-field"><label for="peFind">Find</label><input type="search" id="peFind" value="' + esc(state.peQuery || '') + '" placeholder="Name, email or course" autocomplete="off"></div>' +
       '<p class="ex-note">' + all.length + ' contacts</p>' +
+      ((state.peCats || []).length ? '<div class="admin-note"><b>Your categories</b> ' + state.peCats.map(function(c){
+        return '<span class="pe-tag">' + esc(c.en) + (c.ar && c.ar !== c.en ? ' · ' + esc(c.ar) : '') +
+          ' <button type="button" class="pe-x" data-pe-catdel="' + esc(c.key) + '" aria-label="Remove category ' + esc(c.en) + '">×</button></span>';
+      }).join(' ') + '</div>' : '') +
       list.map(function(x){
         var i = all.indexOf(x), v = x.v;
         var phone = x.row && x.row.phone ? (x.row.phoneOk ? '<span class="pe-pill is-on">📞 ' + esc(x.row.phone) + ' · shown</span>' : '<span class="pe-pill">📞 ' + esc(x.row.phone) + ' · hidden</span>') : '';
         return '<div class="admin-note sst-row pe-row' + (x.src === 'hidden' ? ' is-hidden' : '') + '"><span class="pe-main"><b>' + esc(v.name) + '</b>' +
             (TAG[x.src] ? ' <span class="pe-tag">' + TAG[x.src] + '</span>' : '') +
+            ((v.nameAr || v.ar) ? '<small dir="rtl">' + esc(v.nameAr || v.ar) + '</small>' : '') +
             '<small>' + esc([peCat(v.category), v.role, v.email].filter(Boolean).join(' · ')) + '</small>' + phone + '</span>' +
           '<span class="pe-acts">' +
             (x.src === 'hidden' ? '' : '<button type="button" class="home-btn" data-pe-edit="' + i + '">Edit</button>') +
@@ -1793,7 +1810,7 @@
           live.filter(function(x){ return peNorm(x.v.name) === name; })[0] ||
           live.filter(function(x){ return name && peNorm(x.v.name).indexOf(name) !== -1; })[0];
         if(!hit){ missing.push(parts[0]); return; }
-        var b = hit.row ? JSON.parse(JSON.stringify(hit.row)) : { base: hit.base.name, name: hit.base.name, category: hit.base.category,
+        var b = hit.row ? JSON.parse(JSON.stringify(hit.row)) : { base: hit.base.name, name: hit.base.name, nameAr: hit.base.ar || '', category: hit.base.category,
           role: hit.base.role || '', courses: (hit.base.courses || []).slice(), email: hit.base.email || '' };
         b.uni = 'aaup'; b.phone = phone; b.phoneOk = false;
         jobs.push(b);
@@ -1807,24 +1824,41 @@
       }).catch(function(err){ e.target.disabled = false; toast('Stopped: ' + err.message); });
     });
     on('peCancel', 'click', function(){ state.peEdit = null; render(); });
+    on('peCat', 'change', function(e){
+      var box = document.getElementById('peNewCat'); if(box) box.hidden = e.target.value !== '__new';
+      if(e.target.value === '__new'){ var n = document.getElementById('peNewEn'); if(n) n.focus(); }
+    });
+    main.querySelectorAll('[data-pe-catdel]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var k = b.getAttribute('data-pe-catdel');
+        if(!confirm('Remove this category?')) return;
+        api('DELETE', '/api/admin/contact-cats/' + encodeURIComponent(k) + '?uni=aaup').then(function(){
+          state.peItems = null; toast('Category removed.'); loadContacts(); render();
+        }).catch(function(err){ toast('Could not remove it: ' + err.message); });
+      });
+    });
     on('peFind', 'input', function(e){
       state.peQuery = e.target.value; var pos = e.target.selectionStart; render();
       var f = document.getElementById('peFind'); if(f){ f.focus(); try{ f.setSelectionRange(pos, pos); }catch(err){} }
     });
     on('peSave', 'click', function(e){
       var f = state.peEdit, val = function(id){ return (document.getElementById(id).value || '').trim(); };
-      var body = { id: f.id, uni: 'aaup', base: f.base || '', name: val('peName'), category: val('peCat'), role: val('peRole'),
+      var body = { id: f.id, uni: 'aaup', base: f.base || '', name: val('peName'), nameAr: val('peNameAr'), category: val('peCat'), role: val('peRole'),
         courses: val('peCourses').split(/[,،]/).map(function(s){ return s.trim(); }).filter(Boolean),
         email: val('peEmail'), office: val('peOffice'), phone: val('pePhone'), phoneOk: document.getElementById('pePhoneOk').checked };
       if(!body.name){ toast('Write the name.'); return; }
       if(body.phoneOk && !body.phone){ toast('Add the number first, or switch “Show number” off.'); return; }
+      var newCat = body.category === '__new' ? { uni: 'aaup', en: val('peNewEn'), ar: val('peNewAr') } : null;
+      if(newCat && !newCat.en && !newCat.ar){ toast('Name the new category.'); return; }
       e.target.disabled = true;
-      peSave(body, 'Saved. Students see it the next time their app checks.').catch(function(err){ e.target.disabled = false; toast('Could not save: ' + err.message); });
+      (newCat ? api('PUT', '/api/admin/contact-cats', newCat).then(function(r){ body.category = r.key; }) : Promise.resolve())
+        .then(function(){ return peSave(body, 'Saved. Students see it the next time their app checks.'); })
+        .catch(function(err){ e.target.disabled = false; toast('Could not save: ' + err.message); });
     });
     main.querySelectorAll('[data-pe-edit]').forEach(function(b){
       b.addEventListener('click', function(){
         var x = all[+b.getAttribute('data-pe-edit')]; if(!x) return;
-        state.peEdit = x.row ? JSON.parse(JSON.stringify(x.row)) : { base: x.base.name, name: x.base.name, category: x.base.category,
+        state.peEdit = x.row ? JSON.parse(JSON.stringify(x.row)) : { base: x.base.name, name: x.base.name, nameAr: x.base.ar || '', category: x.base.category,
           role: x.base.role || '', courses: (x.base.courses || []).slice(), email: x.base.email || '' };
         if(x.base && !state.peEdit.base) state.peEdit.base = x.base.name;
         render();
