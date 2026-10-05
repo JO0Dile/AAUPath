@@ -1744,7 +1744,15 @@
     var list = all.filter(function(x){ return !q || peNorm([x.v.name, x.v.email, x.v.role, (x.v.courses || []).join(' ')].join(' ')).indexOf(q) !== -1; });
     var TAG = { edited: 'Edited', added: 'Added', hidden: 'Hidden' };
     return head +
-      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="peAdd">+ Add a contact</button></div>' +
+      '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="peAdd">+ Add a contact</button> ' +
+        '<button type="button" class="home-btn" id="peImportOpen">Import numbers</button></div>' +
+      (state.peImport ? '<div class="admin-note pe-form"><h3 style="margin-top:0;">Import numbers</h3>' +
+        '<p class="admin-hint">One person per line: the name, a comma, the number, and optionally a comma and their email. Each number goes into that person’s phone box, ' +
+        '<b>hidden</b> from students; switch it on per person when you are ready.</p>' +
+        '<textarea id="peImportText" rows="8" style="width:100%;" placeholder="Dr. Iyad Suwan, 0599 000 000"></textarea>' +
+        (state.peImportMsg ? '<p class="admin-hint">' + state.peImportMsg + '</p>' : '') +
+        '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="peImportGo">Fill the boxes</button> ' +
+        '<button type="button" class="home-btn" id="peImportClose">Close</button></div></div>' : '') +
       '<div class="form-field"><label for="peFind">Find</label><input type="search" id="peFind" value="' + esc(state.peQuery || '') + '" placeholder="Name, email or course" autocomplete="off"></div>' +
       '<p class="ex-note">' + all.length + ' contacts</p>' +
       list.map(function(x){
@@ -1770,6 +1778,34 @@
   function bindContacts(main){
     var all = state.peItems ? peList() : [];
     on('peAdd', 'click', function(){ state.peEdit = { category: 'instructor' }; render(); });
+    on('peImportOpen', 'click', function(){ state.peImport = true; state.peImportMsg = ''; render(); });
+    on('peImportClose', 'click', function(){ state.peImport = false; state.peImportMsg = ''; render(); });
+    on('peImportGo', 'click', function(e){
+      var lines = (document.getElementById('peImportText').value || '').split(/\n+/).map(function(l){ return l.trim(); }).filter(Boolean);
+      var jobs = [], missing = [], bad = [];
+      lines.forEach(function(l){
+        // name, number[, email] — the email, when given, finds the person even
+        // if the name is written differently.
+        var parts = l.split(/\s*[,\t،]\s*/), phone = (parts[1] || '').trim(), mail = (parts[2] || '').trim().toLowerCase();
+        if(!parts[0] || !/^[+0-9][0-9 ()-]{5,24}$/.test(phone)){ bad.push(l); return; }
+        var name = peNorm(parts[0]), live = all.filter(function(x){ return x.src !== 'hidden'; });
+        var hit = (mail && live.filter(function(x){ return String(x.v.email || '').toLowerCase() === mail; })[0]) ||
+          live.filter(function(x){ return peNorm(x.v.name) === name; })[0] ||
+          live.filter(function(x){ return name && peNorm(x.v.name).indexOf(name) !== -1; })[0];
+        if(!hit){ missing.push(parts[0]); return; }
+        var b = hit.row ? JSON.parse(JSON.stringify(hit.row)) : { base: hit.base.name, name: hit.base.name, category: hit.base.category,
+          role: hit.base.role || '', courses: (hit.base.courses || []).slice(), email: hit.base.email || '' };
+        b.uni = 'aaup'; b.phone = phone; b.phoneOk = false;
+        jobs.push(b);
+      });
+      if(!jobs.length){ state.peImportMsg = 'Nothing matched.' + (missing.length ? ' Not found: ' + esc(missing.join(', ')) + '.' : '') + (bad.length ? ' Not read: ' + bad.length + ' line(s).' : ''); render(); return; }
+      e.target.disabled = true;
+      jobs.reduce(function(pr, b){ return pr.then(function(){ return api('PUT', '/api/admin/people', b); }); }, Promise.resolve()).then(function(){
+        state.peImportMsg = 'Filled ' + jobs.length + ' number' + (jobs.length === 1 ? '' : 's') + ', all hidden.' +
+          (missing.length ? ' Not found (add them first): ' + esc(missing.join(', ')) + '.' : '') + (bad.length ? ' Not read: ' + bad.length + ' line(s).' : '');
+        state.peItems = null; loadContacts(); render();
+      }).catch(function(err){ e.target.disabled = false; toast('Stopped: ' + err.message); });
+    });
     on('peCancel', 'click', function(){ state.peEdit = null; render(); });
     on('peFind', 'input', function(e){
       state.peQuery = e.target.value; var pos = e.target.selectionStart; render();
@@ -1837,15 +1873,17 @@
     var head = '<h2>🕒 Shared class times</h2>' +
       '<p class="admin-hint">When a student saves class times for a course in My Week, every student of that course sees them as ' +
       '“From a student”. Nobody checks them first, so take down any that are made up. Taking one down removes it for everyone ' +
-      'and it will not come back, even if it is sent again.</p>';
+      'and it will not come back, even if it is sent again. You can also add or fix a time yourself; students see it the same way.</p>';
+    if(state.ctForm) return head + ctFormHtml(state.ctForm);
     var unis = state.tree || [];
     var pick = unis.length > 1 ? '<div class="form-field"><label for="ctUni">University</label><select id="ctUni">' +
       unis.map(function(u){ return '<option value="' + esc(u.slug) + '"' + (u.slug === ctUni() ? ' selected' : '') + '>' + esc(u.name || u.slug) + '</option>'; }).join('') +
       '</select></div>' : '';
-    var tools = '<div class="form-actions"><button type="button" class="home-btn" id="ctReload">🔄 Refresh</button></div>';
+    var tools = '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="ctAdd">+ Add a class time</button> ' +
+      '<button type="button" class="home-btn" id="ctReload">🔄 Refresh</button></div>';
     if(state.ctLoading || !state.ctItems || state.ctUni !== ctUni()) return head + pick + '<p class="ex-note">Loading…</p>';
     if(state.ctErr) return head + pick + tools + '<div class="admin-note admin-note-warn">Could not load them: ' + esc(state.ctErr) + '</div>';
-    if(!state.ctItems.length) return head + pick + tools + '<div class="admin-note">No student has shared class times yet.</div>';
+    if(!state.ctItems.length) return head + pick + tools + '<div class="admin-note">No class times yet.</div>';
     var q = (state.ctQuery || '').trim().toLowerCase();
     var list = state.ctItems.filter(function(x){ return !q || (x.courseName + ' ' + x.course).toLowerCase().indexOf(q) !== -1; });
     var groups = [], by = {};
@@ -1865,11 +1903,89 @@
               esc((x.days || []).map(function(d){ return CT_DAYS[d] || d; }).join(' · ')) + ' · ' + ctTime(x.s) + ' – ' + ctTime(x.e) +
               (x.room ? ' · room ' + esc(x.room) : '') + (x.prof ? ' · ' + esc(x.prof) : '') +
               ' <span style="opacity:.65;">· ' + esc(new Date(x.at * 1000).toLocaleDateString()) + '</span></span>' +
-              '<button type="button" class="home-btn admin-danger" data-ct-del="' + i + '">Take it down</button></div>';
+              '<span class="pe-acts"><button type="button" class="home-btn" data-ct-edit="' + i + '">Edit</button>' +
+              '<button type="button" class="home-btn admin-danger" data-ct-del="' + i + '">Take it down</button></span></div>';
           }).join('');
       }).join('');
   }
+  // The courses of the chosen university (for the course box) and the
+  // instructors in Contacts (for the doctor box), loaded once.
+  function ctLoadLists(){
+    if(state.ctCourses) return Promise.resolve();
+    return Promise.all([
+      fetch('plans.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
+      fetch('contacts.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { contacts: [] }; })
+    ]).then(function(a){
+      var seen = {}, list = [];
+      (a[0].plans || []).forEach(function(pl){
+        if((pl.university || 'aaup') !== ctUni()) return;
+        (pl.courses || []).forEach(function(c){ if(c.id && !seen[c.id]){ seen[c.id] = 1; list.push({ id: c.id, name: c.name || c.id }); } });
+      });
+      state.ctCourses = list.sort(function(x, y){ return x.name.localeCompare(y.name); });
+      var profs = (a[1].contacts || []).filter(function(c){ return c.category === 'instructor'; }).map(function(c){ return c.name; });
+      (state.peItems || []).forEach(function(r){ if(r.category === 'instructor' && profs.indexOf(r.name) === -1) profs.push(r.name); });
+      state.ctProfs = profs;
+    });
+  }
+  var CT_WEEK = [6, 0, 1, 2, 3, 4, 5];
+  function ctFormHtml(f){
+    var courses = state.ctCourses || [];
+    var courseVal = f.course ? (f.courseName && f.courseName !== f.course ? f.courseName + ' · ' + f.course : f.course) : '';
+    return '<div class="admin-note pe-form">' +
+      '<h3 style="margin-top:0;">' + (f.orig ? 'Edit a class time' : 'Add a class time') + '</h3>' +
+      '<div class="form-field"><label for="ctfCourse">Course</label>' +
+        '<input type="text" id="ctfCourse" list="ctfCourseList" value="' + esc(courseVal) + '" placeholder="Type a name or number" autocomplete="off"' + (f.orig ? ' disabled' : '') + '>' +
+        '<datalist id="ctfCourseList">' + courses.map(function(c){ return '<option value="' + esc(c.name + ' · ' + c.id) + '"></option>'; }).join('') + '</datalist></div>' +
+      '<div class="form-field"><span class="ct-lbl">Days</span><div class="ct-days">' + CT_WEEK.map(function(d){
+        return '<label class="ct-day"><input type="checkbox" value="' + d + '"' + ((f.days || []).indexOf(d) !== -1 ? ' checked' : '') + '>' + CT_DAYS[d] + '</label>';
+      }).join('') + '</div></div>' +
+      '<div class="ct-row2">' +
+        '<div class="form-field"><label for="ctfS">From</label><input type="time" id="ctfS" value="' + esc(f.s || '08:00') + '"></div>' +
+        '<div class="form-field"><label for="ctfE">To</label><input type="time" id="ctfE" value="' + esc(f.e || '09:15') + '"></div>' +
+        '<div class="form-field"><label for="ctfRoom">Room</label><input type="text" id="ctfRoom" maxlength="40" value="' + esc(f.room || '') + '" placeholder="B-203"></div>' +
+        '<div class="form-field"><label for="ctfSec">Section <span class="admin-hint">(optional)</span></label><input type="text" id="ctfSec" maxlength="6" value="' + esc(f.sec || '') + '"></div>' +
+      '</div>' +
+      '<div class="form-field"><label for="ctfProf">Doctor <span class="admin-hint">(optional, pick from Contacts or type)</span></label>' +
+        '<input type="text" id="ctfProf" list="ctfProfList" maxlength="40" value="' + esc(f.prof || '') + '" autocomplete="off">' +
+        '<datalist id="ctfProfList">' + (state.ctProfs || []).map(function(n){ return '<option value="' + esc(n) + '"></option>'; }).join('') + '</datalist></div>' +
+      '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="ctfSave">Save</button> ' +
+        '<button type="button" class="home-btn" id="ctfCancel">Cancel</button></div>' +
+    '</div>';
+  }
+  function ctOpenForm(f){
+    state.ctForm = f;
+    ctLoadLists().then(function(){ if(state.section === 'classtimes') render(); }, function(){ render(); });
+    render();
+  }
   function bindClassTimes(main){
+    on('ctAdd', 'click', function(){ ctOpenForm({}); });
+    on('ctfCancel', 'click', function(){ state.ctForm = null; render(); });
+    on('ctfSave', 'click', function(e){
+      var f = state.ctForm, course = f.course;
+      if(!f.orig){
+        var raw = (document.getElementById('ctfCourse').value || '').trim();
+        var m = /·\s*([^·\s]+)\s*$/.exec(raw);
+        var hit = (state.ctCourses || []).filter(function(c){ return (m && c.id === m[1]) || c.id === raw || c.name.toLowerCase() === raw.toLowerCase(); })[0];
+        if(!hit){ toast('Pick the course from the list.'); return; }
+        course = hit.id;
+      }
+      var days = Array.prototype.map.call(main.querySelectorAll('.ct-days input:checked'), function(x){ return +x.value; });
+      var body = { uni: ctUni(), course: course, days: days, s: document.getElementById('ctfS').value, e: document.getElementById('ctfE').value,
+        room: document.getElementById('ctfRoom').value.trim(), sec: document.getElementById('ctfSec').value.trim(), prof: document.getElementById('ctfProf').value.trim() };
+      if(f.orig) body.replace = f.orig;
+      if(!days.length){ toast('Pick at least one day.'); return; }
+      e.target.disabled = true;
+      api('PUT', '/api/admin/shared-sections', body).then(function(){
+        state.ctForm = null; state.ctItems = null; toast('Saved. Students see it the next time their app checks.'); loadClassTimes(); render();
+      }).catch(function(err){ e.target.disabled = false; toast('Could not save: ' + err.message); });
+    });
+    main.querySelectorAll('[data-ct-edit]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var x = state.ctItems[+b.getAttribute('data-ct-edit')]; if(!x) return;
+        ctOpenForm({ course: x.course, courseName: x.courseName, days: (x.days || []).slice(), s: x.s, e: x.e, room: x.room, sec: x.sec, prof: x.prof,
+          orig: { days: x.days, s: x.s, e: x.e, room: x.room } });
+      });
+    });
     on('ctReload', 'click', function(){ state.ctItems = null; loadClassTimes(); render(); });
     on('ctUni', 'change', function(e){ state.ctPick = e.target.value; state.ctItems = null; loadClassTimes(); render(); });
     on('ctFind', 'input', function(e){

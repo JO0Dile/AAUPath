@@ -179,6 +179,46 @@
       "email": "nasry.alladaa@aaup.edu"
     },
     {
+      "name": "Dr. Naeem Alkoumi",
+      "category": "instructor",
+      "courses": [
+        "Calculus I"
+      ],
+      "email": "dr.naeem.alkoumi@aaup.edu"
+    },
+    {
+      "name": "Dr. Jamal Zahalka",
+      "category": "instructor",
+      "courses": [
+        "Palestinian Studies"
+      ],
+      "email": "jamal.zahalka-acp@aaup.edu"
+    },
+    {
+      "name": "Dr. Walaa Ghannam",
+      "category": "instructor",
+      "courses": [
+        "Basic Physics"
+      ],
+      "email": "Wala.Ghannam@aaup.edu"
+    },
+    {
+      "name": "Dr. Balqis Shalabi",
+      "category": "instructor",
+      "courses": [
+        "Advanced English"
+      ],
+      "email": "balquis.shalabi@aaup.edu"
+    },
+    {
+      "name": "Dr. Asmaa Meskawi",
+      "category": "instructor",
+      "courses": [
+        "Python"
+      ],
+      "email": "asmaa.meskawi@aaup.edu"
+    },
+    {
       "name": "Dr. Huthaifa Ashqar",
       "category": "dean",
       "role": "AI College Dean",
@@ -209,10 +249,22 @@
       "email": "ahmad.darmansour@aaup.edu"
     },
     {
-      "name": "Hidaya",
+      "name": "Hidaya Abuzainh",
       "category": "student_affairs",
       "role": "Student Affairs",
       "email": "hidaya.abuzainh@aaup.edu"
+    },
+    {
+      "name": "Dr. Islam Amro",
+      "category": "student_affairs",
+      "role": "Dean of Student Affairs",
+      "email": "Islam.Amro@aaup.edu"
+    },
+    {
+      "name": "Tayma Makhtoub",
+      "category": "student_affairs",
+      "role": "Assistant Dean of Student Affairs",
+      "email": "tayma.makhtoub@aaup.edu"
     },
     {
       "name": "Wisam Oweidat",
@@ -261,6 +313,24 @@
       "category": "administration",
       "role": "Administration",
       "email": "qais.obaid@aaup.edu"
+    },
+    {
+      "name": "Dr. Ahmad Hasasneh",
+      "category": "administration",
+      "role": "Academic Affairs",
+      "email": "Ahmad.Hasasneh@aaup.edu"
+    },
+    {
+      "name": "Eng. Ahmad Asaad",
+      "category": "administration",
+      "role": "Engineering",
+      "email": "ahmad.asaad@aaup.edu"
+    },
+    {
+      "name": "Eng. Thaer Khatib",
+      "category": "administration",
+      "role": "Engineering",
+      "email": "Thaer.Khatib@aaup.edu"
     }
   ]
 }

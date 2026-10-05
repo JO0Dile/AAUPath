@@ -1926,6 +1926,8 @@ async function handleAdminPeople(request, env, seg, url) {
 
 // The admin's list of shared class times, to take down one a student made up.
 // GET    /api/admin/shared-sections?uni=
+// PUT    /api/admin/shared-sections { uni, course, days, s, e, room, sec, prof, replace? }
+//        adds a class time (or edits one: replace names the old time, which goes)
 // DELETE /api/admin/shared-sections { uni, course, days, s, e, room }
 // A taken-down time is hidden, not deleted, so sending it again does nothing;
 // its `at` moves to now so phones see the content changed.
@@ -1941,6 +1943,29 @@ async function handleAdminSharedSections(request, env, url) {
       sections.push({ course: r.course, courseName: await courseName(env, uni, r.course), days: JSON.parse(r.days), s: r.s, e: r.e, room: r.room, sec: r.sec || '', prof: r.prof || '', at: r.at });
     }
     return json({ ok: true, uni, sections }, 200, env, request);
+  }
+  if (request.method === 'PUT') {
+    const body = await readJson(request, 2048);
+    const uni = String(body.uni || 'aaup'), course = String(body.course || '');
+    if (!SLUG_RE.test(uni) || !SLUG_RE.test(course)) throw fail('pick a course');
+    const T = /^([01]\d|2[0-3]):[0-5]\d$/;
+    const days = Array.isArray(body.days) ? [...new Set(body.days.map(Number))].filter((x) => x >= 0 && x <= 6).sort() : [];
+    const st = String(body.s || ''), en = String(body.e || '');
+    if (!days.length) throw fail('pick at least one day');
+    if (!T.test(st) || !T.test(en) || en <= st) throw fail('the end time has to be after the start');
+    const room = str(body.room, 40).trim();
+    const sec = /^[A-Za-z0-9-]{1,6}$/.test(String(body.sec || '')) ? String(body.sec) : '';
+    const prof = str(body.prof, 40).replace(/\s+/g, ' ').trim();
+    const now = Math.floor(Date.now() / 1000);
+    const r = body.replace;
+    if (r && typeof r === 'object') {
+      await db.prepare('DELETE FROM shared_sections WHERE uni = ? AND course = ? AND days = ? AND s = ? AND e = ? AND room = ?')
+        .bind(uni, course, Array.isArray(r.days) ? JSON.stringify(r.days.map(Number)) : String(r.days || ''), String(r.s || ''), String(r.e || ''), String(r.room || '')).run();
+    }
+    await db.prepare(`INSERT INTO shared_sections (uni, course, days, s, e, room, at, sec, prof, hidden) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+      ON CONFLICT(uni, course, days, s, e, room) DO UPDATE SET at = excluded.at, sec = excluded.sec, prof = excluded.prof, hidden = 0`)
+      .bind(uni, course, JSON.stringify(days), st, en, room, now, sec, prof).run();
+    return json({ ok: true }, 200, env, request);
   }
   if (request.method === 'DELETE') {
     const body = await readJson(request, 1024);

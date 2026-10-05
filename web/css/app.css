@@ -9859,3 +9859,7 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .pe-acts{display:flex; gap:6px; flex-wrap:wrap;}
 .pe-switch{display:flex; align-items:center; gap:10px; margin:6px 0 2px; font-weight:700; cursor:pointer;}
 .pe-switch input{width:20px; height:20px; accent-color:var(--accent);}
+.ct-days{display:flex; flex-wrap:wrap; gap:6px;}
+.ct-day{display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:999px; cursor:pointer;}
+.ct-row2{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px;}
+.ct-lbl{display:block; font-weight:700; margin-bottom:6px;}
