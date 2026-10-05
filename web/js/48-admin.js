@@ -1727,6 +1727,7 @@
       '<h3 style="margin-top:0;">' + (f.id || f.base ? 'Edit ' + esc(f.name || f.base) : 'Add a contact') + '</h3>' +
       (f.base ? '<p class="admin-hint">This replaces “' + esc(f.base) + '” from the built-in list. Remove the edit to bring the original back.</p>' : '') +
       field('peName', 'Name', f.name, ' maxlength="100" autocomplete="off"') +
+      field('peNameAr', 'Arabic name <span class="admin-hint">(optional; students using Arabic see this one)</span>', f.nameAr, ' maxlength="100" dir="rtl" autocomplete="off"') +
       '<div class="form-field"><label for="peCat">Category</label><select id="peCat">' + Object.keys(cats).map(function(k){
         return '<option value="' + esc(k) + '"' + (k === (f.category || 'instructor') ? ' selected' : '') + '>' + esc(cats[k].en) + '</option>';
       }).join('') + '<option value="__new">+ New category…</option></select></div>' +
@@ -1775,6 +1776,7 @@
         var phone = x.row && x.row.phone ? (x.row.phoneOk ? '<span class="pe-pill is-on">📞 ' + esc(x.row.phone) + ' · shown</span>' : '<span class="pe-pill">📞 ' + esc(x.row.phone) + ' · hidden</span>') : '';
         return '<div class="admin-note sst-row pe-row' + (x.src === 'hidden' ? ' is-hidden' : '') + '"><span class="pe-main"><b>' + esc(v.name) + '</b>' +
             (TAG[x.src] ? ' <span class="pe-tag">' + TAG[x.src] + '</span>' : '') +
+            ((v.nameAr || v.ar) ? '<small dir="rtl">' + esc(v.nameAr || v.ar) + '</small>' : '') +
             '<small>' + esc([peCat(v.category), v.role, v.email].filter(Boolean).join(' · ')) + '</small>' + phone + '</span>' +
           '<span class="pe-acts">' +
             (x.src === 'hidden' ? '' : '<button type="button" class="home-btn" data-pe-edit="' + i + '">Edit</button>') +
@@ -1808,7 +1810,7 @@
           live.filter(function(x){ return peNorm(x.v.name) === name; })[0] ||
           live.filter(function(x){ return name && peNorm(x.v.name).indexOf(name) !== -1; })[0];
         if(!hit){ missing.push(parts[0]); return; }
-        var b = hit.row ? JSON.parse(JSON.stringify(hit.row)) : { base: hit.base.name, name: hit.base.name, category: hit.base.category,
+        var b = hit.row ? JSON.parse(JSON.stringify(hit.row)) : { base: hit.base.name, name: hit.base.name, nameAr: hit.base.ar || '', category: hit.base.category,
           role: hit.base.role || '', courses: (hit.base.courses || []).slice(), email: hit.base.email || '' };
         b.uni = 'aaup'; b.phone = phone; b.phoneOk = false;
         jobs.push(b);
@@ -1841,7 +1843,7 @@
     });
     on('peSave', 'click', function(e){
       var f = state.peEdit, val = function(id){ return (document.getElementById(id).value || '').trim(); };
-      var body = { id: f.id, uni: 'aaup', base: f.base || '', name: val('peName'), category: val('peCat'), role: val('peRole'),
+      var body = { id: f.id, uni: 'aaup', base: f.base || '', name: val('peName'), nameAr: val('peNameAr'), category: val('peCat'), role: val('peRole'),
         courses: val('peCourses').split(/[,،]/).map(function(s){ return s.trim(); }).filter(Boolean),
         email: val('peEmail'), office: val('peOffice'), phone: val('pePhone'), phoneOk: document.getElementById('pePhoneOk').checked };
       if(!body.name){ toast('Write the name.'); return; }
@@ -1856,7 +1858,7 @@
     main.querySelectorAll('[data-pe-edit]').forEach(function(b){
       b.addEventListener('click', function(){
         var x = all[+b.getAttribute('data-pe-edit')]; if(!x) return;
-        state.peEdit = x.row ? JSON.parse(JSON.stringify(x.row)) : { base: x.base.name, name: x.base.name, category: x.base.category,
+        state.peEdit = x.row ? JSON.parse(JSON.stringify(x.row)) : { base: x.base.name, name: x.base.name, nameAr: x.base.ar || '', category: x.base.category,
           role: x.base.role || '', courses: (x.base.courses || []).slice(), email: x.base.email || '' };
         if(x.base && !state.peEdit.base) state.peEdit.base = x.base.name;
         render();

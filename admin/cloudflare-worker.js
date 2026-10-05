@@ -1488,6 +1488,8 @@ async function contentDb(env) {
     try { await db.prepare('ALTER TABLE shared_sections ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0').run(); } catch { /* already there */ }
     // The section number a student typed with the time, when they knew it.
     try { await db.prepare("ALTER TABLE shared_sections ADD COLUMN sec TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
+    // A contact's Arabic name.
+    try { await db.prepare("ALTER TABLE people ADD COLUMN name_ar TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
     // ...and the doctor's name.
     try { await db.prepare("ALTER TABLE shared_sections ADD COLUMN prof TEXT NOT NULL DEFAULT ''").run(); } catch { /* already there */ }
     contentTablesReady = true;
@@ -1684,7 +1686,7 @@ async function handlePublicContent(request, env, uni) {
     v = Math.max(v, r.at);
     let list = [];
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
-    people.push({ base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+    people.push({ base: r.base, name: r.name, nameAr: r.name_ar || '', category: r.category, role: r.role, courses: list, email: r.email,
       office: r.office, phone: r.phone_ok ? r.phone : '', hidden: !!r.hidden });
   }
   const contactCats = [];
@@ -1891,7 +1893,7 @@ async function handleAdminPeople(request, env, seg, url) {
   const out = (r) => {
     let list = [];
     try { list = JSON.parse(r.courses || '[]'); } catch { list = []; }
-    return { id: r.id, base: r.base, name: r.name, category: r.category, role: r.role, courses: list, email: r.email,
+    return { id: r.id, base: r.base, name: r.name, nameAr: r.name_ar || '', category: r.category, role: r.role, courses: list, email: r.email,
       office: r.office, phone: r.phone, phoneOk: !!r.phone_ok, hidden: !!r.hidden, at: r.at };
   };
   if (request.method === 'GET' && !seg[3]) {
@@ -1915,13 +1917,14 @@ async function handleAdminPeople(request, env, seg, url) {
     if (phone && !PHONE_RE.test(phone)) throw fail('that phone number does not look right');
     const courses = (Array.isArray(b.courses) ? b.courses : []).map((c) => str(c, 80).trim()).filter(Boolean).slice(0, 30);
     const id = /^[a-z0-9-]{6,40}$/.test(String(b.id || '')) ? String(b.id) : crypto.randomUUID();
-    await db.prepare(`INSERT INTO people (id, uni, base, name, category, role, courses, email, office, phone, phone_ok, hidden, at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET base = excluded.base, name = excluded.name, category = excluded.category, role = excluded.role,
+    await db.prepare(`INSERT INTO people (id, uni, base, name, category, role, courses, email, office, phone, phone_ok, hidden, at, name_ar)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET base = excluded.base, name = excluded.name, name_ar = excluded.name_ar, category = excluded.category, role = excluded.role,
         courses = excluded.courses, email = excluded.email, office = excluded.office, phone = excluded.phone,
         phone_ok = excluded.phone_ok, hidden = excluded.hidden, at = excluded.at`)
       .bind(id, uni, str(b.base, 100).trim(), name, category, str(b.role, 100).trim(), JSON.stringify(courses), email,
-        str(b.office, 100).trim(), phone, b.phoneOk && phone ? 1 : 0, b.hidden ? 1 : 0, Math.floor(Date.now() / 1000)).run();
+        str(b.office, 100).trim(), phone, b.phoneOk && phone ? 1 : 0, b.hidden ? 1 : 0, Math.floor(Date.now() / 1000),
+        str(b.nameAr, 100).replace(/\s+/g, ' ').trim()).run();
     const row = await db.prepare('SELECT * FROM people WHERE id = ?').bind(id).first();
     return json({ ok: true, person: out(row) }, 200, env, request);
   }

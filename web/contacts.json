@@ -64,6 +64,7 @@
     },
     {
       "name": "Dr. Yaffa Abdel Aziz",
+      "ar": "د. يافا عبد العزيز",
       "category": "instructor",
       "courses": [
         "Calculus I",
@@ -74,6 +75,7 @@
     },
     {
       "name": "Dr. Maher Nour",
+      "ar": "د. ماهر نور",
       "category": "instructor",
       "courses": [
         "Calculus I",
@@ -94,6 +96,7 @@
     },
     {
       "name": "Dr. Ismat Marouf",
+      "ar": "د. عصمت مرأوف",
       "category": "instructor",
       "courses": [
         "Programming Fundamentals",
@@ -103,6 +106,7 @@
     },
     {
       "name": "Dr. Ahmad Alqerem",
+      "ar": "د. أحمد القرم",
       "category": "instructor",
       "courses": [
         "Programming Fundamentals"
@@ -111,6 +115,7 @@
     },
     {
       "name": "Dr. Rana Moqady",
+      "ar": "د. رنا مقاضي",
       "category": "instructor",
       "courses": [
         "Basic Physics"
@@ -119,6 +124,7 @@
     },
     {
       "name": "Dr. Feras Abu Jaber",
+      "ar": "د. فراس أبو جابر",
       "category": "instructor",
       "courses": [
         "Palestinian Studies"
@@ -127,6 +133,7 @@
     },
     {
       "name": "Rami Abu Shamma",
+      "ar": "د. رامي أبو شامة",
       "category": "instructor",
       "courses": [
         "Advanced English"
@@ -135,6 +142,7 @@
     },
     {
       "name": "Iman Abu Khalaf",
+      "ar": "د. إيمان أبو خلف",
       "category": "instructor",
       "courses": [
         "Advanced English"
@@ -143,6 +151,7 @@
     },
     {
       "name": "Dr. Hind Sweis",
+      "ar": "د. هند سويس",
       "category": "instructor",
       "courses": [
         "Elementary Probability & Statistics"
@@ -151,6 +160,7 @@
     },
     {
       "name": "Yaman Salem",
+      "ar": "د. يامن سالم",
       "category": "instructor",
       "courses": [
         "Introduction to Computer Science"
@@ -159,6 +169,7 @@
     },
     {
       "name": "Khalil Rantisi",
+      "ar": "د. خليل رنتيسي",
       "category": "instructor",
       "courses": [
         "Introduction to Computer Science"
@@ -180,6 +191,7 @@
     },
     {
       "name": "Dr. Naeem Alkoumi",
+      "ar": "د. نعيم الكومي",
       "category": "instructor",
       "courses": [
         "Calculus I"
@@ -188,6 +200,7 @@
     },
     {
       "name": "Dr. Jamal Zahalka",
+      "ar": "د. جمال زحالقة",
       "category": "instructor",
       "courses": [
         "Palestinian Studies"
@@ -196,6 +209,7 @@
     },
     {
       "name": "Dr. Walaa Ghannam",
+      "ar": "د. ولاء غنام",
       "category": "instructor",
       "courses": [
         "Basic Physics"
@@ -204,6 +218,7 @@
     },
     {
       "name": "Dr. Balqis Shalabi",
+      "ar": "د. بلقيس شلبي",
       "category": "instructor",
       "courses": [
         "Advanced English"
@@ -212,6 +227,7 @@
     },
     {
       "name": "Dr. Asmaa Meskawi",
+      "ar": "د. أسماء مسكاوي",
       "category": "instructor",
       "courses": [
         "Python"
@@ -244,48 +260,56 @@
     },
     {
       "name": "Ahmad Mansour",
+      "ar": "أحمد منصور",
       "category": "student_affairs",
       "role": "Student Affairs",
       "email": "ahmad.darmansour@aaup.edu"
     },
     {
       "name": "Hidaya Abuzainh",
+      "ar": "هداية أبو زينة",
       "category": "student_affairs",
       "role": "Student Affairs",
       "email": "hidaya.abuzainh@aaup.edu"
     },
     {
       "name": "Dr. Islam Amro",
+      "ar": "د. إسلام عمرو",
       "category": "student_affairs",
       "role": "Dean of Student Affairs",
       "email": "Islam.Amro@aaup.edu"
     },
     {
       "name": "Tayma Makhtoub",
+      "ar": "تيماء مخطوب",
       "category": "student_affairs",
       "role": "Assistant Dean of Student Affairs",
       "email": "tayma.makhtoub@aaup.edu"
     },
     {
       "name": "Wisam Oweidat",
+      "ar": "وسام عويدات",
       "category": "finance",
       "role": "Finance",
       "email": "wisam.oweidat@aaup.edu"
     },
     {
       "name": "Ahmad Qashoo",
+      "ar": "أحمد قشوع",
       "category": "finance",
       "role": "Finance",
       "email": "ahmad.qashoo@aaup.edu"
     },
     {
       "name": "Miral Tina",
+      "ar": "ميرال تينا",
       "category": "registration",
       "role": "Registration",
       "email": "Miral.Tina@aaup.edu"
     },
     {
       "name": "Ruba Almasri",
+      "ar": "ربا المصري",
       "category": "registration",
       "role": "Registration",
       "email": "ruba.almasri@aaup.edu"
@@ -298,6 +322,7 @@
     },
     {
       "name": "Dr. Safa Jaber",
+      "ar": "د. صفاء جابر",
       "category": "language_center",
       "role": "English",
       "email": "safa.jaber@aaup.edu"
@@ -316,18 +341,21 @@
     },
     {
       "name": "Dr. Ahmad Hasasneh",
+      "ar": "د. أحمد حساسنة",
       "category": "administration",
       "role": "Academic Affairs",
       "email": "Ahmad.Hasasneh@aaup.edu"
     },
     {
       "name": "Eng. Ahmad Asaad",
+      "ar": "م. أحمد أسعد",
       "category": "administration",
       "role": "Engineering",
       "email": "ahmad.asaad@aaup.edu"
     },
     {
       "name": "Eng. Thaer Khatib",
+      "ar": "م. ثائر الخطيب",
       "category": "administration",
       "role": "Engineering",
       "email": "Thaer.Khatib@aaup.edu"

@@ -93,6 +93,7 @@
       var at = p.base ? data.contacts.findIndex(function(c){ return normName(c.name) === normName(p.base); }) : -1;
       if(p.hidden){ if(at !== -1) data.contacts.splice(at, 1); return; }
       var card = { name: p.name, category: data.categories[p.category] ? p.category : 'instructor' };
+      if(p.nameAr) card.ar = p.nameAr;
       if(p.role) card.role = p.role;
       if(p.courses && p.courses.length) card.courses = p.courses.slice();
       if(p.email) card.email = p.email;
@@ -132,7 +133,7 @@
 
   function matches(c, q){
     if(!q) return true;
-    var hay = [c.name, c.role || '', (c.courses || []).join(' '), c.email || ''].join(' ').toLowerCase();
+    var hay = [c.name, c.ar || '', c.role || '', (c.courses || []).join(' '), c.email || ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   }
 
@@ -186,7 +187,9 @@
     return '<div class="ct-card">' +
       '<span class="ct-avatar' + (isPerson ? ' ct-avatar-initials' : '') + '">' + avatar + '</span>' +
       '<div class="ct-card-main">' +
-        '<span class="ct-name">' + esc(c.name) + '</span>' + sub +
+        // The name in the app's language first, the other one under it.
+        '<span class="ct-name">' + esc(rtl && c.ar ? c.ar : c.name) + '</span>' +
+        (c.ar ? '<span class="ct-name-alt"' + (rtl ? ' dir="ltr"' : ' dir="rtl"') + '>' + esc(rtl ? c.name : c.ar) + '</span>' : '') + sub +
         (c.office || c.hours || c.reach
           ? '<span class="ct-staff">' + [c.office, c.hours, c.reach].filter(Boolean).map(esc).join(' · ') + '</span>' : '') +
         (c.phone ? '<a class="ct-phone" dir="ltr" href="tel:' + esc(String(c.phone).replace(/[^0-9+]/g, '')) + '">' + esc(c.phone) + '</a>' : '') +
