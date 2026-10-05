@@ -27,13 +27,20 @@
     { "name": "Khalil Rantisi", "category": "instructor", "courses": ["Introduction to Computer Science"], "email": "khalil.rantisi@aaup.edu" },
     { "name": "Dr. Manar Faraj", "category": "instructor", "courses": ["The Palestinian Prisoners Movement"], "email": "Manar.Faraj@aaup.edu" },
     { "name": "Nasry Sameer Nasr Alladaa", "category": "instructor", "email": "nasry.alladaa@aaup.edu" },
+    { "name": "Dr. Naeem Alkoumi", "category": "instructor", "courses": ["Calculus I"], "email": "dr.naeem.alkoumi@aaup.edu" },
+    { "name": "Dr. Jamal Zahalka", "category": "instructor", "courses": ["Palestinian Studies"], "email": "jamal.zahalka-acp@aaup.edu" },
+    { "name": "Dr. Walaa Ghannam", "category": "instructor", "courses": ["Basic Physics"], "email": "Wala.Ghannam@aaup.edu" },
+    { "name": "Dr. Balqis Shalabi", "category": "instructor", "courses": ["Advanced English"], "email": "balquis.shalabi@aaup.edu" },
+    { "name": "Dr. Asmaa Meskawi", "category": "instructor", "courses": ["Python"], "email": "asmaa.meskawi@aaup.edu" },
 
     { "name": "Dr. Huthaifa Ashqar", "category": "dean", "role": "AI College Dean", "email": "Huthaifa.ashqar@aaup.edu" },
     { "name": "Dr. Islam", "category": "dean", "role": "Secretary to Dean Huthaifa", "email": "" },
     { "name": "Dr. Ghassan Sirhan", "category": "dean", "role": "Head of the Educational Sciences Department", "email": "Ghassan.Sirhan@aaup.edu" },
     { "name": "Sameh Tawafsheh", "category": "it", "role": "IT", "email": "sameh.tawafsheh@aaup.edu" },
     { "name": "Ahmad Mansour", "category": "student_affairs", "role": "Student Affairs", "email": "ahmad.darmansour@aaup.edu" },
-    { "name": "Hidaya", "category": "student_affairs", "role": "Student Affairs", "email": "hidaya.abuzainh@aaup.edu" },
+    { "name": "Hidaya Abuzainh", "category": "student_affairs", "role": "Student Affairs", "email": "hidaya.abuzainh@aaup.edu" },
+    { "name": "Dr. Islam Amro", "category": "student_affairs", "role": "Dean of Student Affairs", "email": "Islam.Amro@aaup.edu" },
+    { "name": "Tayma Makhtoub", "category": "student_affairs", "role": "Assistant Dean of Student Affairs", "email": "tayma.makhtoub@aaup.edu" },
     { "name": "Wisam Oweidat", "category": "finance", "role": "Finance", "email": "wisam.oweidat@aaup.edu" },
     { "name": "Ahmad Qashoo", "category": "finance", "role": "Finance", "email": "ahmad.qashoo@aaup.edu" },
     { "name": "Miral Tina", "category": "registration", "role": "Registration", "email": "Miral.Tina@aaup.edu" },
@@ -41,6 +48,9 @@
     { "name": "Dr. Amanda Khalaf", "category": "language_center", "role": "Language Center", "email": "Amanda.Khalaf@aaup.edu" },
     { "name": "Dr. Safa Jaber", "category": "language_center", "role": "English", "email": "safa.jaber@aaup.edu" },
     { "name": "Mamoun Salaheddin", "category": "administration", "role": "Administration", "email": "mamoun.salaheddeen@aaup.edu" },
-    { "name": "Qais Obaid", "category": "administration", "role": "Administration", "email": "qais.obaid@aaup.edu" }
+    { "name": "Qais Obaid", "category": "administration", "role": "Administration", "email": "qais.obaid@aaup.edu" },
+    { "name": "Dr. Ahmad Hasasneh", "category": "administration", "role": "Academic Affairs", "email": "Ahmad.Hasasneh@aaup.edu" },
+    { "name": "Eng. Ahmad Asaad", "category": "administration", "role": "Engineering", "email": "ahmad.asaad@aaup.edu" },
+    { "name": "Eng. Thaer Khatib", "category": "administration", "role": "Engineering", "email": "Thaer.Khatib@aaup.edu" }
   ]
 }
