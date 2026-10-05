@@ -9863,3 +9863,4 @@ html.grades-docked body.has-sidebar .sheet-plan{margin-inline-end:580px; max-wid
 .ct-day{display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--line); border-radius:999px; cursor:pointer;}
 .ct-row2{display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px;}
 .ct-lbl{display:block; font-weight:700; margin-bottom:6px;}
+.pe-x{border:0; background:none; color:inherit; font:inherit; font-weight:800; cursor:pointer; padding:0 2px;}

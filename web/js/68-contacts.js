@@ -82,6 +82,11 @@
   // out; anything else is added. The phone is only there when the admin set
   // it to show (the Worker leaves it out otherwise).
   function withPeople(data){
+    // The admin's own categories (Lost and Found, ...) join the file's.
+    var cats = window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.contactCats ? window.AAUP_STAFF_CONTENT.contactCats() : [];
+    if(data && data.categories) cats.forEach(function(c){
+      if(!data.categories[c.key]) data.categories[c.key] = { en: c.en, ar: c.ar || c.en, icon: '📌', iconKey: 'people' };
+    });
     var list = window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.people ? window.AAUP_STAFF_CONTENT.people() : [];
     if(!list.length || !data || !Array.isArray(data.contacts)) return data;
     list.forEach(function(p){
