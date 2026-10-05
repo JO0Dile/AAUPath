@@ -1789,7 +1789,7 @@
   }
   function peSave(body, msg){
     return api('PUT', '/api/admin/people', body).then(function(){
-      state.peEdit = null; state.peItems = null; toast(msg); loadContacts(); render();
+      state.peEdit = null; state.peItems = null; state.ctCourses = null; toast(msg); loadContacts(); render();
     });
   }
   function bindContacts(main){
@@ -1948,7 +1948,8 @@
     if(state.ctCourses) return Promise.resolve();
     return Promise.all([
       fetch('plans.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
-      fetch('contacts.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { contacts: [] }; })
+      fetch('contacts.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { contacts: [] }; }),
+      api('GET', '/api/admin/people?uni=aaup').catch(function(){ return { people: [] }; })
     ]).then(function(a){
       var seen = {}, list = [];
       (a[0].plans || []).forEach(function(pl){
@@ -1956,20 +1957,27 @@
         (pl.courses || []).forEach(function(c){ if(c.id && !seen[c.id]){ seen[c.id] = 1; list.push({ id: c.id, name: c.name || c.id }); } });
       });
       state.ctCourses = list.sort(function(x, y){ return x.name.localeCompare(y.name); });
-      var profs = (a[1].contacts || []).filter(function(c){ return c.category === 'instructor'; }).map(function(c){ return c.name; });
-      (state.peItems || []).forEach(function(r){ if(r.category === 'instructor' && profs.indexOf(r.name) === -1) profs.push(r.name); });
-      state.ctProfs = profs;
+      // Everyone in Contacts as students see them: the file's list with the
+      // admin's edits, hides and additions laid over it. Instructors first.
+      var rows = a[2].people || [], used = {}, people = [];
+      (a[1].contacts || []).forEach(function(c){
+        var row = rows.filter(function(r){ return r.base && peNorm(r.base) === peNorm(c.name); })[0];
+        if(row){ used[row.id] = 1; if(row.hidden) return; people.push({ name: row.name, ar: row.nameAr || c.ar || '', category: row.category, role: row.role }); }
+        else people.push({ name: c.name, ar: c.ar || '', category: c.category, role: c.role || '' });
+      });
+      rows.forEach(function(r){ if(!used[r.id] && !r.base && !r.hidden) people.push({ name: r.name, ar: r.nameAr || '', category: r.category, role: r.role }); });
+      people.sort(function(x, y){ return (x.category === 'instructor' ? 0 : 1) - (y.category === 'instructor' ? 0 : 1) || x.name.localeCompare(y.name); });
+      state.ctProfs = people;
     });
   }
   var CT_WEEK = [6, 0, 1, 2, 3, 4, 5];
   function ctFormHtml(f){
-    var courses = state.ctCourses || [];
     var courseVal = f.course ? (f.courseName && f.courseName !== f.course ? f.courseName + ' · ' + f.course : f.course) : '';
     return '<div class="admin-note pe-form">' +
       '<h3 style="margin-top:0;">' + (f.orig ? 'Edit a class time' : 'Add a class time') + '</h3>' +
       '<div class="form-field"><label for="ctfCourse">Course</label>' +
-        '<input type="text" id="ctfCourse" list="ctfCourseList" value="' + esc(courseVal) + '" placeholder="Type a name or number" autocomplete="off"' + (f.orig ? ' disabled' : '') + '>' +
-        '<datalist id="ctfCourseList">' + courses.map(function(c){ return '<option value="' + esc(c.name + ' · ' + c.id) + '"></option>'; }).join('') + '</datalist></div>' +
+        '<div class="ac-wrap"><input type="text" id="ctfCourse" value="' + esc(courseVal) + '" placeholder="Type a name or number" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ctfCourseAc"' + (f.orig ? ' disabled' : '') + '>' +
+        '<div class="ac-list" id="ctfCourseAc" role="listbox" hidden></div></div></div>' +
       '<div class="form-field"><span class="ct-lbl">Days</span><div class="ct-days">' + CT_WEEK.map(function(d){
         return '<label class="ct-day"><input type="checkbox" value="' + d + '"' + ((f.days || []).indexOf(d) !== -1 ? ' checked' : '') + '>' + CT_DAYS[d] + '</label>';
       }).join('') + '</div></div>' +
@@ -1980,8 +1988,8 @@
         '<div class="form-field"><label for="ctfSec">Section <span class="admin-hint">(optional)</span></label><input type="text" id="ctfSec" maxlength="6" value="' + esc(f.sec || '') + '"></div>' +
       '</div>' +
       '<div class="form-field"><label for="ctfProf">Doctor <span class="admin-hint">(optional, pick from Contacts or type)</span></label>' +
-        '<input type="text" id="ctfProf" list="ctfProfList" maxlength="40" value="' + esc(f.prof || '') + '" autocomplete="off">' +
-        '<datalist id="ctfProfList">' + (state.ctProfs || []).map(function(n){ return '<option value="' + esc(n) + '"></option>'; }).join('') + '</datalist></div>' +
+        '<div class="ac-wrap"><input type="text" id="ctfProf" maxlength="40" value="' + esc(f.prof || '') + '" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ctfProfAc" placeholder="Type a name, in English or Arabic">' +
+        '<div class="ac-list" id="ctfProfAc" role="listbox" hidden></div></div></div>' +
       '<div class="form-actions"><button type="button" class="home-btn admin-primary" id="ctfSave">Save</button> ' +
         '<button type="button" class="home-btn" id="ctfCancel">Cancel</button></div>' +
     '</div>';
@@ -1991,7 +1999,44 @@
     ctLoadLists().then(function(){ if(state.section === 'classtimes') render(); }, function(){ render(); });
     render();
   }
+  // A suggestion list under a text box, styled like the rest of the admin
+  // room (the browser's own datalist can't be styled). items(q) returns
+  // [{ label, sub, value }]; arrows move, Enter or a click picks, Esc closes.
+  function bindAc(inputId, listId, items){
+    var input = document.getElementById(inputId), box = document.getElementById(listId);
+    if(!input || !box || input.disabled) return;
+    var cur = [], at = -1;
+    var draw = function(){
+      cur = items(input.value).slice(0, 8);
+      box.innerHTML = cur.map(function(x, i){
+        return '<button type="button" class="ac-opt' + (i === at ? ' is-on' : '') + '" role="option" data-ac="' + i + '"><b>' + esc(x.label) + '</b>' +
+          (x.sub ? '<small>' + esc(x.sub) + '</small>' : '') + '</button>';
+      }).join('');
+      box.hidden = !cur.length; input.setAttribute('aria-expanded', String(!box.hidden));
+    };
+    var pick = function(i){ if(!cur[i]) return; input.value = cur[i].value; box.hidden = true; at = -1; input.setAttribute('aria-expanded', 'false'); };
+    input.addEventListener('input', function(){ at = -1; draw(); });
+    input.addEventListener('focus', draw);
+    input.addEventListener('keydown', function(e){
+      if(box.hidden) return;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); at = Math.min(at + 1, cur.length - 1); draw(); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); at = Math.max(at - 1, 0); draw(); }
+      else if(e.key === 'Enter' && at >= 0){ e.preventDefault(); pick(at); }
+      else if(e.key === 'Escape'){ box.hidden = true; }
+    });
+    box.addEventListener('mousedown', function(e){ var b = e.target.closest('[data-ac]'); if(b){ e.preventDefault(); pick(+b.getAttribute('data-ac')); } });
+    input.addEventListener('blur', function(){ setTimeout(function(){ box.hidden = true; input.setAttribute('aria-expanded', 'false'); }, 120); });
+  }
+  function acMatch(q, hay){ q = peNorm(q); return !q || peNorm(hay).indexOf(q) !== -1; }
   function bindClassTimes(main){
+    bindAc('ctfCourse', 'ctfCourseAc', function(q){
+      return (state.ctCourses || []).filter(function(c){ return acMatch(q, c.name + ' ' + c.id); })
+        .map(function(c){ return { label: c.name, sub: c.id, value: c.name + ' · ' + c.id }; });
+    });
+    bindAc('ctfProf', 'ctfProfAc', function(q){
+      return (state.ctProfs || []).filter(function(p){ return acMatch(q, p.name + ' ' + p.ar); })
+        .map(function(p){ return { label: p.name, sub: [p.ar, p.category === 'instructor' ? '' : (p.role || peCat(p.category))].filter(Boolean).join(' · '), value: p.name }; });
+    });
     on('ctAdd', 'click', function(){ ctOpenForm({}); });
     on('ctfCancel', 'click', function(){ state.ctForm = null; render(); });
     on('ctfSave', 'click', function(e){
@@ -2008,6 +2053,9 @@
         room: document.getElementById('ctfRoom').value.trim(), sec: document.getElementById('ctfSec').value.trim(), prof: document.getElementById('ctfProf').value.trim() };
       if(f.orig) body.replace = f.orig;
       if(!days.length){ toast('Pick at least one day.'); return; }
+      var mins = function(t){ var p = String(t || '').split(':'); return (+p[0] || 0) * 60 + (+p[1] || 0); };
+      var len = mins(body.e) - mins(body.s);
+      if(len > 240 && !confirm('That class is ' + Math.floor(len / 60) + ' hours ' + (len % 60) + ' minutes long (' + ctTime(body.s) + ' – ' + ctTime(body.e) + '). Is AM/PM right? OK saves it anyway.')) return;
       e.target.disabled = true;
       api('PUT', '/api/admin/shared-sections', body).then(function(){
         state.ctForm = null; state.ctItems = null; toast('Saved. Students see it the next time their app checks.'); loadClassTimes(); render();
