@@ -1747,7 +1747,7 @@
       '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn admin-primary" id="peAdd">+ Add a contact</button> ' +
         '<button type="button" class="home-btn" id="peImportOpen">Import numbers</button></div>' +
       (state.peImport ? '<div class="admin-note pe-form"><h3 style="margin-top:0;">Import numbers</h3>' +
-        '<p class="admin-hint">One person per line: the name, a comma, the number, and optionally a comma and their email. Each number goes into that person’s phone box, ' +
+        '<p class="admin-hint">One person per line: the name, a comma, the number, and optionally a comma and their email. A person is found by their name or their email, whichever matches. Each number goes into that person’s phone box, ' +
         '<b>hidden</b> from students; switch it on per person when you are ready.</p>' +
         '<textarea id="peImportText" rows="8" style="width:100%;" placeholder="Dr. Iyad Suwan, 0599 000 000"></textarea>' +
         (state.peImportMsg ? '<p class="admin-hint">' + state.peImportMsg + '</p>' : '') +
