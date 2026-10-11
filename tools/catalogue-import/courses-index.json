@@ -2507,6 +2507,9 @@
    "name": "INFORMATION SECURITY",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020732100"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -2669,6 +2672,9 @@
    "name": "ADVANCED DATABASE SYSTEMS",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020733121"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -2681,6 +2687,9 @@
    "name": "KNOWLEDGE MANAGEMENT SYSTEMS",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020733100"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -2694,7 +2703,8 @@
    "credits": 3.0,
    "theoretical": 3.0,
    "prerequisites": [
-    "207331002"
+    "020733100",
+    "020733121"
    ],
    "requirementRoles": [
     "specElec"
@@ -2708,6 +2718,9 @@
    "name": "E-GOVERNMENT",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020732100"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -2720,6 +2733,9 @@
    "name": "E-CRIME",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020732100"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -2733,7 +2749,8 @@
    "credits": 3.0,
    "theoretical": 3.0,
    "prerequisites": [
-    "207331212"
+    "020733121",
+    "020733401"
    ],
    "requirementRoles": [
     "specElec"
@@ -2778,6 +2795,9 @@
    "name": "MIS PROJECT MANAGEMENT II",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020734411"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -17269,6 +17289,9 @@
    "name": "INTRODUCTION TO DIGITAL MARKETING",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020411010"
+   ],
    "requirementRoles": [
     "specElec"
    ],
@@ -26877,6 +26900,9 @@
    "name": "ENTREPRENEURSHIP IN IT",
    "credits": 3.0,
    "theoretical": 3.0,
+   "prerequisites": [
+    "020211020"
+   ],
    "requirementRoles": [
     "specElec"
    ],

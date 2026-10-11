@@ -1141,11 +1141,11 @@
       "forCourse": "020732100"
     },
     {
-      "requires": "020211030",
+      "requires": "040521301",
       "forCourse": "270113200"
     },
     {
-      "requires": "040521301",
+      "requires": "020211030",
       "forCourse": "270113200"
     },
     {
@@ -1215,6 +1215,54 @@
     {
       "requires": "020211020",
       "forCourse": "270414200"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020732111"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020733700"
+    },
+    {
+      "requires": "020733100",
+      "forCourse": "020734000"
+    },
+    {
+      "requires": "020733100",
+      "forCourse": "020734110"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020734110"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020734201"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020734202"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020734210"
+    },
+    {
+      "requires": "020733401",
+      "forCourse": "020734210"
+    },
+    {
+      "requires": "020734411",
+      "forCourse": "020734501"
+    },
+    {
+      "requires": "020411010",
+      "forCourse": "210312050"
+    },
+    {
+      "requires": "020211020",
+      "forCourse": "270414100"
     }
   ]
 }
