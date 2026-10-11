@@ -167,6 +167,7 @@
     ['courses',       '📚 Courses'],
     ['prereqs',       '🔗 Prerequisites'],
     ['schedule',      '🗓 Study Plan'],
+    ['plancheck',     '🔎 Check with aaup.edu'],
     ['assets',        '🖼 Assets'],
     ['contributions', '📮 Contributions'],
     ['thoughts',      '💬 Student Thoughts'],
@@ -182,7 +183,7 @@
   // headings, with a count beside the ones that are waiting on you.
   var NAV_GROUPS = [
     [null, ['dashboard']],
-    ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'assets']],
+    ['Content', ['universities', 'majors', 'courses', 'prereqs', 'schedule', 'plancheck', 'assets']],
     ['People', ['contributions', 'thoughts', 'classtimes', 'contacts', 'accounts', 'staff']],
     ['System', ['workers', 'settings']]
   ];
@@ -2495,6 +2496,11 @@
       main.innerHTML = sectionClassTimes();
       if(!state.ctLoading && (!state.ctItems || state.ctUni !== ctUni())) loadClassTimes();
     }
+    else if(s === 'plancheck'){
+      // js/112-plan-check.js: every plan against aaup.edu, about once a year.
+      main.innerHTML = window.AdminPlanCheck ? window.AdminPlanCheck.html(planCheckCtx())
+        : '<p class="admin-hint">The plan check did not load. Reload the page.</p>';
+    }
     else if(s === 'contacts'){
       main.innerHTML = sectionContacts();
       if(!state.peLoading && !state.peItems) loadContacts();
@@ -2505,6 +2511,11 @@
     }
     else main.innerHTML = sectionSettings();
     bindMain();
+  }
+
+  function planCheckCtx(){
+    return { api: api, esc: esc, toast: toast,
+             rerender: function(){ if(state.section === 'plancheck') render(); } };
   }
 
   function on(sel, ev, fn){
@@ -2521,6 +2532,7 @@
     if(state.section === 'staff') bindStaff(main);
     if(state.section === 'classtimes') bindClassTimes(main);
     if(state.section === 'contacts') bindContacts(main);
+    if(state.section === 'plancheck' && window.AdminPlanCheck) window.AdminPlanCheck.bind(main, planCheckCtx());
     on('adminWorkersRefresh', 'click', function(){ state.workers = null; render(); });
     main.querySelectorAll('[data-inbox-go]').forEach(function(b){
       b.addEventListener('click', function(){ state.section = b.getAttribute('data-inbox-go'); render(); });

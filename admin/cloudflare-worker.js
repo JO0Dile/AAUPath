@@ -649,6 +649,10 @@ function validMajor(m) {
       semester: ['s1', 's2', 's3', 'summer'].includes(c.semester) ? c.semester
         : (c.semester === '' || c.semester == null ? '' : 's1'),
       description: str(c.description, 2000),
+      // Only the Check card sends these (a course it adds from aaup.edu);
+      // see courseToStored.
+      ...(REQ_KEYS.includes(c.requirement) ? { requirement: c.requirement } : {}),
+      ...(typeof c.isElective === 'boolean' ? { isElective: c.isElective } : {}),
     })),
     prerequisites: prereqs.map((p) => [p[0], p[1]]),
     replaced: replaced.map((r) => ({ old: String(r.old).trim(), oldName: str(r.oldName, 200).trim(), new: r.new })),
@@ -796,8 +800,14 @@ function courseToStored(c, prev) {
       category: CATEGORY_TO_DATA[c.category] || 'CORE',
       year: c.yearId ? parseInt(c.yearId.slice(1), 10) : null,
       semester: c.semester ? parseInt(c.semester.slice(1), 10) : null,
+      // Sent only by the Check card, for a course it adds from aaup.edu: the
+      // requirement it counts towards. The plan editor never sends these, so
+      // its saves carry the stored values through as before.
+      ...(REQ_KEYS.includes(c.requirement) ? { requirement: c.requirement } : {}),
+      ...(typeof c.isElective === 'boolean' && !prev[c.id] ? { isElective: c.isElective } : {}),
     });
 }
+const REQ_KEYS = ['univReq', 'univElec', 'colgReq', 'specReq', 'specElec', 'freeElec', 'supportCourses'];
 
 // ---------------------------------------------------------------------------
 // routes
@@ -1965,6 +1975,33 @@ async function handleAdminContactCats(request, env, seg, url) {
 }
 
 // The admin's list of shared class times, to take down one a student made up.
+// GET /api/admin/aaup?path=/bachelor-accounting/curriculum → { status, html }
+//
+// How the admin's "Check with aaup.edu" card reads the university's own pages
+// (js/112-plan-check.js). Only www.aaup.edu, and only the program list, a
+// program's page or its Academic Plan page - this is not a general proxy.
+// Course descriptions are cut out, so a plan page is tens of KB rather than
+// hundreds. aaup.edu turns away most servers; when it turns this one away the
+// status says so, and the card offers its browser route instead.
+const AAUP_PATH_RE = /^\/(academic-programs|[A-Za-z0-9%._-]{3,200}(\/curriculum)?)$/;
+async function handleAdminAaup(request, env, url) {
+  if (request.method !== 'GET') return json({ error: 'method not allowed' }, 405, env, request);
+  const path = url.searchParams.get('path') || '';
+  if (!AAUP_PATH_RE.test(path)) return json({ error: 'not an aaup.edu program page' }, 400, env, request);
+  let r;
+  try {
+    r = await fetch('https://www.aaup.edu' + path, {
+      headers: { 'User-Agent': 'AAUPath plan check (admin)', Accept: 'text/html' }, redirect: 'follow' });
+  } catch (e) {
+    return json({ status: 0, html: '' }, 200, env, request);
+  }
+  if (!r.ok) return json({ status: r.status, html: '' }, 200, env, request);
+  let html = (await r.text()).replace(/<(p|td) class="d-none course-desc">[\s\S]*?<\/\1>/g, '');
+  const i = html.indexOf('curriculum-wrapper');
+  if (path.endsWith('/curriculum') && i >= 0) html = html.slice(Math.max(0, i - 200));
+  return json({ status: r.status, html }, 200, env, request);
+}
+
 // GET    /api/admin/shared-sections?uni=
 // PUT    /api/admin/shared-sections { uni, course, days, s, e, room, sec, prof, replace? }
 //        adds a class time (or edits one: replace names the old time, which goes)
@@ -2406,6 +2443,8 @@ export default {
       if (seg[1] === 'admin' && seg[2] === 'contact-cats') return await handleAdminContactCats(request, env, seg, url);
       // /api/admin/shared-sections
       if (seg[1] === 'admin' && seg[2] === 'shared-sections') return await handleAdminSharedSections(request, env, url);
+      // /api/admin/aaup?path=  (the admin Check card, js/112-plan-check.js)
+      if (seg[1] === 'admin' && seg[2] === 'aaup') return await handleAdminAaup(request, env, url);
 
       // /api/history/:university/:slug
       if (seg[1] === 'history' && seg[2] && seg[3] && request.method === 'GET') {

@@ -896,6 +896,7 @@ def make_major(prog, slug, college):
             'program': prog['name'],
             'placement': src,
             'via': 'tools/import-catalogue-programs.py',
+            **({'siteSetAside': prog['siteSetAside']} if prog.get('siteSetAside') else {}),
         }),
         **({'advisoryCoursesNotOnSite': prog['_advisoryNotOnSite']} if prog.get('_advisoryNotOnSite') else {}),
         'sourceVersion': 1,
@@ -926,6 +927,8 @@ def main(write=False):
     for p in progs:
         sp = site.get(key(p['name']))
         have.add(key(p['name']))
+        if sp and p['name'] in SITE_SET_ASIDE:
+            p['siteSetAside'] = {'page': sp['page'], 'reason': SITE_SET_ASIDE[p['name']]}
         if not sp or not sp.get('published') or p['name'] in SITE_SET_ASIDE:
             continue
         if site_complete(sp):
