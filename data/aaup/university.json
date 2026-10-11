@@ -125,6 +125,30 @@
       "imageUrl": ""
     },
     {
+      "slug": "aaup-sciences",
+      "name": "Faculty of Sciences",
+      "nameAr": "كلية العلوم",
+      "icon": "🔬",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-modern-sciences",
+      "name": "Faculty of Modern Sciences",
+      "nameAr": "كلية العلوم الحديثة",
+      "icon": "🔭",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
+      "slug": "aaup-sport-sciences",
+      "name": "Faculty of Sport Sciences",
+      "nameAr": "كلية علوم الرياضة",
+      "icon": "🏅",
+      "iconKey": "",
+      "imageUrl": ""
+    },
+    {
       "slug": "aaup-junior-college",
       "name": "Junior College",
       "nameAr": "كلية المجتمع",

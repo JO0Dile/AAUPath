@@ -24,9 +24,11 @@
     "supportCourses": 10.0
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Interior Architecture",
+    "page": "https://www.aaup.edu/bachelor-interior-architecture/curriculum",
     "placement": "suggested",
+    "pageIncomplete": "The page’s tables add up to 124 hours against the 134 it states, so the document’s plan is kept and the page corrects the hours and prerequisites of the courses both list (see merge_site).",
     "via": "tools/import-catalogue-programs.py"
   },
   "sourceVersion": 1,
@@ -76,7 +78,7 @@
       "theoretical": 3.0,
       "practical": null,
       "year": 2,
-      "semester": 2,
+      "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -130,7 +132,7 @@
       "theoretical": 2.0,
       "practical": null,
       "year": 3,
-      "semester": 1,
+      "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -147,8 +149,8 @@
       "credits": "2.0",
       "theoretical": 2.0,
       "practical": null,
-      "year": 3,
-      "semester": 2,
+      "year": 2,
+      "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -418,7 +420,7 @@
       "theoretical": 3.0,
       "practical": null,
       "year": 2,
-      "semester": 1,
+      "semester": 2,
       "category": "CORE",
       "requirement": "specReq",
       "isElective": false,
@@ -1103,7 +1105,7 @@
     },
     {
       "requires": "010610026",
-      "forCourse": "040111001"
+      "forCourse": "010610036"
     },
     {
       "requires": "010610035",

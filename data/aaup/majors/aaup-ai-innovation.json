@@ -176,8 +176,8 @@
       "requirement": "univReq"
     },
     {
-      "slug": "110411000",
-      "code": "110411000",
+      "slug": "240111000",
+      "code": "240111000",
       "name": "Computer Skills",
       "nameAr": null,
       "credits": "2",
@@ -1077,10 +1077,12 @@
         "planCode": "110411000",
         "course": "Computer Skills"
       }
-    ]
+    ],
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-artificial-intelligence-specialization-artificial-intelligence-and-innovation/curriculum"
+    }
   },
-  "requirementHoursDrift": {
-    "univElec": 2.0,
-    "specElec": 6.0
+  "renamedIds": {
+    "110411000": "240111000"
   }
 }

@@ -176,8 +176,8 @@
       "requirement": "univReq"
     },
     {
-      "slug": "110411000",
-      "code": "110411000",
+      "slug": "240111000",
+      "code": "240111000",
       "name": "Computer Skills",
       "nameAr": null,
       "credits": "2",
@@ -1126,6 +1126,14 @@
       "forCourse": "020312100"
     },
     {
+      "requires": "240111000",
+      "forCourse": "020732010"
+    },
+    {
+      "requires": "240111000",
+      "forCourse": "020732100"
+    },
+    {
       "requires": "100411050",
       "forCourse": "100411810"
     },
@@ -1293,9 +1301,12 @@
         "planCode": "110411000",
         "course": "Computer Skills"
       }
-    ]
+    ],
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-data-science-specialization-finance-and-data-science/curriculum"
+    }
   },
-  "requirementHoursDrift": {
-    "specElec": 18.0
+  "renamedIds": {
+    "110411000": "240111000"
   }
 }

@@ -1021,6 +1021,330 @@
       "independentGrades": false,
       "prerequisiteText": null,
       "addedFromSource": "Required by the published plan but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "100411020",
+      "code": "100411020",
+      "name": "Calculus II",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "110411100",
+      "code": "110411100",
+      "name": "Digital Logic Design",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240114320",
+      "code": "240114320",
+      "name": "Entrepreneurship",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240114500",
+      "code": "240114500",
+      "name": "Special Topic in IT",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240213100",
+      "code": "240213100",
+      "name": "Advanced Computer Graphics",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240213150",
+      "code": "240213150",
+      "name": "Statistical Methods in Natural Language Processing",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240213331",
+      "code": "240213331",
+      "name": "Human Computer Interaction (Hci)",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214120",
+      "code": "240214120",
+      "name": "Web Development II",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214181",
+      "code": "240214181",
+      "name": "Digital TV and Cinematography",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214230",
+      "code": "240214230",
+      "name": "Media Theory, Dvd and Compositing",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214320",
+      "code": "240214320",
+      "name": "Color Theory",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214360",
+      "code": "240214360",
+      "name": "Screenwriting and Storyboarding",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214370",
+      "code": "240214370",
+      "name": "Interactive 3D Graphics",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214380",
+      "code": "240214380",
+      "name": "Infographics",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240222300",
+      "code": "240222300",
+      "name": "Multimedia Applications",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240222400",
+      "code": "240222400",
+      "name": "Multimedia Indexing and Retrieval",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240223200",
+      "code": "240223200",
+      "name": "Computer Vision",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240223202",
+      "code": "240223202",
+      "name": "Business and Enterprise Basics",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
     }
   ],
   "prerequisites": [
@@ -1070,6 +1394,10 @@
     },
     {
       "requires": "240111060",
+      "forCourse": "240112200"
+    },
+    {
+      "requires": "240112100",
       "forCourse": "240112200"
     },
     {
@@ -1159,6 +1487,66 @@
     {
       "requires": "240214971",
       "forCourse": "240214990"
+    },
+    {
+      "requires": "100411010",
+      "forCourse": "100411020"
+    },
+    {
+      "requires": "240211013",
+      "forCourse": "110411100"
+    },
+    {
+      "requires": "240212100",
+      "forCourse": "240213100"
+    },
+    {
+      "requires": "100413750",
+      "forCourse": "240213150"
+    },
+    {
+      "requires": "240112100",
+      "forCourse": "240213331"
+    },
+    {
+      "requires": "240213081",
+      "forCourse": "240214120"
+    },
+    {
+      "requires": "240222500",
+      "forCourse": "240214181"
+    },
+    {
+      "requires": "240222500",
+      "forCourse": "240214230"
+    },
+    {
+      "requires": "240212100",
+      "forCourse": "240214320"
+    },
+    {
+      "requires": "240212020",
+      "forCourse": "240214360"
+    },
+    {
+      "requires": "240212401",
+      "forCourse": "240214370"
+    },
+    {
+      "requires": "240213081",
+      "forCourse": "240214380"
+    },
+    {
+      "requires": "240212020",
+      "forCourse": "240222300"
+    },
+    {
+      "requires": "240112100",
+      "forCourse": "240222400"
+    },
+    {
+      "requires": "240213120",
+      "forCourse": "240223200"
     }
   ],
   "iconKey": "palette",
@@ -1174,7 +1562,10 @@
   "requirementSource": {
     "document": "AAUP catalogue docx (data_600.docx)",
     "program": "Bachelor in Multimedia Technology",
-    "via": "tools/merge-catalogue-requirements.py"
+    "via": "tools/merge-catalogue-requirements.py",
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-multimedia-technology/curriculum"
+    }
   },
   "coursesAddedFromSource": [
     {

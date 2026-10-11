@@ -18,8 +18,9 @@
     "univReq": 14.0
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Public Safety Engineering",
+    "page": "https://www.aaup.edu/bachelor-public-safety-engineering/curriculum",
     "placement": "suggested",
     "via": "tools/import-catalogue-programs.py"
   },
@@ -67,8 +68,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -103,8 +104,8 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 2,
       "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",

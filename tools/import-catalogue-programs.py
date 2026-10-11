@@ -72,30 +72,76 @@ def resolve_renames(renames):
     return out
 
 
+def similar(a, b):
+    """Two names for the same course: the same words, or nearly - the
+    university renumbered "Programming Fundamentals (C++)" as "Programming
+    Fundamentals I C++". Three of four words in common is the bar, which keeps
+    "Electrical Circuits I" and "Electrical Circuits II" apart (two of four)."""
+    ta, tb = set(norm_name(a).split()), set(norm_name(b).split())
+    return bool(ta and tb) and (ta == tb or len(ta & tb) / len(ta | tb) >= 0.75)
+
+
+def same_hours(a, b):
+    try:
+        return abs(float(a.get('credits') or 0) - float(b.get('credits') or 0)) < 0.001
+    except (TypeError, ValueError):
+        return False
+
+
 def carry_renames(old, new):
     """The ids a rewritten plan renamed.
 
     When the university renumbers a course, the regenerated plan has the same
     course under a new number. A course the old plan had that the new one does
-    not, with exactly one new course of the same name, is that course renamed;
-    recording it lets js/02-id-renames.js move every student's ticks, grades
-    and notes to the new number instead of leaving them on an id that no
-    longer exists. Earlier renames are kept.
+    not, with exactly one new course of the same name (see similar) and the
+    same hours, is that course renamed; recording it lets js/02-id-renames.js
+    move every student's ticks, grades and notes to the new number instead of
+    leaving them on an id that no longer exists. Earlier renames are kept.
     """
     was = {c['slug']: c for c in old.get('courses', []) if not c.get('isPlaceholder')}
     now = {c['slug']: c for c in new['courses'] if not c.get('isPlaceholder')}
-    came = collections.defaultdict(list)
-    for s in now:
-        if s not in was:
-            came[norm_name(now[s]['name'])].append(s)
+    came = [s for s in now if s not in was]
     renames = dict(old.get('renamedIds') or {})
-    for s in was:
-        if s in now:
-            continue
-        hits = came.get(norm_name(was[s]['name']), [])
-        if len(hits) == 1:
-            renames[s] = hits[0]
+    taken = set()
+    for exact in (True, False):
+        for s in was:
+            if s in now or s in renames and renames[s] in now:
+                continue
+            hits = [n for n in came if n not in taken and same_hours(was[s], now[n]) and
+                    (norm_name(was[s]['name']) == norm_name(now[n]['name']) if exact
+                     else similar(was[s]['name'], now[n]['name']))]
+            if len(hits) == 1:
+                renames[s] = hits[0]
+                taken.add(hits[0])
     return resolve_renames(renames)
+
+
+def keep_slot_ids(old, new):
+    """Elective slots keep the ids they had.
+
+    A slot's id is made from its term and its place in the Advisory Plan's
+    list, so anything that changes that list (a course the site no longer
+    lists, say) renumbers every slot after it - and a student who named the
+    elective they took in one would find it blank. A new slot takes the id of
+    an old slot of the same requirement in the same term, when there is one.
+    """
+    olds = collections.defaultdict(list)
+    for c in old.get('courses', []):
+        if c.get('isPlaceholder'):
+            olds[(c.get('requirement'), c.get('year'), c.get('semester'))].append(c['slug'])
+    used = {c['slug'] for c in new['courses'] if not c.get('isPlaceholder')}
+    slots = [c for c in new['courses'] if c.get('isPlaceholder')]
+    keep = {c['slug'] for c in slots if c['slug'] in {s for v in olds.values() for s in v}}
+    for c in slots:
+        if c['slug'] in keep:
+            continue
+        pool = [s for s in olds.get((c.get('requirement'), c.get('year'), c.get('semester')), [])
+                if s not in keep and s not in used]
+        if pool:
+            c['slug'] = pool[0]
+            keep.add(pool[0])
+    for c in slots:
+        used.add(c['slug'])
 
 
 def site_programs():
@@ -126,6 +172,15 @@ def from_site(sp):
         if sec.get('requiredHours') is not None:
             s['requiredHours'] = sec['requiredHours']
         req[k] = s
+    # The app's one elective pool is specElec. College Electives (only the
+    # Orthodontics residency has them, and no specialization electives of its
+    # own) are that pool; anything else in them would be dropped by
+    # build_courses, which only reads the buckets in ORDER.
+    if 'colgElec' in req:
+        ce = req.pop('colgElec')
+        se = req.setdefault('specElec', {'courses': [], 'requiredHours': 0})
+        se['courses'] = se.get('courses', []) + ce.get('courses', [])
+        se['requiredHours'] = (se.get('requiredHours') or 0) + (ce.get('requiredHours') or 0)
     return req
 
 
@@ -491,6 +546,15 @@ def build_courses(prog):
 def place(prog, courses, prereqs):
     """(placement source, {slug: (year, semester)})"""
     ap = prog.get('advisoryPlan')
+    if ap and ap.get('terms') and prog.get('site'):
+        # An Advisory Plan that covers less than half the courses the site
+        # requires (Ambulance and Emergency's covers part of its first year)
+        # would leave the rest piled into its few terms. The whole plan gets
+        # the suggested sequence instead.
+        required = {c['slug'] for c in courses if not c['isElective']}
+        named = {c.get('code') for t in ap['terms'] for c in t.get('courses', [])}
+        if required and len(required & named) < len(required) / 2:
+            ap = None
     if ap and ap.get('terms'):
         YEARS = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'forth': 4,
                  'fifth': 5, 'sixth': 6, 'seventh': 7}
@@ -510,6 +574,8 @@ def place(prog, courses, prereqs):
                               'spec. req.': 'specReq', 'spec req': 'specReq'}
         extra = []
         known = {c['slug'] for c in courses}
+        courses_by_code = {c['slug']: c for c in courses}
+        advisory_codes = {c.get('code') for t in ap['terms'] for c in t.get('courses', []) if c.get('code')}
         out = {}
         for t in ap['terms']:
             y = YEARS.get((t.get('year') or '').split()[0].lower(), 1)
@@ -519,9 +585,18 @@ def place(prog, courses, prereqs):
                 if code:
                     if code not in known and prog.get('site'):
                         # The site's tables are newer than the document's
-                        # Advisory Plan. A course the plan schedules that the
-                        # site no longer lists is not added back; it is
-                        # recorded on the plan.
+                        # Advisory Plan. A course the plan schedules under a
+                        # number the site has since changed is found by its
+                        # name and hours (see similar) and keeps its term; one
+                        # the site no longer lists at all is not added back,
+                        # and is recorded on the plan.
+                        twin = [k for k in courses_by_code
+                                if k not in advisory_codes and k not in out and
+                                similar(c.get('name') or '', courses_by_code[k]['name']) and
+                                abs(float(c.get('credits') or 0) - float(courses_by_code[k]['credits'] or 0)) < 0.001]
+                        if len(twin) == 1:
+                            out[twin[0]] = (y, s)
+                            continue
                         prog.setdefault('_advisoryNotOnSite', []).append(
                             {'code': code, 'name': title_case(c.get('name') or code)})
                         continue
@@ -588,6 +663,48 @@ def place(prog, courses, prereqs):
     return 'suggested', seq, []
 
 
+def place_new(courses, prereqs, doc_codes):
+    """A required course the site lists and the document's plan never had gets
+    a suggested term, so it is not left in the plan's unscheduled pool.
+
+    The Advisory Plan cannot place it - it predates the course. It goes in the
+    lightest term after everything it needs, and not before the year its
+    number belongs to (the sixth digit of an AAUP course number is its year);
+    a 0-hour university requirement goes in the first term, with Community
+    Service and Beginning English. Courses the Advisory Plan already left
+    unscheduled stay as they were.
+    """
+    terms = collections.defaultdict(float)
+    at = {}
+    for c in courses:
+        if c['year'] and c['semester'] in (1, 2):
+            terms[(c['year'], c['semester'])] += float(c['credits'] or 0)
+            at[c['slug']] = (c['year'], c['semester'])
+    if not terms:
+        return
+    needs = collections.defaultdict(list)
+    for p in prereqs:
+        needs[p['forCourse']].append(p['requires'])
+    for c in sorted(courses, key=lambda c: c['slug']):
+        if c['year'] or c['isElective'] or c['isPlaceholder'] or c['slug'] in doc_codes:
+            continue
+        if c['requirement'] == 'univReq' and not float(c['credits'] or 0):
+            t = min(terms)
+        else:
+            code = c['slug']
+            level = int(code[5]) if len(code) == 9 and code[5] in '123456' else 1
+            floor = (min(level, max(terms)[0]), 0)
+            for q in needs.get(c['slug'], []):
+                if q in at and at[q] >= floor:
+                    floor = at[q]
+            later = [t for t in terms if t > floor] or [max(terms)]
+            t = min(later, key=lambda t: (t[0], terms[t], t))
+        c['year'], c['semester'] = t
+        c['termSuggested'] = True
+        terms[t] += float(c['credits'] or 0)
+        at[c['slug']] = t
+
+
 def years_of(prog):
     m = (prog.get('meta') or {}).get('durationYears')
     if m:
@@ -641,6 +758,8 @@ def make_major(prog, slug, college):
     for c in courses:
         y, s = placement.get(c['slug'], (None, None))
         c['year'], c['semester'] = y, s
+    if src == 'advisory' and prog.get('_docCodes') is not None:
+        place_new(courses, prereqs, prog['_docCodes'])
 
     # Elective hours the document requires that nothing above accounts for -
     # neither a named option nor a slot the advisory plan placed. The student
@@ -810,6 +929,7 @@ def main(write=False):
         if not sp or not sp.get('published') or p['name'] in SITE_SET_ASIDE:
             continue
         if site_complete(sp):
+            p['_docCodes'] = {c['code'] for v in p['requirements'].values() for c in v.get('courses', [])}
             p['requirements'] = from_site(sp)
             p['degreeHours'] = sp.get('degreeHours') or p.get('degreeHours')
             p['sourceIssues'] = None          # those were the document's
@@ -853,7 +973,9 @@ def main(write=False):
         m = make_major(p, slug, college)
         path = os.path.join(MAJORS, slug + '.json')
         if os.path.exists(path):
-            ren = carry_renames(json.load(open(path, encoding='utf-8')), m)
+            before = json.load(open(path, encoding='utf-8'))
+            keep_slot_ids(before, m)
+            ren = carry_renames(before, m)
             if ren:
                 m['renamedIds'] = ren
         made.append(m)

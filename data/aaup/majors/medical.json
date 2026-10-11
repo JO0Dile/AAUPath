@@ -256,7 +256,7 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "-",
+      "prerequisiteText": null,
       "requirement": "specReq"
     },
     {
@@ -566,8 +566,8 @@
       "requirement": "univReq"
     },
     {
-      "slug": "250223040",
-      "code": "250223040",
+      "slug": "290312250",
+      "code": "290312250",
       "name": "Fundamentals of Software Engineering",
       "nameAr": "أساسيات هندسة البرمجيات",
       "credits": "3",
@@ -580,7 +580,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311120)",
+      "prerequisiteText": null,
       "requirement": "colgReq"
     },
     {
@@ -814,7 +814,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-",
+      "prerequisiteText": null,
       "requirement": "specReq"
     },
     {
@@ -886,7 +886,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)",
+      "prerequisiteText": null,
       "requirement": "colgReq"
     },
     {
@@ -1179,6 +1179,24 @@
       "independentGrades": false,
       "prerequisiteText": null,
       "addedFromSource": "Required by the published plan but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "specelec-site-slot-1",
+      "code": null,
+      "name": "Specialization Elective",
+      "nameAr": "اختياري تخصص",
+      "credits": "3",
+      "theoretical": null,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": true,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
     }
   ],
   "prerequisites": [
@@ -1209,10 +1227,6 @@
     {
       "requires": "100311620",
       "forCourse": "100211650"
-    },
-    {
-      "requires": "100311620",
-      "forCourse": "100211620"
     },
     {
       "requires": "100411010",
@@ -1255,8 +1269,8 @@
       "forCourse": "040521301"
     },
     {
-      "requires": "290312140",
-      "forCourse": "250223040"
+      "requires": "290311120",
+      "forCourse": "290312250"
     },
     {
       "requires": "290312130",
@@ -1295,16 +1309,8 @@
       "forCourse": "290313120"
     },
     {
-      "requires": "290313240",
-      "forCourse": "290314130"
-    },
-    {
       "requires": "290312230",
       "forCourse": "290313210"
-    },
-    {
-      "requires": "290312120",
-      "forCourse": "290314110"
     },
     {
       "requires": "290314130",
@@ -1414,12 +1420,10 @@
         "planCode": "250223040",
         "course": "Fundamentals of Software Engineering"
       }
-    ]
-  },
-  "requirementHoursDrift": {
-    "colgReq": 8.0,
-    "specReq": 6.0,
-    "specElec": 27.0
+    ],
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-artificial-intelligence-specialization-artificial-intelligence-and-medical-sciences/curriculum"
+    }
   },
   "renamedIds": {
     "arabic-language": "040111001",
@@ -1451,7 +1455,7 @@
     "data-sci-analytics": "290312210",
     "diff-eq": "290312240",
     "research-methods": "040521301",
-    "fund-se": "250223040",
+    "fund-se": "290312250",
     "intro-os": "290312220",
     "physics": "290322110",
     "physics-lab": "290322110-lab",
@@ -1475,6 +1479,7 @@
     "elective-cognitive-systems": "290313190",
     "elective-digital-health-informatics": "290323250",
     "elective-robotics-foundation": "290313110",
-    "elective-robotics-assistive-tech": "290323230"
+    "elective-robotics-assistive-tech": "290323230",
+    "250223040": "290312250"
   }
 }

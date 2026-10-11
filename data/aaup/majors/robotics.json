@@ -724,7 +724,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-",
+      "prerequisiteText": null,
       "requirement": "specReq"
     },
     {
@@ -1079,10 +1079,6 @@
       "forCourse": "290314120"
     },
     {
-      "requires": "290313240",
-      "forCourse": "290314130"
-    },
-    {
       "requires": "290312230",
       "forCourse": "290313210"
     },
@@ -1156,12 +1152,10 @@
   "requirementSource": {
     "document": "AAUP AI & Data Science catalogue PDF",
     "program": "Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Robotics",
-    "via": "tools/merge-catalogue-requirements.py"
-  },
-  "requirementHoursDrift": {
-    "colgReq": 8.0,
-    "specReq": 3.0,
-    "specElec": 3.0
+    "via": "tools/merge-catalogue-requirements.py",
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-artificial-intelligence-specialization-artificial-intelligence-and-robotics/curriculum"
+    }
   },
   "coursesAddedFromSource": [
     {

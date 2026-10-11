@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Read aaup.edu's "Academic Plan" pages into site-plans.json.
 
-    python3 tools/catalogue-import/parse-site.py PAGES_DIR PROGRAMS_JSON [--captures FILE]
+    python3 tools/catalogue-import/parse-site.py PAGES PROGRAMS_JSON [--captures FILE]
 
-PAGES_DIR      one saved page per program, named after the program's address on
-               aaup.edu: bachelor-accounting.html is the page at
+PAGES          either aaup-academic-plans.json - every page, saved in one go by
+               the script the admin Check card hands out, run in a browser on
+               www.aaup.edu - or a directory of single pages named after the
+               program's address: bachelor-accounting.html is the page at
                https://www.aaup.edu/bachelor-accounting/curriculum
 PROGRAMS_JSON  [[faculty, name, url], ...] read off https://www.aaup.edu/academic-programs,
                plus "ar" ([[faculty, name, url], ...] off the Arabic list) so each
@@ -19,9 +21,10 @@ Plan page is generated from the registration database: every course is a table
 row with its own number, hours and a cell holding the prerequisite course
 NUMBERS, so nothing has to be inferred from layout.
 
-The pages were read through Web Archive captures, because www.aaup.edu answers
-400 to every request from a data centre. Each program records the capture it
-came from, so any figure here can be checked against the page it was read from.
+www.aaup.edu answers 400 to every request from a data centre, so the pages
+are read in a browser on the site (the file above), or from Web Archive
+captures. Each program records when and how it was read (readAt, or capture),
+so any figure here can be checked against the page it came from.
 
 A page with no tables (Bachelor in AI and Robotics Engineering, at the time of
 writing) is kept with "published": false: the program exists, the university
@@ -153,6 +156,11 @@ def main():
     args = ap.parse_args()
     listing = json.load(open(args.programs, encoding='utf-8'))
     ar = {loose(slug_of(u)): (f, n) for f, n, u in listing.get('ar', [])}
+    browser, read_at = None, None
+    if os.path.isfile(args.pages):
+        saved = json.load(open(args.pages, encoding='utf-8'))
+        read_at = saved.get('savedAt')
+        browser = {slug_of(k): (v or {}).get('html') or '' for k, v in saved['pages'].items()}
     caps = {}
     if args.captures:
         for line in open(args.captures, encoding='utf-8'):
@@ -164,16 +172,24 @@ def main():
         if faculty == 'Faculty of Graduate Studies':
             continue
         slug = slug_of(url)
-        path = os.path.join(args.pages, slug + '.html')
-        if not os.path.exists(path):
-            print('no page saved for', name, file=sys.stderr)
-            continue
-        got = parse(open(path, encoding='utf-8', errors='replace').read())
+        if browser is not None:
+            if slug not in browser:
+                print('no page saved for', name, file=sys.stderr)
+                continue
+            got = parse(browser[slug])
+        else:
+            path = os.path.join(args.pages, slug + '.html')
+            if not os.path.exists(path):
+                print('no page saved for', name, file=sys.stderr)
+                continue
+            got = parse(open(path, encoding='utf-8', errors='replace').read())
         far, nar = ar.get(loose(slug), (None, None))
         p = {'faculty': faculty, 'facultyAr': far, 'name': name.replace('\u200b', ''), 'nameAr': nar,
              'url': url.replace('%E2%80%8B', ''), 'page': url.rstrip('/') + '/curriculum'}
         ts = caps.get(slug)
-        if ts:
+        if read_at:
+            p['readAt'] = read_at
+        elif ts:
             p['capture'] = 'https://web.archive.org/web/%s/%s' % (ts, p['page'])
             p['capturedAt'] = '%s-%s-%sT%s:%s:%sZ' % (ts[:4], ts[4:6], ts[6:8], ts[8:10], ts[10:12], ts[12:14])
         p['degreeHours'] = got['degreeHours']
@@ -185,7 +201,8 @@ def main():
         if got['unknownTabs']:
             p['unknownTabs'] = got['unknownTabs']
         out.append(p)
-    json.dump({'source': 'Each program’s Academic Plan page on www.aaup.edu, read from Web Archive captures',
+    json.dump({'source': 'Each program\u2019s Academic Plan page on www.aaup.edu'
+                         + (', read in a browser on the site at ' + read_at if read_at else ', read from Web Archive captures'),
                'programs': out}, open(args.out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print('%d programs, %d with a published plan -> %s'
           % (len(out), sum(p['published'] for p in out), os.path.relpath(args.out)))

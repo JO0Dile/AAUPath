@@ -26,7 +26,10 @@
     "document": "AAUP catalogue docx (data_600.docx)",
     "program": "Bachelor in Computer Science - Specialization in Game Design and Development",
     "placement": "advisory",
-    "via": "tools/import-catalogue-programs.py"
+    "via": "tools/import-catalogue-programs.py",
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-computer-science-specialization-game-design-and-development/curriculum"
+    }
   },
   "sourceVersion": 1,
   "courses": [
