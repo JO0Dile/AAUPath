@@ -164,6 +164,7 @@ def shape_plan(major, scales_by_college, colleges):
 def main():
     index = read(DATA / 'universities.json')
     universities, colleges, plans = {}, {}, []
+    aaup_pages, aaup_set_aside = {}, {}
     skipped = []
 
     for entry in index['universities']:
@@ -232,8 +233,22 @@ def main():
         # first in that order, then everything unplaced alphabetically. The
         # app sorts too — this just keeps the file's own order meaningful, so
         # a reordering shows up as a readable diff rather than a silent one.
-        shaped = [shape_plan(read(f), scales_by_college, colleges)
-                  for f in sorted(majors_dir.glob('*.json'))]
+        raw = [read(f) for f in sorted(majors_dir.glob('*.json'))]
+        shaped = [shape_plan(m, scales_by_college, colleges) for m in raw]
+        # Which page on aaup.edu each plan was read from, for the admin's
+        # "Check with aaup.edu" card (js/112-plan-check.js). Kept beside the
+        # plans rather than inside them, so it is not part of any plan's
+        # version: adding or moving one never sends students an update.
+        for m in raw:
+            src = m.get('requirementSource') or {}
+            page = src.get('page') or (src.get('site') or {}).get('page')
+            if page:
+                aaup_pages[m['slug']] = page.replace('https://www.aaup.edu', '').replace('%E2%80%8B', '')
+            aside = src.get('siteSetAside')
+            if aside:
+                aaup_set_aside[m['slug']] = {
+                    'page': aside['page'].replace('https://www.aaup.edu', '').replace('%E2%80%8B', ''),
+                    'reason': aside['reason']}
         shaped.sort(key=lambda p: (
             p['sortOrder'] is None,
             p['sortOrder'] if p['sortOrder'] is not None else 0,
@@ -272,6 +287,9 @@ def main():
         'universities': universities,
         'colleges': colleges,
         'plans': plans,
+        'aaupPages': dict(sorted(aaup_pages.items())),
+        # Pages read and set aside because they are not the program's plan.
+        'aaupSetAside': dict(sorted(aaup_set_aside.items())),
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
 

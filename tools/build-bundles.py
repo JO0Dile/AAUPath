@@ -83,7 +83,7 @@ GROUPS = {
         '58-wordlist-data.js', '58-wordfilter.js', '59-thoughts.js', '73-contribute.js',
     ],
     'admin': [
-        '48-admin.js',
+        '48-admin.js', '112-plan-check.js',
     ],
 }
 

@@ -22,7 +22,11 @@
     "document": "AAUP catalogue docx (data_600.docx)",
     "program": "Diploma in Mobile Application Development",
     "placement": "advisory",
-    "via": "tools/import-catalogue-programs.py"
+    "via": "tools/import-catalogue-programs.py",
+    "siteSetAside": {
+      "page": "https://www.aaup.edu/diploma-smart-device-maintenance-technology/curriculum",
+      "reason": "Its page (www.aaup.edu/diploma-smart-device-maintenance-technology, the address of the diploma it replaced) shows a 27-hour plan of three courses named only in Arabic - not the 69-hour plan the document prints for this program, which stays."
+    }
   },
   "sourceVersion": 1,
   "courses": [
