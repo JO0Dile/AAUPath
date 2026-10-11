@@ -29,6 +29,11 @@ imported one would:
 
 A major is paired with its source program by requirementSource.program, or by
 EXTRA below for the few majors that predate that field. Never fuzzy-matched.
+
+Superseded where aaup.edu has the program's Academic Plan page: those majors
+follow tools/catalogue-import/site-plans.json (import-catalogue-programs.py
+and sync-site-plans.py), and are skipped here so a run of this script cannot
+put the document's prerequisites back over the site's.
 """
 import argparse
 import glob
@@ -44,6 +49,19 @@ EXTRA = {
     'cybersecurity.json': 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Cyber Security',
     'aaup-networks-infosec.json': 'Bachelor in Computer Networks - Minor Information Security',
 }
+
+
+def on_site():
+    """Program names (normalised) that have a published Academic Plan page."""
+    path = os.path.join(CI, 'site-plans.json')
+    if not os.path.exists(path):
+        return set()
+    return {key(p['name']) for p in json.load(open(path, encoding='utf-8'))['programs'] if p.get('published')}
+
+
+def key(name):
+    import re
+    return re.sub(r'[^a-z0-9]+', ' ', name.replace('\u200b', '').lower()).strip()
 
 
 def sources():
@@ -94,6 +112,7 @@ def main():
     ap.add_argument('--write', action='store_true')
     args = ap.parse_args()
     src = sources()
+    site = on_site()
     total_changed = 0
     for path in sorted(glob.glob(os.path.join(MAJORS, '*.json'))):
         base = os.path.basename(path)
@@ -101,6 +120,8 @@ def main():
         name = (major.get('requirementSource') or {}).get('program') or EXTRA.get(base)
         if not major.get('courses') or not name:
             continue
+        if key(name) in site:
+            continue                      # follows the site - see the docstring
         if name not in src:
             print('%-60s source program not found: %s' % (base, name))
             continue

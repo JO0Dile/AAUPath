@@ -21,6 +21,10 @@ Only majors in PAIRS below are touched, and only after this script has proved
 that EVERY course in the app's plan appears in that catalogue program. A
 partial match is refused: half a taxonomy is worse than none, because the
 missing half looks like a zero rather than an absence.
+
+Superseded where aaup.edu has the program's Academic Plan page: those majors
+are kept in line by tools/sync-site-plans.py, and skipped here so a run of
+this script cannot write the document's figures back over the site's.
 """
 import argparse
 import collections
@@ -157,8 +161,18 @@ def main():
         ai_names = {p['name'] for p in
                     json.loads(AI_CATALOGUE.read_text(encoding='utf-8'))['programs']}
 
+    site_path = REPO / 'tools' / 'catalogue-import' / 'site-plans.json'
+    on_site = set()
+    if site_path.exists():
+        on_site = {normalize(p['name'].replace('\u200b', ''))
+                   for p in json.loads(site_path.read_text(encoding='utf-8'))['programs']
+                   if p.get('published')}
+
     failed = False
     for slug, program_name in PAIRS.items():
+        if normalize(program_name) in on_site:
+            print(f'{slug}: follows aaup.edu (tools/sync-site-plans.py); skipped')
+            continue
         path = MAJORS / f'{slug}.json'
         major = json.loads(path.read_text(encoding='utf-8'))
         program = catalogue.get(program_name)
