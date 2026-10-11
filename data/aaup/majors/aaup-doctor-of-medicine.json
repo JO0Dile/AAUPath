@@ -23,9 +23,12 @@
     "supportCourses": 29.0
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Doctor of Medicine",
+    "page": "https://www.aaup.edu/bachelor-doctor-medicine/curriculum",
     "placement": "advisory",
+    "placementDocument": "AAUP catalogue docx (data_600.docx)",
+    "pageIncomplete": "The page’s tables add up to 228 hours against the 257 it states, so the document’s plan is kept and the page corrects the hours and prerequisites of the courses both list (see merge_site).",
     "via": "tools/import-catalogue-programs.py"
   },
   "sourceVersion": 1,

@@ -176,8 +176,8 @@
       "requirement": "univReq"
     },
     {
-      "slug": "110411000",
-      "code": "110411000",
+      "slug": "240111000",
+      "code": "240111000",
       "name": "Computer Skills",
       "nameAr": null,
       "credits": "2",
@@ -1141,15 +1141,15 @@
     },
     {
       "requires": "010610025",
+      "forCourse": "010610026"
+    },
+    {
+      "requires": "010610025",
       "forCourse": "010610035"
     },
     {
       "requires": "010610026",
       "forCourse": "010610035"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610036"
     },
     {
       "requires": "010610026",
@@ -1280,7 +1280,7 @@
   "imageUrl": null,
   "requirementHours": {
     "univReq": 14.0,
-    "univElec": 6,
+    "univElec": 8,
     "colgReq": 24.0,
     "specReq": 69.0,
     "specElec": 12,
@@ -1295,16 +1295,12 @@
         "planCode": "110411000",
         "course": "Computer Skills"
       }
-    ]
+    ],
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-financial-engineering/curriculum"
+    }
   },
-  "requirementHoursDrift": {
-    "univElec": 2.0,
-    "specElec": 36.0
-  },
-  "degreeHoursDiscrepancy": {
-    "statedDegreeHours": 133,
-    "sumOfRequirementHours": 131.0,
-    "difference": -2.0,
-    "reason": "The PDF states this total but does not print enough requirement sections to reach it. Nothing is inferred to close the gap."
+  "renamedIds": {
+    "110411000": "240111000"
   }
 }

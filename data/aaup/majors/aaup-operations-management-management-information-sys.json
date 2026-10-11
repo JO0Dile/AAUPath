@@ -23,8 +23,9 @@
     "freeElec": 6
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Operations Management - Specialization in Management Information Systems (MIS)",
+    "page": "https://www.aaup.edu/bachelor-operations-management-specialization-management-information-systems-mis/curriculum",
     "placement": "suggested",
     "via": "tools/import-catalogue-programs.py"
   },
@@ -90,8 +91,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 3,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -126,8 +127,8 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 4,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -1215,6 +1216,54 @@
     {
       "requires": "020211020",
       "forCourse": "270414200"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020732111"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020733700"
+    },
+    {
+      "requires": "020733100",
+      "forCourse": "020734000"
+    },
+    {
+      "requires": "020733100",
+      "forCourse": "020734110"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020734110"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020734201"
+    },
+    {
+      "requires": "020732100",
+      "forCourse": "020734202"
+    },
+    {
+      "requires": "020733121",
+      "forCourse": "020734210"
+    },
+    {
+      "requires": "020733401",
+      "forCourse": "020734210"
+    },
+    {
+      "requires": "020734411",
+      "forCourse": "020734501"
+    },
+    {
+      "requires": "020411010",
+      "forCourse": "210312050"
+    },
+    {
+      "requires": "020211020",
+      "forCourse": "270414100"
     }
   ]
 }

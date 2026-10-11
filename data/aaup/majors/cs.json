@@ -5,7 +5,7 @@
   "nameAr": "قسم علم الحاسوب",
   "university": "aaup",
   "college": "aaup-it",
-  "degreeHours": 134,
+  "degreeHours": 135,
   "courses": [
     {
       "slug": "040111001",
@@ -472,7 +472,7 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "Discrete Mathematics (100413750) &amp; Programming Fundamentals II (240112003)",
+      "prerequisiteText": null,
       "requirement": "specReq"
     },
     {
@@ -689,7 +689,7 @@
       "pairGroup": false,
       "independentGrades": false,
       "prerequisiteText": "Principles of Object Oriented Programming (240212010)",
-      "requirement": "specReq"
+      "requirement": "specElec"
     },
     {
       "slug": "240114471",
@@ -872,8 +872,8 @@
       "requirement": "specReq"
     },
     {
-      "slug": "240213231",
-      "code": "240213231",
+      "slug": "240213230",
+      "code": "240213230",
       "name": "Visual Programming (Basic)",
       "nameAr": "البرمجة المرئية",
       "credits": "3",
@@ -887,7 +887,7 @@
       "pairGroup": false,
       "independentGrades": false,
       "prerequisiteText": "Programming Fundamentals II (240112003)",
-      "requirement": "specReq"
+      "requirement": "specElec"
     },
     {
       "slug": "240114350",
@@ -1266,6 +1266,63 @@
       "independentGrades": false,
       "prerequisiteText": "Web Development I (240213081)",
       "requirement": "specElec"
+    },
+    {
+      "slug": "100111010",
+      "code": "100111010",
+      "name": "General Physics I",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "100111051",
+      "code": "100111051",
+      "name": "General Physics Lab I",
+      "nameAr": null,
+      "credits": "1",
+      "theoretical": null,
+      "practical": 2.0,
+      "year": 1,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "100411800",
+      "code": "100411800",
+      "name": "Elementary Probability & Statistics",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
     }
   ],
   "prerequisites": [
@@ -1274,8 +1331,60 @@
       "forCourse": "100411020"
     },
     {
+      "requires": "010610014",
+      "forCourse": "010610025"
+    },
+    {
+      "requires": "010610014",
+      "forCourse": "010610026"
+    },
+    {
+      "requires": "240111011",
+      "forCourse": "240111021"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610035",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "010610036",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "110411100",
+      "forCourse": "240112111"
+    },
+    {
       "requires": "100411020",
       "forCourse": "100412040"
+    },
+    {
+      "requires": "240111011",
+      "forCourse": "240112003"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "110412120"
+    },
+    {
+      "requires": "110411100",
+      "forCourse": "240223041"
     },
     {
       "requires": "240223041",
@@ -1290,24 +1399,12 @@
       "forCourse": "110412130"
     },
     {
-      "requires": "240111011",
-      "forCourse": "240112003"
-    },
-    {
       "requires": "100413750",
       "forCourse": "240112031"
     },
     {
       "requires": "240112003",
       "forCourse": "240112031"
-    },
-    {
-      "requires": "110411100",
-      "forCourse": "240112111"
-    },
-    {
-      "requires": "240112031",
-      "forCourse": "240113020"
     },
     {
       "requires": "240112003",
@@ -1318,102 +1415,6 @@
       "forCourse": "240113132"
     },
     {
-      "requires": "240112031",
-      "forCourse": "240113171"
-    },
-    {
-      "requires": "240113311",
-      "forCourse": "240113221"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "240113291"
-    },
-    {
-      "requires": "240112031",
-      "forCourse": "240113311"
-    },
-    {
-      "requires": "240112111",
-      "forCourse": "240113311"
-    },
-    {
-      "requires": "240113171",
-      "forCourse": "240113620"
-    },
-    {
-      "requires": "240113020",
-      "forCourse": "240114081"
-    },
-    {
-      "requires": "240112111",
-      "forCourse": "240114331"
-    },
-    {
-      "requires": "240113311",
-      "forCourse": "240114341"
-    },
-    {
-      "requires": "240113020",
-      "forCourse": "240114350"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "240114471"
-    },
-    {
-      "requires": "240114974",
-      "forCourse": "240114982"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "240212010"
-    },
-    {
-      "requires": "100412040",
-      "forCourse": "240212100"
-    },
-    {
-      "requires": "240111011",
-      "forCourse": "240212100"
-    },
-    {
-      "requires": "240212010",
-      "forCourse": "240213010"
-    },
-    {
-      "requires": "240113121",
-      "forCourse": "240213081"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "240213231"
-    },
-    {
-      "requires": "010610014",
-      "forCourse": "010610025"
-    },
-    {
-      "requires": "010610014",
-      "forCourse": "010610026"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610036"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610036"
-    },
-    {
       "requires": "010610035",
       "forCourse": "240213480"
     },
@@ -1422,32 +1423,88 @@
       "forCourse": "240213480"
     },
     {
-      "requires": "110411100",
-      "forCourse": "240223041"
+      "requires": "240112031",
+      "forCourse": "240113020"
+    },
+    {
+      "requires": "240112111",
+      "forCourse": "240113311"
+    },
+    {
+      "requires": "240112031",
+      "forCourse": "240113311"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240212010"
+    },
+    {
+      "requires": "240113121",
+      "forCourse": "240213081"
     },
     {
       "requires": "240212010",
-      "forCourse": "240113100"
+      "forCourse": "240213010"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240114471"
+    },
+    {
+      "requires": "240112031",
+      "forCourse": "240113171"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240113291"
+    },
+    {
+      "requires": "240112111",
+      "forCourse": "240114331"
+    },
+    {
+      "requires": "240111011",
+      "forCourse": "240212100"
+    },
+    {
+      "requires": "100412040",
+      "forCourse": "240212100"
+    },
+    {
+      "requires": "240113171",
+      "forCourse": "240113620"
+    },
+    {
+      "requires": "240113311",
+      "forCourse": "240114341"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240213230"
+    },
+    {
+      "requires": "240113020",
+      "forCourse": "240114350"
+    },
+    {
+      "requires": "240114974",
+      "forCourse": "240114982"
+    },
+    {
+      "requires": "240113311",
+      "forCourse": "240113221"
+    },
+    {
+      "requires": "240113020",
+      "forCourse": "240114081"
     },
     {
       "requires": "240113311",
       "forCourse": "240113321"
     },
     {
-      "requires": "240113020",
-      "forCourse": "240114020"
-    },
-    {
-      "requires": "240212010",
-      "forCourse": "240114020"
-    },
-    {
       "requires": "240113311",
-      "forCourse": "240114130"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "240114500"
+      "forCourse": "240314800"
     },
     {
       "requires": "240114081",
@@ -1458,32 +1515,32 @@
       "forCourse": "240114610"
     },
     {
+      "requires": "240113311",
+      "forCourse": "240114130"
+    },
+    {
+      "requires": "240212010",
+      "forCourse": "240113100"
+    },
+    {
+      "requires": "240113020",
+      "forCourse": "240114020"
+    },
+    {
+      "requires": "240212010",
+      "forCourse": "240114020"
+    },
+    {
       "requires": "240113020",
       "forCourse": "240114780"
     },
     {
+      "requires": "240112003",
+      "forCourse": "240114500"
+    },
+    {
       "requires": "240213081",
       "forCourse": "240214120"
-    },
-    {
-      "requires": "240113311",
-      "forCourse": "240314800"
-    },
-    {
-      "requires": "240111011",
-      "forCourse": "240111021"
-    },
-    {
-      "requires": "240112003",
-      "forCourse": "110412120"
-    },
-    {
-      "requires": "010610035",
-      "forCourse": "040521301"
-    },
-    {
-      "requires": "010610036",
-      "forCourse": "040521301"
     }
   ],
   "iconKey": "code",
@@ -1493,17 +1550,17 @@
     "univReq": 14.0,
     "univElec": 8,
     "colgReq": 16.0,
-    "specReq": 81.0,
+    "specReq": 82.0,
     "specElec": 9,
     "freeElec": 6
   },
   "requirementSource": {
     "document": "AAUP catalogue docx (data_600.docx)",
     "program": "Bachelor in Computer Science",
-    "via": "tools/merge-catalogue-requirements.py"
-  },
-  "requirementHoursDrift": {
-    "specElec": 39.0
+    "via": "tools/merge-catalogue-requirements.py",
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-computer-science/curriculum"
+    }
   },
   "renamedIds": {
     "arabic-language": "040111001",
@@ -1547,7 +1604,7 @@
     "senior-proj-1": "240114974",
     "sw-testing": "240113620",
     "unix-lab": "240114341",
-    "visual-prog": "240213231",
+    "visual-prog": "240213230",
     "artificial-intelligence": "240114350",
     "senior-proj-2": "240114982",
     "info-security": "240113221",
@@ -1566,6 +1623,7 @@
     "elective-parallel-prog": "240114780",
     "elective-special-topic-it": "240114500",
     "elective-special-topics-cs": "240114411",
-    "elective-web-dev-2": "240214120"
+    "elective-web-dev-2": "240214120",
+    "240213231": "240213230"
   }
 }

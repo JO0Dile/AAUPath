@@ -176,8 +176,8 @@
       "requirement": "univReq"
     },
     {
-      "slug": "110411000",
-      "code": "110411000",
+      "slug": "240111000",
+      "code": "240111000",
       "name": "Computer Skills",
       "nameAr": null,
       "credits": "2",
@@ -989,10 +989,6 @@
   "prerequisites": [
     {
       "requires": "010610014",
-      "forCourse": "010610025"
-    },
-    {
-      "requires": "010610014",
       "forCourse": "010610026"
     },
     {
@@ -1013,10 +1009,6 @@
     },
     {
       "requires": "010610035",
-      "forCourse": "040521301"
-    },
-    {
-      "requires": "010610036",
       "forCourse": "040521301"
     },
     {
@@ -1066,14 +1058,6 @@
     {
       "requires": "250111040",
       "forCourse": "250113070"
-    },
-    {
-      "requires": "250111040",
-      "forCourse": "250113090"
-    },
-    {
-      "requires": "250114010",
-      "forCourse": "250114020"
     },
     {
       "requires": "250111060",
@@ -1143,11 +1127,10 @@
         "planCode": "110411000",
         "course": "Computer Skills"
       }
-    ]
-  },
-  "requirementHoursDrift": {
-    "univElec": 2.0,
-    "specElec": 27.0
+    ],
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-data-science-specialization-statistics-and-data-science/curriculum"
+    }
   },
   "programMetadata": {
     "programCode": "29011",
@@ -1170,5 +1153,8 @@
     ],
     "studyStyle": "In-Person",
     "metadataSource": "AAUP website program card, screenshot supplied by the app owner"
+  },
+  "renamedIds": {
+    "110411000": "240111000"
   }
 }

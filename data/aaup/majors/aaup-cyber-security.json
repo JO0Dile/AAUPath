@@ -1003,16 +1003,294 @@
       "independentGrades": false,
       "prerequisiteText": null,
       "addedFromSource": "Required by the published plan but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "240114350",
+      "code": "240114350",
+      "name": "Artificial Intelligence",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240114500",
+      "code": "240114500",
+      "name": "Special Topic in IT",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240214120",
+      "code": "240214120",
+      "name": "Web Development II",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240312130",
+      "code": "240312130",
+      "name": "Open Source Software",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240313690",
+      "code": "240313690",
+      "name": "Mobile Hardware for Software Engineers",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240313810",
+      "code": "240313810",
+      "name": "Multimedia Security",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314090",
+      "code": "240314090",
+      "name": "Web Servers Administration",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314510",
+      "code": "240314510",
+      "name": "Applied Information Assurance",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314590",
+      "code": "240314590",
+      "name": "Secure Protocols",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314600",
+      "code": "240314600",
+      "name": "Intelligent Networks and Systems",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314800",
+      "code": "240314800",
+      "name": "Cloud Computing",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240513190",
+      "code": "240513190",
+      "name": "Wireless Networks Management and Security",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 2.0,
+      "practical": 2.0,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240513220",
+      "code": "240513220",
+      "name": "Database Security",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 2.0,
+      "practical": 2.0,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240514180",
+      "code": "240514180",
+      "name": "Advanced Ethical Hacking",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 2.0,
+      "practical": 2.0,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240514220",
+      "code": "240514220",
+      "name": "Exploit Writing in Ethical Hacking",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 2.0,
+      "practical": 2.0,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
     }
   ],
   "prerequisites": [
     {
-      "requires": "100411010",
-      "forCourse": "100411020"
+      "requires": "240211013",
+      "forCourse": "240211030"
     },
     {
-      "requires": "100411020",
-      "forCourse": "100412040"
+      "requires": "010610014",
+      "forCourse": "010610025"
+    },
+    {
+      "requires": "010610014",
+      "forCourse": "010610026"
+    },
+    {
+      "requires": "100411010",
+      "forCourse": "100411020"
     },
     {
       "requires": "100411010",
@@ -1021,6 +1299,26 @@
     {
       "requires": "240111050",
       "forCourse": "240111060"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "100411020",
+      "forCourse": "100412040"
     },
     {
       "requires": "240111050",
@@ -1036,19 +1334,7 @@
     },
     {
       "requires": "240211013",
-      "forCourse": "240113121"
-    },
-    {
-      "requires": "240113121",
-      "forCourse": "240113131"
-    },
-    {
-      "requires": "240211013",
-      "forCourse": "240113131"
-    },
-    {
-      "requires": "240112100",
-      "forCourse": "240113170"
+      "forCourse": "240213040"
     },
     {
       "requires": "240211013",
@@ -1056,39 +1342,35 @@
     },
     {
       "requires": "240211013",
-      "forCourse": "240211030"
-    },
-    {
-      "requires": "240211013",
-      "forCourse": "240213040"
-    },
-    {
-      "requires": "240112100",
-      "forCourse": "240213080"
-    },
-    {
-      "requires": "240211013",
       "forCourse": "240213220"
     },
     {
       "requires": "240213040",
       "forCourse": "240213220"
-    },
-    {
-      "requires": "240213040",
-      "forCourse": "240313260"
     },
     {
       "requires": "100412040",
       "forCourse": "240314150"
     },
     {
-      "requires": "240213040",
-      "forCourse": "240314770"
+      "requires": "240112100",
+      "forCourse": "240512210"
+    },
+    {
+      "requires": "240211013",
+      "forCourse": "240113121"
+    },
+    {
+      "requires": "240211013",
+      "forCourse": "240113131"
+    },
+    {
+      "requires": "240113121",
+      "forCourse": "240113131"
     },
     {
       "requires": "240112100",
-      "forCourse": "240512210"
+      "forCourse": "240113170"
     },
     {
       "requires": "240213040",
@@ -1099,12 +1381,28 @@
       "forCourse": "240513170"
     },
     {
+      "requires": "010610035",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "010610036",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "240112100",
+      "forCourse": "240213080"
+    },
+    {
+      "requires": "240213040",
+      "forCourse": "240313260"
+    },
+    {
       "requires": "240112100",
       "forCourse": "240513200"
     },
     {
-      "requires": "240213080",
-      "forCourse": "240514100"
+      "requires": "240213040",
+      "forCourse": "240314770"
     },
     {
       "requires": "240213040",
@@ -1115,12 +1413,72 @@
       "forCourse": "240514140"
     },
     {
+      "requires": "240213080",
+      "forCourse": "240514100"
+    },
+    {
       "requires": "240113310",
       "forCourse": "240514200"
     },
     {
       "requires": "240514140",
       "forCourse": "240514210"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240114500"
+    },
+    {
+      "requires": "240213080",
+      "forCourse": "240214120"
+    },
+    {
+      "requires": "240211013",
+      "forCourse": "240312130"
+    },
+    {
+      "requires": "240113310",
+      "forCourse": "240313690"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240313810"
+    },
+    {
+      "requires": "240213080",
+      "forCourse": "240314090"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240314510"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240314590"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240314600"
+    },
+    {
+      "requires": "240113310",
+      "forCourse": "240314800"
+    },
+    {
+      "requires": "240513160",
+      "forCourse": "240513190"
+    },
+    {
+      "requires": "240113121",
+      "forCourse": "240513220"
+    },
+    {
+      "requires": "240314770",
+      "forCourse": "240514180"
+    },
+    {
+      "requires": "240314770",
+      "forCourse": "240514220"
     }
   ],
   "iconKey": "shield",
@@ -1136,7 +1494,10 @@
   "requirementSource": {
     "document": "AAUP catalogue docx (data_600.docx)",
     "program": "Bachelor in Cyber Security",
-    "via": "tools/merge-catalogue-requirements.py"
+    "via": "tools/merge-catalogue-requirements.py",
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-cyber-security/curriculum"
+    }
   },
   "coursesAddedFromSource": [
     {

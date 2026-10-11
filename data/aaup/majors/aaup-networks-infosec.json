@@ -10,7 +10,7 @@
   "bioAr": "بكالوريوس في شبكات الحاسوب مع تخصص فرعي في أمن المعلومات (برنامج 24031 · حرم جنين). تصميم وبناء وصيانة وإدارة شبكات الحاسوب مع حماية أمن وسرية نقل المعلومات. 134 ساعة معتمدة على 4 سنوات وفق الخطة الإرشادية الرسمية. تُستثنى مادة الإنجليزية التمهيدية (بدون ساعات).",
   "university": "aaup",
   "college": "aaup-it",
-  "degreeHours": null,
+  "degreeHours": 134,
   "sourceVersion": 1,
   "courses": [
     {
@@ -28,7 +28,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "110411000",
@@ -45,7 +46,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "uni-elective-1",
@@ -62,7 +64,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univElec"
     },
     {
       "slug": "uni-elective-2",
@@ -79,7 +82,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univElec"
     },
     {
       "slug": "100411010",
@@ -96,7 +100,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240221010",
@@ -113,7 +118,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "110111030",
@@ -130,7 +136,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "010610025",
@@ -147,7 +154,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "010610026",
@@ -164,7 +172,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "100411020",
@@ -181,7 +190,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "100413750",
@@ -198,7 +208,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "110411100",
@@ -215,7 +226,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240111011",
@@ -232,7 +244,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240111021",
@@ -249,7 +262,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "010610035",
@@ -266,7 +280,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "010610036",
@@ -283,7 +298,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "040511011",
@@ -300,7 +316,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "uni-elective-3",
@@ -317,7 +334,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univElec"
     },
     {
       "slug": "100412040",
@@ -334,7 +352,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240112003",
@@ -351,7 +370,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "110412120",
@@ -368,7 +388,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240112111",
@@ -385,7 +406,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "040521301",
@@ -402,7 +424,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "uni-elective-4",
@@ -419,7 +442,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univElec"
     },
     {
       "slug": "240112031",
@@ -436,7 +460,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240213081",
@@ -453,7 +478,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "110412130",
@@ -470,7 +496,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240113311",
@@ -487,7 +514,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240223041",
@@ -504,7 +532,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "110113220",
@@ -521,7 +550,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240113120",
@@ -538,7 +568,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240113132",
@@ -555,7 +586,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240113221",
@@ -572,7 +604,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240212011",
@@ -589,7 +622,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240224040",
@@ -606,7 +640,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240613320",
@@ -623,7 +658,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240113291",
@@ -640,7 +676,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240313200",
@@ -657,7 +694,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240313260",
@@ -674,7 +712,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240313270",
@@ -691,7 +730,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240313290",
@@ -708,7 +748,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "spec-elec-1",
@@ -725,7 +766,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specElec"
     },
     {
       "slug": "240613990",
@@ -742,7 +784,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "000011110",
@@ -759,7 +802,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "240114471",
@@ -776,7 +820,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "240314151",
@@ -793,7 +838,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240614050",
@@ -810,7 +856,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240614970",
@@ -827,7 +874,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "spec-elec-2",
@@ -844,7 +892,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specElec"
     },
     {
       "slug": "free-elec-1",
@@ -861,7 +910,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "freeElec"
     },
     {
       "slug": "240114130",
@@ -878,7 +928,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240314120",
@@ -895,7 +946,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "240614980",
@@ -912,7 +964,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "spec-elec-3",
@@ -929,7 +982,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specElec"
     },
     {
       "slug": "spec-elec-4",
@@ -946,7 +1000,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specElec"
     },
     {
       "slug": "free-elec-2",
@@ -963,29 +1018,321 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
+      "prerequisiteText": null,
+      "requirement": "freeElec"
+    },
+    {
+      "slug": "010610014",
+      "code": "010610014",
+      "name": "Beginning English",
+      "nameAr": null,
+      "credits": "0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "UNIVERSITY_REQUIREMENT",
+      "requirement": "univReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "110114080",
+      "code": "110114080",
+      "name": "Web Development II",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240114500",
+      "code": "240114500",
+      "name": "Special Topic in IT",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240312130",
+      "code": "240312130",
+      "name": "Open Source Software",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240313410",
+      "code": "240313410",
+      "name": "Special Topics I",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240313690",
+      "code": "240313690",
+      "name": "Mobile Hardware for Software Engineers",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240313810",
+      "code": "240313810",
+      "name": "Multimedia Security",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314090",
+      "code": "240314090",
+      "name": "Web Servers Administration",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314200",
+      "code": "240314200",
+      "name": "Wireless Network Security",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314410",
+      "code": "240314410",
+      "name": "Special Topics II",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314510",
+      "code": "240314510",
+      "name": "Applied Information Assurance",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314600",
+      "code": "240314600",
+      "name": "Intelligent Networks and Systems",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314770",
+      "code": "240314770",
+      "name": "Ethical Hacking",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240314800",
+      "code": "240314800",
+      "name": "Cloud Computing",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "240614590",
+      "code": "240614590",
+      "name": "Secure Protocols",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
       "prerequisiteText": null
     }
   ],
   "prerequisites": [
     {
-      "requires": "100411010",
-      "forCourse": "100411020"
+      "requires": "240221010",
+      "forCourse": "110111030"
     },
     {
-      "requires": "100411020",
-      "forCourse": "100412040"
+      "requires": "010610014",
+      "forCourse": "010610025"
+    },
+    {
+      "requires": "010610014",
+      "forCourse": "010610026"
+    },
+    {
+      "requires": "100411010",
+      "forCourse": "100411020"
     },
     {
       "requires": "100411010",
       "forCourse": "100413750"
     },
     {
-      "requires": "240221010",
-      "forCourse": "110111030"
+      "requires": "010610025",
+      "forCourse": "010610035"
     },
     {
-      "requires": "240112003",
-      "forCourse": "110412120"
+      "requires": "010610026",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "100411020",
+      "forCourse": "100412040"
     },
     {
       "requires": "240111011",
@@ -993,27 +1340,39 @@
     },
     {
       "requires": "240112003",
-      "forCourse": "240112031"
+      "forCourse": "110412120"
     },
     {
-      "requires": "240313270",
-      "forCourse": "240114471"
+      "requires": "110411100",
+      "forCourse": "240112111"
+    },
+    {
+      "requires": "010610035",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240112031"
     },
     {
       "requires": "240112003",
       "forCourse": "240213081"
     },
     {
-      "requires": "240223041",
-      "forCourse": "110113220"
-    },
-    {
       "requires": "240112031",
       "forCourse": "110412130"
     },
     {
+      "requires": "240112111",
+      "forCourse": "240113311"
+    },
+    {
       "requires": "110411100",
-      "forCourse": "240112111"
+      "forCourse": "240223041"
+    },
+    {
+      "requires": "240223041",
+      "forCourse": "110113220"
     },
     {
       "requires": "240112031",
@@ -1028,39 +1387,31 @@
       "forCourse": "240113221"
     },
     {
-      "requires": "240212011",
-      "forCourse": "240113291"
-    },
-    {
-      "requires": "240112111",
-      "forCourse": "240113311"
-    },
-    {
-      "requires": "240113311",
-      "forCourse": "240114130"
-    },
-    {
       "requires": "240112003",
       "forCourse": "240212011"
-    },
-    {
-      "requires": "110411100",
-      "forCourse": "240223041"
     },
     {
       "requires": "240223041",
       "forCourse": "240224040"
     },
     {
+      "requires": "240113311",
+      "forCourse": "240613320"
+    },
+    {
+      "requires": "240212011",
+      "forCourse": "240113291"
+    },
+    {
       "requires": "240223041",
       "forCourse": "240313200"
     },
     {
-      "requires": "240212011",
+      "requires": "240223041",
       "forCourse": "240313260"
     },
     {
-      "requires": "240223041",
+      "requires": "240212011",
       "forCourse": "240313260"
     },
     {
@@ -1072,26 +1423,99 @@
       "forCourse": "240313290"
     },
     {
-      "requires": "240313290",
-      "forCourse": "240314120"
+      "requires": "240313270",
+      "forCourse": "240114471"
     },
     {
       "requires": "240113221",
       "forCourse": "240314151"
     },
     {
-      "requires": "240113311",
-      "forCourse": "240613320"
-    },
-    {
       "requires": "240313290",
       "forCourse": "240614050"
     },
     {
+      "requires": "240113311",
+      "forCourse": "240114130"
+    },
+    {
+      "requires": "240313290",
+      "forCourse": "240314120"
+    },
+    {
       "requires": "240614970",
       "forCourse": "240614980"
+    },
+    {
+      "requires": "240213081",
+      "forCourse": "110114080"
+    },
+    {
+      "requires": "240112003",
+      "forCourse": "240114500"
+    },
+    {
+      "requires": "240221010",
+      "forCourse": "240312130"
+    },
+    {
+      "requires": "240223041",
+      "forCourse": "240313410"
+    },
+    {
+      "requires": "240113311",
+      "forCourse": "240313690"
+    },
+    {
+      "requires": "240113221",
+      "forCourse": "240313810"
+    },
+    {
+      "requires": "240213081",
+      "forCourse": "240314090"
+    },
+    {
+      "requires": "240313200",
+      "forCourse": "240314200"
+    },
+    {
+      "requires": "240113221",
+      "forCourse": "240314410"
+    },
+    {
+      "requires": "240113221",
+      "forCourse": "240314510"
+    },
+    {
+      "requires": "240224040",
+      "forCourse": "240314600"
+    },
+    {
+      "requires": "240313290",
+      "forCourse": "240314770"
+    },
+    {
+      "requires": "240113311",
+      "forCourse": "240314800"
+    },
+    {
+      "requires": "240313290",
+      "forCourse": "240614590"
     }
   ],
   "iconKey": "network",
-  "imageUrl": null
+  "imageUrl": null,
+  "requirementHours": {
+    "univReq": 14.0,
+    "univElec": 8,
+    "colgReq": 35.0,
+    "specReq": 59.0,
+    "specElec": 12,
+    "freeElec": 6
+  },
+  "requirementSource": {
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-computer-networks-minor-information-security/curriculum"
+    }
+  }
 }

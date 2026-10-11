@@ -4,17 +4,21 @@
     python3 tools/import-catalogue-programs.py            # report only
     python3 tools/import-catalogue-programs.py --write     # write data/aaup/majors/
 
-Reads tools/catalogue-import/catalogue.json (the document's 68 programs) and
+Reads tools/catalogue-import/catalogue.json (the document's 68 programs),
 tools/catalogue-import/from-images/*.json (the seven Junior College diplomas
-that exist only as screenshots), and writes one major per program that the app
-does not already ship. Programs the app already has are listed in ALREADY and
-are never regenerated over - those were authored and reviewed by hand.
+that exist only as screenshots) and tools/catalogue-import/site-plans.json
+(each program's Academic Plan page on aaup.edu), and writes one major per
+program that the app does not already ship. Programs the app already has are
+listed in ALREADY and are never regenerated over - those were authored and
+reviewed by hand, and tools/sync-site-plans.py keeps them in line with the
+site instead.
 
-Everything a plan asserts comes from the document: the course list, the credit
-hours, the prerequisites, the requirement buckets and how many hours each
-bucket needs. The one thing generated is WHEN to take a course, and only where
-the university published no Advisory Plan - see schedule.py's docstring, and
-the note that goes into every such plan's bio.
+Everything a plan asserts comes from the university: the course list, the
+credit hours, the prerequisites, the requirement buckets and how many hours
+each bucket needs - from the site where the program has an Academic Plan page,
+otherwise from the document. The one thing generated is WHEN to take a course,
+and only where the university published no Advisory Plan - see the note that
+goes into every such plan's bio.
 """
 import argparse
 import collections
@@ -29,12 +33,199 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAJORS = os.path.join(REPO, 'data/aaup/majors')
 CAT = os.path.join(REPO, 'tools/catalogue-import/catalogue.json')
 IMGS = os.path.join(REPO, 'tools/catalogue-import/from-images/*.json')
+# Each program's Academic Plan page on aaup.edu, read by parse-site.py. Where
+# a program has one, its tables replace the document's: they are the
+# registration system's own course numbers, hours and prerequisites, and the
+# document's were read off a page layout - see parse-site.py. The document
+# still supplies what the site does not carry: the Advisory Plan (which
+# semester), and the overview.
+SITE = os.path.join(REPO, 'tools/catalogue-import/site-plans.json')
 
 
 def slugify(s):
     s = unicodedata.normalize('NFKD', s)
     s = re.sub(r'[^A-Za-z0-9]+', '-', s).strip('-').lower()
     return re.sub(r'-+', '-', s)
+
+
+def key(name):
+    """A program name as both sources can agree on it: the site's carry
+    zero-width spaces ("Cyber \u200b\u200bSecurity") and an en dash or two."""
+    return re.sub(r'[^a-z0-9]+', ' ', name.replace('\u200b', '').lower()).strip()
+
+
+def norm_name(name):
+    return re.sub(r'[^a-z0-9]+', ' ', (name or '').lower()).strip()
+
+
+def resolve_renames(renames):
+    """Old id -> its final id, following chains (calc-1 -> 100411010 -> ...),
+    so a phone that still has the oldest id moves straight to the newest."""
+    out = {}
+    for k, v in renames.items():
+        seen = {k}
+        while v in renames and v not in seen:
+            seen.add(v)
+            v = renames[v]
+        if v != k:
+            out[k] = v
+    return out
+
+
+def similar(a, b):
+    """Two names for the same course: the same words, or nearly - the
+    university renumbered "Programming Fundamentals (C++)" as "Programming
+    Fundamentals I C++". Three of four words in common is the bar, which keeps
+    "Electrical Circuits I" and "Electrical Circuits II" apart (two of four)."""
+    ta, tb = set(norm_name(a).split()), set(norm_name(b).split())
+    return bool(ta and tb) and (ta == tb or len(ta & tb) / len(ta | tb) >= 0.75)
+
+
+def same_hours(a, b):
+    try:
+        return abs(float(a.get('credits') or 0) - float(b.get('credits') or 0)) < 0.001
+    except (TypeError, ValueError):
+        return False
+
+
+def carry_renames(old, new):
+    """The ids a rewritten plan renamed.
+
+    When the university renumbers a course, the regenerated plan has the same
+    course under a new number. A course the old plan had that the new one does
+    not, with exactly one new course of the same name (see similar) and the
+    same hours, is that course renamed; recording it lets js/02-id-renames.js
+    move every student's ticks, grades and notes to the new number instead of
+    leaving them on an id that no longer exists. Earlier renames are kept.
+    """
+    was = {c['slug']: c for c in old.get('courses', []) if not c.get('isPlaceholder')}
+    now = {c['slug']: c for c in new['courses'] if not c.get('isPlaceholder')}
+    came = [s for s in now if s not in was]
+    renames = dict(old.get('renamedIds') or {})
+    taken = set()
+    for exact in (True, False):
+        for s in was:
+            if s in now or s in renames and renames[s] in now:
+                continue
+            hits = [n for n in came if n not in taken and same_hours(was[s], now[n]) and
+                    (norm_name(was[s]['name']) == norm_name(now[n]['name']) if exact
+                     else similar(was[s]['name'], now[n]['name']))]
+            if len(hits) == 1:
+                renames[s] = hits[0]
+                taken.add(hits[0])
+    return resolve_renames(renames)
+
+
+def keep_slot_ids(old, new):
+    """Elective slots keep the ids they had.
+
+    A slot's id is made from its term and its place in the Advisory Plan's
+    list, so anything that changes that list (a course the site no longer
+    lists, say) renumbers every slot after it - and a student who named the
+    elective they took in one would find it blank. A new slot takes the id of
+    an old slot of the same requirement in the same term, when there is one.
+    """
+    olds = collections.defaultdict(list)
+    for c in old.get('courses', []):
+        if c.get('isPlaceholder'):
+            olds[(c.get('requirement'), c.get('year'), c.get('semester'))].append(c['slug'])
+    used = {c['slug'] for c in new['courses'] if not c.get('isPlaceholder')}
+    slots = [c for c in new['courses'] if c.get('isPlaceholder')]
+    keep = {c['slug'] for c in slots if c['slug'] in {s for v in olds.values() for s in v}}
+    for c in slots:
+        if c['slug'] in keep:
+            continue
+        pool = [s for s in olds.get((c.get('requirement'), c.get('year'), c.get('semester')), [])
+                if s not in keep and s not in used]
+        if pool:
+            c['slug'] = pool[0]
+            keep.add(pool[0])
+    for c in slots:
+        used.add(c['slug'])
+
+
+def site_programs():
+    """{key(name): program} from site-plans.json - see parse-site.py."""
+    if not os.path.exists(SITE):
+        return {}
+    return {key(p['name']): p for p in json.load(open(SITE, encoding='utf-8'))['programs']}
+
+
+def from_site(sp):
+    """The site's requirement tables, in the shape build_courses reads.
+
+    University electives keep only their hours. The site lists the forty-odd
+    courses a student may pick from, the same list for every program; the
+    plan gives those hours as slots the student names, as it always has,
+    rather than forty options in every plan's elective section.
+    """
+    req = {}
+    for k, sec in sp['requirements'].items():
+        s = {}
+        if k not in ('univElec', 'freeElec'):
+            s['courses'] = [{f: c[f] for f in ('code', 'name', 'credits', 'theoretical', 'practical', 'prerequisites')
+                             if c.get(f) is not None} for c in sec.get('courses', [])]
+        else:
+            s['courses'] = []
+        if sec.get('mustPassAll'):
+            s['mustPassAll'] = True
+        if sec.get('requiredHours') is not None:
+            s['requiredHours'] = sec['requiredHours']
+        req[k] = s
+    # The app's one elective pool is specElec. College Electives (only the
+    # Orthodontics residency has them, and no specialization electives of its
+    # own) are that pool; anything else in them would be dropped by
+    # build_courses, which only reads the buckets in ORDER.
+    if 'colgElec' in req:
+        ce = req.pop('colgElec')
+        se = req.setdefault('specElec', {'courses': [], 'requiredHours': 0})
+        se['courses'] = se.get('courses', []) + ce.get('courses', [])
+        se['requiredHours'] = (se.get('requiredHours') or 0) + (ce.get('requiredHours') or 0)
+    return req
+
+
+def site_total(sp):
+    """What the page's tables add up to."""
+    return sum(sec['requiredHours'] if sec.get('requiredHours') is not None
+               else sum(c.get('credits') or 0 for c in sec.get('courses', []))
+               for sec in sp['requirements'].values())
+
+
+def site_complete(sp):
+    """A page whose tables add up to the degree total it states."""
+    return bool(sp.get('degreeHours')) and abs(site_total(sp) - sp['degreeHours']) < 0.001
+
+
+def merge_site(doc, sp):
+    """The document's tables, corrected by an INCOMPLETE page.
+
+    Some pages leave whole tables out (the Upper Basic Level diplomas print 18
+    of their 33 hours: no support courses), or disagree with themselves (the
+    Dental Technology diploma's states 70 hours over tables of 74). Taking such
+    a page as the plan would delete real courses, so the document's plan stays
+    the plan and the page only corrects the courses both list: their hours and
+    prerequisites. A course only the page lists is not added - on a page that
+    does not add up, nothing says it belongs - and is returned so the plan can
+    record it.
+    """
+    site = from_site(sp)
+    req = {k: dict(v, courses=[dict(c) for c in v.get('courses', [])]) for k, v in doc.items()}
+    by_code = {c['code']: c for v in req.values() for c in v['courses']}
+    only = []
+    for k, sec in site.items():
+        for c in sec.get('courses', []):
+            mine = by_code.get(c['code'])
+            if mine is None:
+                only.append({'code': c['code'], 'name': title_case(c['name']),
+                             'credits': c.get('credits'), 'requirement': k})
+                continue
+            if c.get('credits') is not None:
+                mine['credits'] = c['credits']
+            if c.get('prerequisites'):
+                mine['prerequisites'] = list(c['prerequisites'])
+            else:
+                mine.pop('prerequisites', None)
+    return req, only
 
 
 def load():
@@ -158,6 +349,16 @@ def sequence(courses, years):
 # --------------------------------------------------------------------------
 # Building the majors
 # --------------------------------------------------------------------------
+# Academic Plan pages that are not the program's plan, read and set aside.
+SITE_SET_ASIDE = {
+    'Diploma in Mobile Application Development':
+        'Its page (www.aaup.edu/diploma-smart-device-maintenance-technology, the '
+        'address of the diploma it replaced) shows a 27-hour plan of three courses '
+        'named only in Arabic - not the 69-hour plan the document prints for this '
+        'program, which stays.',
+}
+
+
 # Faculties the app already has, plus the ones this adds. Arabic names and
 # icons are authored here because the document carries neither.
 FACULTIES = {
@@ -174,9 +375,16 @@ FACULTIES = {
  'Faculty of Law':                                     ('aaup-law', 'كلية الحقوق', '⚖️'),
  'Faculty of Medicine':                                ('aaup-medicine', 'كلية الطب', '🩺'),
  'Faculty of Modern Media':                            ('aaup-modern-media', 'كلية الإعلام الحديث', '🎙'),
+ # Faculties whose programs are only on aaup.edu - the document has none of them.
+ 'Faculty of Modern Sciences':                         ('aaup-modern-sciences', 'كلية العلوم الحديثة', '🔭'),
+ 'Faculty of Nursing':                                 ('aaup-nursing', 'كلية التمريض', '🩺'),
+ 'Faculty of Pharmacy':                                ('aaup-pharmacy', 'كلية الصيدلة', '💊'),
+ 'Faculty of Sciences':                                ('aaup-sciences', 'كلية العلوم', '🔬'),
+ 'Faculty of Sport Sciences':                          ('aaup-sport-sciences', 'كلية علوم الرياضة', '🏅'),
 }
 
-# Programs the app already ships, hand-checked. Never regenerated over.
+# Programs the app already ships, hand-checked. Never regenerated over;
+# tools/sync-site-plans.py keeps them in line with aaup.edu.
 ALREADY = {
  'Bachelor in Computer Science': 'cs',
  'Bachelor in Cyber Security': 'aaup-cyber-security',
@@ -185,7 +393,28 @@ ALREADY = {
  'Bachelor in Computer Networks - Minor Information Security': 'aaup-networks-infosec',
  'Bachelor in Computer Science - Minor Computer Information Technology': 'aaup-cs-cit',
  'Bachelor in Computer Science - Specialization in Game Design and Development': 'aaup-cs-gamedev',
+ # The Faculty of AI and Data Science, Nursing, Pharmacy and Respiratory
+ # Therapy plans predate the document import. They were never generated here,
+ # but aaup.edu lists them, so they are named to stop the site generating a
+ # second copy of each.
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Cyber Security': 'cybersecurity',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Digital Media': 'aaup-ai-digital-media',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Education Technology': 'aaup-ai-education-tech',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Financial Technology': 'aaup-ai-fintech',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Innovation': 'aaup-ai-innovation',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Medical Sciences': 'medical',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Public Relations': 'aaup-ai-public-relations',
+ 'Bachelor in Artificial Intelligence - Specialization in Artificial Intelligence and Robotics': 'robotics',
+ 'Bachelor in Data Science - Specialization in Data Science and Machine Learning': 'aaup-data-science-ml',
+ 'Bachelor in Data Science - Specialization in Finance and Data Science': 'aaup-finance-data-science',
+ 'Bachelor in Data Science - Specialization in Statistics and Data Science': 'aaup-statistics-data-science',
+ 'Bachelor in Financial Engineering': 'aaup-financial-engineering',
+ 'Bachelor in Virtual Reality Science': 'aaup-virtual-reality',
+ 'Bachelor in Nursing': 'aaup-nursing',
+ 'Bachelor in Pharmacy': 'aaup-pharmacy',
+ 'Bachelor in Respiratory Therapy': 'aaup-respiratory',
 }
+ALREADY_KEYS = {key(n): s for n, s in ALREADY.items()}
 
 # requirement bucket -> the app's display category (the card's colour).
 DISPLAY = {
@@ -317,6 +546,15 @@ def build_courses(prog):
 def place(prog, courses, prereqs):
     """(placement source, {slug: (year, semester)})"""
     ap = prog.get('advisoryPlan')
+    if ap and ap.get('terms') and prog.get('site'):
+        # An Advisory Plan that covers less than half the courses the site
+        # requires (Ambulance and Emergency's covers part of its first year)
+        # would leave the rest piled into its few terms. The whole plan gets
+        # the suggested sequence instead.
+        required = {c['slug'] for c in courses if not c['isElective']}
+        named = {c.get('code') for t in ap['terms'] for c in t.get('courses', [])}
+        if required and len(required & named) < len(required) / 2:
+            ap = None
     if ap and ap.get('terms'):
         YEARS = {'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'forth': 4,
                  'fifth': 5, 'sixth': 6, 'seventh': 7}
@@ -336,6 +574,8 @@ def place(prog, courses, prereqs):
                               'spec. req.': 'specReq', 'spec req': 'specReq'}
         extra = []
         known = {c['slug'] for c in courses}
+        courses_by_code = {c['slug']: c for c in courses}
+        advisory_codes = {c.get('code') for t in ap['terms'] for c in t.get('courses', []) if c.get('code')}
         out = {}
         for t in ap['terms']:
             y = YEARS.get((t.get('year') or '').split()[0].lower(), 1)
@@ -343,6 +583,23 @@ def place(prog, courses, prereqs):
             for c in t.get('courses', []):
                 code = c.get('code')
                 if code:
+                    if code not in known and prog.get('site'):
+                        # The site's tables are newer than the document's
+                        # Advisory Plan. A course the plan schedules under a
+                        # number the site has since changed is found by its
+                        # name and hours (see similar) and keeps its term; one
+                        # the site no longer lists at all is not added back,
+                        # and is recorded on the plan.
+                        twin = [k for k in courses_by_code
+                                if k not in advisory_codes and k not in out and
+                                similar(c.get('name') or '', courses_by_code[k]['name']) and
+                                abs(float(c.get('credits') or 0) - float(courses_by_code[k]['credits'] or 0)) < 0.001]
+                        if len(twin) == 1:
+                            out[twin[0]] = (y, s)
+                            continue
+                        prog.setdefault('_advisoryNotOnSite', []).append(
+                            {'code': code, 'name': title_case(c.get('name') or code)})
+                        continue
                     out[code] = (y, s)
                     if code not in known:
                         # The advisory plan schedules a course that appears in
@@ -406,6 +663,48 @@ def place(prog, courses, prereqs):
     return 'suggested', seq, []
 
 
+def place_new(courses, prereqs, doc_codes):
+    """A required course the site lists and the document's plan never had gets
+    a suggested term, so it is not left in the plan's unscheduled pool.
+
+    The Advisory Plan cannot place it - it predates the course. It goes in the
+    lightest term after everything it needs, and not before the year its
+    number belongs to (the sixth digit of an AAUP course number is its year);
+    a 0-hour university requirement goes in the first term, with Community
+    Service and Beginning English. Courses the Advisory Plan already left
+    unscheduled stay as they were.
+    """
+    terms = collections.defaultdict(float)
+    at = {}
+    for c in courses:
+        if c['year'] and c['semester'] in (1, 2):
+            terms[(c['year'], c['semester'])] += float(c['credits'] or 0)
+            at[c['slug']] = (c['year'], c['semester'])
+    if not terms:
+        return
+    needs = collections.defaultdict(list)
+    for p in prereqs:
+        needs[p['forCourse']].append(p['requires'])
+    for c in sorted(courses, key=lambda c: c['slug']):
+        if c['year'] or c['isElective'] or c['isPlaceholder'] or c['slug'] in doc_codes:
+            continue
+        if c['requirement'] == 'univReq' and not float(c['credits'] or 0):
+            t = min(terms)
+        else:
+            code = c['slug']
+            level = int(code[5]) if len(code) == 9 and code[5] in '123456' else 1
+            floor = (min(level, max(terms)[0]), 0)
+            for q in needs.get(c['slug'], []):
+                if q in at and at[q] >= floor:
+                    floor = at[q]
+            later = [t for t in terms if t > floor] or [max(terms)]
+            t = min(later, key=lambda t: (t[0], terms[t], t))
+        c['year'], c['semester'] = t
+        c['termSuggested'] = True
+        terms[t] += float(c['credits'] or 0)
+        at[c['slug']] = t
+
+
 def years_of(prog):
     m = (prog.get('meta') or {}).get('durationYears')
     if m:
@@ -459,6 +758,8 @@ def make_major(prog, slug, college):
     for c in courses:
         y, s = placement.get(c['slug'], (None, None))
         c['year'], c['semester'] = y, s
+    if src == 'advisory' and prog.get('_docCodes') is not None:
+        place_new(courses, prereqs, prog['_docCodes'])
 
     # Elective hours the document requires that nothing above accounts for -
     # neither a named option nor a slot the advisory plan placed. The student
@@ -527,6 +828,9 @@ def make_major(prog, slug, college):
     if meta.get('incompleteInSource'):
         bio.append('Note: the published plan is cut off in the source; these are every '
                    'course it lists.')
+    if prog.get('origin') == 'site' and prog.get('degreeHours') and abs(total - prog['degreeHours']) > 0.001:
+        bio.append('Note: aaup.edu lists courses for fewer hours than it states for this '
+                   'degree; these are every course it lists.')
 
     degree = 'Diploma' if prog['name'].startswith('Diploma') else (
              'Residency' if 'Residency' in prog['name'] else 'B.Sc.')
@@ -564,16 +868,36 @@ def make_major(prog, slug, college):
                 'sumOfRequirementHours': total,
                 'difference': round(total - prog['degreeHours'], 2),
                 'reason': (meta.get('incompleteInSource', {}) or {}).get('arithmetic')
+                          or ('The program\u2019s Academic Plan page on aaup.edu states this '
+                              'total, and its tables list courses for the other figure: the '
+                              'rest is not published there. Neither figure is altered here.'
+                              if prog.get('origin') == 'site' else None)
                           or 'The published document states one degree total and lists '
                              'requirement sections adding to another. Neither figure is '
                              'altered here.'}}
            if prog.get('degreeHours') and abs(total - prog['degreeHours']) > 0.001 else {}),
-        'requirementSource': {
+        'requirementSource': ({
+            'document': 'aaup.edu Academic Plan page',
+            'program': prog['name'],
+            'page': prog['site']['page'],
+            **({'capture': prog['site']['capture'], 'capturedAt': prog['site']['capturedAt']}
+               if prog['site'].get('capture') else {}),
+            'placement': src,
+            **({'placementDocument': 'AAUP catalogue docx (data_600.docx)'} if src == 'advisory' else {}),
+            **({'pageIncomplete': 'The page\u2019s tables add up to %g hours against the %s it states, so '
+                                  'the document\u2019s plan is kept and the page corrects the hours and '
+                                  'prerequisites of the courses both list (see merge_site).'
+                                  % (prog['siteIncomplete'], prog['site'].get('degreeHours'))}
+               if prog.get('siteIncomplete') is not None and prog.get('origin') != 'site' else {}),
+            **({'onlyOnIncompletePage': prog['siteOnly']} if prog.get('siteOnly') else {}),
+            'via': 'tools/import-catalogue-programs.py',
+        } if prog.get('site') else {
             'document': 'AAUP catalogue docx (data_600.docx)',
             'program': prog['name'],
             'placement': src,
             'via': 'tools/import-catalogue-programs.py',
-        },
+        }),
+        **({'advisoryCoursesNotOnSite': prog['_advisoryNotOnSite']} if prog.get('_advisoryNotOnSite') else {}),
         'sourceVersion': 1,
         'courses': courses,
         'prerequisites': prereqs,
@@ -591,10 +915,40 @@ def main(write=False):
             best[k] = p
     progs = list(best.values())
 
+    # The site's tables replace the document's wherever the site has them.
+    # Programs only the site has (whole faculties: Sciences, Modern Sciences,
+    # Sport Sciences) come in here too, with the document's overview when it
+    # names the program at all.
+    site = site_programs()
+    overviews = {key(p['name']): p.get('overview')
+                 for f in json.load(open(CAT, encoding='utf-8')) for p in f['programs']}
+    have = set()
+    for p in progs:
+        sp = site.get(key(p['name']))
+        have.add(key(p['name']))
+        if not sp or not sp.get('published') or p['name'] in SITE_SET_ASIDE:
+            continue
+        if site_complete(sp):
+            p['_docCodes'] = {c['code'] for v in p['requirements'].values() for c in v.get('courses', [])}
+            p['requirements'] = from_site(sp)
+            p['degreeHours'] = sp.get('degreeHours') or p.get('degreeHours')
+            p['sourceIssues'] = None          # those were the document's
+        else:
+            p['requirements'], p['siteOnly'] = merge_site(p['requirements'], sp)
+            p['siteIncomplete'] = site_total(sp)
+        p['site'] = sp
+    for k, sp in sorted(site.items()):
+        if k in have or not sp.get('published') or sp['name'] in SITE_SET_ASIDE:
+            continue
+        progs.append({'faculty': sp['faculty'], 'name': sp['name'],
+                      'degreeHours': sp.get('degreeHours'),
+                      'requirements': from_site(sp), 'advisoryPlan': None,
+                      'overview': overviews.get(k), 'origin': 'site', 'site': sp})
+
     used, made, skipped = set(ALREADY.values()), [], []
     for p in sorted(progs, key=lambda x: (x['faculty'], x['name'])):
-        if p['name'] in ALREADY:
-            skipped.append((p['name'], ALREADY[p['name']]))
+        if key(p['name']) in ALREADY_KEYS:
+            skipped.append((p['name'], ALREADY_KEYS[key(p['name'])]))
             continue
         college = FACULTIES[p['faculty']][0]
         # The degree level goes in the slug, not a numeric suffix. "Dental
@@ -617,9 +971,16 @@ def main(write=False):
             slug = '%s%s-%d' % (prefix, base, n); n += 1
         used.add(slug)
         m = make_major(p, slug, college)
+        path = os.path.join(MAJORS, slug + '.json')
+        if os.path.exists(path):
+            before = json.load(open(path, encoding='utf-8'))
+            keep_slot_ids(before, m)
+            ren = carry_renames(before, m)
+            if ren:
+                m['renamedIds'] = ren
         made.append(m)
         if write:
-            with open(os.path.join(MAJORS, slug + '.json'), 'w', encoding='utf-8') as f:
+            with open(path, 'w', encoding='utf-8') as f:
                 json.dump(m, f, ensure_ascii=False, indent=2)
                 f.write('\n')
     return made, skipped, progs

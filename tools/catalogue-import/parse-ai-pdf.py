@@ -115,10 +115,15 @@ def parse_program(name, body):
                 sect['courses'].append(course)
         buf.clear()
 
-    for raw in body.split('\n'):
-        stripped = raw.strip()
-        if not stripped:
-            continue
+    lines = [raw.strip() for raw in body.split('\n')]
+    lines = [x for x in lines if x]
+
+    def is_marker(line):
+        return bool(TOTAL.search(line) or NOISE.match(line) or MUST_N.search(line)
+                    or MUST_ALL.search(line) or NO_PLAN.match(line)
+                    or any(rx.match(line) for _, rx in SECTIONS))
+
+    for i, stripped in enumerate(lines):
 
         mt = TOTAL.search(stripped)
         if mt:
@@ -165,6 +170,21 @@ def parse_program(name, body):
 
         first = stripped.split()[0]
         if CODE.match(first):
+            # A line of nothing but course codes is either the start of a
+            # course whose name wraps onto the next lines, or more of the
+            # PREVIOUS row's prerequisites: the PDF stacks a second (third...)
+            # prerequisite in its cell under the first, so it lands on lines
+            # of its own after the row - "MACHINE LEARNING 2 2 3" then
+            # "250223010" then "290312120". Treating every such line as a new
+            # course threw away every prerequisite after the first. It is a
+            # continuation when the row before it is already complete and the
+            # next line is not the wrapped name of a new course.
+            only_codes = all(CODE.match(t) for t in stripped.split())
+            nxt = lines[i + 1] if i + 1 < len(lines) else ''
+            names_next = bool(nxt) and not CODE.match(nxt.split()[0]) and not is_marker(nxt)
+            if only_codes and buf and parse_record(' '.join(buf)) and not names_next:
+                buf.append(stripped)
+                continue
             flush()
         buf.append(stripped)
 

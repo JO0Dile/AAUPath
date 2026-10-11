@@ -48,6 +48,26 @@ RULES = [
     (r'industrial product design',            'palette'),
     (r'virtual reality',                      'vr'),
 
+    # Programs only aaup.edu lists (Sciences, Modern Sciences, Sport
+    # Sciences, Digital Sciences). Before "education", so a science degree
+    # with a minor in education keeps its subject's icon.
+    (r'forensic',                             'microscope'),
+    (r'biology|biotechnology',                'dna'),
+    (r'chemistry',                            'flask'),
+    (r'physics',                              'atom'),
+    (r'mathematics and statistics',           'sigma'),
+    (r'sport',                                'medal'),
+    (r'optometry',                            'eye'),
+    (r'technology management|pioneering',     'rocket'),
+    (r'sustainable development',              'leaf'),
+    (r'culture, technology|technology and society', 'people'),
+    (r'digital health|hospitals?|health care','health'),
+    (r'neuromarketing|marketing',             'target'),
+    (r'diplomacy|political science',          'handshake'),
+    (r'social work',                          'handshake'),
+    (r'digital management|management of business', 'briefcase'),
+    (r'financial and banking|banking',        'finance'),
+
     (r'accounting',                           'chart'),
     (r'islamic banking|econom',               'finance'),
     (r'human resources',                      'people'),

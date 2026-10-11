@@ -12,6 +12,51 @@ Turns the university catalogue document into structured data.
 `blocks.jsonl` and the AI faculty PDF are both committed, so every step runs
 without the 4.6 MB source document.
 
+## site-plans.json — each program's Academic Plan page on aaup.edu
+
+    python3 parse-site.py PAGES_DIR PROGRAMS_JSON --captures CAPTURES   # -> site-plans.json
+    python3 ../import-catalogue-programs.py --write    # generated plans
+    python3 ../sync-site-plans.py --write              # hand-authored plans
+
+Every program on www.aaup.edu/academic-programs has an "Academic Plan" page
+(`/<program>/curriculum`) built from the registration system: one table row per
+course with its number, weekly hours, credit hours and a cell of prerequisite
+course NUMBERS. That is the most direct source there is, so where a program has
+one it wins over the document — the document's prerequisites were read off a
+page layout, and in places they sit one row off (Accounting's 020211030 is
+printed against Accounting for Financial Institutions; the page puts it under
+Econometrics, where it belongs; Doctor of Dental Surgery and Architecture
+Engineering had the same shift).
+
+www.aaup.edu answers 400 to requests from data centres, so the pages were read
+from Web Archive captures, and every program records the capture it was read
+from (`capture`, `capturedAt`). The page HTML is not committed; this JSON is.
+
+How the pages are used:
+- **A complete page** (its tables add up to the degree total it states)
+  replaces the document's tables outright. Courses it does not list leave the
+  plan; courses only it lists join it; a course the university renumbered is
+  renamed rather than dropped and re-added, so students keep their ticks and
+  grades (`renamedIds`, applied on phones by `web/js/02-id-renames.js`).
+- **An incomplete page** (the four Upper Basic Level diplomas print 18 of
+  their 33 hours; Doctor of Dental Surgery 193 of 211; the Dental Technology
+  diploma states 70 over tables of 74) only corrects the courses it shares
+  with the document: their hours and prerequisites. Courses only it lists are
+  recorded on the plan (`onlyOnIncompletePage`), not added.
+- **A program only the site has** (the faculties of Sciences, Modern Sciences
+  and Sport Sciences, most of Digital Sciences) is generated from its page; if
+  that page is incomplete the plan says so in its bio.
+- **No plan published** (`"published": false` — AI and Robotics Engineering,
+  AI and Digital Media, AI and Education Technology, Political Science and
+  Digital Diplomacy at the time of reading): nothing is invented.
+- **Set aside**: Mobile Application Development's page sits at the address of
+  the diploma it replaced and shows that diploma's three Arabic-named courses
+  (27 hours); the document's 69-hour plan stays. See `SITE_SET_ASIDE`.
+
+A printed "-" in the Prerequisite column means none and is applied as none. A
+pair the page prints as each other's prerequisite (a lecture and its lab) is
+kept as co-requisites, never as two locks.
+
 ## What is in catalogue.json
 13 faculties, 68 programs, 3,076 course entries, 1,797 distinct courses.
 Also 37 program overviews and 99 of the author's own notes about individual
@@ -98,7 +143,16 @@ by program NAME ONLY. Its course data comes from a separate 48-page faculty PDF
 (`sources/ai-data-science-faculty.pdf`), parsed by `parse-ai-pdf.py` into the
 same program shape.
 
-13 programs, 446 course rows. **Five carry no plan and say so** in the
+13 programs, 482 course rows.
+
+A course with more than one prerequisite prints them stacked in one cell, so
+the second and later ones arrive as lines of bare codes after the row
+("MACHINE LEARNING 2 2 3" / "250223010" / "290312120"). The parser used to read
+each such line as a new course and drop it, losing 46 prerequisites - Machine
+Learning in AI and Medical Sciences among them. A line of bare codes is now
+read as more of the previous row's prerequisites unless the next line is the
+wrapped name of a new course. `tools/sync-prerequisites.py` then makes every
+major's prerequisites match its source program. **Five carry no plan and say so** in the
 document's own words — "No plan", "No plan yet", "Noo plan yet". Of the eight
 that do, five reconcile to their stated degree total exactly:
 

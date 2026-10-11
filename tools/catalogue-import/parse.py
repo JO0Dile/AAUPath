@@ -128,8 +128,24 @@ def parse_course_row(cells):
         else: frag.append(d)
 
     if extra: name = name + ' ' + ' '.join(extra)
-    joined=''.join(frag)
-    prereqs=[joined[i:i+9] for i in range(0, len(joined)-8, 9)]
+    # A code printed with its leading zero dropped ("20732100" for 020732100,
+    # ten rows of the Operations Management - MIS tables) is 8 digits. Joined
+    # with the others it shifted every code after it, and on its own it was
+    # shorter than a code and read as nothing - the prerequisite vanished.
+    # When every separate run in the cell is a whole code of 8 or 9 digits,
+    # each is a code, padded back to 9; otherwise the runs are pieces of codes
+    # split by the copy-paste and are stitched together as before.
+    # Only the prerequisite cell(s): those holding a run longer than an hour
+    # count. A split code leaves a short piece in the same cell
+    # ("10021100\n2" is 100211002), so every run there must be a whole code.
+    pcells=[v for v in cells[2:] if v and not re.search(r'[A-Za-z\u0600-\u06FF]', v)
+            and any(len(r) > 2 for r in re.findall(r'\d+', v))]
+    runs=[r for v in pcells for r in re.findall(r'\d+', v)]
+    if runs and all(len(r) in (8, 9) for r in runs) and any(len(r) == 8 for r in runs):
+        prereqs=[r.zfill(9) for r in runs]
+    else:
+        joined=''.join(frag)
+        prereqs=[joined[i:i+9] for i in range(0, len(joined)-8, 9)]
 
     c={'code':code, 'name':norm(name)}
     if nums:

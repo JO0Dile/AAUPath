@@ -18,9 +18,11 @@
     "specReq": 63.0
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Advanced Residency in Prosthodontics",
+    "page": "https://www.aaup.edu/advanced-residency-prosthodontics/curriculum",
     "placement": "advisory",
+    "placementDocument": "AAUP catalogue docx (data_600.docx)",
     "via": "tools/import-catalogue-programs.py"
   },
   "sourceVersion": 1,

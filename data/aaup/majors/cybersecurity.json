@@ -5,7 +5,7 @@
   "nameAr": "الذكاء الاصطناعي والأمن السيبراني",
   "university": "aaup",
   "college": "aaup-ai-ds",
-  "degreeHours": null,
+  "degreeHours": 127,
   "courses": [
     {
       "slug": "040111001",
@@ -22,7 +22,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univReq"
     },
     {
       "slug": "100411010",
@@ -39,7 +40,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "colgReq"
     },
     {
       "slug": "240111000",
@@ -56,7 +58,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univReq"
     },
     {
       "slug": "100413750",
@@ -73,7 +76,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "colgReq"
     },
     {
       "slug": "010610025",
@@ -90,7 +94,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": true,
-      "prerequisiteText": "-"
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "010610026",
@@ -107,7 +112,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": true,
-      "prerequisiteText": "-"
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "290311110",
@@ -124,7 +130,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "colgReq"
     },
     {
       "slug": "290311110-lab",
@@ -141,7 +148,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "colgReq"
     },
     {
       "slug": "uni-elective-1",
@@ -158,7 +166,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univElec"
     },
     {
       "slug": "010610035",
@@ -175,7 +184,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": true,
-      "prerequisiteText": "Intermediate English (010610025) & Intermediate English Lab (010610026)"
+      "prerequisiteText": "Intermediate English (010610025) & Intermediate English Lab (010610026)",
+      "requirement": "univReq"
     },
     {
       "slug": "010610036",
@@ -192,7 +202,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": true,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univReq"
     },
     {
       "slug": "100411020",
@@ -209,7 +220,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Calculus I (100411010)"
+      "prerequisiteText": "Calculus I (100411010)",
+      "requirement": "colgReq"
     },
     {
       "slug": "250111040",
@@ -226,7 +238,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Calculus I (100411010)"
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "290311210",
@@ -243,7 +256,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Computer Science (290311110)"
+      "prerequisiteText": "Introduction to Computer Science (290311110)",
+      "requirement": "colgReq"
     },
     {
       "slug": "290311210-lab",
@@ -260,7 +274,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Computer Science (290311110)"
+      "prerequisiteText": "Introduction to Computer Science (290311110)",
+      "requirement": "colgReq"
     },
     {
       "slug": "uni-elective-2",
@@ -277,24 +292,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
-    },
-    {
-      "slug": "290312130",
-      "code": "290312130",
-      "name": "Computer Architecture",
-      "nameAr": "بنية الحاسوب",
-      "credits": "3",
-      "theoretical": "3",
-      "practical": null,
-      "year": 2,
-      "semester": 1,
-      "category": "CORE",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "-",
+      "requirement": "univElec"
     },
     {
       "slug": "290312140",
@@ -311,7 +310,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "colgReq"
     },
     {
       "slug": "290312120",
@@ -328,7 +328,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "colgReq"
     },
     {
       "slug": "290312110",
@@ -345,7 +346,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290312110-lab",
@@ -362,7 +364,8 @@
       "isPlaceholder": false,
       "pairGroup": true,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290372210",
@@ -379,7 +382,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "250223010",
@@ -396,7 +400,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Calculus II (100411020)"
+      "prerequisiteText": "Calculus II (100411020)",
+      "requirement": "colgReq"
     },
     {
       "slug": "040511011",
@@ -413,7 +418,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univReq"
     },
     {
       "slug": "290372220",
@@ -430,7 +436,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290312210",
@@ -447,24 +454,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Elementary Probability & Statistics (250111040)"
-    },
-    {
-      "slug": "290312240",
-      "code": "290312240",
-      "name": "Differential Equations",
-      "nameAr": "المعادلات التفاضلية",
-      "credits": "3",
-      "theoretical": "3",
-      "practical": null,
-      "year": 2,
-      "semester": 2,
-      "category": "MATH",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": "Calculus II (100411020)"
+      "prerequisiteText": "Elementary Probability & Statistics (250111040)",
+      "requirement": "colgReq"
     },
     {
       "slug": "290313130",
@@ -481,7 +472,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "040521301",
@@ -498,7 +490,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Advanced English (010610035) &amp; Advanced English Lab (010610036)"
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "290312220",
@@ -515,7 +508,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Computer Architecture (290312130)"
+      "prerequisiteText": "Computer Architecture (290312130)",
+      "requirement": "colgReq"
     },
     {
       "slug": "uni-elective-3",
@@ -532,7 +526,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "univElec"
     },
     {
       "slug": "290373110",
@@ -549,7 +544,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
+      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)",
+      "requirement": "specReq"
     },
     {
       "slug": "290373210",
@@ -566,7 +562,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290373130",
@@ -583,7 +580,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "free-elective-1",
@@ -600,7 +598,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "freeElec"
     },
     {
       "slug": "290312230",
@@ -617,7 +616,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "290373120",
@@ -634,7 +634,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290373230",
@@ -651,7 +652,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290314110",
@@ -668,7 +670,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
+      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)",
+      "requirement": "colgReq"
     },
     {
       "slug": "free-elective-2",
@@ -685,7 +688,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "freeElec"
     },
     {
       "slug": "290373220",
@@ -702,7 +706,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Computer Networks (290372220)"
+      "prerequisiteText": "Computer Networks (290372220)",
+      "requirement": "specReq"
     },
     {
       "slug": "290374120",
@@ -719,7 +724,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "dept-elective-1",
@@ -736,7 +742,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specElec"
     },
     {
       "slug": "dept-elective-2",
@@ -753,7 +760,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specElec"
     },
     {
       "slug": "290374110",
@@ -770,7 +778,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specReq"
     },
     {
       "slug": "290354230",
@@ -787,7 +796,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specReq"
     },
     {
       "slug": "290374210",
@@ -804,7 +814,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Introduction to Cybersecurity (290372210)"
+      "prerequisiteText": "Introduction to Cybersecurity (290372210)",
+      "requirement": "specReq"
     },
     {
       "slug": "dept-elective-3",
@@ -821,7 +832,8 @@
       "isPlaceholder": true,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specElec"
     },
     {
       "slug": "290373160",
@@ -838,7 +850,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Ethical Hacking and Penetration Testing (290373230)"
+      "prerequisiteText": "Ethical Hacking and Penetration Testing (290373230)",
+      "requirement": "specElec"
     },
     {
       "slug": "290313210",
@@ -855,7 +868,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Machine Learning (290312230)"
+      "prerequisiteText": "Machine Learning (290312230)",
+      "requirement": "specElec"
     },
     {
       "slug": "250223040",
@@ -872,7 +886,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specElec"
     },
     {
       "slug": "290313250",
@@ -889,7 +904,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specReq"
     },
     {
       "slug": "290313120",
@@ -906,7 +922,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Machine Learning (290312230)"
+      "prerequisiteText": "Machine Learning (290312230)",
+      "requirement": "specElec"
     },
     {
       "slug": "290313110",
@@ -923,7 +940,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Programming Fundamentals (290311210)"
+      "prerequisiteText": "Programming Fundamentals (290311210)",
+      "requirement": "specElec"
     },
     {
       "slug": "290373150",
@@ -940,7 +958,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specElec"
     },
     {
       "slug": "290373140",
@@ -957,7 +976,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "-"
+      "prerequisiteText": "-",
+      "requirement": "specElec"
     },
     {
       "slug": "290373170",
@@ -974,53 +994,121 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Computer Networks (290372220)"
+      "prerequisiteText": "Computer Networks (290372220)",
+      "requirement": "specElec"
+    },
+    {
+      "slug": "000011110",
+      "code": "000011110",
+      "name": "Community Service",
+      "nameAr": null,
+      "credits": "0",
+      "theoretical": 1.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "UNIVERSITY_REQUIREMENT",
+      "requirement": "univReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "010610014",
+      "code": "010610014",
+      "name": "Beginning English",
+      "nameAr": null,
+      "credits": "0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "UNIVERSITY_REQUIREMENT",
+      "requirement": "univReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "290313240",
+      "code": "290313240",
+      "name": "Deep Learning",
+      "nameAr": null,
+      "credits": "3",
+      "theoretical": 2.0,
+      "practical": 2.0,
+      "year": 3,
+      "semester": 2,
+      "category": "MATH",
+      "requirement": "colgReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "specelec-site-slot-1",
+      "code": null,
+      "name": "Specialization Elective",
+      "nameAr": "اختياري تخصص",
+      "credits": "3",
+      "theoretical": null,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": true,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
     }
   ],
   "prerequisites": [
     {
-      "requires": "290311110",
-      "forCourse": "290311210"
+      "requires": "010610014",
+      "forCourse": "010610025"
     },
     {
-      "requires": "100411010",
-      "forCourse": "250111040"
+      "requires": "010610014",
+      "forCourse": "010610026"
     },
     {
-      "requires": "100413750",
-      "forCourse": "250111040"
+      "requires": "010610025",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
     },
     {
       "requires": "100411010",
       "forCourse": "100411020"
     },
     {
-      "requires": "100411020",
-      "forCourse": "290312240"
+      "requires": "100411010",
+      "forCourse": "250111040"
     },
     {
-      "requires": "100411020",
-      "forCourse": "250223010"
-    },
-    {
-      "requires": "250223010",
-      "forCourse": "290312230"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610036"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610036"
+      "requires": "290311110",
+      "forCourse": "290311210"
     },
     {
       "requires": "290311210",
@@ -1032,75 +1120,35 @@
     },
     {
       "requires": "290311210",
-      "forCourse": "290312130"
-    },
-    {
-      "requires": "290311210",
       "forCourse": "290312110"
-    },
-    {
-      "requires": "290311210",
-      "forCourse": "290313130"
     },
     {
       "requires": "290311210",
       "forCourse": "290372210"
     },
     {
+      "requires": "100411020",
+      "forCourse": "250223010"
+    },
+    {
       "requires": "290311210",
       "forCourse": "290372220"
-    },
-    {
-      "requires": "290311210",
-      "forCourse": "290374110"
-    },
-    {
-      "requires": "290311210",
-      "forCourse": "250223040"
-    },
-    {
-      "requires": "290311210",
-      "forCourse": "290313110"
-    },
-    {
-      "requires": "290312130",
-      "forCourse": "290312220"
-    },
-    {
-      "requires": "290312120",
-      "forCourse": "290312230"
-    },
-    {
-      "requires": "290312120",
-      "forCourse": "290314110"
-    },
-    {
-      "requires": "290312120",
-      "forCourse": "290373110"
     },
     {
       "requires": "250111040",
       "forCourse": "290312210"
     },
     {
-      "requires": "290312210",
-      "forCourse": "290312230"
+      "requires": "290311210",
+      "forCourse": "290313130"
     },
     {
-      "requires": "290312230",
-      "forCourse": "290313120"
+      "requires": "010610035",
+      "forCourse": "040521301"
     },
     {
-      "requires": "290312230",
-      "forCourse": "290313210"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290373120"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290373130"
+      "requires": "290312120",
+      "forCourse": "290373110"
     },
     {
       "requires": "290372210",
@@ -1108,35 +1156,67 @@
     },
     {
       "requires": "290372210",
+      "forCourse": "290373130"
+    },
+    {
+      "requires": "290312120",
+      "forCourse": "290312230"
+    },
+    {
+      "requires": "290372210",
+      "forCourse": "290373120"
+    },
+    {
+      "requires": "290372210",
       "forCourse": "290373230"
     },
     {
-      "requires": "290372210",
-      "forCourse": "290374120"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290374210"
+      "requires": "290312120",
+      "forCourse": "290314110"
     },
     {
       "requires": "290372220",
       "forCourse": "290373220"
     },
     {
-      "requires": "290372220",
-      "forCourse": "290373170"
+      "requires": "290372210",
+      "forCourse": "290374120"
+    },
+    {
+      "requires": "290311210",
+      "forCourse": "290374110"
+    },
+    {
+      "requires": "290372210",
+      "forCourse": "290374210"
     },
     {
       "requires": "290373230",
       "forCourse": "290373160"
     },
     {
-      "requires": "010610035",
-      "forCourse": "040521301"
+      "requires": "290312230",
+      "forCourse": "290313210"
     },
     {
-      "requires": "010610036",
-      "forCourse": "040521301"
+      "requires": "290311210",
+      "forCourse": "250223040"
+    },
+    {
+      "requires": "290312230",
+      "forCourse": "290313120"
+    },
+    {
+      "requires": "290311210",
+      "forCourse": "290313110"
+    },
+    {
+      "requires": "290372220",
+      "forCourse": "290373170"
+    },
+    {
+      "requires": "290312230",
+      "forCourse": "290313240"
     }
   ],
   "iconKey": "shield",
@@ -1192,5 +1272,28 @@
     "elective-special-topics-cyber": "290373150",
     "elective-web-dev": "290373140",
     "elective-wireless-networks": "290373170"
+  },
+  "removedNotOnSite": [
+    {
+      "code": "290312130",
+      "name": "Computer Architecture"
+    },
+    {
+      "code": "290312240",
+      "name": "Differential Equations"
+    }
+  ],
+  "requirementHours": {
+    "univReq": 14.0,
+    "univElec": 6,
+    "colgReq": 44.0,
+    "specReq": 45.0,
+    "specElec": 12,
+    "freeElec": 6
+  },
+  "requirementSource": {
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-artificial-intelligence-specialization-artificial-intelligence-and-cyber-%E2%80%8B%E2%80%8Bsecurity/curriculum"
+    }
   }
 }

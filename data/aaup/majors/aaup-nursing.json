@@ -10,7 +10,7 @@
   "bioAr": "بكالوريوس في التمريض (برنامج 17011 · حرم جنين ورام الله). رعاية متمحورة حول المريض والأسرة في مختلف بيئات الرعاية الصحية، مع مختبرات محاكاة وواقع افتراضي ومركز إنعاش معتمد. 146 ساعة معتمدة على 4 سنوات (بفصول صيفية في السنوات 1-3) وفق الخطة الإرشادية الرسمية. تُستثنى الإنجليزية التمهيدية.",
   "university": "aaup",
   "college": "aaup-nursing",
-  "degreeHours": null,
+  "degreeHours": 146,
   "sourceVersion": 1,
   "courses": [
     {
@@ -28,7 +28,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "040111001",
@@ -45,7 +46,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "040511260",
@@ -62,7 +64,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "040511270",
@@ -79,7 +82,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "060511040",
@@ -96,7 +100,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "100211630",
@@ -113,7 +118,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "100311630",
@@ -130,7 +136,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170111200",
@@ -147,7 +154,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "010610072",
@@ -164,7 +172,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "170111220",
@@ -181,7 +190,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170111290",
@@ -198,7 +208,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170111510",
@@ -215,7 +226,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170111520",
@@ -232,7 +244,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170111530",
@@ -249,7 +262,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170111540",
@@ -266,7 +280,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170111550",
@@ -283,7 +298,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "010610073",
@@ -300,7 +316,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "110411000",
@@ -317,7 +334,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "100211240",
@@ -334,7 +352,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170112150",
@@ -351,7 +370,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112190",
@@ -368,7 +388,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112200",
@@ -385,7 +406,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112240",
@@ -402,7 +424,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112270",
@@ -419,7 +442,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112280",
@@ -436,7 +460,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112290",
@@ -453,7 +478,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112180",
@@ -470,7 +496,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170112310",
@@ -487,7 +514,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112320",
@@ -504,7 +532,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112330",
@@ -521,7 +550,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113130",
@@ -538,7 +568,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170112170",
@@ -555,7 +586,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170112340",
@@ -572,7 +604,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113190",
@@ -589,7 +622,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113200",
@@ -606,7 +640,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113270",
@@ -623,7 +658,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113280",
@@ -640,7 +676,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113370",
@@ -657,7 +694,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113380",
@@ -674,7 +712,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113390",
@@ -691,7 +730,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113290",
@@ -708,7 +748,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113300",
@@ -725,7 +766,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113320",
@@ -742,7 +784,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113340",
@@ -759,7 +802,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113350",
@@ -776,7 +820,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170113360",
@@ -793,7 +838,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "040521301",
@@ -810,7 +856,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "170113400",
@@ -827,7 +874,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "040511011",
@@ -844,7 +892,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "univReq"
     },
     {
       "slug": "100414890",
@@ -861,7 +910,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "colgReq"
     },
     {
       "slug": "170114170",
@@ -878,7 +928,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114180",
@@ -895,7 +946,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114190",
@@ -912,7 +964,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114260",
@@ -929,7 +982,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114330",
@@ -946,7 +1000,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114340",
@@ -963,7 +1018,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114350",
@@ -980,7 +1036,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114200",
@@ -997,7 +1054,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114250",
@@ -1014,7 +1072,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114280",
@@ -1031,7 +1090,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114290",
@@ -1048,7 +1108,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114360",
@@ -1065,7 +1126,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114370",
@@ -1082,7 +1144,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "170114380",
@@ -1099,7 +1162,8 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": null
+      "prerequisiteText": null,
+      "requirement": "specReq"
     },
     {
       "slug": "spec-elec-1",
@@ -1116,13 +1180,92 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
+      "prerequisiteText": null,
+      "requirement": "specElec"
+    },
+    {
+      "slug": "000011110",
+      "code": "000011110",
+      "name": "Community Service",
+      "nameAr": null,
+      "credits": "0",
+      "theoretical": 1.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "UNIVERSITY_REQUIREMENT",
+      "requirement": "univReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "010610014",
+      "code": "010610014",
+      "name": "Beginning English",
+      "nameAr": null,
+      "credits": "0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 1,
+      "semester": 1,
+      "category": "UNIVERSITY_REQUIREMENT",
+      "requirement": "univReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "addedFromSite": "Listed on the program’s Academic Plan page but missing from this plan; the term shown is suggested."
+    },
+    {
+      "slug": "060423680",
+      "code": "060423680",
+      "name": "Cardio-pulmonary Physiotherapy",
+      "nameAr": null,
+      "credits": "2",
+      "theoretical": 2.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "170114160",
+      "code": "170114160",
+      "name": "Health System Laws and Policies in Hebrew",
+      "nameAr": null,
+      "credits": "2",
+      "theoretical": 2.0,
+      "practical": null,
+      "year": null,
+      "semester": null,
+      "category": "DEPARTMENT_ELECTIVE",
+      "requirement": "specElec",
+      "isElective": true,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
       "prerequisiteText": null
     }
   ],
   "prerequisites": [
     {
-      "requires": "100311630",
-      "forCourse": "100211240"
+      "requires": "010610014",
+      "forCourse": "010610071"
+    },
+    {
+      "requires": "010610071",
+      "forCourse": "010610072"
     },
     {
       "requires": "170111510",
@@ -1151,6 +1294,14 @@
     {
       "requires": "170111510",
       "forCourse": "170111540"
+    },
+    {
+      "requires": "010610072",
+      "forCourse": "010610073"
+    },
+    {
+      "requires": "100311630",
+      "forCourse": "100211240"
     },
     {
       "requires": "170111540",
@@ -1193,20 +1344,20 @@
       "forCourse": "170112330"
     },
     {
-      "requires": "170111540",
-      "forCourse": "170112340"
-    },
-    {
-      "requires": "170112150",
-      "forCourse": "170112340"
-    },
-    {
       "requires": "100311630",
       "forCourse": "170113130"
     },
     {
       "requires": "170112240",
       "forCourse": "170113130"
+    },
+    {
+      "requires": "170111540",
+      "forCourse": "170112340"
+    },
+    {
+      "requires": "170112150",
+      "forCourse": "170112340"
     },
     {
       "requires": "170112170",
@@ -1223,6 +1374,14 @@
     {
       "requires": "170113190",
       "forCourse": "170113280"
+    },
+    {
+      "requires": "170112320",
+      "forCourse": "170113370"
+    },
+    {
+      "requires": "170112320",
+      "forCourse": "170113390"
     },
     {
       "requires": "170112170",
@@ -1249,18 +1408,6 @@
       "forCourse": "170113360"
     },
     {
-      "requires": "170112320",
-      "forCourse": "170113370"
-    },
-    {
-      "requires": "170113370",
-      "forCourse": "170113380"
-    },
-    {
-      "requires": "170112320",
-      "forCourse": "170113390"
-    },
-    {
       "requires": "100211630",
       "forCourse": "170113400"
     },
@@ -1269,16 +1416,20 @@
       "forCourse": "170114170"
     },
     {
-      "requires": "170114170",
-      "forCourse": "170114180"
-    },
-    {
       "requires": "170112240",
       "forCourse": "170114190"
     },
     {
       "requires": "170113130",
       "forCourse": "170114190"
+    },
+    {
+      "requires": "170114330",
+      "forCourse": "170114340"
+    },
+    {
+      "requires": "170114330",
+      "forCourse": "170114350"
     },
     {
       "requires": "170112320",
@@ -1301,18 +1452,21 @@
       "forCourse": "170114290"
     },
     {
-      "requires": "170114330",
-      "forCourse": "170114340"
-    },
-    {
-      "requires": "170114330",
-      "forCourse": "170114350"
-    },
-    {
       "requires": "170112320",
       "forCourse": "170114360"
     }
   ],
   "iconKey": "health",
-  "imageUrl": null
+  "imageUrl": null,
+  "requirementHours": {
+    "univReq": 11.0,
+    "colgReq": 21.0,
+    "specReq": 112.0,
+    "specElec": 2
+  },
+  "requirementSource": {
+    "site": {
+      "page": "https://www.aaup.edu/bachelor-nursing/curriculum"
+    }
+  }
 }

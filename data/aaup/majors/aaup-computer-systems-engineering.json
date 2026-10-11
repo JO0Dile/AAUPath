@@ -3,31 +3,42 @@
   "slug": "aaup-computer-systems-engineering",
   "name": "Computer Systems Engineering",
   "nameAr": null,
-  "subtitle": "B.Sc. · 163 CH",
+  "subtitle": "B.Sc. · 140 CH",
   "subtitleAr": null,
   "icon": "🎓",
   "iconKey": "circuit",
   "imageUrl": null,
-  "bio": "163 CH — Univ. Req. 14 · Univ. Elec. 8 · Colg. Req. 36 · Spec. Req. 87 · Spec. Elec. 12 · Free Elec. 6. Year-by-year layout is the university’s published Advisory Plan.",
+  "bio": "140 CH — Univ. Req. 10 · Univ. Elec. 4 · Colg. Req. 36 · Spec. Req. 87 · Spec. Elec. 3. Year-by-year layout is the university’s published Advisory Plan.",
   "bioAr": null,
   "overview": null,
   "university": "aaup",
   "college": "aaup-engineering",
-  "degreeHours": 163,
+  "degreeHours": 140,
   "requirementHours": {
-    "univReq": 14.0,
-    "univElec": 8,
+    "univReq": 10.0,
+    "univElec": 4,
     "colgReq": 36.0,
     "specReq": 87.0,
-    "specElec": 12,
-    "freeElec": 6
+    "specElec": 3
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Computer Systems Engineering",
+    "page": "https://www.aaup.edu/bachelor-computer-systems-engineering/curriculum",
     "placement": "advisory",
+    "placementDocument": "AAUP catalogue docx (data_600.docx)",
     "via": "tools/import-catalogue-programs.py"
   },
+  "advisoryCoursesNotOnSite": [
+    {
+      "code": "110411000",
+      "name": "Computer Skills"
+    },
+    {
+      "code": "040111001",
+      "name": "Arabic Language"
+    }
+  ],
   "sourceVersion": 1,
   "courses": [
     {
@@ -90,8 +101,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -126,28 +137,10 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 2,
       "semester": 1,
-      "category": "UNIVERSITY_REQUIREMENT",
-      "requirement": "univReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "040111001",
-      "code": "040111001",
-      "name": "Arabic Language",
-      "nameAr": null,
-      "credits": "2.0",
-      "theoretical": 2.0,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -184,24 +177,6 @@
       "practical": null,
       "year": 4,
       "semester": 2,
-      "category": "UNIVERSITY_REQUIREMENT",
-      "requirement": "univReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "110411000",
-      "code": "110411000",
-      "name": "Computer Skills",
-      "nameAr": null,
-      "credits": "2.0",
-      "theoretical": 2.0,
-      "practical": null,
-      "year": 1,
-      "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -252,8 +227,8 @@
       "name": "General Physics Lab I",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 1,
       "category": "MATH",
@@ -355,8 +330,44 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230315141",
-      "code": "230315141",
+      "slug": "230111050",
+      "code": "230111050",
+      "name": "Engineering Workshop I",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 2,
+      "semester": 1,
+      "category": "MATH",
+      "requirement": "colgReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230112050",
+      "code": "230112050",
+      "name": "Engineering Workshop II",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 2,
+      "semester": 2,
+      "category": "MATH",
+      "requirement": "colgReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230215170",
+      "code": "230215170",
       "name": "Engineering Project Management",
       "nameAr": null,
       "credits": "3.0",
@@ -373,31 +384,13 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230711050",
-      "code": "230711050",
-      "name": "Engineering Workshop I",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 1,
-      "category": "MATH",
-      "requirement": "colgReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230711110",
-      "code": "230711110",
+      "slug": "230611110",
+      "code": "230611110",
       "name": "Engineering Drawing",
       "nameAr": null,
       "credits": "2.0",
-      "theoretical": 4.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 4.0,
       "year": 1,
       "semester": 2,
       "category": "MATH",
@@ -427,31 +420,13 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230712050",
-      "code": "230712050",
-      "name": "Engineering Workshop II",
+      "slug": "240111020",
+      "code": "240111020",
+      "name": "Programming Fundamentals I (Lab)",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 2,
-      "category": "MATH",
-      "requirement": "colgReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "240111011",
-      "code": "240111011",
-      "name": "Programming Fundamentals (C++)",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 1,
       "category": "MATH",
@@ -463,12 +438,12 @@
       "prerequisiteText": null
     },
     {
-      "slug": "240111021",
-      "code": "240111021",
-      "name": "Programming Fundamentals I (Lab)",
+      "slug": "240111030",
+      "code": "240111030",
+      "name": "Programming Fundamentals I C++",
       "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 2.0,
+      "credits": "3.0",
+      "theoretical": 3.0,
       "practical": null,
       "year": 1,
       "semester": 1,
@@ -499,8 +474,8 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712120",
-      "code": "110712120",
+      "slug": "230112120",
+      "code": "230112120",
       "name": "Electrical Circuits I",
       "nameAr": null,
       "credits": "3.0",
@@ -517,8 +492,8 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712210",
-      "code": "110712210",
+      "slug": "230112210",
+      "code": "230112210",
       "name": "Electrical Circuits II",
       "nameAr": null,
       "credits": "3.0",
@@ -535,15 +510,15 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712220",
-      "code": "110712220",
-      "name": "Electrical Circuits Lab",
+      "slug": "230112240",
+      "code": "230112240",
+      "name": "Signals and Systems",
       "nameAr": null,
-      "credits": "1.0",
+      "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
-      "year": 3,
-      "semester": 1,
+      "year": 2,
+      "semester": 2,
       "category": "CORE",
       "requirement": "specReq",
       "isElective": false,
@@ -553,15 +528,15 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712240",
-      "code": "110712240",
-      "name": "Signals and Systems",
+      "slug": "230113120",
+      "code": "230113120",
+      "name": "Electrical Circuits Lab",
       "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 2,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 3,
+      "semester": 1,
       "category": "CORE",
       "requirement": "specReq",
       "isElective": false,
@@ -614,8 +589,8 @@
       "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
-      "year": null,
-      "semester": null,
+      "year": 3,
+      "semester": 2,
       "category": "CORE",
       "requirement": "specReq",
       "isElective": false,
@@ -648,8 +623,8 @@
       "name": "Computer Network Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 2,
       "category": "CORE",
@@ -684,8 +659,8 @@
       "name": "Assembly Programming Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 1,
       "category": "CORE",
@@ -702,8 +677,8 @@
       "name": "Database Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 3,
       "semester": 1,
       "category": "CORE",
@@ -756,8 +731,8 @@
       "name": "Electronics Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 1,
       "category": "CORE",
@@ -810,8 +785,8 @@
       "name": "Digital Logic Design Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 2,
       "semester": 1,
       "category": "CORE",
@@ -900,8 +875,8 @@
       "name": "Microprocessor Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 2,
       "category": "CORE",
@@ -936,7 +911,7 @@
       "name": "Internship",
       "nameAr": null,
       "credits": "6.0",
-      "theoretical": null,
+      "theoretical": 18.0,
       "practical": null,
       "year": 4,
       "semester": 3,
@@ -990,8 +965,8 @@
       "name": "Embedded Systems Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 5,
       "semester": 1,
       "category": "CORE",
@@ -1008,8 +983,8 @@
       "name": "Linux Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 5,
       "semester": 1,
       "category": "CORE",
@@ -1471,25 +1446,6 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230213211",
-      "code": "230213211",
-      "name": "Data & Computer Networks",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": null,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null,
-      "notInAnyRequirementTable": true
-    },
-    {
       "slug": "univelec-slot-y4s1-2",
       "code": null,
       "name": "University Elective",
@@ -1598,7 +1554,7 @@
       "prerequisiteText": null
     },
     {
-      "slug": "univelec-slot-y5s2-8",
+      "slug": "univelec-slot-y5s2-9",
       "code": null,
       "name": "University Elective",
       "nameAr": "متطلب جامعي اختياري",
@@ -1616,7 +1572,7 @@
       "prerequisiteText": null
     },
     {
-      "slug": "univelec-slot-y5s2-9",
+      "slug": "univelec-slot-y5s2-8",
       "code": null,
       "name": "University Elective",
       "nameAr": "متطلب جامعي اختياري",
@@ -1720,12 +1676,12 @@
       "forCourse": "100413020"
     },
     {
-      "requires": "230711050",
-      "forCourse": "230712050"
+      "requires": "230111050",
+      "forCourse": "230112050"
     },
     {
-      "requires": "240111011",
-      "forCourse": "240111021"
+      "requires": "240111030",
+      "forCourse": "240111020"
     },
     {
       "requires": "100411010",
@@ -1733,27 +1689,27 @@
     },
     {
       "requires": "100111021",
-      "forCourse": "110712120"
+      "forCourse": "230112120"
     },
     {
       "requires": "100411020",
-      "forCourse": "110712120"
+      "forCourse": "230112120"
     },
     {
-      "requires": "110712120",
-      "forCourse": "110712210"
-    },
-    {
-      "requires": "110712210",
-      "forCourse": "110712220"
+      "requires": "230112120",
+      "forCourse": "230112210"
     },
     {
       "requires": "100412021",
-      "forCourse": "110712240"
+      "forCourse": "230112240"
     },
     {
-      "requires": "110712120",
-      "forCourse": "110712240"
+      "requires": "230112120",
+      "forCourse": "230112240"
+    },
+    {
+      "requires": "230112210",
+      "forCourse": "230113120"
     },
     {
       "requires": "230811210",
@@ -1772,7 +1728,7 @@
       "forCourse": "230213221"
     },
     {
-      "requires": "240111011",
+      "requires": "240111030",
       "forCourse": "230213221"
     },
     {
@@ -1792,15 +1748,15 @@
       "forCourse": "230215211"
     },
     {
-      "requires": "110712120",
+      "requires": "230112120",
       "forCourse": "230713110"
     },
     {
-      "requires": "110712240",
+      "requires": "230112240",
       "forCourse": "230713120"
     },
     {
-      "requires": "110712220",
+      "requires": "230113120",
       "forCourse": "230713210"
     },
     {
@@ -1808,7 +1764,7 @@
       "forCourse": "230713210"
     },
     {
-      "requires": "110712210",
+      "requires": "230112210",
       "forCourse": "230713250"
     },
     {
@@ -1865,7 +1821,7 @@
     },
     {
       "requires": "230814130",
-      "forCourse": "230815140"
+      "forCourse": "230815120"
     },
     {
       "requires": "230815120",
@@ -1892,7 +1848,7 @@
       "forCourse": "230815640"
     },
     {
-      "requires": "240111011",
+      "requires": "240111030",
       "forCourse": "240112003"
     },
     {
@@ -1933,6 +1889,10 @@
     },
     {
       "requires": "240112003",
+      "forCourse": "110815580"
+    },
+    {
+      "requires": "240112003",
       "forCourse": "110815600"
     },
     {
@@ -1944,7 +1904,7 @@
       "forCourse": "110815660"
     },
     {
-      "requires": "110712240",
+      "requires": "230112240",
       "forCourse": "110815670"
     },
     {
@@ -1976,15 +1936,15 @@
       "forCourse": "230215730"
     },
     {
-      "requires": "110712210",
+      "requires": "230112210",
       "forCourse": "230314160"
     },
     {
-      "requires": "110712240",
+      "requires": "230112240",
       "forCourse": "230314160"
     },
     {
-      "requires": "110712240",
+      "requires": "230112240",
       "forCourse": "230714220"
     },
     {
@@ -2003,5 +1963,17 @@
       "requires": "240112003",
       "forCourse": "240113291"
     }
-  ]
+  ],
+  "renamedIds": {
+    "230315141": "230215170",
+    "230711050": "230111050",
+    "230711110": "230611110",
+    "230712050": "230112050",
+    "240111021": "240111020",
+    "110712120": "230112120",
+    "110712210": "230112210",
+    "110712220": "230113120",
+    "110712240": "230112240",
+    "240111011": "240111030"
+  }
 }

@@ -11216,19 +11216,28 @@
         "code": "020732111",
         "name": "INFORMATION SECURITY",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020732100"
+        ]
        },
        {
         "code": "020733700",
         "name": "ADVANCED DATABASE SYSTEMS",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020733121"
+        ]
        },
        {
         "code": "020734000",
         "name": "KNOWLEDGE MANAGEMENT SYSTEMS",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020733100"
+        ]
        },
        {
         "code": "020734110",
@@ -11236,20 +11245,27 @@
         "credits": 3.0,
         "theoretical": 3.0,
         "prerequisites": [
-         "207331002"
+         "020733100",
+         "020733121"
         ]
        },
        {
         "code": "020734201",
         "name": "E-GOVERNMENT",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020732100"
+        ]
        },
        {
         "code": "020734202",
         "name": "E-CRIME",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020732100"
+        ]
        },
        {
         "code": "020734210",
@@ -11257,26 +11273,36 @@
         "credits": 3.0,
         "theoretical": 3.0,
         "prerequisites": [
-         "207331212"
+         "020733121",
+         "020733401"
         ]
        },
        {
         "code": "020734501",
         "name": "MIS PROJECT MANAGEMENT II",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020734411"
+        ]
        },
        {
         "code": "210312050",
         "name": "INTRODUCTION TO DIGITAL MARKETING",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020411010"
+        ]
        },
        {
         "code": "270414100",
         "name": "ENTREPRENEURSHIP IN IT",
         "credits": 3.0,
-        "theoretical": 3.0
+        "theoretical": 3.0,
+        "prerequisites": [
+         "020211020"
+        ]
        }
       ],
       "requiredHours": 3

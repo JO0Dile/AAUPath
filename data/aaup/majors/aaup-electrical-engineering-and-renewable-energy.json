@@ -3,31 +3,46 @@
   "slug": "aaup-electrical-engineering-and-renewable-energy",
   "name": "Electrical Engineering and Renewable Energy",
   "nameAr": null,
-  "subtitle": "B.Sc. · 161 CH",
+  "subtitle": "B.Sc. · 141 CH",
   "subtitleAr": null,
   "icon": "🎓",
   "iconKey": "bolt",
   "imageUrl": null,
-  "bio": "161 CH — Univ. Req. 14 · Univ. Elec. 8 · Colg. Req. 36 · Spec. Req. 88 · Spec. Elec. 9 · Free Elec. 6. Year-by-year layout is the university’s published Advisory Plan. Note: the published Advisory Plan schedules 2 courses before one of its own prerequisites; shown as published.",
+  "bio": "141 CH — Univ. Req. 10 · Univ. Elec. 4 · Colg. Req. 36 · Spec. Req. 88 · Spec. Elec. 3. Year-by-year layout is the university’s published Advisory Plan.",
   "bioAr": null,
   "overview": null,
   "university": "aaup",
   "college": "aaup-engineering",
-  "degreeHours": 161,
+  "degreeHours": 141,
   "requirementHours": {
-    "univReq": 14.0,
-    "univElec": 8,
+    "univReq": 10.0,
+    "univElec": 4,
     "colgReq": 36.0,
     "specReq": 88.0,
-    "specElec": 9,
-    "freeElec": 6
+    "specElec": 3
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Electrical Engineering and Renewable Energy",
+    "page": "https://www.aaup.edu/bachelor-electrical-engineering-and-renewable-energy/curriculum",
     "placement": "advisory",
+    "placementDocument": "AAUP catalogue docx (data_600.docx)",
     "via": "tools/import-catalogue-programs.py"
   },
+  "advisoryCoursesNotOnSite": [
+    {
+      "code": "110411000",
+      "name": "Computer Skills"
+    },
+    {
+      "code": "040111001",
+      "name": "Arabic Language"
+    },
+    {
+      "code": "230714170",
+      "name": "Principles of Telecomuniaction"
+    }
+  ],
   "sourceVersion": 1,
   "courses": [
     {
@@ -90,8 +105,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -126,28 +141,10 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 2,
       "semester": 1,
-      "category": "UNIVERSITY_REQUIREMENT",
-      "requirement": "univReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "040111001",
-      "code": "040111001",
-      "name": "Arabic Language",
-      "nameAr": null,
-      "credits": "2.0",
-      "theoretical": 2.0,
-      "practical": null,
-      "year": 1,
-      "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -184,24 +181,6 @@
       "practical": null,
       "year": 3,
       "semester": 2,
-      "category": "UNIVERSITY_REQUIREMENT",
-      "requirement": "univReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "110411000",
-      "code": "110411000",
-      "name": "Computer Skills",
-      "nameAr": null,
-      "credits": "2.0",
-      "theoretical": 2.0,
-      "practical": null,
-      "year": 1,
-      "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
       "requirement": "univReq",
       "isElective": false,
@@ -252,8 +231,8 @@
       "name": "General Physics Lab I",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 1,
       "category": "MATH",
@@ -355,8 +334,44 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230315141",
-      "code": "230315141",
+      "slug": "230111050",
+      "code": "230111050",
+      "name": "Engineering Workshop I",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 2,
+      "semester": 1,
+      "category": "MATH",
+      "requirement": "colgReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230112050",
+      "code": "230112050",
+      "name": "Engineering Workshop II",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 2,
+      "semester": 2,
+      "category": "MATH",
+      "requirement": "colgReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230215170",
+      "code": "230215170",
       "name": "Engineering Project Management",
       "nameAr": null,
       "credits": "3.0",
@@ -373,31 +388,13 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230711050",
-      "code": "230711050",
-      "name": "Engineering Workshop I",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 1,
-      "category": "MATH",
-      "requirement": "colgReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230711110",
-      "code": "230711110",
+      "slug": "230611110",
+      "code": "230611110",
       "name": "Engineering Drawing",
       "nameAr": null,
       "credits": "2.0",
-      "theoretical": 4.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 4.0,
       "year": 1,
       "semester": 2,
       "category": "MATH",
@@ -427,31 +424,13 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230712050",
-      "code": "230712050",
-      "name": "Engineering Workshop II",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 2,
-      "category": "MATH",
-      "requirement": "colgReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "240111021",
-      "code": "240111021",
+      "slug": "240111020",
+      "code": "240111020",
       "name": "Programming Fundamentals I (Lab)",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 1,
       "category": "MATH",
@@ -463,8 +442,8 @@
       "prerequisiteText": null
     },
     {
-      "slug": "240111031",
-      "code": "240111031",
+      "slug": "240111030",
+      "code": "240111030",
       "name": "Programming Fundamentals I C++",
       "nameAr": null,
       "credits": "3.0",
@@ -481,32 +460,14 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712230",
-      "code": "110712230",
-      "name": "Electromagnetic Theory I",
+      "slug": "230112120",
+      "code": "230112120",
+      "name": "Electrical Circuits I",
       "nameAr": null,
       "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
       "year": 2,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "110712240",
-      "code": "110712240",
-      "name": "Signals and Systems",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
       "semester": 1,
       "category": "CORE",
       "requirement": "specReq",
@@ -517,32 +478,14 @@
       "prerequisiteText": null
     },
     {
-      "slug": "110712250",
-      "code": "110712250",
-      "name": "Introduction to Matlab Lab",
+      "slug": "230112210",
+      "code": "230112210",
+      "name": "Electrical Circuits II",
       "nameAr": null,
-      "credits": "1.0",
+      "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
-      "year": 1,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "110714260",
-      "code": "110714260",
-      "name": "Principles of Telecomuniaction Lab",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
+      "year": 2,
       "semester": 2,
       "category": "CORE",
       "requirement": "specReq",
@@ -571,6 +514,168 @@
       "prerequisiteText": null
     },
     {
+      "slug": "230112240",
+      "code": "230112240",
+      "name": "Signals and Systems",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230112250",
+      "code": "230112250",
+      "name": "Electromagnetic Theory I",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 2,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230112270",
+      "code": "230112270",
+      "name": "Introduction to Matlab Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 1,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113110",
+      "code": "230113110",
+      "name": "Electronics I",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113120",
+      "code": "230113120",
+      "name": "Electrical Circuits Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 3,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113130",
+      "code": "230113130",
+      "name": "Electrical Installations and Safety",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113140",
+      "code": "230113140",
+      "name": "Probability and Random Variables",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113210",
+      "code": "230113210",
+      "name": "Electrical Installations and Safety Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 3,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113220",
+      "code": "230113220",
+      "name": "Electronics Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
       "slug": "230113240",
       "code": "230113240",
       "name": "Control Systems I",
@@ -589,11 +694,47 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230114150",
-      "code": "230114150",
-      "name": "Control Systems Lab",
+      "slug": "230113250",
+      "code": "230113250",
+      "name": "Electronics II",
       "nameAr": null,
-      "credits": "1.0",
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230113260",
+      "code": "230113260",
+      "name": "Electrical Machines I",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 3,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114110",
+      "code": "230114110",
+      "name": "Power Systems I",
+      "nameAr": null,
+      "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
       "year": 4,
@@ -605,6 +746,97 @@
       "pairGroup": false,
       "independentGrades": false,
       "prerequisiteText": null
+    },
+    {
+      "slug": "230114120",
+      "code": "230114120",
+      "name": "Renewable Energy Systems I",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114130",
+      "code": "230114130",
+      "name": "Power Electronics",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114140",
+      "code": "230114140",
+      "name": "Electrical Machines II",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114150",
+      "code": "230114150",
+      "name": "Control Systems Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114170",
+      "code": "230114170",
+      "name": "Principles of Telecommunication",
+      "nameAr": null,
+      "credits": "3.0",
+      "theoretical": 3.0,
+      "practical": null,
+      "year": 4,
+      "semester": 1,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null,
+      "termSuggested": true
     },
     {
       "slug": "230114220",
@@ -630,8 +862,8 @@
       "name": "Electrical Machines Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 2,
       "category": "CORE",
@@ -650,6 +882,24 @@
       "credits": "3.0",
       "theoretical": 3.0,
       "practical": null,
+      "year": 4,
+      "semester": 2,
+      "category": "CORE",
+      "requirement": "specReq",
+      "isElective": false,
+      "isPlaceholder": false,
+      "pairGroup": false,
+      "independentGrades": false,
+      "prerequisiteText": null
+    },
+    {
+      "slug": "230114260",
+      "code": "230114260",
+      "name": "Principles of Telecomuniaction Lab",
+      "nameAr": null,
+      "credits": "1.0",
+      "theoretical": null,
+      "practical": 3.0,
       "year": 4,
       "semester": 2,
       "category": "CORE",
@@ -684,8 +934,8 @@
       "name": "Computer Applications for Electrical Power and Renewable Energy Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 5,
       "semester": 1,
       "category": "CORE",
@@ -756,8 +1006,8 @@
       "name": "Renewable Energies Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 5,
       "semester": 1,
       "category": "CORE",
@@ -774,8 +1024,8 @@
       "name": "Power Systems Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 5,
       "semester": 2,
       "category": "CORE",
@@ -823,98 +1073,8 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230713110",
-      "code": "230713110",
-      "name": "Electronics I",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230713120",
-      "code": "230713120",
-      "name": "Probability and Random Variables",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230713210",
-      "code": "230713210",
-      "name": "Electronics Lab",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230713250",
-      "code": "230713250",
-      "name": "Electronics II",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230714170",
-      "code": "230714170",
-      "name": "Principles of Telecomuniaction",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230811210",
-      "code": "230811210",
+      "slug": "230211210",
+      "code": "230211210",
       "name": "Digital Logic Design",
       "nameAr": null,
       "credits": "3.0",
@@ -931,216 +1091,18 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230812110",
-      "code": "230812110",
+      "slug": "230212110",
+      "code": "230212110",
       "name": "Digital Logic Design Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 3.0,
       "year": 2,
       "semester": 2,
       "category": "CORE",
       "requirement": "specReq",
       "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230912120",
-      "code": "230912120",
-      "name": "Electrical Circuits I",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230912210",
-      "code": "230912210",
-      "name": "Electrical Circuits II",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 2,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230913120",
-      "code": "230913120",
-      "name": "Electrical Circuits Lab",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230913130",
-      "code": "230913130",
-      "name": "Electrical Installations and Safety",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230913210",
-      "code": "230913210",
-      "name": "Electrical Installations and Safety Lab",
-      "nameAr": null,
-      "credits": "1.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230913260",
-      "code": "230913260",
-      "name": "Electrical Machines I",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230914110",
-      "code": "230914110",
-      "name": "Power Systems I",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230914120",
-      "code": "230914120",
-      "name": "Renewable Energy Systems I",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230914130",
-      "code": "230914130",
-      "name": "Power Electronics",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230914140",
-      "code": "230914140",
-      "name": "Electrical Machines II",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": 4,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "specReq",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "110714430",
-      "code": "110714430",
-      "name": "Microprocessors & Microcontrollers",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": null,
-      "semester": null,
-      "category": "DEPARTMENT_ELECTIVE",
-      "requirement": "specElec",
-      "isElective": true,
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
@@ -1168,24 +1130,6 @@
       "slug": "230113440",
       "code": "230113440",
       "name": "Material Science and Engineering",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": null,
-      "semester": null,
-      "category": "DEPARTMENT_ELECTIVE",
-      "requirement": "specElec",
-      "isElective": true,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230114180",
-      "code": "230114180",
-      "name": "Programmable Logic Controllers",
       "nameAr": null,
       "credits": "3.0",
       "theoretical": 3.0,
@@ -1327,27 +1271,9 @@
       "prerequisiteText": null
     },
     {
-      "slug": "230512010",
-      "code": "230512010",
-      "name": "Strength of Materials",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": 3.0,
-      "practical": null,
-      "year": null,
-      "semester": null,
-      "category": "DEPARTMENT_ELECTIVE",
-      "requirement": "specElec",
-      "isElective": true,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null
-    },
-    {
-      "slug": "230514030",
-      "code": "230514030",
-      "name": "Applied Dynamics and Applications",
+      "slug": "230213240",
+      "code": "230213240",
+      "name": "Microprocessor Systems & Applications",
       "nameAr": null,
       "credits": "3.0",
       "theoretical": 3.0,
@@ -1579,36 +1505,28 @@
       "forCourse": "100413020"
     },
     {
-      "requires": "230711050",
-      "forCourse": "230712050"
+      "requires": "230111050",
+      "forCourse": "230112050"
     },
     {
-      "requires": "240111031",
-      "forCourse": "240111021"
+      "requires": "100111010",
+      "forCourse": "230711200"
     },
     {
-      "requires": "100111021",
-      "forCourse": "110712230"
+      "requires": "100411010",
+      "forCourse": "230711200"
     },
     {
-      "requires": "100412021",
-      "forCourse": "110712230"
+      "requires": "240111030",
+      "forCourse": "240111020"
     },
     {
-      "requires": "100412021",
-      "forCourse": "110712240"
+      "requires": "100411020",
+      "forCourse": "230112120"
     },
     {
-      "requires": "230912120",
-      "forCourse": "110712240"
-    },
-    {
-      "requires": "240111031",
-      "forCourse": "110712250"
-    },
-    {
-      "requires": "230714170",
-      "forCourse": "110714260"
+      "requires": "230112120",
+      "forCourse": "230112210"
     },
     {
       "requires": "100111010",
@@ -1616,22 +1534,98 @@
     },
     {
       "requires": "100412021",
-      "forCourse": "230112220"
+      "forCourse": "230112240"
     },
     {
-      "requires": "230913120",
-      "forCourse": "230112220"
+      "requires": "230112120",
+      "forCourse": "230112240"
+    },
+    {
+      "requires": "100111021",
+      "forCourse": "230112250"
+    },
+    {
+      "requires": "100412021",
+      "forCourse": "230112250"
+    },
+    {
+      "requires": "240111030",
+      "forCourse": "230112270"
+    },
+    {
+      "requires": "230112120",
+      "forCourse": "230113110"
+    },
+    {
+      "requires": "230112210",
+      "forCourse": "230113120"
+    },
+    {
+      "requires": "230112210",
+      "forCourse": "230113130"
+    },
+    {
+      "requires": "230112240",
+      "forCourse": "230113140"
+    },
+    {
+      "requires": "230112050",
+      "forCourse": "230113210"
+    },
+    {
+      "requires": "230113130",
+      "forCourse": "230113210"
+    },
+    {
+      "requires": "230113120",
+      "forCourse": "230113220"
+    },
+    {
+      "requires": "230113250",
+      "forCourse": "230113220"
     },
     {
       "requires": "100412350",
       "forCourse": "230113240"
     },
     {
-      "requires": "110712240",
+      "requires": "230112240",
       "forCourse": "230113240"
     },
     {
-      "requires": "110712250",
+      "requires": "230113110",
+      "forCourse": "230113250"
+    },
+    {
+      "requires": "230112210",
+      "forCourse": "230113260"
+    },
+    {
+      "requires": "230112250",
+      "forCourse": "230113260"
+    },
+    {
+      "requires": "100412350",
+      "forCourse": "230114110"
+    },
+    {
+      "requires": "230113260",
+      "forCourse": "230114110"
+    },
+    {
+      "requires": "230113110",
+      "forCourse": "230114120"
+    },
+    {
+      "requires": "230113250",
+      "forCourse": "230114130"
+    },
+    {
+      "requires": "230113260",
+      "forCourse": "230114140"
+    },
+    {
+      "requires": "230112270",
       "forCourse": "230114150"
     },
     {
@@ -1639,23 +1633,31 @@
       "forCourse": "230114150"
     },
     {
-      "requires": "230914110",
+      "requires": "230112240",
+      "forCourse": "230114170"
+    },
+    {
+      "requires": "230114110",
       "forCourse": "230114220"
     },
     {
-      "requires": "230914140",
+      "requires": "230114140",
       "forCourse": "230114230"
     },
     {
-      "requires": "230914120",
+      "requires": "230114120",
       "forCourse": "230114240"
     },
     {
-      "requires": "230114240",
+      "requires": "230114170",
+      "forCourse": "230114260"
+    },
+    {
+      "requires": "230113130",
       "forCourse": "230115110"
     },
     {
-      "requires": "230913130",
+      "requires": "230114240",
       "forCourse": "230115110"
     },
     {
@@ -1688,126 +1690,18 @@
     },
     {
       "requires": "230114220",
-      "forCourse": "230713110"
+      "forCourse": "230115240"
     },
     {
-      "requires": "230912120",
-      "forCourse": "230713110"
-    },
-    {
-      "requires": "110712240",
-      "forCourse": "230713120"
-    },
-    {
-      "requires": "230713250",
-      "forCourse": "230713210"
-    },
-    {
-      "requires": "230913120",
-      "forCourse": "230713210"
-    },
-    {
-      "requires": "230713110",
-      "forCourse": "230713250"
-    },
-    {
-      "requires": "230912210",
-      "forCourse": "230713250"
-    },
-    {
-      "requires": "230713120",
-      "forCourse": "230714170"
-    },
-    {
-      "requires": "230811210",
-      "forCourse": "230812110"
-    },
-    {
-      "requires": "100111021",
-      "forCourse": "230912120"
-    },
-    {
-      "requires": "100411020",
-      "forCourse": "230912120"
-    },
-    {
-      "requires": "230912120",
-      "forCourse": "230912210"
-    },
-    {
-      "requires": "230912210",
-      "forCourse": "230913120"
-    },
-    {
-      "requires": "230912210",
-      "forCourse": "230913130"
-    },
-    {
-      "requires": "230712050",
-      "forCourse": "230913210"
-    },
-    {
-      "requires": "230913130",
-      "forCourse": "230913210"
-    },
-    {
-      "requires": "110712230",
-      "forCourse": "230913260"
-    },
-    {
-      "requires": "230912210",
-      "forCourse": "230913260"
-    },
-    {
-      "requires": "100412350",
-      "forCourse": "230914110"
-    },
-    {
-      "requires": "230711200",
-      "forCourse": "230914120"
-    },
-    {
-      "requires": "230713110",
-      "forCourse": "230914120"
-    },
-    {
-      "requires": "230913260",
-      "forCourse": "230914120"
-    },
-    {
-      "requires": "230713250",
-      "forCourse": "230914130"
-    },
-    {
-      "requires": "230913260",
-      "forCourse": "230914140"
-    },
-    {
-      "requires": "230713110",
-      "forCourse": "110714430"
-    },
-    {
-      "requires": "230112220",
-      "forCourse": "230113420"
-    },
-    {
-      "requires": "230811210",
-      "forCourse": "230113420"
+      "requires": "230211210",
+      "forCourse": "230212110"
     },
     {
       "requires": "100111021",
       "forCourse": "230113440"
     },
     {
-      "requires": "230113240",
-      "forCourse": "230114180"
-    },
-    {
-      "requires": "230811210",
-      "forCourse": "230114180"
-    },
-    {
-      "requires": "230914120",
+      "requires": "230114120",
       "forCourse": "230114450"
     },
     {
@@ -1815,19 +1709,19 @@
       "forCourse": "230114490"
     },
     {
-      "requires": "230114220",
-      "forCourse": "230115430"
-    },
-    {
-      "requires": "230914140",
+      "requires": "230114140",
       "forCourse": "230115430"
     },
     {
       "requires": "230114220",
+      "forCourse": "230115430"
+    },
+    {
+      "requires": "230113130",
       "forCourse": "230115440"
     },
     {
-      "requires": "230913130",
+      "requires": "230114220",
       "forCourse": "230115440"
     },
     {
@@ -1841,32 +1735,42 @@
     {
       "requires": "230114220",
       "forCourse": "230115480"
-    }
-  ],
-  "advisoryPlanPrerequisiteConflicts": [
-    {
-      "course": "Engineering Thermodynamics",
-      "courseTerm": [
-        2,
-        2
-      ],
-      "prerequisite": "Electrical Circuits Lab",
-      "prerequisiteTerm": [
-        3,
-        1
-      ]
     },
     {
-      "course": "Electronics I",
-      "courseTerm": [
-        3,
-        1
-      ],
-      "prerequisite": "Power Systems II",
-      "prerequisiteTerm": [
-        4,
-        2
-      ]
+      "requires": "230113110",
+      "forCourse": "230213240"
+    },
+    {
+      "requires": "230211210",
+      "forCourse": "230213240"
     }
-  ]
+  ],
+  "renamedIds": {
+    "230315141": "230215170",
+    "230711050": "230111050",
+    "230711110": "230611110",
+    "230712050": "230112050",
+    "240111021": "240111020",
+    "240111031": "240111030",
+    "110712230": "230112250",
+    "110712240": "230112240",
+    "110712250": "230112270",
+    "110714260": "230114260",
+    "230713110": "230113110",
+    "230713120": "230113140",
+    "230713210": "230113220",
+    "230713250": "230113250",
+    "230811210": "230211210",
+    "230812110": "230212110",
+    "230912120": "230112120",
+    "230912210": "230112210",
+    "230913120": "230113120",
+    "230913130": "230113130",
+    "230913210": "230113210",
+    "230913260": "230113260",
+    "230914110": "230114110",
+    "230914120": "230114120",
+    "230914130": "230114130",
+    "230914140": "230114140"
+  }
 }

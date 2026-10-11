@@ -23,11 +23,23 @@
     "freeElec": 6
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Law",
+    "page": "https://www.aaup.edu/bachelor-law/curriculum",
     "placement": "advisory",
+    "placementDocument": "AAUP catalogue docx (data_600.docx)",
     "via": "tools/import-catalogue-programs.py"
   },
+  "advisoryCoursesNotOnSite": [
+    {
+      "code": "030121420",
+      "name": "Administrative Law (1)"
+    },
+    {
+      "code": "030313220",
+      "name": "Origin of Islamic JURISPRUDENCE(1)"
+    }
+  ],
   "sourceVersion": 1,
   "courses": [
     {
@@ -90,8 +102,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 1,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -126,8 +138,8 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 2,
       "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -1633,25 +1645,6 @@
       "prerequisiteText": null
     },
     {
-      "slug": "030121420",
-      "code": "030121420",
-      "name": "Administrative Law (1)",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": null,
-      "practical": null,
-      "year": 2,
-      "semester": 1,
-      "category": "CORE",
-      "requirement": "",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null,
-      "notInAnyRequirementTable": true
-    },
-    {
       "slug": "univelec-slot-y2s2-3",
       "code": null,
       "name": "University Elective",
@@ -1704,25 +1697,6 @@
       "pairGroup": false,
       "independentGrades": false,
       "prerequisiteText": null
-    },
-    {
-      "slug": "030313220",
-      "code": "030313220",
-      "name": "Origin of Islamic JURISPRUDENCE(1)",
-      "nameAr": null,
-      "credits": "3.0",
-      "theoretical": null,
-      "practical": null,
-      "year": 3,
-      "semester": 2,
-      "category": "CORE",
-      "requirement": "",
-      "isElective": false,
-      "isPlaceholder": false,
-      "pairGroup": false,
-      "independentGrades": false,
-      "prerequisiteText": null,
-      "notInAnyRequirementTable": true
     },
     {
       "slug": "specelec-slot-y4s1-7",
@@ -2088,7 +2062,7 @@
     },
     {
       "requires": "030114210",
-      "forCourse": "030124280"
+      "forCourse": "030124171"
     },
     {
       "requires": "030122240",

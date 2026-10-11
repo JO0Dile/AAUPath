@@ -13,7 +13,7 @@
   "overview": "The “Digital Media and Communication” Program that Arab American University opened will help in solving a huge problem in Palestine and the Arab World as it will be connected to the usage of 80% of citizens in the Palestinian community. The different types and forms of the social media networks and its audiences control most aspects of our lives without any deep, scientific, and practical corresponding educational programs to raise awareness, knowledge and systematic science. This program in AAUP is considered to be an innovation and renewal, and it is a scientific boldness to enter such a life and media-related field. This program depends on the field-work aspect in teaching and the university provided a scientific environment enhanced with laboratories for experiments in order to provide specialized content. Also AAUP provided an opportunity for students to contact some academics and experts face-to-face through the e-learning system as they cannot enter Palestine.This program will provide and build an interactive and integrated forum on the internet to be a platform for the program, for the faculty (Faculty of Digital Media) and for the university as well. This will be the criteria to distinguish students according to what they produce and practice, not on what they are theoretically tested in. And so students’ production will be a variety of democratic digital content that benefit the Palestinian and the Arab community.The program will provide students with the needed skills to start their own work independently and build aprofessional content, especially in light of the increasing number of unemployment between new graduates. Graduates also will be able to start their own pioneer projects in a world that is no longer exclusive to large institutions. Graduates of this program will be “Communication and Social Media Specialists” and innovators in applying technology and employing it to achieve the organization goals.This program helps to cover the gap in the educational Palestinian institutions which did not recognize the network world that forms most of our world and affects our lives. We started to have second and third virtual lives, as the networks are places where you can express your opinions, market your products, a cultural, artistic, advertising and political place … etc. By providing this program, AAUP provides a program that fits this virtual and real world that affects our lives and our future.The “Digital Media and Communication” Program that Arab American University opened will help in solving a huge problem in Palestine and the Arab World as it will be connected to the usage of 80% of citizens in the Palestinian community. The different types and forms of the social media networks and its audiences control most aspects of our lives without any deep, scientific, and practical corresponding educational programs to raise awareness, knowledge and systematic science. This program in AAUP is considered to be an innovation and renewal, and it is a scientific boldness to enter such a life and media-related field. This program depends on the field-work aspect in teaching and the university provided a scientific environment enhanced with laboratories for experiments in order to provide specialized content. Also AAUP provided an opportunity for students to contact some academics and experts face-to-face through the e-learning system as they cannot enter Palestine.This program will provide and build an interactive and integrated forum on the internet to be a platform for the program, for the faculty (Faculty of Digital Media) and for the university as well. This will be the criteria to distinguish students according to what they produce and practice, not on what they are theoretically tested in. And so students’ production will be a variety of democratic digital content that benefit the Palestinian and the Arab community.The program will provide students with the needed skills to start their own work independently and build aprofessional content, especially in light of the increasing number of unemployment between new graduates. Graduates also will be able to start their own pioneer projects in a world that is no longer exclusive to large institutions. Graduates of this program will be “Communication and Social Media Specialists” and innovators in applying technology and employing it to achieve the organization goals.This program helps to cover the gap in the educational Palestinian institutions which did not recognize the network world that forms most of our world and affects our lives. We started to have second and third virtual lives, as the networks are places where you can express your opinions, market your products, a cultural, artistic, advertising and political place … etc. By providing this program, AAUP provides a program that fits this virtual and real world that affects our lives and our future.",
   "university": "aaup",
   "college": "aaup-modern-media",
-  "degreeHours": null,
+  "degreeHours": 133,
   "requirementHours": {
     "univReq": 14.0,
     "univElec": 8,
@@ -23,8 +23,9 @@
     "freeElec": 6
   },
   "requirementSource": {
-    "document": "AAUP catalogue docx (data_600.docx)",
+    "document": "aaup.edu Academic Plan page",
     "program": "Bachelor in Modern Media - Specialization in Digital Media and Communication",
+    "page": "https://www.aaup.edu/bachelor-modern-media-specialization-digital-media-and-communication/curriculum",
     "placement": "suggested",
     "via": "tools/import-catalogue-programs.py"
   },
@@ -90,8 +91,8 @@
       "name": "Intermediate English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 4,
       "semester": 1,
       "category": "UNIVERSITY_REQUIREMENT",
@@ -126,8 +127,8 @@
       "name": "Advanced English Lab",
       "nameAr": null,
       "credits": "1.0",
-      "theoretical": 2.0,
-      "practical": null,
+      "theoretical": null,
+      "practical": 2.0,
       "year": 4,
       "semester": 2,
       "category": "UNIVERSITY_REQUIREMENT",
