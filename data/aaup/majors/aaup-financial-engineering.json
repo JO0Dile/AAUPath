@@ -1141,15 +1141,15 @@
     },
     {
       "requires": "010610025",
+      "forCourse": "010610026"
+    },
+    {
+      "requires": "010610025",
       "forCourse": "010610035"
     },
     {
       "requires": "010610026",
       "forCourse": "010610035"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610036"
     },
     {
       "requires": "010610026",

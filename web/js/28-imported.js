@@ -214,6 +214,13 @@
     var plans = loadImportedPlans();
     var p = plans[planId];
     if(!p) return;
+    // Not for a university plan. At AAUP the same course has different
+    // prerequisites in different plans - Machine Learning needs Fundamentals
+    // of AI and Linear Algebra I in AI and Medical Sciences, Fundamentals of
+    // AI alone in AI and Robotics - so copying a link from another plan puts
+    // a prerequisite this plan does not have. A university plan's
+    // prerequisites are exactly the ones it was published with.
+    if(p.official) return;
     var course = (p.courses || []).filter(function(c){ return c.id === slug; })[0];
     if(!course) return;
 

@@ -1106,10 +1106,6 @@
       "forCourse": "040521301"
     },
     {
-      "requires": "010610036",
-      "forCourse": "040521301"
-    },
-    {
       "requires": "020111011",
       "forCourse": "020111021"
     },
@@ -1186,11 +1182,11 @@
       "forCourse": "020333220"
     },
     {
-      "requires": "020332220",
+      "requires": "100411810",
       "forCourse": "020333240"
     },
     {
-      "requires": "100411810",
+      "requires": "020332220",
       "forCourse": "020333240"
     },
     {
@@ -1262,19 +1258,19 @@
       "forCourse": "020333140"
     },
     {
-      "requires": "020332220",
-      "forCourse": "020333160"
-    },
-    {
       "requires": "020411010",
       "forCourse": "020333160"
     },
     {
       "requires": "020332220",
+      "forCourse": "020333160"
+    },
+    {
+      "requires": "020411010",
       "forCourse": "020334230"
     },
     {
-      "requires": "020411010",
+      "requires": "020332220",
       "forCourse": "020334230"
     }
   ],

@@ -43,14 +43,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -483,14 +491,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -896,14 +912,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -1006,7 +1030,11 @@
        "code": "250112120",
        "name": "OPERATIONS RESEARCH II",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "250111040",
+        "250112110"
+       ]
       },
       {
        "code": "250112130",
@@ -1331,14 +1359,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -1725,14 +1761,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -1875,7 +1919,11 @@
        "name": "MACHINE LEARNING",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "250223010",
+        "290312120"
+       ]
       },
       {
        "code": "290312240",
@@ -1966,14 +2014,22 @@
        "name": "AI FOR CLINICAL DECISION SUPPORT SYSTEMS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "250111040",
+        "290312210"
+       ]
       },
       {
        "code": "290323220",
        "name": "AI IN DIAGNOSTIC AND PREDICTIVE MEDICINE",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290312230",
+        "290313110"
+       ]
       },
       {
        "code": "290323230",
@@ -1987,21 +2043,33 @@
        "name": "AI APPLICATIONS IN LABORATORY TECHNOLOGY AND DIAGNOSIS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "100311620",
+        "290312210"
+       ]
       },
       {
        "code": "290323250",
        "name": "DIGITAL HEALTH AND INFORMATICS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "250111040",
+        "290314110"
+       ]
       },
       {
        "code": "290323260",
        "name": "AI IN GENOMICS AND PERSONALIZED MEDICINE",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "100211620",
+        "290312120"
+       ]
       },
       {
        "code": "290323270",
@@ -2186,14 +2254,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -2464,7 +2540,11 @@
        "name": "AUTONOMOUS VEHICLE SIMULATION AND MODELING OF AI ROBOTIC SYSTEMS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290312230",
+        "290313110"
+       ]
       },
       {
        "code": "290314130",
@@ -2506,28 +2586,44 @@
        "name": "EMBEDDED SYSTEM FOR ROBOTICS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290312130",
+        "290313110"
+       ]
       },
       {
        "code": "290313150",
        "name": "ROBOTICS OPERATING SYSTEMS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290312140",
+        "290312220"
+       ]
       },
       {
        "code": "290313160",
        "name": "SWARM ROBOTICS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290312140",
+        "290313110"
+       ]
       },
       {
        "code": "290313170",
        "name": "SENSORS AND PERCEPTION IN ROBOTICS",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "290313110",
+        "290313210"
+       ]
       },
       {
        "code": "290313180",
@@ -2599,14 +2695,22 @@
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
        "name": "ADVANCED ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "040111001",
@@ -2770,7 +2874,11 @@
        "code": "020214110",
        "name": "DECISION ANALYSIS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020211020",
+        "020332220"
+       ]
       },
       {
        "code": "020313701",
@@ -2785,7 +2893,11 @@
        "code": "020314650",
        "name": "BANKS MANAGEMENT",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020312100",
+        "020333110"
+       ]
       },
       {
        "code": "020332210",
@@ -2841,13 +2953,21 @@
        "code": "020333220",
        "name": "ESSENTIALS OF INVESTMENTS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020332210",
+        "020333110"
+       ]
       },
       {
        "code": "020333240",
        "name": "FINANCIAL ANALYTICS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020332220",
+        "100411810"
+       ]
       },
       {
        "code": "020333250",
@@ -2858,7 +2978,11 @@
        "code": "020334110",
        "name": "VALUATION",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020114110",
+        "020332210"
+       ]
       },
       {
        "code": "020334120",
@@ -2875,12 +2999,20 @@
        "code": "020334210",
        "name": "DATA ANALYTICS FOR BUSINESS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020333120",
+        "020333240"
+       ]
       },
       {
        "code": "020334220",
        "name": "GRADUATION PROJECT FOR FINANCE AND DATA ANALYTICS",
-       "credits": 3.0
+       "credits": 3.0,
+       "prerequisites": [
+        "020332220",
+        "020333240"
+       ]
       },
       {
        "code": "020334250",
@@ -2890,7 +3022,11 @@
       {
        "code": "020334261",
        "name": "INTERNSHIP IN FINANCE AND DATA SCIENCE I",
-       "credits": 3.0
+       "credits": 3.0,
+       "prerequisites": [
+        "020314650",
+        "020334210"
+       ]
       },
       {
        "code": "020334262",
@@ -2931,7 +3067,11 @@
        "code": "020213210",
        "name": "LEADERSHIP",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020211020",
+        "020212100"
+       ]
       },
       {
        "code": "020332230",
@@ -2956,19 +3096,31 @@
        "name": "DATA ANALYTICS FOR ACCOUNTING",
        "credits": 3.0,
        "theoretical": 2.0,
-       "practical": 2.0
+       "practical": 2.0,
+       "prerequisites": [
+        "020312100",
+        "020332220"
+       ]
       },
       {
        "code": "020333160",
        "name": "MARKETING ANALYTICS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020332220",
+        "020411010"
+       ]
       },
       {
        "code": "020334230",
        "name": "DIGITAL ANALYTICS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020332220",
+        "020411010"
+       ]
       }
      ],
      "requiredHours": 6
@@ -3007,13 +3159,21 @@
        "name": "INTERMEDIATE ENGLISH LAB",
        "credits": 1.0,
        "weeklyHours": 2.0,
-       "weeklyHoursColumnUnknown": true
+       "weeklyHoursColumnUnknown": true,
+       "prerequisites": [
+        "010610014",
+        "010610025"
+       ]
       },
       {
        "code": "010610035",
        "name": "ADVANCED ENGLISH",
        "credits": 2.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "010610025",
+        "010610026"
+       ]
       },
       {
        "code": "010610036",
@@ -3041,7 +3201,11 @@
        "code": "040521301",
        "name": "FUNDAMENTALS OF RESEARCH METHODS",
        "credits": 2.0,
-       "theoretical": 2.0
+       "theoretical": 2.0,
+       "prerequisites": [
+        "010610035",
+        "010610036"
+       ]
       },
       {
        "code": "240111000",
@@ -3152,7 +3316,11 @@
        "code": "250222050",
        "name": "FINANCIAL ECONOMICS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "250221020",
+        "250222010"
+       ]
       },
       {
        "code": "250222060",
@@ -3196,7 +3364,8 @@
        "credits": 3.0,
        "theoretical": 3.0,
        "prerequisites": [
-        "250222010"
+        "250222010",
+        "250222040"
        ]
       },
       {
@@ -3218,7 +3387,11 @@
        "code": "250223060",
        "name": "FINANCIAL STATEMENT ANALYSIS",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020312100",
+        "250221060"
+       ]
       },
       {
        "code": "250223070",
@@ -3323,7 +3496,11 @@
        "code": "020313701",
        "name": "INTERNATIONAL FINANCIAL MANAGEMENT",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020312100",
+        "250222060"
+       ]
       },
       {
        "code": "020333120",
@@ -3335,7 +3512,11 @@
        "code": "020334110",
        "name": "VALUATION",
        "credits": 3.0,
-       "theoretical": 3.0
+       "theoretical": 3.0,
+       "prerequisites": [
+        "020312100",
+        "250223060"
+       ]
       },
       {
        "code": "020411010",

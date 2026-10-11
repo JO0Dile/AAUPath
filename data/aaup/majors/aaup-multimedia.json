@@ -1025,6 +1025,18 @@
   ],
   "prerequisites": [
     {
+      "requires": "240211013",
+      "forCourse": "240211030"
+    },
+    {
+      "requires": "010610014",
+      "forCourse": "010610025"
+    },
+    {
+      "requires": "010610014",
+      "forCourse": "010610026"
+    },
+    {
       "requires": "100411010",
       "forCourse": "100413750"
     },
@@ -1033,8 +1045,24 @@
       "forCourse": "240111060"
     },
     {
-      "requires": "010610035",
-      "forCourse": "240213480"
+      "requires": "240212020",
+      "forCourse": "240212031"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610035"
+    },
+    {
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
     },
     {
       "requires": "240111050",
@@ -1045,8 +1073,20 @@
       "forCourse": "240112200"
     },
     {
-      "requires": "240112100",
-      "forCourse": "240112200"
+      "requires": "240212020",
+      "forCourse": "240212401"
+    },
+    {
+      "requires": "240212020",
+      "forCourse": "240222500"
+    },
+    {
+      "requires": "010610035",
+      "forCourse": "040521301"
+    },
+    {
+      "requires": "010610035",
+      "forCourse": "240213480"
     },
     {
       "requires": "240112100",
@@ -1057,28 +1097,16 @@
       "forCourse": "240113131"
     },
     {
-      "requires": "240211013",
-      "forCourse": "240211030"
-    },
-    {
-      "requires": "240212020",
-      "forCourse": "240212031"
-    },
-    {
       "requires": "240111050",
       "forCourse": "240212100"
     },
     {
-      "requires": "240212020",
-      "forCourse": "240212401"
+      "requires": "240212401",
+      "forCourse": "240223100"
     },
     {
       "requires": "240112100",
       "forCourse": "240213081"
-    },
-    {
-      "requires": "100413750",
-      "forCourse": "240213120"
     },
     {
       "requires": "240112100",
@@ -1089,24 +1117,20 @@
       "forCourse": "240213250"
     },
     {
+      "requires": "240212020",
+      "forCourse": "240214350"
+    },
+    {
+      "requires": "100413750",
+      "forCourse": "240213120"
+    },
+    {
       "requires": "240113121",
       "forCourse": "240213340"
     },
     {
-      "requires": "240222500",
-      "forCourse": "240214100"
-    },
-    {
       "requires": "240213250",
       "forCourse": "240214200"
-    },
-    {
-      "requires": "240213231",
-      "forCourse": "240214210"
-    },
-    {
-      "requires": "240212020",
-      "forCourse": "240214301"
     },
     {
       "requires": "240223100",
@@ -1117,24 +1141,24 @@
       "forCourse": "240214330"
     },
     {
-      "requires": "240212020",
-      "forCourse": "240214350"
-    },
-    {
-      "requires": "240214971",
-      "forCourse": "240214990"
+      "requires": "240222500",
+      "forCourse": "240214100"
     },
     {
       "requires": "240212020",
-      "forCourse": "240222500"
-    },
-    {
-      "requires": "240212401",
-      "forCourse": "240223100"
+      "forCourse": "240214301"
     },
     {
       "requires": "240213231",
       "forCourse": "240224700"
+    },
+    {
+      "requires": "240213231",
+      "forCourse": "240214210"
+    },
+    {
+      "requires": "240214971",
+      "forCourse": "240214990"
     }
   ],
   "iconKey": "palette",

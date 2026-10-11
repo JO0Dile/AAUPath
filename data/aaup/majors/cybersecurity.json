@@ -226,7 +226,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Calculus I (100411010)"
+      "prerequisiteText": null
     },
     {
       "slug": "290311210",
@@ -498,7 +498,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Advanced English (010610035) &amp; Advanced English Lab (010610036)"
+      "prerequisiteText": null
     },
     {
       "slug": "290312220",
@@ -617,7 +617,7 @@
       "isPlaceholder": false,
       "pairGroup": false,
       "independentGrades": false,
-      "prerequisiteText": "Fundamentals of Artificial Intelligence (290312120)"
+      "prerequisiteText": null
     },
     {
       "slug": "290373120",
@@ -979,48 +979,36 @@
   ],
   "prerequisites": [
     {
-      "requires": "290311110",
-      "forCourse": "290311210"
+      "requires": "010610025",
+      "forCourse": "010610035"
     },
     {
-      "requires": "100411010",
-      "forCourse": "250111040"
+      "requires": "010610026",
+      "forCourse": "010610035"
     },
     {
-      "requires": "100413750",
-      "forCourse": "250111040"
+      "requires": "010610025",
+      "forCourse": "010610036"
+    },
+    {
+      "requires": "010610026",
+      "forCourse": "010610036"
     },
     {
       "requires": "100411010",
       "forCourse": "100411020"
     },
     {
-      "requires": "100411020",
-      "forCourse": "290312240"
+      "requires": "100411010",
+      "forCourse": "250111040"
     },
     {
-      "requires": "100411020",
-      "forCourse": "250223010"
+      "requires": "290311110",
+      "forCourse": "290311210"
     },
     {
-      "requires": "250223010",
-      "forCourse": "290312230"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610035"
-    },
-    {
-      "requires": "010610025",
-      "forCourse": "010610036"
-    },
-    {
-      "requires": "010610026",
-      "forCourse": "010610036"
+      "requires": "290311210",
+      "forCourse": "290312130"
     },
     {
       "requires": "290311210",
@@ -1032,35 +1020,35 @@
     },
     {
       "requires": "290311210",
-      "forCourse": "290312130"
-    },
-    {
-      "requires": "290311210",
       "forCourse": "290312110"
-    },
-    {
-      "requires": "290311210",
-      "forCourse": "290313130"
     },
     {
       "requires": "290311210",
       "forCourse": "290372210"
     },
     {
+      "requires": "100411020",
+      "forCourse": "250223010"
+    },
+    {
       "requires": "290311210",
       "forCourse": "290372220"
     },
     {
-      "requires": "290311210",
-      "forCourse": "290374110"
+      "requires": "250111040",
+      "forCourse": "290312210"
+    },
+    {
+      "requires": "100411020",
+      "forCourse": "290312240"
     },
     {
       "requires": "290311210",
-      "forCourse": "250223040"
+      "forCourse": "290313130"
     },
     {
-      "requires": "290311210",
-      "forCourse": "290313110"
+      "requires": "010610035",
+      "forCourse": "040521301"
     },
     {
       "requires": "290312130",
@@ -1068,39 +1056,7 @@
     },
     {
       "requires": "290312120",
-      "forCourse": "290312230"
-    },
-    {
-      "requires": "290312120",
-      "forCourse": "290314110"
-    },
-    {
-      "requires": "290312120",
       "forCourse": "290373110"
-    },
-    {
-      "requires": "250111040",
-      "forCourse": "290312210"
-    },
-    {
-      "requires": "290312210",
-      "forCourse": "290312230"
-    },
-    {
-      "requires": "290312230",
-      "forCourse": "290313120"
-    },
-    {
-      "requires": "290312230",
-      "forCourse": "290313210"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290373120"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290373130"
     },
     {
       "requires": "290372210",
@@ -1108,35 +1064,63 @@
     },
     {
       "requires": "290372210",
+      "forCourse": "290373130"
+    },
+    {
+      "requires": "290312120",
+      "forCourse": "290312230"
+    },
+    {
+      "requires": "290372210",
+      "forCourse": "290373120"
+    },
+    {
+      "requires": "290372210",
       "forCourse": "290373230"
     },
     {
-      "requires": "290372210",
-      "forCourse": "290374120"
-    },
-    {
-      "requires": "290372210",
-      "forCourse": "290374210"
+      "requires": "290312120",
+      "forCourse": "290314110"
     },
     {
       "requires": "290372220",
       "forCourse": "290373220"
     },
     {
-      "requires": "290372220",
-      "forCourse": "290373170"
+      "requires": "290372210",
+      "forCourse": "290374120"
+    },
+    {
+      "requires": "290311210",
+      "forCourse": "290374110"
+    },
+    {
+      "requires": "290372210",
+      "forCourse": "290374210"
     },
     {
       "requires": "290373230",
       "forCourse": "290373160"
     },
     {
-      "requires": "010610035",
-      "forCourse": "040521301"
+      "requires": "290312230",
+      "forCourse": "290313210"
     },
     {
-      "requires": "010610036",
-      "forCourse": "040521301"
+      "requires": "290311210",
+      "forCourse": "250223040"
+    },
+    {
+      "requires": "290312230",
+      "forCourse": "290313120"
+    },
+    {
+      "requires": "290311210",
+      "forCourse": "290313110"
+    },
+    {
+      "requires": "290372220",
+      "forCourse": "290373170"
     }
   ],
   "iconKey": "shield",

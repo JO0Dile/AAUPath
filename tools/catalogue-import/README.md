@@ -98,7 +98,16 @@ by program NAME ONLY. Its course data comes from a separate 48-page faculty PDF
 (`sources/ai-data-science-faculty.pdf`), parsed by `parse-ai-pdf.py` into the
 same program shape.
 
-13 programs, 446 course rows. **Five carry no plan and say so** in the
+13 programs, 482 course rows.
+
+A course with more than one prerequisite prints them stacked in one cell, so
+the second and later ones arrive as lines of bare codes after the row
+("MACHINE LEARNING 2 2 3" / "250223010" / "290312120"). The parser used to read
+each such line as a new course and drop it, losing 46 prerequisites - Machine
+Learning in AI and Medical Sciences among them. A line of bare codes is now
+read as more of the previous row's prerequisites unless the next line is the
+wrapped name of a new course. `tools/sync-prerequisites.py` then makes every
+major's prerequisites match its source program. **Five carry no plan and say so** in the
 document's own words — "No plan", "No plan yet", "Noo plan yet". Of the eight
 that do, five reconcile to their stated degree total exactly:
 
