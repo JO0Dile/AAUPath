@@ -1,0 +1,10 @@
+{
+ "note": "Courses the university renamed without changing them: same course number, same hours, new title. Applied to every plan on every build (tools/arabic_fill.py), so a plan re-imported from a page that still shows the old title keeps the new one.",
+ "renames": {
+  "Computer Skills": {
+   "name": "Digital Skills",
+   "ar": "المهارات الرقمية",
+   "since": "2026, by order to the Palestinian universities"
+  }
+ }
+}

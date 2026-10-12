@@ -380,7 +380,7 @@
     {
       id: 'highskilled', icon: '🖥️', iconKey: 'terminal', cat: 'special',
       title: { en: 'High Skilled Student', ar: 'طالب عالي المهارة' },
-      desc: { en: 'Complete Computer Skills & Research Methods.', ar: 'أكمل مهارات حاسوبية وأساسيات مناهج البحث.' },
+      desc: { en: 'Complete Digital Skills & Research Methods.', ar: 'أكمل المهارات الرقمية وأساسيات مناهج البحث.' },
       check: highSkilledDone,
       prog: function(prefix){ return countSlugs(prefix, ['computer-skills', 'research-methods']); }
     },
