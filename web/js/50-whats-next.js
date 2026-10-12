@@ -207,7 +207,7 @@
   function chipHTML(c, rtl){
     var name = rtl && c.nameAr ? c.nameAr : c.name;
     return '<button type="button" class="next-course-chip" data-wn-id="' + esc(c.id) + '">' +
-      '<span>' + name + '</span>' + (c.cr ? '<span class="ncc-cr">' + esc(c.cr) + 'H</span>' : '') +
+      '<span>' + name + '</span>' + (c.cr ? '<span class="ncc-cr">' + esc(window.__hrs(c.cr)) + '</span>' : '') +
       '</button>';
   }
 
@@ -347,7 +347,7 @@
       html += '<button type="button" class="wn-lead" data-wn-id="' + esc(lead.id) + '">' +
         '<span class="wn-lead-label">' + esc(t.doNext) + '</span>' +
         '<span class="wn-lead-name">' + leadName +
-        (lead.cr ? ' <span class="wn-lead-cr">' + esc(lead.cr) + 'H</span>' : '') + '</span>' +
+        (lead.cr ? ' <span class="wn-lead-cr">' + esc(window.__hrs(lead.cr)) + '</span>' : '') + '</span>' +
         '<span class="wn-lead-why">' + esc(t.doNextWhy(leadName, lead.opens || 0)) + '</span>' +
         '<span class="wn-lead-cta">' + esc(t.doNextAdd) + window.AAUP_ICONS.preview('chevronRight', 13) + '</span>' +
         '</button>';

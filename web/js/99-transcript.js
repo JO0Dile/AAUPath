@@ -68,7 +68,7 @@
       (groups.length ? body : '<p class="tr-empty">' + (r ? 'ما في مساقات منجزة بعد.' : 'No passed courses yet.') + '</p>') +
       '<div class="tr-total"><span>' + (r ? 'الساعات المنجزة' : 'Hours passed') + ' <b>' + totalHours + '</b></span>' +
         (cum != null ? '<span>' + (r ? 'المعدل التراكمي' : 'Cumulative GPA') + ' <b>' + cum.toFixed(2) + '</b></span>' : '') + '</div>' +
-      '<p class="tr-foot">' + (r ? 'غير رسمي · من سجلّك بتطبيق AAUPath، مش من دائرة القبول والتسجيل. ' : 'Unofficial · from your own record in AAUPath, not from the Registrar. ') +
+      '<p class="tr-foot">' + (r ? 'غير رسمي · من سجلّك بالتطبيق، مش من دائرة القبول والتسجيل. ' : 'Unofficial · from your own record in AAUPath, not from the Registrar. ') +
         esc(new Date().toLocaleDateString(r ? 'ar' : 'en', { year: 'numeric', month: 'long', day: 'numeric' })) + '</p>' +
       '</div>';
   }
@@ -99,7 +99,7 @@
   function open(prefix){
     var r = ar(), el = overlayEl();
     el.querySelector('[data-tr-close]').textContent = r ? 'إغلاق' : 'Close';
-    el.querySelector('[data-tr-print]').textContent = r ? 'احفظ PDF أو اطبع' : 'Save as PDF or print';
+    el.querySelector('[data-tr-print]').textContent = r ? 'احفظ كملف أو اطبع' : 'Save as PDF or print';
     document.getElementById('transcriptRoot').innerHTML = build(prefix, r);
     el.classList.add('open');
   }

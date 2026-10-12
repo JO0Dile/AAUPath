@@ -73,6 +73,46 @@
     });
   }
 
+  // ---------- what the server said, in the app's language ----------
+  // The account Worker (cloud/cloudflare-worker.js) answers in English. Each
+  // answer it can give is written here in Arabic too, so a student using the
+  // app in Arabic never reads an English error. Anything it says that is not
+  // in this list falls back to the screen's own Arabic message.
+  var ERR_AR = {
+    'cloud sync is not configured on the server': 'المزامنة مش مفعّلة على الخادم.',
+    'new password is too long': 'كلمة المرور الجديدة طويلة كثير.',
+    'password is too long': 'كلمة المرور طويلة كثير.',
+    'username must be 3-24 characters: letters, numbers, underscore only': 'اسم المستخدم لازم يكون من 3 لـ 24 خانة: حروف إنجليزية وأرقام وشرطة سفلية بس.',
+    'that username is already taken': 'اسم المستخدم هاد محجوز.',
+    'not found': 'مش موجود.',
+    'unauthorized': 'لازم تسجّل دخول.',
+    'forbidden': 'مش مسموح.',
+    'type at least 3 characters': 'اكتب 3 خانات على الأقل.',
+    'that email/username and recovery code do not match': 'الإيميل أو اسم المستخدم ما بيطابق رمز الاسترجاع.',
+    'that Google sign-in is not valid for this app': 'الدخول عن طريق جوجل هاد مش صالح لهالتطبيق.',
+    'synced data is too large': 'البيانات أكبر من المسموح للمزامنة.',
+    'synced data changed since this device last read it': 'البيانات تغيّرت من جهاز ثاني — جرّب مرة ثانية.',
+    'something went wrong on the server — check the Worker logs': 'صار خلل على الخادم — جرّب بعدين.',
+    'session expired — please sign in again': 'انتهت الجلسة — سجّل دخول مرة ثانية.',
+    'no such account': 'ما في حساب بهالمعلومات.',
+    'missing data object': 'البيانات ناقصة.',
+    'missing Google credential': 'بيانات جوجل ناقصة.',
+    'invalid email/username or password': 'الإيميل أو كلمة المرور غلط.',
+    'enter a valid email address': 'اكتب إيميل صحيح.',
+    'current password is incorrect': 'كلمة المرور الحالية غلط.',
+    'an account with that email already exists — sign in instead': 'في حساب بهالإيميل — سجّل دخول بداله.',
+    'Sign in with Google is not set up on the server': 'الدخول عن طريق جوجل مش مفعّل على الخادم.',
+    'Google did not accept that sign-in — try again': 'جوجل ما قبل الدخول — جرّب مرة ثانية.',
+    'could not reach the server — check your connection': 'ما قدرنا نوصل للخادم — تأكد من الإنترنت.'
+  };
+  function errorText(said, en, ar){
+    if(!(window.AAUP_LANG && window.AAUP_LANG.isAr())) return said || en;
+    if(said && ERR_AR[said]) return ERR_AR[said];
+    var m = said && /^(?:new )?password must be at least (\d+) characters$/.exec(said);
+    if(m) return 'كلمة المرور لازم تكون ' + m[1] + ' خانات على الأقل.';
+    return ar;
+  }
+
   // ---------- the synced blob ----------
   function relevantKeys(){
     var keys = [];
@@ -509,11 +549,11 @@
           ? 'اكتب إيميلك أو اسم المستخدم، ورمز الاسترجاع اللي ظهرلك لما عملت الحساب، وكلمة مرور جديدة.'
           : 'Type your email or username, the recovery code you were shown when you made the account, and a new password.') + '</p>' +
         '<div class="form-field"><input type="text" id="cloudForgotId" placeholder="' + (r ? 'الإيميل أو اسم المستخدم' : 'Email or username') + '" autocomplete="username"></div>' +
-        '<div class="form-field"><input type="text" id="cloudForgotCode" placeholder="' + (r ? 'رمز الاسترجاع (XXXX-XXXX-XXXX)' : 'Recovery code (XXXX-XXXX-XXXX)') + '" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>' +
+        '<div class="form-field"><input type="text" id="cloudForgotCode" placeholder="' + (r ? 'رمز الاسترجاع (12 خانة)' : 'Recovery code (XXXX-XXXX-XXXX)') + '" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>' +
         '<div class="form-field"><input type="password" id="cloudForgotNew" placeholder="' + (r ? 'كلمة مرور جديدة' : 'New password') + '" autocomplete="new-password"></div>' +
         '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn btn-pri" id="cloudForgotSubmit">' + ICONBTN('keys') + (r ? 'غيّر كلمة المرور' : 'Set new password') + '</button></div>' +
         '<p class="form-note">' + (r
-          ? 'ما عندك الرمز؟ إذا لسا مسجّل دخول على جهاز ثاني، غيّرها من هناك (تغيير كلمة المرور ← نسيت كلمتك الحالية؟). غير هيك، تواصل مع فريق AAUPath ليعطوك كلمة مرور مؤقتة.'
+          ? 'ما عندك الرمز؟ إذا لسا مسجّل دخول على جهاز ثاني، غيّرها من هناك (تغيير كلمة المرور ← نسيت كلمتك الحالية؟). غير هيك، تواصل مع فريق التطبيق ليعطوك كلمة مرور مؤقتة.'
           : 'No code? If you are still signed in on another phone, change it there (Change password → "Forgot your current password?"). Otherwise, contact the AAUPath team for a temporary password.') + '</p>' +
       '</div>' +
       '<div id="cloudGoogleWrap" style="display:none;"><div class="cloud-or"><span>' + (r ? 'أو' : 'or') + '</span></div><div id="cloudGoogleBtn" class="cloud-google"></div></div>' +
@@ -559,7 +599,7 @@
             });
             return;
           }
-          showMsg(root, (r.data && r.data.error) || 'Sync failed.', true);
+          showMsg(root, errorText(r.data && r.data.error, 'Sync failed.', 'ما زبطت المزامنة.'), true);
           syncBtn.disabled = false; syncBtn.textContent = (rtl ? 'زامن هلق' : 'Sync now');
         });
       });
@@ -580,7 +620,7 @@
           : 'Permanently delete your cloud account? This can’t be undone — but this device’s own copy of your data stays right here, untouched.';
         window.__showConfirmDialog(warn, function(){
           deleteCloudAccount().then(function(r){
-            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not delete account.', true); return; }
+            if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Could not delete account.', 'ما قدرنا نحذف الحساب.'), true); return; }
             stopAutoSync();
             location.reload();
           });
@@ -603,7 +643,7 @@
         box.querySelector('#cloudUsernameSubmit').addEventListener('click', function(){
           var val = box.querySelector('#cloudUsernameInput').value.trim();
           setUsername(val).then(function(r){
-            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not update username.', true); return; }
+            if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Could not update username.', 'ما قدرنا نغيّر اسم المستخدم.'), true); return; }
             render();
           });
         });
@@ -640,7 +680,7 @@
           var cur = box.querySelector('#cloudPwCurrent').value;
           var next = box.querySelector('#cloudPwNew').value;
           (withoutCurrent ? setPasswordSignedIn(next) : changePassword(cur, next)).then(function(r){
-            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not change password.', true); return; }
+            if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Could not change password.', 'ما قدرنا نغيّر كلمة المرور.'), true); return; }
             box.style.display = 'none'; box.innerHTML = '';
             showMsg(root, rtl ? 'تم تحديث كلمة المرور.' : 'Password updated.', false);
           });
@@ -660,7 +700,7 @@
           '<div class="form-actions" style="justify-content:flex-start;"><button type="button" class="home-btn btn-pri" id="cloudRecNew">' + (rtl ? 'اعمل رمز جديد' : 'Make a new code') + '</button></div>';
         box.querySelector('#cloudRecNew').addEventListener('click', function(){
           newRecoveryCode().then(function(r){
-            if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not make a code.', true); return; }
+            if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Could not make a code.', 'ما قدرنا نعمل رمز.'), true); return; }
             box.innerHTML = codePanelHtml(r.data.recoveryCode, rtl);
             bindCodePanel(box, rtl, function(){ box.style.display = 'none'; box.innerHTML = ''; });
           });
@@ -686,7 +726,7 @@
         forgotSubmit.disabled = true;
         useRecovery(ident, code, next).then(function(r){
           forgotSubmit.disabled = false;
-          if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Could not reset the password.', true); return; }
+          if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Could not reset the password.', 'ما قدرنا نغيّر كلمة المرور.'), true); return; }
           startAutoSync();
           // The used code is spent: the new one is shown before anything else.
           showPendingRecovery({ reload: true });
@@ -716,7 +756,7 @@
         signInBtn.disabled = true;
         signIn(identifier.trim(), password).then(function(r){
           signInBtn.disabled = false;
-          if(!r.ok){ showMsg(root, r.data.error || 'Sign in failed.', true); return; }
+          if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Sign in failed.', 'ما زبط تسجيل الدخول.'), true); return; }
           reconcileAfterSignIn(rtl, function(res){
             startAutoSync();
             if(res.reload){ location.reload(); return; }
@@ -735,7 +775,7 @@
         signUpBtn.disabled = true;
         signUp(email.trim(), username.trim(), password).then(function(r){
           signUpBtn.disabled = false;
-          if(!r.ok){ showMsg(root, r.data.error || 'Sign up failed.', true); return; }
+          if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Sign up failed.', 'ما زبط إنشاء الحساب.'), true); return; }
           startAutoSync();
           // The recovery code first; the reload waits for "I saved it".
           if(getPendingRecovery()) showPendingRecovery({ reload: true });
@@ -823,7 +863,7 @@
   }
   function mountGoogle(host, rtl, root){
     renderGoogle(host, rtl, function(r){
-      if(!r.ok){ showMsg(root, (r.data && r.data.error) || 'Google sign-in failed.', true); return; }
+      if(!r.ok){ showMsg(root, errorText(r.data && r.data.error, 'Google sign-in failed.', 'ما زبط الدخول عن طريق جوجل.'), true); return; }
       reconcileAfterSignIn(rtl, function(res){
         startAutoSync();
         if(res.reload){ location.reload(); return; }
@@ -885,6 +925,7 @@
   else { window.addEventListener('load', initModalClose); }
 
   window.AAUP_CLOUD = {
+    errorText: errorText,
     isConfigured: isConfigured, isSignedIn: isSignedIn, getEmail: getEmail, getUsername: getUsername, displayName: displayName,
     sectionHtml: sectionHtml, bindSection: bindSection,
     open: open, close: close,

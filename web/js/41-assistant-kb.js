@@ -95,7 +95,7 @@
           waitFor: function () { return !!document.querySelector('#hmSheetList [data-hm-major]'); } },
         { target: q('#hmSheetList [data-hm-major]'),
           text: { en: 'And then your major. That opens your plan, and AAUPath remembers it.',
-                  ar: 'وبعدين تخصصك. هيك بتفتح خطتك، وAAUPath بيتذكرها.' } }
+                  ar: 'وبعدين تخصصك. هيك بتفتح خطتك، والتطبيق بيتذكرها.' } }
       ]
     },
     settings: {
@@ -610,7 +610,7 @@
         en: ['Settings → My data → Danger zone → Reset all data clears progress, grades, notes, and your own plans on this device. It asks you to type RESET first.',
              'It cannot be undone, so export a backup first.',
              'To clear just one plan’s progress, use that plan’s own reset instead of this.'],
-        ar: ['الإعدادات ← بياناتي ← منطقة الخطر ← «مسح كل البيانات» يمسح التقدّم والعلامات والملاحظات وخططك على هذا الجهاز. بيطلب منك تكتب RESET أولًا.',
+        ar: ['الإعدادات ← بياناتي ← منطقة الخطر ← «مسح كل البيانات» يمسح التقدّم والعلامات والملاحظات وخططك على هذا الجهاز. بيطلب منك تكتب «امسح» أولًا.',
              'لا يمكن التراجع عنه، فصدّر نسخة احتياطية أولًا.',
              'لمسح تقدّم خطة واحدة فقط، استخدم زر التصفير الخاص بتلك الخطة.']
       }
@@ -736,7 +736,7 @@
         en: ['Share this plan has a Print button: it gives a clean one-page version of your whole plan.',
              'From there your browser can print it or save it as a PDF.'],
         ar: ['في «شارك هذه الخطة» زر طباعة: بيعطيك نسخة نظيفة من خطتك كاملة في صفحة واحدة.',
-             'ومن هناك يمكن لمتصفحك طباعتها أو حفظها كملف PDF.']
+             'ومن هناك يمكن لمتصفحك طباعتها أو حفظها كملف.']
       }
     },
     {

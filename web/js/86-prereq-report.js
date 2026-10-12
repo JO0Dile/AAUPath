@@ -247,19 +247,30 @@
   }
 
   function mail(body, tx){
+    // The draft opens in the student's own mail app, so it is in their
+    // language; the course numbers are what the maintainer goes by.
+    var L = window.__L;
+    var A = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var nm = function(c){ return A ? courseName(body.prefix, c.id, true) : c.name; };
+    var major = body.majorName;
+    if(A){
+      var mp = (window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {})[body.prefix];
+      var ma = mp && mp.majorName && mp.majorName.ar;
+      if(ma && (ma.big || typeof ma === 'string')) major = ma.big || ma;
+    }
     var lines = [
-      'Plan: ' + body.majorName + ' (' + body.prefix + ')',
-      'Course: ' + body.course.name + (body.course.num ? ' [' + body.course.num + ']' : ''),
-      'Prerequisite reported wrong: ' + (body.wrongPrereq
-        ? body.wrongPrereq.name + (body.wrongPrereq.num ? ' [' + body.wrongPrereq.num + ']' : '')
-        : '(not one of the listed ones)'),
-      'All prerequisites the app lists: ' + (body.listedPrereqs.map(function(p){
-        return p.name + (p.num ? ' [' + p.num + ']' : '');
-      }).join(', ') || '(none)'),
+      L('Plan: ', 'الخطة: ') + major + ' (' + body.prefix + ')',
+      L('Course: ', 'المساق: ') + nm(body.course) + (body.course.num ? ' [' + body.course.num + ']' : ''),
+      L('Prerequisite reported wrong: ', 'المتطلب الغلط: ') + (body.wrongPrereq
+        ? nm(body.wrongPrereq) + (body.wrongPrereq.num ? ' [' + body.wrongPrereq.num + ']' : '')
+        : L('(not one of the listed ones)', '(مش من المتطلبات المذكورة)')),
+      L('All prerequisites the app lists: ', 'المتطلبات اللي بالتطبيق: ') + (body.listedPrereqs.map(function(p){
+        return nm(p) + (p.num ? ' [' + p.num + ']' : '');
+      }).join(L(', ', '، ')) || L('(none)', '(ولا إشي)')),
       '', body.note || ''
     ];
     var href = 'mailto:' + MAILTO +
-      '?subject=' + encodeURIComponent('AAUPath — wrong prerequisite: ' + body.course.name) +
+      '?subject=' + encodeURIComponent(L('AAUPath — wrong prerequisite: ', 'متطلب سابق غلط: ') + nm(body.course)) +
       '&body=' + encodeURIComponent(lines.join('\n'));
     if(window.__showToast) window.__showToast(tx.mail);
     window.location.href = href;

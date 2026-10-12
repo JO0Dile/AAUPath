@@ -210,7 +210,7 @@
           : (rtl ? 'أعلى من ' + TARGET_MAX + ' ساعة' : 'over ' + TARGET_MAX + 'H');
     return '<div class="sb-meter sb-meter-' + state + '">' +
       '<div class="sb-meter-top">' +
-        '<span class="sb-meter-num">' + t.cr + 'H</span>' +
+        '<span class="sb-meter-num">' + window.__hrs(t.cr) + '</span>' +
         '<span class="sb-meter-note">' + t.count + ' ' +
           (rtl ? 'مساق' : (t.count === 1 ? 'course' : 'courses')) + ' · ' + note + '</span>' +
       '</div>' +
@@ -220,7 +220,7 @@
         '<span class="sb-meter-tick" style="inset-inline-start:' + ((FULL_TIME / METER_MAX) * 100).toFixed(1) + '%;"></span>' +
         '<span class="sb-meter-tick" style="inset-inline-start:' + ((TARGET_MAX / METER_MAX) * 100).toFixed(1) + '%;"></span>' +
       '</div>' +
-      '<div class="sb-meter-scale"><span>0</span><span>' + FULL_TIME + 'H</span><span>' + TARGET_MAX + 'H</span></div>' +
+      '<div class="sb-meter-scale"><span>0</span><span>' + window.__hrs(FULL_TIME) + '</span><span>' + window.__hrs(TARGET_MAX) + '</span></div>' +
       '</div>';
   }
 
@@ -240,7 +240,7 @@
             (rtl ? 'صعب عليك سابقًا' : 'hard for you before') + '</span>' : '') +
         '</span>' +
       '</span>' +
-      '<span class="sb-row-cr">' + c.cr + 'H</span>' +
+      '<span class="sb-row-cr">' + window.__hrs(c.cr) + '</span>' +
       '</button>';
   }
 
@@ -259,7 +259,7 @@
           '<span class="sb-tray-why">' + esc(reasonFor(c, rtl)) + '</span>' +
           (caution ? '<span class="sb-tray-caution">' + esc(caution) + '</span>' : '') +
         '</div>' +
-        '<span class="sb-tray-cr">' + c.cr + 'H</span>' +
+        '<span class="sb-tray-cr">' + window.__hrs(c.cr) + '</span>' +
         '<button type="button" class="sb-tray-x" data-sb-remove="' + esc(s) + '" aria-label="' +
           (rtl ? 'إزالة' : 'Remove') + ' ' + esc(courseName(prefix, s, rtl)) + '">' + window.AAUP_ICONS.preview('close', 12) + '</button>' +
         '</div>';
@@ -294,7 +294,7 @@
     return '<div class="sb-breakdown">' + keys.map(function(cat){
       var label = CAT_LABEL[cat] ? (rtl ? CAT_LABEL[cat].ar : CAT_LABEL[cat].en) : cat;
       return '<span class="sb-bd"><span class="sb-bd-chip sb-chip-' + cat + '"></span>' +
-        esc(label) + ' <b>' + t.byCat[cat] + 'H</b></span>';
+        esc(label) + ' <b>' + window.__hrs(t.byCat[cat]) + '</b></span>';
     }).join('') + '</div>';
   }
 
@@ -464,8 +464,8 @@
         var t = totalsFor(pool, chosen);
         var text = chosen.map(function(s){
           var c = t.index[s];
-          return '• ' + courseName(prefix, s, rtl) + (c.num ? ' (' + c.num + ')' : '') + ' — ' + c.cr + 'H';
-        }).join('\n') + '\n= ' + t.cr + 'H';
+          return '• ' + courseName(prefix, s, rtl) + (c.num ? ' (' + c.num + ')' : '') + ' — ' + window.__hrs(c.cr, rtl);
+        }).join('\n') + '\n= ' + window.__hrs(t.cr, rtl);
         var msg = document.getElementById('sbCopyMsg');
         var ok = function(){ if(msg) msg.textContent = rtl ? 'انتسخت ✓' : 'Copied ✓'; };
         var no = function(){ if(msg) msg.textContent = rtl ? 'ما قدرت أنسخ — علّم النص وانسخه يدويًا.' : 'Could not copy — select the text and copy it manually.'; };

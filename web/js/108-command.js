@@ -51,7 +51,7 @@
       run: function(id){ openPlan(id); if(window.AAUP_AUDIT) window.AAUP_AUDIT.open(id); } },
     { en: 'My Week', ar: 'أسبوعي', words: 'week class times timetable أسبوع محاضرات', plan: true,
       run: function(id){ if(window.AAUP_TIMETABLE) window.AAUP_TIMETABLE.open(id); } },
-    { en: 'Save my plan as a spreadsheet (Excel)', ar: 'احفظ خطتي كجدول (Excel)', words: 'excel xlsx spreadsheet export csv sheet جدول اكسل', plan: true,
+    { en: 'Save my plan as a spreadsheet (Excel)', ar: 'احفظ خطتي كجدول إكسل', words: 'excel xlsx spreadsheet export csv sheet جدول اكسل', plan: true,
       run: function(id){ exportXlsx(id); } },
     { en: 'Present my plan on a big screen', ar: 'اعرض خطتي على شاشة كبيرة', words: 'present projector big screen slides عرض شاشة بروجكتر', plan: true,
       run: function(id){ if(window.AAUP_STAFF) window.AAUP_STAFF.present(id); } },
@@ -63,7 +63,7 @@
       run: function(){ var b = document.getElementById('sbFoldBtn'); if(b) b.click(); } },
     { en: 'Home', ar: 'الرئيسية', words: 'home start رئيسية', run: function(){ if(window.AAUP_TASK_HOME) window.AAUP_TASK_HOME.show(); } },
     { en: 'Settings', ar: 'الإعدادات', words: 'settings preferences theme إعدادات', run: function(){ if(window.AAUP_SIDEBAR) window.AAUP_SIDEBAR.openSettings(); } },
-    { en: 'Switch to العربية', ar: 'Switch to English', words: 'language arabic english لغة عربي انجليزي', run: function(){ if(window.AAUP_LANG) window.AAUP_LANG.toggle(); } },
+    { en: 'Switch to Arabic', ar: 'بدّل للإنجليزية', words: 'language arabic english لغة عربي انجليزي', run: function(){ if(window.AAUP_LANG) window.AAUP_LANG.toggle(); } },
     { en: 'Keyboard shortcuts', ar: 'اختصارات لوحة المفاتيح', words: 'keyboard shortcuts keys اختصارات', key: '?',
       run: function(){ if(window.AAUP_SHORTCUTS) window.AAUP_SHORTCUTS.openHelp(); } }
   ];
@@ -185,7 +185,7 @@
     if(q){ add(L('Do', 'أوامر'), acts); add(L('Courses', 'مساقات'), courseRows); add(L('More results', 'نتائج تانية'), otherRows); }
     else add(L('Do', 'أوامر'), acts);
     if(q){
-      add('', [{ title: L('Ask AAUPath: “' + raw.trim() + '”', 'اسأل AAUPath: «' + raw.trim() + '»'), ask: true,
+      add('', [{ title: L('Ask AAUPath: “' + raw.trim() + '”', 'اسأل المساعد: «' + raw.trim() + '»'), ask: true,
         run: function(){ window.AAUP_TASK_HOME.runResult('ask', raw); } }]);
     }
 

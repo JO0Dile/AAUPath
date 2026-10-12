@@ -37,7 +37,7 @@
                  ar: 'النص رح يكون تباينه ضعيف على هذه الخلفية — لون أغمق أو أفتح بيقرأ أحسن.' },
     okAccent:  { en: 'Good contrast.', ar: 'تباين جيد.' },
     badHex:    { en: 'That is not a colour code. Try #1b4f8c.',
-                 ar: 'هذا ليس كود لون. جرّب ‎#1b4f8c‎.' },
+                 ar: 'هذا ليس كود لون. جرّب ‎#335577‎.' },
     presets:      { en: 'Saved presets', ar: 'المحفوظات' },
     savePreset:   { en: '+ Save current colours', ar: '+ احفظ الألوان الحالية' },
     presetNamePh: { en: 'Name this preset…', ar: 'اسم للمحفوظة…' },

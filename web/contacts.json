@@ -54,11 +54,17 @@
   "contacts": [
     {
       "name": "Dr. Iyad Suwan",
+      "ar": "د. إياد صوان",
       "category": "instructor",
       "courses": [
         "Calculus I",
         "Calculus II",
         "Discrete Mathematics"
+      ],
+      "coursesAr": [
+        "التفاضل والتكامل (1)",
+        "التفاضل والتكامل (2)",
+        "الرياضيات المتقطعة"
       ],
       "email": "iyad.suwan@aaup.edu"
     },
@@ -71,6 +77,11 @@
         "Calculus II",
         "Discrete Mathematics"
       ],
+      "coursesAr": [
+        "التفاضل والتكامل (1)",
+        "التفاضل والتكامل (2)",
+        "الرياضيات المتقطعة"
+      ],
       "email": "yaffa.abdelaziz@aaup.edu"
     },
     {
@@ -82,15 +93,26 @@
         "Calculus II",
         "Discrete Mathematics"
       ],
+      "coursesAr": [
+        "التفاضل والتكامل (1)",
+        "التفاضل والتكامل (2)",
+        "الرياضيات المتقطعة"
+      ],
       "email": "maher.nour@aaup.edu"
     },
     {
       "name": "Dr. Mithqal Daraghmeh",
+      "ar": "د. مثقال دراغمة",
       "category": "instructor",
       "courses": [
         "Calculus I",
         "Calculus II",
         "Discrete Mathematics"
+      ],
+      "coursesAr": [
+        "التفاضل والتكامل (1)",
+        "التفاضل والتكامل (2)",
+        "الرياضيات المتقطعة"
       ],
       "email": ""
     },
@@ -102,6 +124,10 @@
         "Programming Fundamentals",
         "Python"
       ],
+      "coursesAr": [
+        "أساسيات البرمجة",
+        "البرمجة بلغة بايثون"
+      ],
       "email": "ismat.marouf@aaup.edu"
     },
     {
@@ -110,6 +136,9 @@
       "category": "instructor",
       "courses": [
         "Programming Fundamentals"
+      ],
+      "coursesAr": [
+        "أساسيات البرمجة"
       ],
       "email": "ahmed.alqerem@aaup.edu"
     },
@@ -120,6 +149,9 @@
       "courses": [
         "Basic Physics"
       ],
+      "coursesAr": [
+        "الفيزياء الأساسية"
+      ],
       "email": "rana.moqady@aaup.edu"
     },
     {
@@ -128,6 +160,9 @@
       "category": "instructor",
       "courses": [
         "Palestinian Studies"
+      ],
+      "coursesAr": [
+        "دراسات فلسطينية"
       ],
       "email": "Feras.AbuJaber@aaup.edu"
     },
@@ -138,6 +173,9 @@
       "courses": [
         "Advanced English"
       ],
+      "coursesAr": [
+        "اللغة الإنجليزية المتقدمة"
+      ],
       "email": "rami.abushamma@aaup.edu"
     },
     {
@@ -146,6 +184,9 @@
       "category": "instructor",
       "courses": [
         "Advanced English"
+      ],
+      "coursesAr": [
+        "اللغة الإنجليزية المتقدمة"
       ],
       "email": "iman.abukhalaf@aaup.edu"
     },
@@ -156,6 +197,9 @@
       "courses": [
         "Elementary Probability & Statistics"
       ],
+      "coursesAr": [
+        "مبادئ الاحتمالات والإحصاء"
+      ],
       "email": "hind.sweis@aaup.edu"
     },
     {
@@ -164,6 +208,9 @@
       "category": "instructor",
       "courses": [
         "Introduction to Computer Science"
+      ],
+      "coursesAr": [
+        "مدخل إلى علم الحاسوب"
       ],
       "email": "yaman.salem@aaup.edu"
     },
@@ -174,18 +221,26 @@
       "courses": [
         "Introduction to Computer Science"
       ],
+      "coursesAr": [
+        "مدخل إلى علم الحاسوب"
+      ],
       "email": "khalil.rantisi@aaup.edu"
     },
     {
       "name": "Dr. Manar Faraj",
+      "ar": "د. منار فرج",
       "category": "instructor",
       "courses": [
         "The Palestinian Prisoners Movement"
+      ],
+      "coursesAr": [
+        "الحركة الأسيرة الفلسطينية"
       ],
       "email": "Manar.Faraj@aaup.edu"
     },
     {
       "name": "Nasry Sameer Nasr Alladaa",
+      "ar": "نصري سمير نصر اللداعة",
       "category": "instructor",
       "email": "nasry.alladaa@aaup.edu"
     },
@@ -196,6 +251,9 @@
       "courses": [
         "Calculus I"
       ],
+      "coursesAr": [
+        "التفاضل والتكامل (1)"
+      ],
       "email": "dr.naeem.alkoumi@aaup.edu"
     },
     {
@@ -204,6 +262,9 @@
       "category": "instructor",
       "courses": [
         "Palestinian Studies"
+      ],
+      "coursesAr": [
+        "دراسات فلسطينية"
       ],
       "email": "jamal.zahalka-acp@aaup.edu"
     },
@@ -214,6 +275,9 @@
       "courses": [
         "Basic Physics"
       ],
+      "coursesAr": [
+        "الفيزياء الأساسية"
+      ],
       "email": "Wala.Ghannam@aaup.edu"
     },
     {
@@ -222,6 +286,9 @@
       "category": "instructor",
       "courses": [
         "Advanced English"
+      ],
+      "coursesAr": [
+        "اللغة الإنجليزية المتقدمة"
       ],
       "email": "balquis.shalabi@aaup.edu"
     },
@@ -232,30 +299,41 @@
       "courses": [
         "Python"
       ],
+      "coursesAr": [
+        "البرمجة بلغة بايثون"
+      ],
       "email": "asmaa.meskawi@aaup.edu"
     },
     {
       "name": "Dr. Huthaifa Ashqar",
+      "ar": "د. حذيفة أشقر",
       "category": "dean",
       "role": "AI College Dean",
+      "roleAr": "عميد كلية الذكاء الاصطناعي وعلوم البيانات",
       "email": "Huthaifa.ashqar@aaup.edu"
     },
     {
       "name": "Dr. Islam",
+      "ar": "د. إسلام",
       "category": "dean",
       "role": "Secretary to Dean Huthaifa",
+      "roleAr": "سكرتاريا مكتب العميد د. حذيفة",
       "email": ""
     },
     {
       "name": "Dr. Ghassan Sirhan",
+      "ar": "د. غسان سرحان",
       "category": "dean",
       "role": "Head of the Educational Sciences Department",
+      "roleAr": "رئيس قسم العلوم التربوية",
       "email": "Ghassan.Sirhan@aaup.edu"
     },
     {
       "name": "Sameh Tawafsheh",
+      "ar": "سامح طوافشة",
       "category": "it",
       "role": "IT",
+      "roleAr": "تكنولوجيا المعلومات",
       "email": "sameh.tawafsheh@aaup.edu"
     },
     {
@@ -263,6 +341,7 @@
       "ar": "أحمد منصور",
       "category": "student_affairs",
       "role": "Student Affairs",
+      "roleAr": "شؤون الطلبة",
       "email": "ahmad.darmansour@aaup.edu"
     },
     {
@@ -270,6 +349,7 @@
       "ar": "هداية أبو زينة",
       "category": "student_affairs",
       "role": "Student Affairs",
+      "roleAr": "شؤون الطلبة",
       "email": "hidaya.abuzainh@aaup.edu"
     },
     {
@@ -277,6 +357,7 @@
       "ar": "د. إسلام عمرو",
       "category": "student_affairs",
       "role": "Dean of Student Affairs",
+      "roleAr": "عميد شؤون الطلبة",
       "email": "Islam.Amro@aaup.edu"
     },
     {
@@ -284,6 +365,7 @@
       "ar": "تيماء مخطوب",
       "category": "student_affairs",
       "role": "Assistant Dean of Student Affairs",
+      "roleAr": "مساعدة عميد شؤون الطلبة",
       "email": "tayma.makhtoub@aaup.edu"
     },
     {
@@ -291,6 +373,7 @@
       "ar": "وسام عويدات",
       "category": "finance",
       "role": "Finance",
+      "roleAr": "الشؤون المالية",
       "email": "wisam.oweidat@aaup.edu"
     },
     {
@@ -298,6 +381,7 @@
       "ar": "أحمد قشوع",
       "category": "finance",
       "role": "Finance",
+      "roleAr": "الشؤون المالية",
       "email": "ahmad.qashoo@aaup.edu"
     },
     {
@@ -305,6 +389,7 @@
       "ar": "ميرال تينا",
       "category": "registration",
       "role": "Registration",
+      "roleAr": "التسجيل",
       "email": "Miral.Tina@aaup.edu"
     },
     {
@@ -312,12 +397,15 @@
       "ar": "ربا المصري",
       "category": "registration",
       "role": "Registration",
+      "roleAr": "التسجيل",
       "email": "ruba.almasri@aaup.edu"
     },
     {
       "name": "Dr. Amanda Khalaf",
+      "ar": "د. أماندا خلف",
       "category": "language_center",
       "role": "Language Center",
+      "roleAr": "مركز اللغات",
       "email": "Amanda.Khalaf@aaup.edu"
     },
     {
@@ -325,18 +413,23 @@
       "ar": "د. صفاء جابر",
       "category": "language_center",
       "role": "English",
+      "roleAr": "اللغة الإنجليزية",
       "email": "safa.jaber@aaup.edu"
     },
     {
       "name": "Mamoun Salaheddin",
+      "ar": "مأمون صلاح الدين",
       "category": "administration",
       "role": "Administration",
+      "roleAr": "الإدارة",
       "email": "mamoun.salaheddeen@aaup.edu"
     },
     {
       "name": "Qais Obaid",
+      "ar": "قيس عبيد",
       "category": "administration",
       "role": "Administration",
+      "roleAr": "الإدارة",
       "email": "qais.obaid@aaup.edu"
     },
     {
@@ -344,6 +437,7 @@
       "ar": "د. أحمد حساسنة",
       "category": "administration",
       "role": "Academic Affairs",
+      "roleAr": "الشؤون الأكاديمية",
       "email": "Ahmad.Hasasneh@aaup.edu"
     },
     {
@@ -351,6 +445,7 @@
       "ar": "م. أحمد أسعد",
       "category": "administration",
       "role": "Engineering",
+      "roleAr": "الهندسة",
       "email": "ahmad.asaad@aaup.edu"
     },
     {
@@ -358,6 +453,7 @@
       "ar": "م. ثائر الخطيب",
       "category": "administration",
       "role": "Engineering",
+      "roleAr": "الهندسة",
       "email": "Thaer.Khatib@aaup.edu"
     }
   ]

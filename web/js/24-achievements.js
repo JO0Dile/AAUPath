@@ -443,7 +443,14 @@
     var dashEl = document.getElementById('dashboard');
     if(dashEl && getComputedStyle(dashEl).display !== 'none') return;
     var gender = studentGender();
-    var MESSAGES = {
+    var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
+    var MESSAGES = rtl ? {
+      1: 'أهلًا بالجامعة.\nمبروك — خلص ما عدت مستجد.',
+      2: 'خلصت السنة الثانية.\nنص الطريق للقمة — كمّل.',
+      3: 'خلصت السنة الثالثة.\nخط النهاية صار قريب.',
+      4: 'خلصت سنة التخرج.\nروب التخرج صار إلك تقريبًا.',
+      5: 'خمس سنين ولسا صامد.\nأهلين يا ' + (gender === 'Female' ? 'حجّة' : 'حجّي') + ' — كل الاحترام.'
+    } : {
       1: 'Welcome to university.\nCongrats — you are not a smurf anymore.',
       2: 'Second year cleared.\nHalfway to legend — keep pushing.',
       3: 'Third year done.\nThe finish line is in sight.',
@@ -452,14 +459,15 @@
     };
     var msg = MESSAGES[yearNum];
     if(!msg) return;
-    var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
     var ov = document.createElement('div');
     ov.className = 'year-cel-overlay';
     ov.innerHTML =
-      '<div class="year-cel-card" role="dialog" aria-modal="true">' +
+      // The terminal look is the joke in English; in Arabic the card keeps
+      // the window and says the year in words instead of a command line.
+      '<div class="year-cel-card" role="dialog" aria-modal="true"' + (rtl ? ' dir="rtl"' : '') + '>' +
         '<div class="year-cel-bar"><span class="ycb-dot r"></span><span class="ycb-dot y"></span>' +
-          '<span class="ycb-dot g"></span><span class="ycb-title">student@aaup: ~/year-' + yearNum + '</span></div>' +
-        '<pre class="year-cel-body"><span class="ycb-run">$ ./finish_year ' + yearNum + '\n</span>' +
+          '<span class="ycb-dot g"></span><span class="ycb-title">' + (rtl ? 'السنة ' + yearNum : 'student@aaup: ~/year-' + yearNum) + '</span></div>' +
+        '<pre class="year-cel-body">' + (rtl ? '' : '<span class="ycb-run">$ ./finish_year ' + yearNum + '\n</span>') +
           '<span class="year-cel-text"></span><span class="year-cel-cursor">&#9611;</span></pre>' +
         '<button type="button" class="year-cel-close">' + (rtl ? 'إغلاق' : 'close') + '</button>' +
       '</div>';
@@ -776,7 +784,7 @@
         icon: btn.getAttribute('data-ach-icon'),
         title: btn.getAttribute('data-ach-title'),
         subtitle: btn.getAttribute('data-ach-sub'),
-        footer: 'University Easy Plans'
+        footer: window.__L('University Easy Plans', 'خطتي الجامعية')
       });
     });
     overlay.addEventListener('click', function(e){
@@ -792,9 +800,9 @@
       if(!btn || !window.__downloadCardImage) return;
       e.stopPropagation();
       window.__downloadCardImage({
-        title: 'Achievements',
+        title: window.__L('Achievements', 'الإنجازات'),
         subtitle: btn.getAttribute('data-ach-major') || '',
-        rows: [{ label: 'Unlocked', value: btn.getAttribute('data-ach-unlocked') + ' / ' + btn.getAttribute('data-ach-total'), accent: true }],
+        rows: [{ label: window.__L('Unlocked', 'المفتوحة'), value: btn.getAttribute('data-ach-unlocked') + ' / ' + btn.getAttribute('data-ach-total'), accent: true }],
         filename: 'achievements'
       });
     });

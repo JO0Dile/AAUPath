@@ -358,7 +358,6 @@
               row(t.th, info.th) +
               row(t.pr, info.pr) +
               row(t.cat, cats[(course && course.category) || ''] || '') +
-              (!rtl && info.ar ? row(t.ar, info.ar) : '') +
               row(t.term, term) +
               (course && course.termSuggested ? '<p class="cd-note">' + esc(t.termSuggested) + '</p>' : '') +
             '</div></details>' +

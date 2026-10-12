@@ -521,7 +521,7 @@ if (('serviceWorker' in navigator) && (location.protocol === 'https:' || locatio
   (function(){
     function paint(){
       document.querySelectorAll('.app-version-badge').forEach(function(el){
-        el.textContent = 'v' + (window.APP_VERSION || '?');
+        el.textContent = window.__ver ? window.__ver(window.APP_VERSION) : 'v' + (window.APP_VERSION || '?');
       });
     }
     if(document.readyState === 'complete'){ paint(); }

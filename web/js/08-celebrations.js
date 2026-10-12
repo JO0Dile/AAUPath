@@ -399,7 +399,7 @@
     // footer
     ctx.fillStyle = th.accent;
     ctx.font = 'bold 34px sans-serif';
-    ctx.fillText(opts.footer || 'Study Plans', W / 2, H - 90);
+    ctx.fillText(opts.footer || window.__L('Study Plans', 'خطتي الدراسية'), W / 2, H - 90);
 
     return canvas;
   }
@@ -427,7 +427,7 @@
       // Prefer the native share sheet (mobile) with the image attached;
       // fall back to a plain download everywhere else.
       if(file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share){
-        navigator.share({ files: [file], title: 'Achievement Unlocked', text: (opts.title || '') }).catch(function(){ downloadBlob(blob); });
+        navigator.share({ files: [file], title: window.__L('Achievement Unlocked', 'إنجاز جديد'), text: (opts.title || '') }).catch(function(){ downloadBlob(blob); });
       } else {
         downloadBlob(blob);
       }
@@ -442,7 +442,7 @@
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    if(window.__showToast){ window.__showToast('Achievement card saved'); }
+    if(window.__showToast){ window.__showToast(window.__L('Achievement card saved', 'انحفظت بطاقة الإنجاز')); }
   }
 
   window.AAUP_CELEBRATE = { confetti: confettiBurst, shareAchievement: shareAchievement };

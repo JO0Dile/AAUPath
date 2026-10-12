@@ -29,6 +29,15 @@ def main():
     for i, c in enumerate(contacts):
         if not c.get('name'):
             errors.append(f'contact #{i} has no name')
+        # Most students use the app in Arabic, and an Arabic screen should not
+        # carry one English word: every name, role and course is written in
+        # both languages here.
+        if not c.get('ar'):
+            errors.append(f'{c.get("name", "#" + str(i))}: no Arabic name ("ar")')
+        if c.get('role') and not c.get('roleAr'):
+            errors.append(f'{c.get("name")}: role "{c["role"]}" has no Arabic ("roleAr")')
+        if len(c.get('courses') or []) != len(c.get('coursesAr') or []):
+            errors.append(f'{c.get("name")}: "coursesAr" must name the same courses as "courses", in Arabic')
         if c.get('category') not in cats:
             errors.append(f'{c.get("name", "#" + str(i))}: unknown category "{c.get("category")}"')
         # The one rule this file exists to enforce: no phone numbers ever

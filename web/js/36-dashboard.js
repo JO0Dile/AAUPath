@@ -231,7 +231,7 @@
         (window.AAUP_WHATS_NEXT
           ? '<div id="' + prefix + '-dashNextBody"></div>'
           : (nextCourses.length
-              ? '<div class="dash-next-list">' + nextCourses.map(function(c){ return '<div class="dash-next-item"><span>' + nameFor(c.slug) + '</span><span>' + c.cr + 'H</span></div>'; }).join('') + '</div>'
+              ? '<div class="dash-next-list">' + nextCourses.map(function(c){ return '<div class="dash-next-item"><span>' + nameFor(c.slug) + '</span><span>' + window.__hrs(c.cr) + '</span></div>'; }).join('') + '</div>'
               : '<p class="ex-note">' + (rtl ? 'لا توجد توصيات متاحة الآن.' : 'No recommendations available right now.') + '</p>')) +
         '</div>' +
         (window.AAUP_GRADUATION

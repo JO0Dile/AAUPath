@@ -78,6 +78,33 @@ def fill_course_names(plans, hand):
     return a, b, missing
 
 
+# ------------------------------------------------- courses named in Arabic only
+ARABIC = re.compile('[\u0600-\u06ff]')
+
+
+def fill_english_names(plans, english):
+    """A few rows on the university's ENGLISH pages print the course title in
+    Arabic (Statistics and Data Analysis in Technology and Society, First Aid
+    and Emergency Evacuation in Occupational Health and Safety). Shown as is,
+    an English reader gets an Arabic title. The Arabic is the university's own
+    wording, so it moves to the Arabic side and the English side takes the
+    title from data/aaup/course-names-en.json. Returns the names with no
+    English yet."""
+    missing = set()
+    for plan in plans:
+        for c in plan.get('courses') or []:
+            name = (c.get('name') or '').strip()
+            if not ARABIC.search(name):
+                continue
+            if english.get(name):
+                if not (c.get('ar') or '').strip():
+                    c['ar'] = name
+                c['name'] = english[name]
+            else:
+                missing.add(name)
+    return missing
+
+
 # ---------------------------------------------------------------- major names
 def _small_ar(small, minors):
     """'127 CH — Univ. Req. 14 · Free Elec. 6' in Arabic, or '' if unrecognised.
@@ -228,9 +255,11 @@ def fill_bios(plans, leads, notes, buckets):
 def apply(plans, report=print):
     """Fill every Arabic gap in `plans`, in place. Called by build-catalogue.py."""
     course_map = _read('course-names-ar.json')
+    english = _read('course-names-en.json')
     majors = _read('major-names-ar.json')
     bios = _read('plan-bios-ar.json')
 
+    no_english = fill_english_names(plans, english)
     a, b, missing_courses = fill_course_names(plans, course_map)
     mfilled, mmissing = fill_major_names(
         plans, majors.get('majorNames', {}), majors.get('minors', {}))
@@ -243,8 +272,10 @@ def apply(plans, report=print):
     if missing_courses:
         report(f'  NO ARABIC    : {len(missing_courses)} course name(s) — '
                f'add them to data/aaup/course-names-ar.json')
+    for name in sorted(no_english):
+        report(f'  NO ENGLISH   : {name} — add it to data/aaup/course-names-en.json')
     for pid, name in mmissing:
         report(f'  NO ARABIC    : programme {pid} ({name})')
     for pid, why in bproblems:
         report(f'  NO ARABIC    : bio for {pid} — {why}')
-    return not (missing_courses or mmissing or bproblems)
+    return not (missing_courses or no_english or mmissing or bproblems)

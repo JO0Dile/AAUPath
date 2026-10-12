@@ -467,7 +467,10 @@ window.__downloadCardImage = function(spec){
   var th = window.__themeColors();
   var bg = spec.bg || th.bg, panel = spec.panel || th.panel, line = spec.line || th.line;
   var text = spec.text || th.text, dim = spec.dim || th.dim, accent = spec.accent || th.accent;
-  var FONT = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  var FONT = 'Cairo, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+  // An Arabic card reads from the right, like the screen it came from.
+  var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+  var X = rtl ? W - PAD - 14 : PAD + 14;
 
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   __cardRoundRect(ctx, PAD / 2, PAD / 2, W - PAD, H - PAD, 16);
@@ -476,30 +479,31 @@ window.__downloadCardImage = function(spec){
 
   var y = PAD + 22;
   ctx.textBaseline = 'alphabetic';
+  if(rtl){ ctx.direction = 'rtl'; ctx.textAlign = 'right'; }
   ctx.fillStyle = text;
   ctx.font = '700 20px ' + FONT;
-  ctx.fillText(spec.title || '', PAD + 14, y);
+  ctx.fillText(spec.title || '', X, y);
   if(spec.subtitle){
     y += 24;
     ctx.fillStyle = dim;
     ctx.font = '600 12px ' + FONT;
-    ctx.fillText(spec.subtitle, PAD + 14, y);
+    ctx.fillText(spec.subtitle, X, y);
   }
   y = headH + PAD - 8;
 
   rows.forEach(function(row){
     ctx.fillStyle = dim;
     ctx.font = '700 10px ' + FONT;
-    ctx.fillText(String(row.label || '').toUpperCase(), PAD + 14, y);
+    ctx.fillText(String(row.label || '').toUpperCase(), X, y);
     ctx.fillStyle = row.accent ? accent : text;
     ctx.font = '800 19px ' + FONT;
-    ctx.fillText(String(row.value == null ? '' : row.value), PAD + 14, y + 24);
+    ctx.fillText(String(row.value == null ? '' : row.value), X, y + 24);
     y += rowH;
   });
 
   ctx.fillStyle = dim;
   ctx.font = '600 10px ' + FONT;
-  ctx.fillText(spec.footer || 'Easy Plans', PAD + 14, H - PAD + 6);
+  ctx.fillText(spec.footer || window.__L('Easy Plans', 'خطتي الجامعية'), X, H - PAD + 6);
 
   var filename = (spec.filename || 'card') + '.png';
   function downloadBlob(blob){
@@ -511,10 +515,10 @@ window.__downloadCardImage = function(spec){
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    if(window.__showToast) window.__showToast('Saved.');
+    if(window.__showToast) window.__showToast(window.__L('Saved.', 'انحفظ.'));
   }
   canvas.toBlob(function(blob){
-    if(!blob){ if(window.__showToast) window.__showToast('Could not create the image.'); return; }
+    if(!blob){ if(window.__showToast) window.__showToast(window.__L('Could not create the image.', 'ما قدرنا نعمل الصورة.')); return; }
     // Same preference as js/08-celebrations.js's achievement share: the
     // native share sheet, with the image already attached, beats a plain
     // download on a phone — straight into whatever app the student actually
@@ -522,7 +526,7 @@ window.__downloadCardImage = function(spec){
     var file = null;
     try{ file = new File([blob], filename, { type: 'image/png' }); }catch(e){ file = null; }
     if(file && navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share){
-      navigator.share({ files: [file], title: spec.title || 'Card' }).catch(function(){ downloadBlob(blob); });
+      navigator.share({ files: [file], title: spec.title || window.__L('Card', 'بطاقة') }).catch(function(){ downloadBlob(blob); });
     } else {
       downloadBlob(blob);
     }

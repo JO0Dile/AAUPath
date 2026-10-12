@@ -255,7 +255,7 @@
           '<span class="cp-row-col">' + esc(collegeName(r.plan, rtl)) + '</span>' +
           '<span class="cp-bar"><span class="cp-bar-fill" style="width:' + bar + '%;"></span></span>' +
         '</span>' +
-        '<span class="cp-row-num"><b>' + r.cmp.keptCr + 'H</b><small>' + t('transfers', rtl) + '</small></span>' +
+        '<span class="cp-row-num"><b>' + window.__hrs(r.cmp.keptCr) + '</b><small>' + t('transfers', rtl) + '</small></span>' +
         '</button>';
     }).join('') + '</div>' +
     (empty.length ? '<p class="form-note">' + empty.length + ' ' +
@@ -263,7 +263,7 @@
   }
 
   function courseLine(name, cr, note, rtl){
-    return '<li><span>' + esc(name) + '</span><span class="cp-li-cr">' + cr + 'H</span>' +
+    return '<li><span>' + esc(name) + '</span><span class="cp-li-cr">' + window.__hrs(cr) + '</span>' +
       (note ? '<span class="cp-li-note">' + esc(note) + '</span>' : '') + '</li>';
   }
 
@@ -280,15 +280,15 @@
       '<div class="cp-head">' +
         '<span class="cp-head-icon">' + window.AAUP_ICONS.markup(to, { size: 30 }) + '</span>' +
         '<div><h3>' + esc(planName(to, rtl)) + '</h3>' +
-        '<p>' + esc(collegeName(to, rtl)) + ' · ' + c.total + 'H</p></div>' +
+        '<p>' + esc(collegeName(to, rtl)) + ' · ' + window.__hrs(c.total) + '</p></div>' +
       '</div>' +
       '<div class="cp-nums">' +
-        '<div class="cp-num"><b>' + c.keptCr + 'H</b><span>' + t('transfers', rtl) + ' · ' +
+        '<div class="cp-num"><b>' + window.__hrs(c.keptCr) + '</b><span>' + t('transfers', rtl) + ' · ' +
           t('ofYours', rtl).replace('{n}', c.doneCr) + '</span></div>' +
-        '<div class="cp-num"><b>' + c.lostCr + 'H</b><span>' + t('lost', rtl) + '</span></div>' +
+        '<div class="cp-num"><b>' + window.__hrs(c.lostCr) + '</b><span>' + t('lost', rtl) + '</span></div>' +
         '<div class="cp-num"><b>' + c.pct + '%</b><span>' + t('wouldBe', rtl) + ' ' + t('doneOf', rtl) +
           ' · ' + t('nowAt', rtl).replace('{n}', nowPct) + '</span></div>' +
-        '<div class="cp-num"><b>' + c.stillCr + 'H</b><span>' + t('left', rtl) + ' · ' +
+        '<div class="cp-num"><b>' + window.__hrs(c.stillCr) + '</b><span>' + t('left', rtl) + ' · ' +
           c.stillCount + ' ' + t('notDone', rtl) + '</span></div>' +
         (extra === null ? '' :
           '<div class="cp-num"><b>' + (extra > 0 ? '+' : '') + extra + '</b><span>' +

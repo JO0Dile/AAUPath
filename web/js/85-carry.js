@@ -119,9 +119,9 @@
       var now = rowHours(row);
       var label = T.put;
       if(now != null && moving != null){
-        label += ' · ' + now + 'H → ' + (now + moving) + 'H';
+        label += ' · ' + window.__hrs(now) + ' → ' + window.__hrs(now + moving);
       } else if(now != null){
-        label += ' · ' + now + 'H';
+        label += ' · ' + window.__hrs(now);
       }
       if(check && check.ok === false){ slot.className += ' carry-slot-ask'; }
       slot.textContent = label;

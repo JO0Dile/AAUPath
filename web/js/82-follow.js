@@ -110,7 +110,7 @@
       var pct = total ? Math.max(0, Math.min(100, Math.round(doneCr / total * 100))) : 0;
       return '<div class="fl-row' + (cls ? ' ' + cls : '') + '">' +
         '<div class="fl-line"><span class="fl-name">' + esc(label) + '</span>' +
-        '<span class="fl-num">' + doneCr + ' / ' + total + 'H</span></div>' +
+        '<span class="fl-num">' + doneCr + ' / ' + window.__hrs(total) + '</span></div>' +
         '<div class="fl-track"><i style="width:' + pct + '%;"></i></div></div>';
     }
 

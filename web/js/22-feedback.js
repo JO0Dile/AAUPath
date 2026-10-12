@@ -32,7 +32,7 @@
   function send(prefix){
     var feedback = buildFeedback(prefix);
     if(feedback.length === 0){
-      if(window.__showToast) window.__showToast('Nothing to share yet — rate a course first');
+      if(window.__showToast) window.__showToast(window.__L('Nothing to share yet — rate a course first', 'لسا ما في إشي تشاركه — قيّم مساق أول'));
       return;
     }
     var info = window.AAUP_STUDENT ? window.AAUP_STUDENT.get() : null;
@@ -44,11 +44,11 @@
       submittedAt: new Date().toISOString(),
       feedback: feedback
     };
-    var subject = 'AAUP Course Feedback \u2013 ' + ((info && info.name) || 'Anonymous Student');
+    var subject = window.__L('AAUP Course Feedback \u2013 ', 'تقييم مساقات \u2013 ') + ((info && info.name) || window.__L('Anonymous Student', 'طالب مجهول'));
     var body = JSON.stringify(payload, null, 2);
     var mailto = 'mailto:' + FEEDBACK_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     window.location.href = mailto;
-    if(window.__showToast) window.__showToast('Email opened \u2014 hit send');
+    if(window.__showToast) window.__showToast(window.__L('Email opened \u2014 hit send', 'انفتح الإيميل \u2014 اضغط إرسال'));
   }
 
   window.AAUP_FEEDBACK = { send: send, buildFeedback: buildFeedback };

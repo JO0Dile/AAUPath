@@ -198,7 +198,7 @@
         // Round 8, idea 18: the plan as a spreadsheet (js/108-command.js).
         (window.AAUP_EXPORT ? '<button type="button" class="cp-choice-btn" id="spExcel">' +
           '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('chart', 20) + '</span>' +
-          '<span class="cp-choice-text"><b>' + (r ? 'كجدول (Excel)' : 'As a spreadsheet (Excel)') + '</b>' +
+          '<span class="cp-choice-text"><b>' + (r ? 'كجدول إكسل' : 'As a spreadsheet (Excel)') + '</b>' +
           '<span>' + (r ? 'كل مساق: السنة والفصل والساعات والحالة والعلامة' : 'Every course with its year, semester, hours, status and grade') + '</span></span></button>' : '') +
         '<button type="button" class="cp-choice-btn" id="spMaintainer">' +
           '<span class="cp-choice-icon">' + window.AAUP_ICONS.preview('mail', 20) + '</span>' +
@@ -642,16 +642,18 @@
   // thing. What it is for is a shared laptop: each person gets their own
   // plan and grades, and none of it leaves the device.
   function peopleHtml(r, current, others){
+    // The first account on every device is called "Default" in storage.
+    var shown = function(a){ return r && a === 'Default' ? 'الافتراضي' : a; };
     return '<h3 class="mh set-grp-h">' + window.AAUP_ICONS.preview('person', 18) + (r ? 'الأشخاص على هذا الجهاز' : 'People on this device') + '</h3>' +
       '<p class="form-note" style="margin-top:0;">' + (r
         ? 'جهاز مشترك؟ كل شخص إله خطته وعلاماته. ولا إشي بيطلع من الجهاز.'
         : 'Sharing a laptop? Each person gets their own plan and grades. Nothing leaves this device.') + '</p>' +
-      '<p style="font-size:12.5px;">' + (r ? 'الحساب الحالي: ' : 'Current account: ') + '<b>' + window.__escapeHtml(current) + '</b></p>' +
+      '<p style="font-size:12.5px;">' + (r ? 'الحساب الحالي: ' : 'Current account: ') + '<b>' + window.__escapeHtml(shown(current)) + '</b></p>' +
       (others.length
         ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
           others.map(function(a){
             return '<span class="acct-row">' +
-              '<button type="button" class="home-btn acct-switch-btn" data-acct="' + window.__escapeHtml(a) + '">' + window.AAUP_ICONS.preview('refresh', 14) + (r ? 'التبديل إلى ' : 'Switch to ') + window.__escapeHtml(a) + '</button>' +
+              '<button type="button" class="home-btn acct-switch-btn" data-acct="' + window.__escapeHtml(a) + '">' + window.AAUP_ICONS.preview('refresh', 14) + (r ? 'التبديل إلى ' : 'Switch to ') + window.__escapeHtml(shown(a)) + '</button>' +
               '<button type="button" class="home-btn acct-delete-btn" data-acct="' + window.__escapeHtml(a) + '" aria-label="' + (r ? 'حذف الحساب' : 'Delete account') + '">' + window.AAUP_ICONS.preview('trash', 14) + '</button>' +
               '</span>';
           }).join('') + '</div>'
@@ -696,7 +698,7 @@
         var active = sz.id === current;
         return '<button type="button" class="size-pick' + (active ? ' size-pick-active' : '') +
           '" data-size-pick="' + sz.id + '" aria-pressed="' + active + '">' +
-          '<span style="font-size:' + Math.round(11 * sz.scale) + 'px;">Aa</span>' +
+          '<span style="font-size:' + Math.round(11 * sz.scale) + 'px;">' + (r ? 'أب' : 'Aa') + '</span>' +
           '<span>' + (r ? sz.ar : sz.en) + '</span></button>';
       }).join('') +
       '</div>';
@@ -750,7 +752,7 @@
       return r ? ('قبل ' + d + ' يوم') : (d + ' days ago');
     };
     if(C && C.isSignedIn && C.isSignedIn()){
-      return '<p class="bk-status is-ok">' + (r ? 'متزامن مع حسابك على Google — بينتقل معك لأي جهاز.' : 'Synced with your Google account — it moves with you to any device.') + '</p>';
+      return '<p class="bk-status is-ok">' + (r ? 'متزامن مع حسابك على جوجل — بينتقل معك لأي جهاز.' : 'Synced with your Google account — it moves with you to any device.') + '</p>';
     }
     var last = 0;
     try{ last = Date.parse(localStorage.getItem('aaup_lastExport') || '') || 0; }catch(e){}
@@ -880,7 +882,7 @@
           '<h2 class="mh" style="margin-top:4px;">' + window.AAUP_ICONS.preview(sub ? sub.iconKey : 'gear', 20) + (sub ? (r ? sub.ar : sub.en) : '') + '</h2>') +
       '<div id="settingsTabContent">' + tabContent + moreHtml + '</div>' +
       '<div class="form-actions"><button type="button" class="home-btn" id="setClose">' + (r ? 'إغلاق' : 'Close') + '</button></div>' +
-      '<p class="form-note" style="text-align:center;opacity:.6;">v' + (window.APP_VERSION || '?') + ' · ' + (r ? 'مشروع طلابي مفتوح' : 'an open student project') + '</p>';
+      '<p class="form-note" style="text-align:center;opacity:.6;">' + window.__ver(window.APP_VERSION, r) + ' · ' + (r ? 'مشروع طلابي مفتوح' : 'an open student project') + '</p>';
 
     document.getElementById('setClose').addEventListener('click', function(){ document.getElementById('devModalOverlay').classList.remove('open'); });
     body.querySelectorAll('[data-settings-tab]').forEach(function(tabEl){
@@ -959,14 +961,14 @@
         var area = document.getElementById('setResetArea');
         if(!area || !window.AAUP_DATA) return;
         area.innerHTML =
-          '<label class="set-danger-lbl" for="setResetWord">' + (r ? 'اكتب RESET للتأكيد' : 'Type RESET to confirm') + '</label>' +
-          '<div class="set-danger-row"><input type="text" id="setResetWord" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="ltr">' +
+          '<label class="set-danger-lbl" for="setResetWord">' + (r ? 'اكتب «امسح» للتأكيد' : 'Type RESET to confirm') + '</label>' +
+          '<div class="set-danger-row"><input type="text" id="setResetWord" autocomplete="off" autocapitalize="characters" spellcheck="false" dir="' + (r ? 'rtl' : 'ltr') + '">' +
           '<button type="button" class="home-btn set-danger-btn" id="setResetGo" disabled>' + (r ? 'امسح كل إشي' : 'Erase everything') + '</button>' +
           '<button type="button" class="home-btn" id="setResetCancel">' + (r ? 'إلغاء' : 'Cancel') + '</button></div>';
         var word = document.getElementById('setResetWord');
         var go = document.getElementById('setResetGo');
         word.focus();
-        word.addEventListener('input', function(){ go.disabled = word.value.trim().toUpperCase() !== 'RESET'; });
+        word.addEventListener('input', function(){ go.disabled = word.value.trim().toUpperCase() !== (r ? 'امسح' : 'RESET'); });
         go.addEventListener('click', function(){ if(!go.disabled) window.AAUP_DATA.resetAllNow(); });
         document.getElementById('setResetCancel').addEventListener('click', function(){ renderSettingsBody(body); });
       });

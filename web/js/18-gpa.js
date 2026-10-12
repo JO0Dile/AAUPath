@@ -152,9 +152,10 @@
   // The long form, for a <select> option where a row of text is the whole
   // control and there is room to explain.
   function gradeLabel(g){
-    if(g === 'W') return 'W — Withdrawn (not counted)';
-    if(g === 'FA') return 'FA — Absence fail (counts as F)';
-    if(g === 'TR') return 'TR — Transferred (hours count, not in the GPA)';
+    var L = window.__L || function(en){ return en; };
+    if(g === 'W') return L('W — Withdrawn (not counted)', 'W — منسحب (ما بينحسب)');
+    if(g === 'FA') return L('FA — Absence fail (counts as F)', 'FA — رسوب بسبب الغياب (بينحسب F)');
+    if(g === 'TR') return L('TR — Transferred (hours count, not in the GPA)', 'TR — معادَل (الساعات بتنحسب، مش داخل المعدل)');
     return g;
   }
   // The short form, for anywhere the grade is a CHIP. gradeLabel's sentence

@@ -121,7 +121,7 @@
         s.courses.forEach(function(c){
           var mark = c.done ? '✓' : '○';
           var gradeTag = c.grade ? ' <span class="po-grade">' + esc(c.grade) + '</span>' : '';
-          var crTag = c.credits !== '' ? ' <span class="po-cr">' + esc(String(c.credits)) + 'H</span>' : '';
+          var crTag = c.credits !== '' ? ' <span class="po-cr">' + esc(window.__hrs(c.credits)) + '</span>' : '';
           var codeTag = (fullMode && c.code) ? '<span class="po-code">' + esc(c.code) + '</span>' : '';
           // Course names come out of courseInfo already escaped once by the
           // shared sanitizer — esc()'ing them again printed a real "&" as a
@@ -171,7 +171,7 @@
           '</div>' +
           '<button type="button" class="home-btn po-print" id="planOverviewPrintBtn">' +
             (window.AAUP_ICONS ? window.AAUP_ICONS.preview('printer', 15) : '') +
-            (A ? 'طباعة / حفظ PDF' : 'Print / Save PDF') + '</button>' +
+            (A ? 'طباعة / حفظ كملف' : 'Print / Save PDF') + '</button>' +
         '</div>' +
         // .po-sheet is a page, not a panel: white, page-proportioned and with
         // a shadow, so what is on screen is what comes out of the printer.
@@ -219,7 +219,7 @@
     var print = overlay.querySelector('#planOverviewPrintBtn');
     if(print){
       print.innerHTML = (window.AAUP_ICONS ? window.AAUP_ICONS.preview('printer', 15) : '') +
-        (A ? 'طباعة / حفظ PDF' : 'Print / Save PDF');
+        (A ? 'طباعة / حفظ كملف' : 'Print / Save PDF');
     }
     overlay.setAttribute('dir', A ? 'rtl' : 'ltr');
   }

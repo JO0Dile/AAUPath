@@ -324,7 +324,7 @@
       dEn: 'A link or picture of your plan', dAr: 'رابط أو صورة لخطتك',
       run: function(id){ window.AAUP_SHARE.open(id); } },
     { key: 'about', icon: 'help', needs: false, en: 'About', ar: 'عن التطبيق',
-      dEn: 'Who made AAUPath, and how to reach them', dAr: 'مين عمل AAUPath وكيف توصله',
+      dEn: 'Who made AAUPath, and how to reach them', dAr: 'مين عمل التطبيق وكيف توصله',
       run: function(){ window.AAUP_ABOUT.open(); } },
     { key: 'whatsnew', icon: 'news', needs: false, en: "What's new", ar: 'الجديد',
       dEn: 'Changes in the latest update', dAr: 'شو تغيّر بآخر تحديث',
@@ -361,7 +361,7 @@
 
   // Why a feature needs the major — said once, on the sheet that asks.
   var REASON = {
-    plan: ['Pick your major and AAUPath opens every course in it.', 'اختار تخصصك وAAUPath بيفتحلك كل مساقاته.'],
+    plan: ['Pick your major and AAUPath opens every course in it.', 'اختار تخصصك والتطبيق بيفتحلك كل مساقاته.'],
     gpa: ['Your GPA is worked out from your own courses, so this needs your major. You only pick it once.',
           'معدلك بينحسب من مساقاتك، فبنحتاج تخصصك. بتختاره مرة وحدة بس.'],
     progress: ['Progress is measured against your major’s plan, so this needs your major. You only pick it once.',
@@ -392,9 +392,9 @@
   }
   var HINTS = {
     en: ['Try “Calculus”', 'Try “my GPA”', 'Try “registration”', 'Try “Cyber Security”'],
-    ar: ['جرّب «Calculus»', 'جرّب «معدلي»', 'جرّب «التسجيل»', 'جرّب «الأمن السيبراني»']
+    ar: ['جرّب «تفاضل»', 'جرّب «معدلي»', 'جرّب «التسجيل»', 'جرّب «الأمن السيبراني»']
   };
-  var CHIPS = { en: ['my GPA', 'Calculus', 'Suwan'], ar: ['معدلي', 'Calculus', 'Suwan'] };
+  var CHIPS = { en: ['my GPA', 'Calculus', 'Suwan'], ar: ['معدلي', 'تفاضل', 'صوان'] };
   function hint(){ var h = HINTS[ar() ? 'ar' : 'en']; return h[state.hint % h.length]; }
 
   // The name a card goes by: the plan card says My Plan once a major is chosen.
@@ -622,7 +622,7 @@
         var done = !!progress[id + '-c-' + c.id];
         var nm = plain(ar() && c.ar ? c.ar : c.name);
         return '<button type="button" class="hm-sem-row hm-pin-row' + (done ? ' is-done' : '') + '" data-hm-pin="' + esc(c.id) + '">' +
-          '<span class="hm-sem-name">' + esc(nm) + '<small>' + (parseFloat(c.creditHours) || 0) + 'H' + (done ? ' · ' + esc(L('passed', 'منجز')) : '') + '</small></span>' +
+          '<span class="hm-sem-name">' + esc(nm) + '<small>' + window.__hrs(parseFloat(c.creditHours) || 0) + (done ? ' · ' + esc(L('passed', 'منجز')) : '') + '</small></span>' +
           '<span class="hm-pin-go app-icon-dir" aria-hidden="true">' + ic('chevronRight', 16) + '</span></button>';
       }).join('') +
       '</section>';
@@ -636,12 +636,12 @@
       : L('Year ' + ts.term.n + ' · ' + semName[ts.term.s], 'السنة ' + ts.term.n + ' · ' + semName[ts.term.s]);
     return '<section class="hm-sem" aria-label="' + esc(L('This semester', 'هالفصل')) + '">' +
       '<div class="hm-sem-h"><b>' + esc(L('This semester', 'هالفصل')) + '</b>' +
-        '<span>' + esc(title) + ' · ' + ts.list.length + ' · ' + hours + 'H</span></div>' +
+        '<span>' + esc(title) + ' · ' + ts.list.length + ' · ' + window.__hrs(hours) + '</span></div>' +
       ts.list.slice(0, 7).map(function(c){
         var done = !!ts.progress[id + '-c-' + c.id];
         var nm = plain(ar() && c.ar ? c.ar : c.name);
         return '<div class="hm-sem-row' + (done ? ' is-done' : '') + '">' +
-          '<span class="hm-sem-name">' + esc(nm) + '<small>' + (parseFloat(c.creditHours) || 0) + 'H</small></span>' +
+          '<span class="hm-sem-name">' + esc(nm) + '<small>' + window.__hrs(parseFloat(c.creditHours) || 0) + '</small></span>' +
           '<button type="button" class="hm-sem-tick" data-hm-tick="' + esc(c.id) + '" aria-pressed="' + done + '" aria-label="' +
             esc((done ? L('Passed: ', 'منجز: ') : L('Mark passed: ', 'علّمه منجز: ')) + nm) + '">' +
             (done ? ic('check', 14) + '<span>' + esc(L('passed', 'منجز')) + '</span>' : '<span class="hm-sem-circle"></span>') +
@@ -666,7 +666,7 @@
         '<div class="hm-top">' +
           '<span class="hm-brand"><img src="assets/icons/favicon.png" alt="" aria-hidden="true">AAUPath</span>' +
           '<span class="hm-top-actions">' +
-            '<button type="button" class="hm-iconbtn" data-hm-lang aria-label="' + esc(L('Switch to Arabic', 'Switch to English')) + '">' + (rtl ? 'EN' : 'ع') + '</button>' +
+            '<button type="button" class="hm-iconbtn" data-hm-lang aria-label="' + esc(L('Switch to Arabic', 'بدّل للإنجليزية')) + '">' + (rtl ? 'EN' : 'ع') + '</button>' +
             '<button type="button" class="hm-iconbtn" data-hm-settings aria-label="' + esc(L('Settings', 'الإعدادات')) + '">' + ic('gear', 20) + '</button>' +
           '</span>' +
         '</div>' +
@@ -674,7 +674,7 @@
           '<span class="hm-greet">' + esc(greeting()) + '</span>' +
           '<h1 class="hm-title">' + esc(L('What do you need?', 'شو بدك؟')) + '</h1>' +
           '<div class="hm-search">' +
-            '<label for="hmSearch" class="hm-sr">' + esc(L('Search AAUPath', 'ابحث في AAUPath')) + '</label>' +
+            '<label for="hmSearch" class="hm-sr">' + esc(L('Search AAUPath', 'ابحث في التطبيق')) + '</label>' +
             '<span class="hm-search-ic" aria-hidden="true">' + ic('search', 22) + '</span>' +
             '<input id="hmSearch" type="search" autocomplete="off" enterkeyhint="search" value="' + esc(state.q) + '" placeholder="' + esc(hint()) + '">' +
             '<button type="button" class="hm-search-cancel" data-hm-cancel>' + esc(L('Cancel', 'إلغاء')) + '</button>' +
@@ -693,11 +693,11 @@
           (window.AAUP_TIMETABLE ? window.AAUP_TIMETABLE.todayHtml(id) : '') +
           pinnedHtml(id) +
           thisSemesterHtml(id) +
-          '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في AAUPath')) + '</span>' +
+          '<span class="hm-label hm-label-desk">' + esc(L('Everything in AAUPath', 'كل إشي في التطبيق')) + '</span>' +
           '<div class="hm-grid">' + arrangedFeatures().map(function(f){ return cardHtml(f, id, s); }).join('') + '</div>' +
           moreRowHtml() +
           '<button type="button" class="hm-arrange-link" data-hm-arrange>' + ic('menu', 14) + esc(L('Arrange Home', 'رتّب الرئيسية')) + '</button>' +
-          '<div class="hm-foot"><button type="button" class="app-version-badge hm-ver" data-hm-ver>v' + esc(window.APP_VERSION || '?') + '</button>' +
+          '<div class="hm-foot"><button type="button" class="app-version-badge hm-ver" data-hm-ver>' + esc(window.__ver(window.APP_VERSION)) + '</button>' +
             (devShown() ? '<button type="button" class="dev-link" data-hm-dev>' + esc(L('Developer', 'المطوّر')) + '</button>' : '') + '</div>' +
         '</div>' +
         railHtml(id, s) +
@@ -739,9 +739,10 @@
     if(contacts && contacts !== 'error' && contacts.contacts){
       contacts.contacts.forEach(function(c){
         if(c.category !== 'instructor') return;
-        var chay = c.name + ' ' + (c.courses || []).join(' ');
+        var chay = c.name + ' ' + (c.ar || '') + ' ' + (c.courses || []).join(' ') + ' ' + (c.coursesAr || []).join(' ');
         if(found(q, chay)){
-          out.push({ kind: L('Professor', 'محاضر'), title: c.name, sub: (c.courses || []).join(' \u00b7 '), go: 'p:' + c.name });
+          var sh = window.AAUP_CONTACTS.shown(c, ar(), contacts);
+          out.push({ kind: L('Professor', 'محاضر'), title: sh.name, sub: sh.courses.join(' \u00b7 '), go: 'p:' + sh.name });
         }
       });
     }
@@ -805,8 +806,8 @@
     }).join('') +
       ((!rs.length && !answer) || looksLikeQuestion(q)
         ? '<button type="button" class="hm-res hm-res-ask" data-hm-res="ask">' + ic('chatdots', 17) +
-          esc(rs.length || answer ? L('Ask AAUPath: “' + q + '”', 'اسأل AAUPath: «' + q + '»')
-                                  : L('Nothing matches that. Ask AAUPath instead', 'ما في نتيجة. اسأل AAUPath بدالها')) + '</button>'
+          esc(rs.length || answer ? L('Ask AAUPath: “' + q + '”', 'اسأل المساعد: «' + q + '»')
+                                  : L('Nothing matches that. Ask AAUPath instead', 'ما في نتيجة. اسأل المساعد بدالها')) + '</button>'
         : '');
     box.hidden = false;
   }

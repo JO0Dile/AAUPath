@@ -168,8 +168,18 @@
     return lines.join('\n');
   }
 
+  // The app is used in one language at a time, and an Arabic screen should
+  // not get an answer full of English course titles.
+  function languageNote() {
+    return (window.AAUP_LANG && window.AAUP_LANG.isAr())
+      ? 'APP LANGUAGE: Arabic. The student reads Arabic only: answer entirely in Arabic and call every course by its Arabic name (the part after " / " in COURSES). No English words.'
+      : 'APP LANGUAGE: English. Answer in English and call every course by its English name.';
+  }
+
   function buildContext() {
     return [
+      languageNote(),
+      '',
       catalogueSummary(),
       '',
       planSummary(),

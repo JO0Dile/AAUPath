@@ -10,6 +10,9 @@
 // user's own data (self-XSS at worst) but not for data that arrived over
 // the network on behalf of every user of the feed.
 (function(){
+  // Everything this module says to a student, in the app's language.
+  function ar(){ return !!(window.AAUP_LANG && window.AAUP_LANG.isAr()); }
+  function L(en, a){ return ar() ? a : en; }
   function safeId(s, fallback){
     var out = String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     return out || fallback || ('x-' + Math.random().toString(36).slice(2, 8));
@@ -158,22 +161,24 @@
       return m;
     };
     var a = byId(oldP.courses), b = byId(newP.courses);
-    var label = function(c){ return (c.courseNumber ? c.courseNumber + ' · ' : '') + (c.name || c.id); };
+    var label = function(c){ return (c.courseNumber ? c.courseNumber + ' · ' : '') + ((ar() && c.ar) || c.name || c.id); };
 
-    Object.keys(b).forEach(function(id){ if(!a[id]) out.push({ kind: 'add', text: 'Adds ' + label(b[id])}); });
-    Object.keys(a).forEach(function(id){ if(!b[id] && !keptByStudent(planId, a[id])) out.push({ kind: 'remove', text: 'Removes ' + label(a[id])}); });
+    Object.keys(b).forEach(function(id){ if(!a[id]) out.push({ kind: 'add', text: L('Adds ', 'يضيف ') + label(b[id])}); });
+    Object.keys(a).forEach(function(id){ if(!b[id] && !keptByStudent(planId, a[id])) out.push({ kind: 'remove', text: L('Removes ', 'يحذف ') + label(a[id])}); });
 
     Object.keys(b).forEach(function(id){
       if(!a[id]) return;
       var o = a[id], n = b[id];
       if(o.creditHours !== n.creditHours){
-        out.push({ kind: 'change', text: label(n) + ': credit hours ' + o.creditHours + ' → ' + n.creditHours });
+        out.push({ kind: 'change', text: label(n) + L(': credit hours ', ': الساعات ') + o.creditHours + ' → ' + n.creditHours });
       }
       // An elective the plan leaves open, placed by the student: theirs, kept.
       if(n.yearId && (o.yearId !== n.yearId || o.semester !== n.semester)){
-        out.push({ kind: 'move', text: label(n) + ': moved to Year ' + String(n.yearId).replace(/^y/, '') + ' · ' + semLabel(n.semester) });
+        out.push({ kind: 'move', text: label(n) + L(': moved to Year ', ': انتقل للسنة ') + String(n.yearId).replace(/^y/, '') + ' · ' + semLabel(n.semester) });
       }
-      if(o.name !== n.name){ out.push({ kind: 'rename', text: 'Renamed “' + o.name + '” → “' + n.name + '”' }); }
+      if(o.name !== n.name){
+        out.push({ kind: 'rename', text: ar() ? 'تغيّر الاسم «' + (o.ar || o.name) + '» ← «' + (n.ar || n.name) + '»' : 'Renamed “' + o.name + '” → “' + n.name + '”' });
+      }
     });
 
     var key = function(p){ return p[0] + '>' + p[1]; };
@@ -181,20 +186,20 @@
     (oldP.prerequisites || []).forEach(function(p){ oldPr[key(p)] = p; });
     (newP.prerequisites || []).forEach(function(p){ newPr[key(p)] = p; });
     Object.keys(newPr).forEach(function(k){
-      if(!oldPr[k]) out.push({ kind: 'prereq', text: 'New prerequisite: ' + nameIn(b, newPr[k][0]) + ' before ' + nameIn(b, newPr[k][1]) });
+      if(!oldPr[k]) out.push({ kind: 'prereq', text: L('New prerequisite: ', 'متطلب سابق جديد: ') + nameIn(b, newPr[k][0]) + L(' before ', ' قبل ') + nameIn(b, newPr[k][1]) });
     });
     Object.keys(oldPr).forEach(function(k){
-      if(!newPr[k]) out.push({ kind: 'prereq', text: 'Dropped prerequisite: ' + nameIn(a, oldPr[k][0]) + ' before ' + nameIn(a, oldPr[k][1]) });
+      if(!newPr[k]) out.push({ kind: 'prereq', text: L('Dropped prerequisite: ', 'انشال متطلب سابق: ') + nameIn(a, oldPr[k][0]) + L(' before ', ' قبل ') + nameIn(a, oldPr[k][1]) });
     });
 
     var oy = (oldP.structure && oldP.structure.years || []).length;
     var ny = (newP.structure && newP.structure.years || []).length;
-    if(oy !== ny) out.push({ kind: 'structure', text: 'Plan length changes from ' + oy + ' to ' + ny + ' years' });
+    if(oy !== ny) out.push({ kind: 'structure', text: L('Plan length changes from ' + oy + ' to ' + ny + ' years', 'مدة الخطة بتتغيّر من ' + oy + ' إلى ' + ny + ' سنوات') });
     return out;
   }
 
-  function semLabel(s){ return s === 's1' ? 'Semester 1' : s === 's2' ? 'Semester 2' : 'Summer'; }
-  function nameIn(map, id){ return map[id] ? (map[id].name || id) : id; }
+  function semLabel(s){ return s === 's1' ? L('Semester 1', 'الفصل الأول') : s === 's2' ? L('Semester 2', 'الفصل الثاني') : L('Summer', 'الصيفي'); }
+  function nameIn(map, id){ return map[id] ? ((ar() && map[id].ar) || map[id].name || id) : id; }
 
   // Icons, logos and blurbs are published presentation, not the student's
   // work — nothing in the app lets them edit these — so they are refreshed
@@ -210,6 +215,18 @@
         existing[f] = sanitized[f];
         changed = true;
       }
+    });
+    // A course's Arabic name is presentation too. Hundreds of courses had
+    // none, and a customized plan never takes a new course list without a
+    // yes, so it would have kept showing them in English for good. Filled in
+    // only where the student has not written one of their own: none at all,
+    // or the English name standing in for it.
+    var incoming = {};
+    (sanitized.courses || []).forEach(function(c){ if(c && c.id) incoming[c.id] = c; });
+    (existing.courses || []).forEach(function(c){
+      var n = c && incoming[c.id];
+      if(!n || !n.ar || n.ar === c.ar) return;
+      if(!c.ar || c.ar === c.name){ c.ar = n.ar; changed = true; }
     });
     return changed;
   }
@@ -272,7 +289,7 @@
     if(window.__carryAllReplaced && window.__carryAllReplaced()){
       var fresh = window.performance && performance.now ? performance.now() < 15000 : false;
       if(fresh) location.reload();
-      else if(window.__showActionToast) window.__showActionToast('A course in your plan was replaced; your progress moved to the new one.', 'Reload', function(){ location.reload(); });
+      else if(window.__showActionToast) window.__showActionToast(L('A course in your plan was replaced; your progress moved to the new one.', 'انبدل مساق بخطتك؛ تقدّمك انتقل للمساق الجديد.'), L('Reload', 'حدّث'), function(){ location.reload(); });
     }
     if(awaiting.length) queueConsent(awaiting);
     return result;
@@ -305,24 +322,26 @@
     var item = consentQueue[0];
     var plans = window.AAUP_IMPORTED.loadImportedPlans();
     var plan = plans[item.id];
-    var name = plan && plan.majorName ? ((plan.majorName.en && plan.majorName.en.big) || item.id) : item.id;
+    var name = plan && plan.majorName ? ((ar() && plan.majorName.ar && plan.majorName.ar.big) || (plan.majorName.en && plan.majorName.en.big) || item.id) : item.id;
 
     var el = document.createElement('div');
     el.className = 'sync-consent-overlay open';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
+    el.setAttribute('dir', ar() ? 'rtl' : 'ltr');
 
     var box = document.createElement('div');
     box.className = 'sync-consent';
 
     var h = document.createElement('h3');
-    h.textContent = 'The official ' + name + ' plan was updated';
+    h.textContent = L('The official ' + name + ' plan was updated', 'انحدّثت الخطة الرسمية لتخصص ' + name);
     box.appendChild(h);
 
     var p = document.createElement('p');
     p.className = 'sync-consent-lead';
-    p.textContent = 'You have made your own changes to this plan, so nothing has been altered. ' +
-      'Here is what the official version changed:';
+    p.textContent = L('You have made your own changes to this plan, so nothing has been altered. ' +
+      'Here is what the official version changed:',
+      'عدّلت على هالخطة بنفسك، فما تغيّر فيها إشي. هاد اللي تغيّر بالنسخة الرسمية:');
     box.appendChild(p);
 
     var ul = document.createElement('ul');
@@ -337,14 +356,15 @@
     if(item.changes.length > 40){
       var more = document.createElement('p');
       more.className = 'sync-consent-more';
-      more.textContent = '…and ' + (item.changes.length - 40) + ' more.';
+      more.textContent = L('…and ' + (item.changes.length - 40) + ' more.', '…وكمان ' + (item.changes.length - 40) + '.');
       box.appendChild(more);
     }
 
     var warn = document.createElement('p');
     warn.className = 'sync-consent-warn';
-    warn.textContent = 'Applying takes the official version of this plan. Courses you added or already took, ' +
-      'where you placed your electives, and your ticks, grades and notes are all kept.';
+    warn.textContent = L('Applying takes the official version of this plan. Courses you added or already took, ' +
+      'where you placed your electives, and your ticks, grades and notes are all kept.',
+      'التطبيق بياخذ النسخة الرسمية من الخطة. المساقات اللي أضفتها أو أخذتها، ومكان اختيارياتك، وعلاماتك وملاحظاتك كلها بتضل.');
     box.appendChild(warn);
 
     var actions = document.createElement('div');
@@ -353,13 +373,13 @@
     var apply = document.createElement('button');
     apply.type = 'button';
     apply.className = 'home-btn sync-consent-apply';
-    apply.textContent = 'Apply changes to my plan';
+    apply.textContent = L('Apply changes to my plan', 'طبّق التغييرات على خطتي');
     apply.addEventListener('click', function(){ resolveConsent(item, true, el); });
 
     var keep = document.createElement('button');
     keep.type = 'button';
     keep.className = 'home-btn';
-    keep.textContent = 'Keep my current version';
+    keep.textContent = L('Keep my current version', 'خلّيني على نسختي');
     keep.addEventListener('click', function(){ resolveConsent(item, false, el); });
 
     actions.appendChild(apply);
@@ -394,7 +414,7 @@
     consentQueue = consentQueue.filter(function(q){ return q.id !== item.id; });
     consentOpen = false;
     if(window.__showToast){
-      window.__showToast(accept ? 'Updated to the official plan.' : 'Kept your version.');
+      window.__showToast(accept ? L('Updated to the official plan.', 'صارت خطتك على النسخة الرسمية.') : L('Kept your version.', 'ضلّت نسختك زي ما هي.'));
     }
     if(accept) window.AAUP_IMPORTED.plansChanged();
     showNextConsent();
@@ -403,13 +423,13 @@
   function lastSyncLabel(){
     var t = 0;
     try{ t = parseInt(localStorage.getItem('aaup_lastSync') || '0', 10) || 0; }catch(e){}
-    if(!t) return 'Never checked yet.';
+    if(!t) return L('Never checked yet.', 'لسا ما انفحصت.');
     var mins = Math.round((Date.now() - t) / 60000);
-    if(mins < 1) return 'Last checked just now.';
-    if(mins < 60) return 'Last checked ' + mins + ' min ago.';
+    if(mins < 1) return L('Last checked just now.', 'آخر فحص: هلّق.');
+    if(mins < 60) return L('Last checked ' + mins + ' min ago.', 'آخر فحص: قبل ' + mins + ' دقيقة.');
     var hrs = Math.round(mins / 60);
-    if(hrs < 24) return 'Last checked ' + hrs + 'h ago.';
-    return 'Last checked ' + Math.round(hrs / 24) + 'd ago.';
+    if(hrs < 24) return L('Last checked ' + hrs + 'h ago.', 'آخر فحص: قبل ' + hrs + ' ساعة.');
+    return L('Last checked ' + Math.round(hrs / 24) + 'd ago.', 'آخر فحص: قبل ' + Math.round(hrs / 24) + ' يوم.');
   }
 
   // Two startup paths reach checkForUpdates(false): the catalogue boot chain
@@ -428,7 +448,7 @@
     if(!manual && autoCheck) return autoCheck;
     var run = (presetFeed ? Promise.resolve(presetFeed) : fetchFeed()).then(function(feed){
       if(!feed){
-        if(manual && window.__showToast){ window.__showToast('Could not reach the plans feed — check your connection.'); }
+        if(manual && window.__showToast){ window.__showToast(L('Could not reach the plans feed — check your connection.', 'ما قدرنا نوصل للخطط — تأكد من الإنترنت.')); }
         return { added: 0, updated: 0, pending: 0, cosmetic: 0 };
       }
       var result = applyFeed(feed);
@@ -446,12 +466,12 @@
       if(!manual && firstRun){ return result; }
       if(manual || result.added || result.updated || result.cosmetic){
         var bits = [];
-        if(result.added) bits.push(result.added + ' new');
-        if(result.updated) bits.push(result.updated + ' updated');
-        if(result.cosmetic) bits.push(result.cosmetic + ' refreshed');
-        if(!bits.length) bits.push('already up to date');
-        var msg = bits.join(', ') +
-          (result.pending ? ' · ' + result.pending + ' need' + (result.pending === 1 ? 's' : '') + ' your decision' : '') + '.';
+        if(result.added) bits.push(L(result.added + ' new', result.added + ' جديدة'));
+        if(result.updated) bits.push(L(result.updated + ' updated', result.updated + ' انحدّثت'));
+        if(result.cosmetic) bits.push(L(result.cosmetic + ' refreshed', result.cosmetic + ' تجدّدت'));
+        if(!bits.length) bits.push(L('already up to date', 'كل إشي محدّث'));
+        var msg = bits.join(L(', ', '، ')) +
+          (result.pending ? ' · ' + L(result.pending + ' need' + (result.pending === 1 ? 's' : '') + ' your decision', result.pending + ' بتستنى قرارك') : '') + '.';
         if(window.__showToast){ window.__showToast(msg); }
       }
       return result;
