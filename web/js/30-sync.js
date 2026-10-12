@@ -136,6 +136,13 @@
   // Where the university and the student both moved the same course, the
   // student's place wins: an update never moves a course someone put
   // somewhere themselves.
+  //
+  // One kind of change is the student's to decide: the university moving a
+  // course to a different term. A prerequisite or an elective is not a
+  // choice (the student has to take it), but the order they take courses in
+  // can be, so on the plan a student is actually following those moves wait
+  // for "Keep my plan" or "Take the new plan" (pendingMoves, below). Every
+  // other plan on the phone just takes them.
 
   // What an update must not take from a student even when the university
   // drops the course: one they added, a retake, or one they ticked, graded
@@ -194,12 +201,18 @@
   // stays where it is (on one they never edited, the difference is the
   // university's); and a course missing from the copy comes back (it may
   // be one the university just added).
-  function mergeOfficial(planId, base, current, incoming){
+  // ask: this is a plan the student follows, so a course the university
+  // moved waits for their answer instead of moving.
+  function mergeOfficial(planId, base, current, incoming, ask){
     var B = base ? base.c : null;
     var cur = {}, inc = {};
     (current.courses || []).forEach(function(c){ cur[c.id] = c; });
     (incoming.courses || []).forEach(function(c){ inc[c.id] = c; });
-    var out = [];
+    var out = [], moves = [];
+    // Moves from an earlier update the student has not answered yet. Until
+    // they do, the course is still the university's to move, not theirs.
+    var waiting = {};
+    (current.pendingMoves || []).forEach(function(mv){ if(mv && mv.id) waiting[mv.id] = mv; });
 
     (incoming.courses || []).forEach(function(n){
       var c = cur[n.id], b = B && typeof B[n.id] === 'string' ? B[n.id].split('|') : null;
@@ -218,12 +231,13 @@
       });
       // An Arabic name the student wrote stays when the university has none.
       if(!b && c.ar && c.ar !== c.name && blank(n.ar)) m.ar = c.ar;
-      var theirs = !!c.placedByStudent || (b
+      var undecided = waiting[n.id] && waiting[n.id].from === place(c);
+      var theirs = !!c.placedByStudent || (undecided ? false : (b
         ? place(c) !== b[0]
-        : (!!current.wasEdited && place(c) !== place(n)));
-      if(!theirs){
-        if(n.yearId) m.yearId = n.yearId; else delete m.yearId;
-        m.semester = n.semester || '';
+        : (!!current.wasEdited && place(c) !== place(n))));
+      if(!theirs && place(c) !== place(n)){
+        if(ask) moves.push({ id: n.id, from: place(c), to: place(n) });
+        else { if(n.yearId) m.yearId = n.yearId; else delete m.yearId; m.semester = n.semester || ''; }
       }
       out.push(m);
     });
@@ -282,8 +296,22 @@
     merged.structure = { years: years };
     merged.wasEdited = !!current.wasEdited;
     delete merged.declinedVersion;
+    if(moves.length) merged.pendingMoves = moves; else delete merged.pendingMoves;
     merged.base = makeBase(incoming);
     return merged;
+  }
+
+  // The plan a student follows: the one they picked, or one they have
+  // ticked, graded or edited. The other plans on the phone are the
+  // catalogue, and nobody needs asking about those.
+  function inUse(planId, plan){
+    var sel = window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected ? window.AAUP_DASHBOARD.getSelected() : null;
+    if(sel === planId || (plan && plan.wasEdited)) return true;
+    var pre = planId + '-c-';
+    var maps = [window.__getProgress ? window.__getProgress() : {},
+      window.AAUP_GPA && window.AAUP_GPA.loadGrades ? window.AAUP_GPA.loadGrades() : {},
+      window.AAUP_GPA && window.AAUP_GPA.loadStatuses ? window.AAUP_GPA.loadStatuses() : {}];
+    return maps.some(function(m){ return Object.keys(m || {}).some(function(k){ return k.indexOf(pre) === 0 && m[k]; }); });
   }
 
   function applyFeed(feed){
@@ -325,7 +353,8 @@
         }
         return;
       }
-      local[sanitized.id] = mergeOfficial(sanitized.id, existing.base && existing.base.c ? existing.base : null, existing, sanitized);
+      local[sanitized.id] = mergeOfficial(sanitized.id, existing.base && existing.base.c ? existing.base : null, existing, sanitized,
+        inUse(sanitized.id, existing));
       result.updated++;
     });
 
@@ -340,7 +369,115 @@
       if(fresh) location.reload();
       else if(window.__showActionToast) window.__showActionToast(L('A course in your plan was replaced; your progress moved to the new one.', 'انبدل مساق بخطتك؛ تقدّمك انتقل للمساق الجديد.'), L('Reload', 'حدّث'), function(){ location.reload(); });
     }
+    if(Object.keys(local).some(function(k){ return local[k] && local[k].pendingMoves && local[k].pendingMoves.length; })){
+      setTimeout(askAboutMoves, 1200);
+    }
     return result;
+  }
+
+  // ---------------------------------------------------------------------
+  // "Keep my plan" — only for courses the university moved to another term
+  // ---------------------------------------------------------------------
+  function termLabel(pl){
+    var m = /^y(\d+)\/(s[123])$/.exec(pl || '');
+    if(!m) return L('Electives (no set term)', 'الاختيارية (بدون فصل محدد)');
+    var sem = { s1: L('Semester 1', 'الفصل الأول'), s2: L('Semester 2', 'الفصل الثاني'), s3: L('Summer', 'الصيفي') }[m[2]];
+    return L('Year ', 'السنة ') + m[1] + ' \u00b7 ' + sem;
+  }
+  var asking = false;
+  function askAboutMoves(){
+    if(asking || !window.AAUP_IMPORTED) return;
+    var plans = window.AAUP_IMPORTED.loadImportedPlans();
+    var id = Object.keys(plans).filter(function(k){ return plans[k] && plans[k].pendingMoves && plans[k].pendingMoves.length; })[0];
+    if(!id) return;
+    // Not over another window, and not over the first screen a student sees.
+    var first = document.getElementById('onboardingWizardOverlay');
+    if(document.querySelector('.modal-overlay.open, .dialog-overlay.open') || (first && first.classList.contains('open'))){
+      setTimeout(askAboutMoves, 4000);
+      return;
+    }
+    asking = true;
+    var plan = plans[id];
+    var mn = plan.majorName || {};
+    var name = (ar() && mn.ar && mn.ar.big) || (mn.en && mn.en.big) || id;
+    var byId = {};
+    (plan.courses || []).forEach(function(c){ byId[c.id] = c; });
+
+    var el = document.createElement('div');
+    el.className = 'sync-moves-overlay open';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('dir', ar() ? 'rtl' : 'ltr');
+    var box = document.createElement('div');
+    box.className = 'sync-moves';
+    var h = document.createElement('h3');
+    h.textContent = L('The official ' + name + ' plan moved some courses', 'الخطة الرسمية لتخصص ' + name + ' نقلت مساقات لفصول ثانية');
+    var lead = document.createElement('p');
+    lead.className = 'sync-moves-lead';
+    lead.textContent = L('The rest of the update is already in your plan. These courses are now in a different term:',
+      'باقي التحديث صار بخطتك. هالمساقات صارت بفصل ثاني:');
+    var ul = document.createElement('ul');
+    ul.className = 'sync-moves-list';
+    plan.pendingMoves.forEach(function(mv){
+      var c = byId[mv.id];
+      if(!c) return;
+      var li = document.createElement('li');
+      var b = document.createElement('b');
+      b.textContent = (ar() && c.ar) || c.name || c.id;
+      li.appendChild(b);
+      li.appendChild(document.createTextNode(' ' + termLabel(mv.from) + (ar() ? ' \u2190 ' : ' \u2192 ') + termLabel(mv.to)));
+      ul.appendChild(li);
+    });
+    var note = document.createElement('p');
+    note.className = 'sync-moves-note';
+    note.textContent = L('Courses you moved yourself stay where you put them either way.', 'المساقات اللي نقلتها بنفسك بتضل مكانها بكل الأحوال.');
+    var row = document.createElement('div');
+    row.className = 'sync-moves-actions';
+    var keep = document.createElement('button');
+    keep.type = 'button';
+    keep.className = 'home-btn';
+    keep.textContent = L('Keep my plan', 'خلّيني على خطتي');
+    var take = document.createElement('button');
+    take.type = 'button';
+    take.className = 'home-btn btn-pri';
+    take.textContent = L('Take the new plan', 'خذ الخطة الجديدة');
+    keep.addEventListener('click', function(){ answerMoves(id, false, el); });
+    take.addEventListener('click', function(){ answerMoves(id, true, el); });
+    row.appendChild(keep);
+    row.appendChild(take);
+    [h, lead, ul, note, row].forEach(function(x){ box.appendChild(x); });
+    el.appendChild(box);
+    document.body.appendChild(el);
+    take.focus();
+  }
+  function answerMoves(id, take, el){
+    var plans = window.AAUP_IMPORTED.loadImportedPlans();
+    var plan = plans[id];
+    if(plan){
+      if(take){
+        var byId = {};
+        (plan.courses || []).forEach(function(c){ byId[c.id] = c; });
+        (plan.pendingMoves || []).forEach(function(mv){
+          var c = byId[mv.id];
+          // Only if it is still where it was when the question was asked.
+          if(!c || place(c) !== mv.from) return;
+          var to = String(mv.to || '').split('/');
+          if(to[0]) c.yearId = to[0]; else delete c.yearId;
+          c.semester = to[1] || '';
+        });
+      }
+      // Kept: the base already names the new terms, so these courses now
+      // count as placed by the student and no later update asks again.
+      delete plan.pendingMoves;
+      window.AAUP_IMPORTED.saveImportedPlans(plans);
+    }
+    if(el && el.parentNode) el.parentNode.removeChild(el);
+    asking = false;
+    if(window.__showToast) window.__showToast(take ? L('Your plan now follows the new terms.', 'خطتك صارت على الفصول الجديدة.') : L('Kept your plan as it was.', 'ضلّت خطتك زي ما هي.'));
+    // Redrawn only if it is the plan on screen.
+    var page = document.getElementById('page-' + id);
+    if(take && page && page.offsetParent !== null && window.AAUP_IMPORTED.refresh) window.AAUP_IMPORTED.refresh(id);
+    setTimeout(askAboutMoves, 600);
   }
 
   function lastSyncLabel(){
@@ -417,7 +554,8 @@
     // through the network would mean publishing a change and waiting for a
     // deploy, which is not a thing a test can do — and this is the one branch
     // in the app that can destroy a student's own work if it is wrong.
-    __applyFeedForTest: applyFeed
+    __applyFeedForTest: applyFeed,
+    askAboutMoves: askAboutMoves
   };
 
   // No startup check is scheduled here. 01-catalogue.js already downloads the
