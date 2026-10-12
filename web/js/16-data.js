@@ -40,7 +40,7 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
     // Read by Settings' "last backup" line (js/37-sidebar.js backupStatusHtml).
     try{ localStorage.setItem('aaup_lastExport', new Date().toISOString()); }catch(e){}
-    if(window.__showToast) window.__showToast('Progress exported!');
+    if(window.__showToast) window.__showToast(window.__L('Progress exported!', 'انحفظت نسخة من تقدّمك!'));
   }
 
   function triggerImport(){
@@ -54,12 +54,12 @@
       var parsed;
       try{ parsed = JSON.parse(String(reader.result)); }
       catch(e){
-        if(window.__showToast) window.__showToast('That file is not valid JSON.');
+        if(window.__showToast) window.__showToast(window.__L('That file is not valid JSON.', 'هاد الملف مش ملف نسخة احتياطية صالح.'));
         return;
       }
       var data = parsed && parsed.data;
       if(!data || typeof data !== 'object'){
-        if(window.__showToast) window.__showToast('That file does not look like an AAUP Planner export.');
+        if(window.__showToast) window.__showToast(window.__L('That file does not look like an AAUP Planner export.', 'هاد الملف مش نسخة احتياطية من التطبيق.'));
         return;
       }
       // Only this app's own keys — a backup file is just JSON anyone could
@@ -112,7 +112,7 @@
         try{ localStorage.setItem(k, JSON.stringify(data[k])); count++; }
         catch(e){ /* skip a key that fails to write */ }
       });
-      if(window.__showToast) window.__showToast('Imported ' + count + ' item(s) — reloading…');
+      if(window.__showToast) window.__showToast(window.__L('Imported ' + count + ' item(s) — reloading…', 'انسترجع ' + count + ' عنصر — جاري إعادة التحميل…'));
       setTimeout(function(){ location.reload(); }, 900);
     };
     reader.readAsText(file);
@@ -122,7 +122,7 @@
   // (type RESET) before calling this.
   function resetAllNow(){
     relevantKeys().forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-    if(window.__showToast) window.__showToast('Everything cleared — reloading…');
+    if(window.__showToast) window.__showToast(window.__L('Everything cleared — reloading…', 'انمسح كل إشي — جاري إعادة التحميل…'));
     setTimeout(function(){ location.reload(); }, 700);
   }
 

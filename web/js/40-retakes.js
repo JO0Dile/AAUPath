@@ -61,7 +61,7 @@
     if(!currentContainer) return;
     var targetRow = nextRegularContainer(prefix, currentContainer.id);
     if(!targetRow){
-      if(window.__showToast){ window.__showToast('No later semester \u2014 place it yourself'); }
+      if(window.__showToast){ window.__showToast(window.__L('No later semester \u2014 place it yourself', 'ما في فصل بعده \u2014 حطّه بنفسك')); }
       return;
     }
 
@@ -116,7 +116,7 @@
       card.appendChild(nameDiv);
       var badge = document.createElement('span');
       badge.className = 'retake-badge';
-      badge.textContent = '\u21bb Retake';
+      badge.textContent = '\u21bb ' + window.__L('Retake', 'إعادة');
       card.appendChild(badge);
       targetRow.appendChild(card);
 
@@ -140,7 +140,7 @@
       if(window.__injectCheckboxes){ window.__injectCheckboxes(); }
     }
 
-    if(window.__showToast){ window.__showToast('Auto-scheduled a retake of "' + baseName + '" next semester.'); }
+    if(window.__showToast){ window.__showToast(window.__L('Auto-scheduled a retake of "' + baseName + '" next semester.', 'انجدولت إعادة «' + baseName + '» للفصل الجاي.')); }
   }
 
   function removeRetakeIfUntouched(prefix, slug){

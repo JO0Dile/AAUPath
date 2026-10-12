@@ -35,7 +35,7 @@
       (ENTRIES.length
         ? ENTRIES.map(function(e){
             var lines = (r ? e.ar : e.en) || [];
-            return '<section class="wn2-entry"><div class="wn2-head"><b>v' + esc(e.version) + '</b>' + (e.date ? '<span>' + esc(e.date) + '</span>' : '') + '</div>' +
+            return '<section class="wn2-entry"><div class="wn2-head"><b>' + esc(window.__ver(e.version, r)) + '</b>' + (e.date ? '<span>' + esc(e.date) + '</span>' : '') + '</div>' +
               '<ul>' + lines.map(function(l){ return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></section>';
           }).join('')
         : '<p class="wn2-empty">' + (r ? 'لسا ما في إشي هون.' : 'Nothing here yet.') + '</p>');

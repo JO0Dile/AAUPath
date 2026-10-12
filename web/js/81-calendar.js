@@ -143,7 +143,7 @@
         'RRULE:FREQ=WEEKLY;BYDAY=' + m.d.map(function(d){ return BYDAY[d]; }).join(',') + ';UNTIL=' + ymd(to) + 'T235959',
         'SUMMARY:' + icsText(nm),
         (m.r ? 'LOCATION:' + icsText(m.r) : ''),
-        (num ? 'DESCRIPTION:' + icsText(num + ' · ' + (parseFloat(c.creditHours) || 0) + 'H') : ''),
+        (num ? 'DESCRIPTION:' + icsText(num + ' · ' + window.__hrs(parseFloat(c.creditHours) || 0)) : ''),
         'END:VEVENT'
       );
     });

@@ -90,14 +90,15 @@
 
   function switchTo(name){
     name = (name || '').trim();
-    if(!name) return { ok: false, error: 'Please enter a name.' };
+    if(!name) return { ok: false, error: window.__L('Please enter a name.', 'اكتب اسم.') };
     var current = currentAccount();
-    if(name === current) return { ok: false, error: 'That\u2019s already the current account.' };
+    if(name === current) return { ok: false, error: window.__L('That\u2019s already the current account.', 'هاد هو الحساب الحالي.') };
     // Save the account being left, and confirm it stuck, BEFORE touching
     // anything. Nothing has been modified at this point, so bailing out here
     // is completely safe \u2014 unlike bailing out after the wipe below.
     if(!snapshotCurrent(current)){
-      return { ok: false, error: 'Couldn\u2019t save \u201c' + current + '\u201d before switching, so nothing was changed and your progress is exactly as it was. This device\u2019s storage is most likely full \u2014 export a backup from Settings, free some space, then try again.' };
+      return { ok: false, error: window.__L('Couldn\u2019t save \u201c' + current + '\u201d before switching, so nothing was changed and your progress is exactly as it was. This device\u2019s storage is most likely full \u2014 export a backup from Settings, free some space, then try again.',
+        'ما قدرنا نحفظ «' + current + '» قبل التبديل، فما تغيّر إشي وتقدّمك زي ما هو. غالبًا مساحة الجهاز ممتلئة \u2014 احفظ نسخة احتياطية من الإعدادات، فضّي مساحة، وجرّب مرة ثانية.') };
     }
     markAccountExists(current);
     clearLiveKeys();
@@ -106,7 +107,8 @@
       // so put back the account we just left rather than stranding them in
       // an empty app with everything apparently gone.
       restoreSnapshot(current);
-      return { ok: false, error: 'Couldn\u2019t open \u201c' + name + '\u201d \u2014 its saved data looks damaged, so you\u2019ve been left on \u201c' + current + '\u201d with everything intact.' };
+      return { ok: false, error: window.__L('Couldn\u2019t open \u201c' + name + '\u201d \u2014 its saved data looks damaged, so you\u2019ve been left on \u201c' + current + '\u201d with everything intact.',
+        'ما قدرنا نفتح «' + name + '» \u2014 بياناته شكلها خربانة، فضلّيت على «' + current + '» وكل إشي سليم.') };
     }
     markAccountExists(name);
     try{ localStorage.setItem(CURRENT_KEY, name); }catch(e){}
@@ -116,13 +118,13 @@
 
   function createAccount(name){
     name = (name || '').trim();
-    if(!name) return { ok: false, error: 'Please enter a name.' };
-    if(listAccounts().indexOf(name) !== -1) return { ok: false, error: 'An account with that name already exists.' };
+    if(!name) return { ok: false, error: window.__L('Please enter a name.', 'اكتب اسم.') };
+    if(listAccounts().indexOf(name) !== -1) return { ok: false, error: window.__L('An account with that name already exists.', 'في حساب بهالاسم.') };
     return switchTo(name);
   }
 
   function deleteAccount(name){
-    if(name === currentAccount()) return { ok: false, error: 'Can\u2019t delete the account you\u2019re currently using \u2014 switch to another one first.' };
+    if(name === currentAccount()) return { ok: false, error: window.__L('Can\u2019t delete the account you\u2019re currently using \u2014 switch to another one first.', 'ما بتقدر تحذف الحساب اللي أنت فيه \u2014 بدّل لحساب ثاني أول.') };
     var m; try{ m = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '{}') || {}; }catch(e){ m = {}; }
     delete m[name];
     try{ localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(m)); }catch(e){}

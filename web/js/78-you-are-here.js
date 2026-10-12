@@ -111,14 +111,14 @@
     var hours = picks.reduce(function(a, c){ return a + (c.cr || 0); }, 0);
     box.innerHTML =
       '<div class="ynx-head"><span class="ynx-label">' + esc(t.head) + '</span>' +
-      (picks.length ? '<span class="ynx-hours">' + hours + 'H</span>' : '') + '</div>' +
+      (picks.length ? '<span class="ynx-hours">' + window.__hrs(hours) + '</span>' : '') + '</div>' +
       (picks.length
         ? '<div class="ynx-list">' + picks.map(function(c){
             var why = window.AAUP_ADVISOR.reason ? window.AAUP_ADVISOR.reason(c, rtl) : '';
             var nm = window.AAUP_ADVISOR.name ? window.AAUP_ADVISOR.name(prefix, c.slug, rtl) : c.slug;
             return '<button type="button" class="ynx-card" data-ynx-slug="' + esc(c.slug) + '">' +
               '<span class="ynx-name">' + esc(nm) + '</span>' +
-              '<span class="ynx-meta">' + esc(c.cr + 'H' + (why ? ' · ' + why : '')) + '</span>' +
+              '<span class="ynx-meta">' + esc(window.__hrs(c.cr) + (why ? ' · ' + why : '')) + '</span>' +
               '</button>';
           }).join('') + '</div>'
         : '<p class="ynx-empty">' + esc(t.empty) + '</p>') +

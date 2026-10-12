@@ -188,7 +188,7 @@
   // js/28-imported.js). opts.undo puts an Undo button on it.
   function showUnlockToast(title, subtitle, opts){
     notify({ title: title, sub: subtitle || '', kind: 'ok',
-             action: opts && opts.undo ? { label: opts.undoLabel || 'Undo', fn: opts.undo } : null,
+             action: opts && opts.undo ? { label: opts.undoLabel || window.__L('Undo', 'تراجع'), fn: opts.undo } : null,
              choices: (opts && opts.choices) || null,
              ms: opts && opts.undo ? 5000 : 0 });
   }

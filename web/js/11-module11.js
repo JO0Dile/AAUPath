@@ -504,7 +504,7 @@
       var cr = meta ? meta.cr : '';
       html += '<button type="button" class="next-course-chip" data-course-id="' + el.id + '">' +
         '<span>' + name + '</span>' +
-        (cr ? '<span class="ncc-cr">' + cr + 'H</span>' : '') +
+        (cr ? '<span class="ncc-cr">' + window.__hrs(cr) + '</span>' : '') +
         '</button>';
     });
     html += '</div>';

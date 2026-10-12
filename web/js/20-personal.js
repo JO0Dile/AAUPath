@@ -51,7 +51,7 @@
         dot = document.createElement('span');
         dot.className = 'card-note-dot';
         dot.setAttribute('role', 'img');
-        dot.setAttribute('aria-label', 'You wrote a note');
+        dot.setAttribute('aria-label', window.__L('You wrote a note', 'كتبت ملاحظة'));
         el.appendChild(dot);
       } else if(!hasNote && dot){ dot.remove(); }
 

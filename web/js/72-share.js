@@ -162,7 +162,7 @@
     // the screen now, so it is an instruction, not an afterthought.
     scan: { en: 'Point a camera here to open it', ar: 'وجّه الكاميرا هنا لفتحها' },
     tooBig: { en: 'This plan is too large to fit in a QR code — the link above still works, just send it directly.',
-              ar: 'هاي الخطة كبيرة كثير على رمز QR — بس الرابط فوق يشتغل تمام، ابعته مباشرة.' },
+              ar: 'هاي الخطة كبيرة كثير على رمز الاستجابة السريعة — بس الرابط فوق يشتغل تمام، ابعته مباشرة.' },
     building: { en: 'Building your link…', ar: 'عم نجهّز رابطك…' },
     error: { en: 'Could not build a share link for this plan.', ar: 'ما قدرنا نجهّز رابط مشاركة لهاي الخطة.' },
     shareVia: { en: 'Share via…', ar: 'شارك عبر…' },
@@ -383,7 +383,7 @@
         var snap = JSON.parse(jsonText);
         if(window.AAUP_FOLLOW) window.AAUP_FOLLOW.accept(snap);
       }).catch(function(){
-        if(window.__showToast) window.__showToast('Could not open that link.');
+        if(window.__showToast) window.__showToast(window.__L('Could not open that link.', 'ما قدرنا نفتح الرابط.'));
       });
       return;
     }
@@ -397,23 +397,24 @@
       try{ bytes = fromBase64Url(data); }catch(e){ return; }
       decompressBytes(bytes, marker === 'g').then(function(jsonText){
         var obj;
-        try{ obj = JSON.parse(jsonText); }catch(e){ throw new Error('That link is not a valid plan.'); }
-        var nameObj = obj && obj.majorName && obj.majorName.en;
-        var name = (nameObj && (nameObj.big || nameObj)) || 'this plan';
-        var msg = 'Someone shared “' + name + '” with you. Import it into your plans?';
+        try{ obj = JSON.parse(jsonText); }catch(e){ throw new Error(window.__L('That link is not a valid plan.', 'الرابط هاد مش خطة صالحة.')); }
+        var A = window.AAUP_LANG && window.AAUP_LANG.isAr();
+        var nameObj = obj && obj.majorName && ((A && obj.majorName.ar && (obj.majorName.ar.big || typeof obj.majorName.ar === 'string') && obj.majorName.ar) || obj.majorName.en);
+        var name = (nameObj && (nameObj.big || nameObj)) || window.__L('this plan', 'هالخطة');
+        var msg = window.__L('Someone shared “' + name + '” with you. Import it into your plans?', 'حدا شاركك «' + name + '». تضيفها لخططك؟');
         var doImport = function(){
           var result = window.AAUP_DEV && window.AAUP_DEV.importPlan(jsonText);
           if(result && result.ok){
-            if(window.__showToast) window.__showToast('Imported — opening it now.');
+            if(window.__showToast) window.__showToast(window.__L('Imported — opening it now.', 'انضافت — عم نفتحها.'));
             if(window.AAUP_DASHBOARD) window.AAUP_DASHBOARD.selectAndOpen(result.id);
           } else if(window.__showToast){
-            window.__showToast('Could not import that plan: ' + ((result && result.errors) || ['unknown error']).join(' '));
+            window.__showToast(window.__L('Could not import that plan: ' + ((result && result.errors) || ['unknown error']).join(' '), 'ما قدرنا نضيف هالخطة.'));
           }
         };
         if(window.__showConfirmDialog){ window.__showConfirmDialog(msg, doImport); }
         else if(window.confirm(msg)){ doImport(); }
       }).catch(function(err){
-        if(window.__showToast) window.__showToast('Could not open that share link: ' + (err && err.message || err));
+        if(window.__showToast) window.__showToast(window.__L('Could not open that share link: ' + (err && err.message || err), 'ما قدرنا نفتح رابط المشاركة.'));
       });
     }
   }

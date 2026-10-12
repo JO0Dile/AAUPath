@@ -234,7 +234,7 @@
             'stroke-dasharray="' + C + '" stroke-dashoffset="' + offset + '"/>' +
         '</svg>' +
         '<div class="ar-lbl">' + (rtl ? lbl.ar : lbl.en) + '</div>' +
-        '<div class="ar-frac">' + r.completed + '/' + r.total + 'H</div>' +
+        '<div class="ar-frac">' + r.completed + '/' + window.__hrs(r.total) + '</div>' +
       '</div>';
     }).join('') + '</div>';
   }
@@ -252,17 +252,17 @@
       totalReq += r.total; totalC += r.completed; totalIP += r.inProgress; totalP += r.planned; totalM += r.missing;
       html += '<tr>' +
         '<td class="cat-name"><span class="audit-cat-dot" style="background:var(--' + r.cat + ')"></span>' + (rtl ? lbl.ar : lbl.en) + '</td>' +
-        '<td>' + r.total + 'H</td>' +
-        '<td class="col-completed' + (r.completed ? '' : ' zero') + '">' + r.completed + 'H</td>' +
-        '<td class="col-inprogress' + (r.inProgress ? '' : ' zero') + '">' + r.inProgress + 'H</td>' +
-        '<td class="col-planned' + (r.planned ? '' : ' zero') + '">' + r.planned + 'H</td>' +
-        '<td class="col-missing' + (r.missing ? '' : ' zero') + '">' + r.missing + 'H</td>' +
+        '<td>' + window.__hrs(r.total) + '</td>' +
+        '<td class="col-completed' + (r.completed ? '' : ' zero') + '">' + window.__hrs(r.completed) + '</td>' +
+        '<td class="col-inprogress' + (r.inProgress ? '' : ' zero') + '">' + window.__hrs(r.inProgress) + '</td>' +
+        '<td class="col-planned' + (r.planned ? '' : ' zero') + '">' + window.__hrs(r.planned) + '</td>' +
+        '<td class="col-missing' + (r.missing ? '' : ' zero') + '">' + window.__hrs(r.missing) + '</td>' +
         '</tr>';
     });
     html += '</tbody><tfoot><tr style="font-weight:800;">' +
-      '<td>' + (rtl ? 'الإجمالي' : 'Total') + '</td><td>' + totalReq + 'H</td>' +
-      '<td class="col-completed">' + totalC + 'H</td><td class="col-inprogress">' + totalIP + 'H</td>' +
-      '<td class="col-planned">' + totalP + 'H</td><td class="col-missing">' + totalM + 'H</td>' +
+      '<td>' + (rtl ? 'الإجمالي' : 'Total') + '</td><td>' + window.__hrs(totalReq) + '</td>' +
+      '<td class="col-completed">' + window.__hrs(totalC) + '</td><td class="col-inprogress">' + window.__hrs(totalIP) + '</td>' +
+      '<td class="col-planned">' + window.__hrs(totalP) + '</td><td class="col-missing">' + window.__hrs(totalM) + '</td>' +
       '</tr></tfoot></table>';
     // Six columns of category data don't fit a phone width even with the
     // header text wrapping to two lines — the table used to just spill past

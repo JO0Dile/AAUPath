@@ -558,7 +558,7 @@
       veil = document.createElement('div');
       veil.className = 'ep-drop-veil';
       veil.innerHTML = '<div><b>' + esc(L('Drop to restore', 'افلته لترجّع النسخة')) + '</b><span>' +
-        esc(L('An AAUPath backup file (.json)', 'ملف نسخة احتياطية من AAUPath (.json)')) + '</span></div>';
+        esc(L('An AAUPath backup file (.json)', 'ملف نسخة احتياطية من التطبيق')) + '</span></div>';
       document.body.appendChild(veil);
     }
     clearTimeout(veilTimer);
@@ -567,7 +567,7 @@
   function hideDropVeil(){ clearTimeout(veilTimer); if(veil){ veil.remove(); veil = null; } }
   function restoreFile(file){
     if(!file) return;
-    if(!/\.json$/i.test(file.name || '') && file.type !== 'application/json'){ toast(L('That isn’t a backup file (.json).', 'هاد مش ملف نسخة احتياطية (.json).')); return; }
+    if(!/\.json$/i.test(file.name || '') && file.type !== 'application/json'){ toast(L('That isn’t a backup file (.json).', 'هاد مش ملف نسخة احتياطية من التطبيق.')); return; }
     if(!window.AAUP_DATA || !window.AAUP_DATA.handleImportFile) return;
     var go = function(){ window.AAUP_DATA.handleImportFile(file); };
     var msg = L('Restore "' + file.name + '"? It replaces what is on this device now.', 'ترجّع «' + file.name + '»؟ رح تحلّ محل اللي على هالجهاز هلق.');

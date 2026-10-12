@@ -198,7 +198,7 @@
   function rowHtml(c, kind, value, rtl, keepLabel){
     return '<label class="wi-row">' +
       '<span class="wi-row-name">' + esc(rtl ? (c.ar || c.name) : c.name) + '</span>' +
-      '<span class="wi-row-cr">' + c.cr + 'H</span>' +
+      '<span class="wi-row-cr">' + window.__hrs(c.cr) + '</span>' +
       (c.grade ? '<span class="wi-row-old">' + esc(c.grade) + '</span>' : '') +
       '<select class="wi-sel" data-wi-kind="' + kind + '" data-wi-pid="' + esc(c.pid) + '">' +
         gradeOptions(value, rtl, keepLabel) + '</select>' +

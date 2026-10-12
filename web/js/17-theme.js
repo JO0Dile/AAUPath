@@ -191,7 +191,7 @@
   function addPreset(name, bg, accent){
     if(!hexToRgb(bg) || !hexToRgb(accent)) return null;
     var list = loadPresets();
-    var preset = { id: 'p' + Date.now().toString(36), name: String(name || '').slice(0, 24) || 'My colours', bg: bg, accent: accent };
+    var preset = { id: 'p' + Date.now().toString(36), name: String(name || '').slice(0, 24) || window.__L('My colours', 'ألواني'), bg: bg, accent: accent };
     list.push(preset);
     savePresets(list);
     return preset;

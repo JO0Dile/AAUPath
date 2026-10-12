@@ -68,14 +68,14 @@
       thanks: 'Added — open it from your home screen from now on.'
     },
     ar: {
-      barTitle: 'ضيف AAUPath على جوالك',
+      barTitle: 'ضيف التطبيق على جوالك',
       barSub: 'بلا متجر وبلا حساب',
       barSubIos: 'مشاركة ← إضافة إلى الشاشة الرئيسية',
       go: 'تثبيت',
       how: 'كيف',
-      rowTitle: 'ثبّت AAUPath',
+      rowTitle: 'ثبّت التطبيق',
       rowSub: 'الشاشة الرئيسية · بيشتغل بدون إنترنت',
-      helpTitle: 'AAUPath على شاشتك الرئيسية',
+      helpTitle: 'التطبيق على شاشتك الرئيسية',
       helpInstalled: 'مثبَّت. إذا شلته، من هون بترجّعه.',
       helpInstallable: 'بيفتح زي التطبيق، بيبلّش فورًا، وبيشتغل بدون اتصال. بلا متجر وبلا حساب.',
       helpManual: 'سفاري ما بيقدر يعمل هيك من زر. اضغط "مشاركة" تحت بالمتصفح، بعدين "إضافة إلى الشاشة الرئيسية".',

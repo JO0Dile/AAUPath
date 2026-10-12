@@ -103,8 +103,25 @@
     applyStatic();
   }
 
+  // Credit hours in a few characters. "3H" is English; Arabic writes the
+  // hour out as its first letter, "3 س", the way timetables shorten ساعة.
+  function hours(n, rtl){
+    if(rtl === undefined) rtl = isAr();
+    return rtl ? n + ' س' : n + 'H';
+  }
+
+  // The app's version, "v10.22" or "الإصدار 10.22".
+  function version(v, rtl){
+    if(rtl === undefined) rtl = isAr();
+    return (rtl ? 'الإصدار ' : 'v') + (v == null ? '?' : v);
+  }
+
+  // The one-line form most screens use: L('Saved', 'انحفظ').
+  window.__L = function(en, ar){ return isAr() ? ar : en; };
+  window.__hrs = hours;
+  window.__ver = version;
   window.AAUP_LANG = {
-    get: get, isAr: isAr,
+    get: get, isAr: isAr, hours: hours,
     set: setAndApply,
     toggle: function(){ return setAndApply(isAr() ? 'en' : 'ar'); },
     applyStatic: applyStatic

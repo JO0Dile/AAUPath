@@ -133,8 +133,38 @@
 
   function matches(c, q){
     if(!q) return true;
-    var hay = [c.name, c.ar || '', c.role || '', (c.courses || []).join(' '), c.email || ''].join(' ').toLowerCase();
+    var hay = [c.name, c.ar || '', c.role || '', c.roleAr || '', (c.courses || []).join(' '),
+      (c.coursesAr || []).join(' '), c.email || ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
+  }
+
+  // A card in one language only. contacts.json writes every name, role and
+  // course in both; a professor's own card and the admin room's contacts may
+  // not, so a course is looked up among the plans on this phone, and a role
+  // with no Arabic falls back to its category's Arabic name.
+  var arByName = null;
+  function courseAr(n){
+    if(!arByName){
+      arByName = {};
+      var all = window.AAUP_IMPORTED ? window.AAUP_IMPORTED.loadImportedPlans() : {};
+      Object.keys(all).forEach(function(id){
+        ((all[id] && all[id].courses) || []).forEach(function(c){
+          if(c && c.name && c.ar && !arByName[normName(c.name)]) arByName[normName(c.name)] = c.ar;
+        });
+      });
+    }
+    return arByName[normName(n)] || '';
+  }
+  function shown(c, rtl, data){
+    var cat = (data && data.categories && data.categories[c.category]) || {};
+    var courses = (c.courses || []).map(function(n, i){
+      return rtl ? ((c.coursesAr && c.coursesAr[i]) || courseAr(n) || n) : n;
+    });
+    return {
+      name: rtl ? (c.ar || c.name) : c.name,
+      role: rtl ? (c.roleAr || (c.role ? cat.ar : '') || '') : (c.role || ''),
+      courses: courses
+    };
   }
 
   // Courses this student still has to take, by normalised name, so the
@@ -165,9 +195,16 @@
   }
   function teachesNow(c){ return (c.courses || []).some(function(n){ return nowCourses[normName(n)]; }); }
 
+  // Two letters, from the name in the app's language, as markup. Arabic
+  // letters join, so a zero-width non-joiner keeps them two letters rather
+  // than one shape (ماهر نور would otherwise read as the word من). It goes
+  // in as an entity, after escaping: the text cleaner drops invisible
+  // characters.
   function initials(name){
-    var parts = String(name || '').replace(/^(dr|prof|mr|ms|mrs|eng)\.?\s+/i, '').split(/\s+/).filter(Boolean);
-    return ((parts[0] || '')[0] || '') + ((parts[1] || '')[0] || '');
+    var parts = String(name || '').replace(/^(dr|prof|mr|ms|mrs|eng)\.?\s+/i, '')
+      .replace(/^(د|م|أ)\.\s*/, '').split(/\s+/).filter(Boolean);
+    var a = (parts[0] || '')[0] || '', b = (parts[1] || '')[0] || '';
+    return esc(a).toUpperCase() + (/[\u0600-\u06ff]/.test(a + b) && a && b ? '&zwnj;&#8202;' : '') + esc(b).toUpperCase();
   }
 
   // One line per person: who, what they teach, and the two things you came
@@ -178,18 +215,18 @@
     var cat = data.categories[c.category] || {};
     var catLabel = rtl ? cat.ar : cat.en;
     var isPerson = c.category === 'instructor';
-    var avatar = isPerson ? esc(initials(c.name)).toUpperCase() : (catIcon(cat, 20) || window.AAUP_ICONS.preview('person', 20));
+    var s = shown(c, rtl, data);
+    var avatar = isPerson ? initials(s.name) : (catIcon(cat, 20) || window.AAUP_ICONS.preview('person', 20));
     var sub = c.courses && c.courses.length
-      ? '<span class="ct-courses">' + c.courses.map(function(n){
-          return '<span class="ct-course' + (mine[normName(n)] ? ' ct-course-mine' : '') + '">' + esc(n) + '</span>';
+      ? '<span class="ct-courses">' + c.courses.map(function(n, i){
+          return '<span class="ct-course' + (mine[normName(n)] ? ' ct-course-mine' : '') + '">' + esc(s.courses[i]) + '</span>';
         }).join('') + '</span>'
-      : '<span class="ct-sub">' + esc(c.role || catLabel || '') + '</span>';
+      : '<span class="ct-sub">' + esc(s.role || catLabel || '') + '</span>';
     return '<div class="ct-card">' +
       '<span class="ct-avatar' + (isPerson ? ' ct-avatar-initials' : '') + '">' + avatar + '</span>' +
       '<div class="ct-card-main">' +
-        // The name in the app's language first, the other one under it.
-        '<span class="ct-name">' + esc(rtl && c.ar ? c.ar : c.name) + '</span>' +
-        (c.ar ? '<span class="ct-name-alt"' + (rtl ? ' dir="ltr"' : ' dir="rtl"') + '>' + esc(rtl ? c.name : c.ar) + '</span>' : '') + sub +
+        // The name in the app's language only.
+        '<span class="ct-name">' + esc(s.name) + '</span>' + sub +
         (c.office || c.hours || c.reach
           ? '<span class="ct-staff">' + [c.office, c.hours, c.reach].filter(Boolean).map(esc).join(' · ') + '</span>' : '') +
         (c.phone ? '<a class="ct-phone" dir="ltr" href="tel:' + esc(String(c.phone).replace(/[^0-9+]/g, '')) + '">' + esc(c.phone) + '</a>' : '') +
@@ -197,8 +234,8 @@
       '</div>' +
       (c.email
         ? '<div class="ct-acts">' +
-            '<button type="button" class="ct-icbtn" data-ct-copy="' + esc(c.email) + '" title="' + t('copyEmail', rtl) + '" aria-label="' + t('copyEmail', rtl) + ': ' + esc(c.name) + '">' + window.AAUP_ICONS.preview('copy', 20) + '</button>' +
-            '<a class="ct-icbtn ct-icbtn-pri" href="mailto:' + esc(c.email) + '" title="' + t('sendEmail', rtl) + '" aria-label="' + t('sendEmail', rtl) + ': ' + esc(c.name) + '">' + window.AAUP_ICONS.preview('mail', 20) + '</a>' +
+            '<button type="button" class="ct-icbtn" data-ct-copy="' + esc(c.email) + '" title="' + t('copyEmail', rtl) + '" aria-label="' + t('copyEmail', rtl) + ': ' + esc(s.name) + '">' + window.AAUP_ICONS.preview('copy', 20) + '</button>' +
+            '<a class="ct-icbtn ct-icbtn-pri" href="mailto:' + esc(c.email) + '" title="' + t('sendEmail', rtl) + '" aria-label="' + t('sendEmail', rtl) + ': ' + esc(s.name) + '">' + window.AAUP_ICONS.preview('mail', 20) + '</a>' +
           '</div>'
         : '') +
       '</div>';
@@ -288,6 +325,7 @@
     if(!body) return;
     var rtl = window.__isRtl ? window.__isRtl(prefix) : false;
     body.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+    arByName = null;
     buildMine(prefix);
     buildNow(prefix);
     // A full page, not a pop-up: the directory is something you read down,
@@ -393,5 +431,5 @@
   if(document.readyState === 'complete'){ bindOverlay(); }
   else { window.addEventListener('load', bindOverlay); }
 
-  window.AAUP_CONTACTS = { open: open, data: load };
+  window.AAUP_CONTACTS = { open: open, data: load, shown: shown };
 })();

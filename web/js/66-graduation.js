@@ -285,7 +285,7 @@
       '<details class="grad-how" id="' + hostId + 'How"' + (howOpen ? ' open' : '') + '><summary>' + t('how', rtl) + '</summary>' +
       '<div class="grad-head">' +
         '<span class="grad-load-label">' + t('load', rtl) + '</span>' +
-        '<span class="grad-load-val" id="' + hostId + 'LoadVal">' + load + 'H</span>' +
+        '<span class="grad-load-val" id="' + hostId + 'LoadVal">' + window.__hrs(load) + '</span>' +
       '</div>' +
       '<input type="range" id="' + hostId + 'Slider" class="grad-slider" min="9" max="21" step="1" value="' + load + '">' +
       '<div class="grad-dots">' + dotsHtml + '</div>' +
@@ -321,7 +321,7 @@
           rows: [
             { label: t('finish', rtl), value: termLabel(finish, rtl), accent: true },
             { label: rtl ? 'الفصول المتبقية' : 'Semesters left', value: semesters + ' ' + (rtl ? '' : yearsHint(semesters, rtl)) },
-            { label: t('load', rtl), value: load + 'H' }
+            { label: t('load', rtl), value: window.__hrs(load) }
           ],
           filename: 'graduation-' + prefix
         });

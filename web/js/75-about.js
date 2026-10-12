@@ -22,6 +22,7 @@
   // making someone copy digits out of a paragraph.
   var MAKER = {
     name: 'AL-Hammam Natsha',
+    nameAr: 'الهمام نتشة',
     handles: ['JO0Dile', 'Dile'],
     discord: '_dile_',
     phone: '0543443896'
@@ -43,8 +44,8 @@
       more: 'More ways to reach us are coming.'
     },
     ar: {
-      title: 'عن AAUPath',
-      what: 'AAUPath مخطِّط دراسي مجاني يعمل بدون إنترنت لطلبة الجامعة العربية الأمريكية. هذا مشروع طلابي غير رسمي — تأكّد دائمًا من أي معلومة مع مرشدك الأكاديمي.',
+      title: 'عن التطبيق',
+      what: 'هذا التطبيق مخطِّط دراسي مجاني يعمل بدون إنترنت لطلبة الجامعة العربية الأمريكية. هذا مشروع طلابي غير رسمي — تأكّد دائمًا من أي معلومة مع مرشدك الأكاديمي.',
       madeIn: 'صُنع بأيدي طلبة في فلسطين، لطلبة العالم.',
       uniLabel: 'الجامعة',
       makerLabel: 'من إعداد',
@@ -104,8 +105,8 @@
     // text is the bare host rather than the raw URL.
     var host = site.replace(/^https?:\/\//, '').replace(/\/$/, '');
     var siteHtml = /^https:\/\//.test(site)
-      ? '<a href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">' + esc(host) + '</a>'
-      : esc(host);
+      ? '<a href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">' + esc(rtl ? 'موقع الجامعة' : host) + '</a>'
+      : esc(rtl ? '' : host);
 
     // A campus contributes one row: its switchboard as a tel: link, with the
     // fax number under it when the record carries one. A campus with no
@@ -145,7 +146,11 @@
         '</div>' +
         '<div class="abt-rows">' +
           row('person', t.makerLabel,
-            '<b>' + esc(MAKER.name) + '</b><br><span class="abt-sub">' + esc(MAKER.handles.join(' · ')) + '</span>') +
+            // The handles are nicknames in Latin letters; the Arabic screen
+            // gives the name alone. The Discord row keeps the username, the
+            // one thing that has to be typed exactly.
+            '<b>' + esc(rtl ? MAKER.nameAr : MAKER.name) + '</b>' +
+            (rtl ? '' : '<br><span class="abt-sub">' + esc(MAKER.handles.join(' · ')) + '</span>')) +
           row('speech', t.discord, '<code>' + esc(MAKER.discord) + '</code>') +
           row('mobile', t.phone, telLink(MAKER.phone)) +
         '</div>' +

@@ -93,7 +93,7 @@
     t.innerHTML = '<b>' + esc(nameOf(hit.planId, hit.slug)) + '</b>' +
       '<span>' + esc(L('Needs: ', 'بيحتاج: ')) + list(needs, true) + '</span>' +
       '<span>' + esc(L('Opens: ', 'بيفتح: ')) + list(opens, false) + '</span>' +
-      '<span class="crs-tip-meta">' + esc((c ? (parseFloat(c.creditHours) || 0) : 0) + 'H · ' + st[ar() ? 1 : 0]) + '</span>';
+      '<span class="crs-tip-meta">' + esc(window.__hrs(c ? (parseFloat(c.creditHours) || 0) : 0) + ' · ' + st[ar() ? 1 : 0]) + '</span>';
     t.hidden = false;
     var r = hit.el.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight;
     var left = Math.min(Math.max(8, r.left + r.width / 2 - tw / 2), window.innerWidth - tw - 8);

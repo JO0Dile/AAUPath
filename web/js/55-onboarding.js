@@ -206,25 +206,27 @@
         secondary: cloud ? t().notNow : ''
       };
     }
+    var A = lang() === 'ar';
+    var L = function(en, ar){ return A ? ar : en; };
     return {
-      title: mode === 'up' ? 'Create your account' : 'Sign in',
-      sub: 'Your progress, grades and plans follow you to any device.',
+      title: mode === 'up' ? L('Create your account', 'أنشئ حسابك') : L('Sign in', 'تسجيل الدخول'),
+      sub: L('Your progress, grades and plans follow you to any device.', 'تقدّمك وعلاماتك وخططك بتلحقك على أي جهاز.'),
       content:
         '<div class="wiz-fields">' +
-        '<input type="text" id="wizCloudIdentifier" placeholder="Email" autocomplete="username" inputmode="email">' +
-        '<input type="password" id="wizCloudPassword" placeholder="Password" autocomplete="' +
+        '<input type="text" id="wizCloudIdentifier" placeholder="' + L('Email', 'الإيميل') + '" autocomplete="username" inputmode="email">' +
+        '<input type="password" id="wizCloudPassword" placeholder="' + L('Password', 'كلمة المرور') + '" autocomplete="' +
           (mode === 'up' ? 'new-password' : 'current-password') + '">' +
         (mode === 'up'
-          ? '<input type="text" id="wizCloudSignUpUsername" placeholder="Name (optional)" autocomplete="nickname">'
+          ? '<input type="text" id="wizCloudSignUpUsername" placeholder="' + L('Name (optional)', 'الاسم (اختياري)') + '" autocomplete="nickname">'
           : '') +
         '</div>' +
         '<div id="wizCloudMsg"></div>' +
         '<button type="button" class="wiz-switch" id="wizCloudToggleSignUp">' +
-          (mode === 'up' ? 'I already have an account' : 'Create one instead') +
+          (mode === 'up' ? L('I already have an account', 'عندي حساب') : L('Create one instead', 'أنشئ حساب جديد')) +
         '</button>' +
-        '<div id="wizGoogleWrap" hidden><div class="cloud-or"><span>or</span></div><div id="wizGoogleBtn" class="cloud-google"></div></div>',
-      primary: mode === 'up' ? 'Create account' : 'Sign in',
-      secondary: 'Not now'
+        '<div id="wizGoogleWrap" hidden><div class="cloud-or"><span>' + L('or', 'أو') + '</span></div><div id="wizGoogleBtn" class="cloud-google"></div></div>',
+      primary: mode === 'up' ? L('Create account', 'أنشئ الحساب') : L('Sign in', 'ادخل'),
+      secondary: L('Not now', 'ليس الآن')
     };
   }
 
@@ -281,6 +283,12 @@
   // Sign in and sign up are the same panel with one field's difference, so
   // they are one form with a mode rather than two stacked forms where a
   // hidden one used to sit under a toggle.
+  // The account server answers in English; js/52-cloud.js says it in Arabic.
+  function cloudErr(r, en, ar){
+    var said = r && r.data && r.data.error;
+    if(window.AAUP_CLOUD && window.AAUP_CLOUD.errorText) return window.AAUP_CLOUD.errorText(said, en, ar);
+    return lang() === 'ar' ? ar : (said || en);
+  }
   function submitCloud(btn){
     var idEl = document.getElementById('wizCloudIdentifier');
     var pwEl = document.getElementById('wizCloudPassword');
@@ -288,8 +296,8 @@
     var identifier = (idEl.value || '').trim();
     var password = pwEl.value || '';
     if(!identifier || !password){
-      showCloudMsg(mode === 'up' ? 'Enter an email and a password.'
-                                 : 'Enter your email and password.', true);
+      showCloudMsg(lang() === 'ar' ? 'اكتب الإيميل وكلمة المرور.'
+        : (mode === 'up' ? 'Enter an email and a password.' : 'Enter your email and password.'), true);
       return;
     }
     btn.disabled = true;
@@ -297,7 +305,7 @@
       var username = ((document.getElementById('wizCloudSignUpUsername') || {}).value || '').trim();
       window.AAUP_CLOUD.signUp(identifier, username, password).then(function(r){
         btn.disabled = false;
-        if(!r.ok){ showCloudMsg((r.data && r.data.error) || 'Sign up failed.', true); return; }
+        if(!r.ok){ showCloudMsg(cloudErr(r, 'Sign up failed.', 'ما زبط إنشاء الحساب.'), true); return; }
         if(window.AAUP_STUDENT && window.AAUP_STUDENT.markSeen){ window.AAUP_STUDENT.markSeen(); }
         window.AAUP_CLOUD.startAutoSync();
         finish(true);             // a brand-new account has nothing to reconcile
@@ -308,7 +316,7 @@
     }
     window.AAUP_CLOUD.signIn(identifier, password).then(function(r){
       btn.disabled = false;
-      if(!r.ok){ showCloudMsg((r.data && r.data.error) || 'Sign in failed.', true); return; }
+      if(!r.ok){ showCloudMsg(cloudErr(r, 'Sign in failed.', 'ما زبط تسجيل الدخول.'), true); return; }
       // Marked seen BEFORE any reload reconcileAfterSignIn might trigger —
       // otherwise a reload mid-flow would start it over, since nothing else
       // marks first-run done on this path.
@@ -325,7 +333,7 @@
     var gWrap = document.getElementById('wizGoogleWrap');
     if(gWrap && window.AAUP_CLOUD && window.AAUP_CLOUD.googleButton){
       window.AAUP_CLOUD.googleButton(gWrap, document.getElementById('wizGoogleBtn'), false, function(r){
-        if(!r.ok){ showCloudMsg((r.data && r.data.error) || 'Google sign-in failed.', true); return; }
+        if(!r.ok){ showCloudMsg(cloudErr(r, 'Google sign-in failed.', 'ما زبط الدخول عن طريق جوجل.'), true); return; }
         if(window.AAUP_STUDENT && window.AAUP_STUDENT.markSeen){ window.AAUP_STUDENT.markSeen(); }
         window.AAUP_CLOUD.reconcileAfterSignIn(false, function(res){
           window.AAUP_CLOUD.startAutoSync();

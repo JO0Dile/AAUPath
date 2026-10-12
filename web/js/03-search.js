@@ -126,7 +126,7 @@
   //
   // The match is marked in the text it was found in, and anything the
   // marking cannot explain on its own gets a short label.
-  var REASON_LABEL = { code: 'code', ar: 'Arabic name', fuzzy: 'closest match' };
+  var REASON_LABEL = { code: ['code', 'رقم المساق'], ar: ['Arabic name', 'الاسم بالعربي'], fuzzy: ['closest match', 'أقرب نتيجة'] };
 
   function reasonFor(item, q){
     if(item.code && item.code.toLowerCase().indexOf(q) !== -1) return 'code';
@@ -156,14 +156,14 @@
   // Only the two states worth a word in a list of results: a course you have
   // already passed, and one you cannot register for yet. "Open" is the normal
   // case and says nothing.
-  var STATE_LABEL = { done: 'passed', locked: 'locked' };
+  var STATE_LABEL = { done: ['passed', 'منجز'], locked: ['locked', 'مقفول'] };
 
   function renderDropdown(dropdownEl, results, opts){
     dropdownEl.innerHTML = '';
     if(!results.length){
       var empty = document.createElement('div');
       empty.className = 'search-empty';
-      empty.textContent = opts.emptyText || 'No matches';
+      empty.textContent = opts.emptyText || window.__L('No matches', 'ما في نتائج');
       dropdownEl.appendChild(empty);
       dropdownEl.classList.add('open');
       return;
@@ -205,14 +205,14 @@
         if(r.state && STATE_LABEL[r.state]){
           var stateEl = document.createElement('span');
           stateEl.className = 'sh-state sh-state-' + r.state;
-          stateEl.textContent = STATE_LABEL[r.state];
+          stateEl.textContent = STATE_LABEL[r.state][window.AAUP_LANG && window.AAUP_LANG.isAr() ? 1 : 0];
           meta.appendChild(stateEl);
         }
         // 'name' needs no label: the mark in the name above already says it.
         if(REASON_LABEL[r.reason]){
           var why = document.createElement('span');
           why.className = 'sh-why sh-why-' + r.reason;
-          why.textContent = REASON_LABEL[r.reason];
+          why.textContent = REASON_LABEL[r.reason][window.AAUP_LANG && window.AAUP_LANG.isAr() ? 1 : 0];
           meta.appendChild(why);
         }
         hit.appendChild(meta);
@@ -334,13 +334,14 @@
   function allPlanCourses(){
     var plans = window.AAUP_IMPORTED ? (window.AAUP_IMPORTED.loadImportedPlans() || {}) : {};
     var ids = Object.keys(plans);
-    var key = ids.map(function(id){
+    var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    // The language too: each entry says where the course sits in words.
+    var key = (rtl ? 'ar|' : 'en|') + ids.map(function(id){
       var p = plans[id] || {};
       return id + ':' + (p.version || 0) + ':' + ((p.courses || []).length);
     }).join('|');
     if(courseIdxCache && courseIdxKey === key) return courseIdxCache;
 
-    var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
     // The plan the student is actually on goes first, so its courses win the
     // ten result slots ahead of the same course in someone else's major.
     var selected = window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected
@@ -359,10 +360,13 @@
                       (mn.en && mn.en.big) || id);
       (p.courses || []).forEach(function(c){
         if(!c || !c.id) return;
+        // "Year 2 · Semester 1", written out: the ids (y2, s1) are the app's.
+        var yr = String(c.yearId || '').replace(/\D+/g, '');
+        var sem = { s1: ['Semester 1', 'الفصل الأول'], s2: ['Semester 2', 'الفصل الثاني'], s3: ['Summer', 'الصيفي'] }[c.semester];
         var where = [
           planName,
-          c.yearId ? String(c.yearId).toUpperCase() : '',
-          c.semester ? String(c.semester).toUpperCase() : ''
+          yr ? (rtl ? 'السنة ' + yr : 'Year ' + yr) : '',
+          sem ? sem[rtl ? 1 : 0] : ''
         ].filter(Boolean).join(' \u00b7 ');
         out.push({
           page: id, slug: c.id, imported: true, isCourse: true,
@@ -450,7 +454,7 @@
     attachSearch({
       input: input, box: box, clear: clear, dropdown: dropdown,
       getIndex: function(){ return (window.__PLAN_DATA[prefix] && window.__PLAN_DATA[prefix].index) || []; },
-      emptyText: 'No matching course found / لا يوجد مساق مطابق',
+      emptyText: (window.AAUP_LANG && window.AAUP_LANG.isAr()) ? 'لا يوجد مساق مطابق' : 'No matching course found',
       onSelect: function(r){
         input.value = '';
         box.classList.remove('has-value');

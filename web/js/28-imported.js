@@ -363,7 +363,7 @@
   function removeYear(planId, yearId){
     withPlan(planId, function(p, plans){
       if(yearCourseCount(p, yearId) > 0){
-        if(window.__showToast){ window.__showToast('Year not empty — move its courses first'); }
+        if(window.__showToast){ window.__showToast(isAr() ? 'السنة مش فاضية — انقل مساقاتها أول' : 'Year not empty — move its courses first'); }
         return;
       }
       p.structure.years = p.structure.years.filter(function(y){ return y.id !== yearId; });
@@ -383,7 +383,7 @@
   function removeSummer(planId, yearId){
     withPlan(planId, function(p, plans){
       if(yearCourseCount(p, yearId, 's3') > 0){
-        if(window.__showToast){ window.__showToast('Summer not empty — move its courses first'); }
+        if(window.__showToast){ window.__showToast(isAr() ? 'الفصل الصيفي مش فاضي — انقل مساقاته أول' : 'Summer not empty — move its courses first'); }
         return;
       }
       var y = p.structure.years.filter(function(yy){ return yy.id === yearId; })[0];
@@ -426,7 +426,8 @@
     var plans = loadImportedPlans();
     var p = plans[planId];
     if(!p) return;
-    var name = ((p.courses || []).filter(function(c){ return c.id === slug; })[0] || {}).name || slug;
+    var gone = (p.courses || []).filter(function(c){ return c.id === slug; })[0] || {};
+    var name = (isAr() && gone.ar) || gone.name || slug;
     p.courses = (p.courses || []).filter(function(c){ return c.id !== slug; });
     // Cascade-clean prerequisite pairs in BOTH directions — otherwise a
     // removed course leaves dangling references (as something's stated
@@ -436,7 +437,7 @@
     var progress = window.__getProgress ? window.__getProgress() : {};
     delete progress[planId + '-c-' + slug];
     persistProgress();
-    if(!quiet && window.__showToast){ window.__showToast('Removed "' + name + '".'); }
+    if(!quiet && window.__showToast){ window.__showToast(isAr() ? 'انشال «' + name + '».' : 'Removed "' + name + '".'); }
     render(planId);
   }
 
@@ -564,7 +565,7 @@
     var plansNow = loadImportedPlans();
     var p = plansNow[planId];
     if((p.courses || []).some(function(c){ return c.id === id; })){
-      if(window.__showToast){ window.__showToast('A course with that ID already exists in this plan.'); }
+      if(window.__showToast){ window.__showToast(isAr() ? 'في مساق بنفس الرقم بهالخطة.' : 'A course with that ID already exists in this plan.'); }
       return;
     }
     // own: the student added it, so an official update never takes it away
@@ -583,7 +584,7 @@
     saveImportedPlans(plansNow);
     runAutoLink(planId, id);
     if(overlay){ overlay.classList.remove('open'); }
-    if(window.__showToast){ window.__showToast('Added "' + nameEn + '"'); }
+    if(window.__showToast){ window.__showToast(isAr() ? 'انضاف «' + (nameAr || nameEn) + '»' : 'Added "' + nameEn + '"'); }
     render(planId);
   }
 
@@ -698,7 +699,7 @@
       saveImportedPlans(plansNow);
       runAutoLink(planId, newId);
       overlay.classList.remove('open');
-      if(window.__showToast){ window.__showToast('Saved changes to "' + nameEn + '"'); }
+      if(window.__showToast){ window.__showToast(isAr() ? 'انحفظت تعديلات «' + (nameAr || nameEn) + '»' : 'Saved changes to "' + nameEn + '"'); }
       render(planId);
     });
   }
@@ -757,7 +758,7 @@
       clear: document.getElementById(planId + '-courseSearchClear'),
       dropdown: document.getElementById(planId + '-courseSearchDropdown'),
       getIndex: function(){ return (window.__PLAN_DATA[planId] && window.__PLAN_DATA[planId].index) || []; },
-      emptyText: 'No matching course found / لا يوجد مساق مطابق',
+      emptyText: isAr() ? 'لا يوجد مساق مطابق' : 'No matching course found',
       onSelect: function(r){
         input.value = '';
         document.getElementById(planId + '-courseSearchBox').classList.remove('has-value');
@@ -1244,12 +1245,11 @@
       // Round 10: offered in one semester only, and placed in the other.
       (!done && window.AAUP_STAFF_CONTENT && window.AAUP_STAFF_CONTENT.offerClash(c) ? ' offer-warn' : '');
     var displayName = (rtl && c.ar) ? c.ar : c.name;
-    // 43: the other language, underneath. Lectures, slides and the registrar
-    // all use the English title, so a student reading Arabic still has to be
-    // able to match the card to what the portal calls it — and the reverse is
-    // true for an English reader sitting in an Arabic lecture.
-    var otherName = (rtl && c.ar && c.name && c.name !== c.ar) ? c.name
-      : (!rtl && c.ar && c.ar !== c.name) ? c.ar : '';
+    // 43 printed the other language under the name, so a card could be
+    // matched to what the registrar calls it. Most students read Arabic only,
+    // and that line made every card half English, so each language now shows
+    // only itself. The course number in the course window is what matches a
+    // card to the portal, in either language.
     // The old quick "📊 set grade" shortcut for a done course is retired —
     // it shared the same top-right corner as the new checkbox and would
     // visually collide with it. Grade is now set from the full course-
@@ -1258,8 +1258,8 @@
     // anything else still calls it directly.
     var cardButtons = editing
       ? '<div class="imp-card-btn-row">' +
-        '<button type="button" class="imp-edit-course-btn" title="Edit course" onclick="event.stopPropagation(); AAUP_IMPORTED.editCoursePrompt(\'' + planId + '\',\'' + c.id + '\');">' + window.AAUP_ICONS.preview('pen', 13) + '</button>' +
-        '<button type="button" class="imp-remove-course-btn" title="Remove course" onclick="event.stopPropagation(); AAUP_IMPORTED.confirmRemoveCourse(\'' + planId + '\',\'' + c.id + '\');">' + window.AAUP_ICONS.preview('close', 13) + '</button>' +
+        '<button type="button" class="imp-edit-course-btn" title="' + (rtl ? 'عدّل المساق' : 'Edit course') + '" onclick="event.stopPropagation(); AAUP_IMPORTED.editCoursePrompt(\'' + planId + '\',\'' + c.id + '\');">' + window.AAUP_ICONS.preview('pen', 13) + '</button>' +
+        '<button type="button" class="imp-remove-course-btn" title="' + (rtl ? 'احذف المساق' : 'Remove course') + '" onclick="event.stopPropagation(); AAUP_IMPORTED.confirmRemoveCourse(\'' + planId + '\',\'' + c.id + '\');">' + window.AAUP_ICONS.preview('close', 13) + '</button>' +
         '</div>'
       : '';
     var checkboxHtml = editing ? '' :
@@ -1310,7 +1310,7 @@
     }catch(e){ gr = ''; }
     var hoursTx = partOfPair
       ? (rtl ? 'ضمن ' + c.creditHours + ' ساعات' : 'part of ' + c.creditHours + 'H')
-      : c.creditHours + 'H';
+      : window.AAUP_LANG.hours(c.creditHours, rtl);
     if(done && gr && !superseded){ hoursTx += ' · ' + gr; }
     // Each part in its own span so the phone layout can drop the year: a
     // card sitting inside a block headed "Year 1" does not need to say
@@ -1377,7 +1377,6 @@
       (bucket && BUCKET_LABEL[bucket]
         ? '<span class="req-code" aria-hidden="true">' + BUCKET_LABEL[bucket][rtl ? 1 : 0] + '</span>' : '') +
       '<div class="name">' + displayName + '</div>' +
-      (otherName ? '<div class="name-alt">' + bidi(otherName) + '</div>' : '') +
       '<div class="course-meta">' + meta + '</div>' +
       noteDotHtml(planId, c.id, rtl) +
       '</div>';
@@ -1929,7 +1928,7 @@
     return '<div class="imp-semester-block' + (heavy ? ' is-heavy' : '') + '">' +
       '<div class="imp-semester-title">' + semTx +
       (hardOnes.length >= 3 ? '<span class="imp-sem-verdict is-hard">' + window.__escapeHtml(rtl ? hardOnes.length + ' مواد صعبة' : hardOnes.length + ' hard ones') + '</span>' : '') +
-      (semHours > 0 ? '<span class="imp-sem-hours">' + semHours + 'H</span>' : '') +
+      (semHours > 0 ? '<span class="imp-sem-hours">' + window.AAUP_LANG.hours(semHours, rtl) + '</span>' : '') +
       (verdict ? '<span class="imp-sem-verdict ' + verdictCls + '">' +
         window.__escapeHtml(verdict) + '</span>' : '') +
       // 12 · One action instead of six taps. A student setting up two years of
@@ -2258,9 +2257,9 @@
           (yearFinished
             // A finished year reads as history: done, its hours, its GPA.
             ? '<span class="iy-done">' + window.AAUP_ICONS.preview('check', 14) + '<span>' + (rtl ? 'خلصت' : 'done') +
-                ' · ' + yearHours + 'H' + (yearGpa != null ? ' · ' + (rtl ? 'المعدل ' : 'GPA ') + yearGpa.toFixed(2) : '') + '</span></span>'
+                ' · ' + window.AAUP_LANG.hours(yearHours, rtl) + (yearGpa != null ? ' · ' + (rtl ? 'المعدل ' : 'GPA ') + yearGpa.toFixed(2) : '') + '</span></span>'
             : yearRingHtml(yearDone, yearCourses.length, rtl) +
-              '<span class="iy-hours">' + yearHours + 'H</span>') +
+              '<span class="iy-hours">' + window.AAUP_LANG.hours(yearHours, rtl) + '</span>') +
         '</button>';
       if(editing){
         html += '<div class="imp-year-actions">' +
@@ -2629,6 +2628,7 @@
     return needs;
   }
   function renderLegacy(id, p, host){
+    var rtl = isAr();
     var progressKey = 'aaup-imported-progress-' + id;
     var progress = {};
     try{ progress = JSON.parse(localStorage.getItem(progressKey) || '{}') || {}; }catch(e){}
@@ -2636,7 +2636,7 @@
     var needs = computeNeedsLegacy(p.prerequisites);
     var bySemester = {};
     p.courses.forEach(function(c){
-      var sem = c.semester || 'Unspecified';
+      var sem = c.semester || (rtl ? 'غير محدد' : 'Unspecified');
       (bySemester[sem] = bySemester[sem] || []).push(c);
     });
     function isDoneLegacy(cid){ return !!progress[cid]; }
@@ -2650,10 +2650,13 @@
     var en = nameParts(p.majorName.en), ar = nameParts(p.majorName.ar);
 
     var html = '<div class="sheet sheet-plan sheet-plan-simple">' +
-      '<header><div class="header-actions"><button type="button" class="home-btn" onclick="AAUP_IMPORTED.close()"><span>' + window.AAUP_ICONS.preview('home', 15) + '</span><span>Home</span></button></div>' +
-      '<h1>' + txt(en.big) + (en.small ? ' ' + txt(en.small) : '') + ' <em style="opacity:.6;font-size:.6em;">' + txt(ar.big) + (ar.small ? ' ' + txt(ar.small) : '') + '</em></h1></header>' +
+      '<header><div class="header-actions"><button type="button" class="home-btn" onclick="AAUP_IMPORTED.close()"><span>' + window.AAUP_ICONS.preview('home', 15) + '</span><span>' + (rtl ? 'الرئيسية' : 'Home') + '</span></button></div>' +
+      // The name in the app's language only.
+      (function(){ var n = rtl && ar.big ? ar : en; return '<h1>' + txt(n.big) + (n.small ? ' ' + txt(n.small) : '') + '</h1>'; })() + '</header>' +
       '<div class="imp-body-pad">' +
-      '<p style="font-size:12px;color:var(--text-dim);">This is a community-imported plan \u2014 a simplified view without the custom prerequisite-arrow diagram the built-in majors have, but progress tracking and prerequisite locking both work normally.</p>' +
+      '<p style="font-size:12px;color:var(--text-dim);">' + (rtl
+        ? 'هذه خطة مستوردة من الطلبة \u2014 عرض مبسّط بدون مخطط أسهم المتطلبات، لكن تتبّع التقدّم وقفل المتطلبات بيشتغلوا عادي.'
+        : 'This is a community-imported plan \u2014 a simplified view without the custom prerequisite-arrow diagram the built-in majors have, but progress tracking and prerequisite locking both work normally.') + '</p>' +
       // "48 / 129H completed (37%)" — the bar underneath is the percentage,
       // and "completed" is what a progress meter means. What is left is the
       // two numbers, plus (from js/64-milestones.js, which appends into this
@@ -2670,7 +2673,7 @@
         var locked = !done && !avail;
         var reqNames = (needs[c.id] || []).map(function(rid){
           var rc = p.courses.filter(function(cc){ return cc.id === rid; })[0];
-          return rc ? rc.name : rid;
+          return rc ? (rtl && rc.ar ? rc.ar : rc.name) : rid;
         });
         var entry = community[c.id];
         var communityBadge = '';
@@ -2679,9 +2682,9 @@
           if(avgD){ communityBadge += '<span class="meta-badge">' + window.AAUP_ICONS.preview('star', 11) + avgD + '</span>'; }
         }
         html += '<div class="imp-course-card' + (done ? ' completed' : '') + (locked ? ' locked' : '') + '" data-imp-course="' + c.id + '">' +
-          '<div class="imp-name">' + c.name + (done ? ' ✓' : '') + '</div>' +
-          '<div class="imp-cr">' + c.creditHours + 'H \u00b7 ' + (c.category || '') + '</div>' +
-          (locked ? '<div class="imp-lock-note">' + window.AAUP_ICONS.preview('lock', 11) + ' Requires: ' + reqNames.join(', ') + '</div>' : '') +
+          '<div class="imp-name">' + (rtl && c.ar ? c.ar : c.name) + (done ? ' ✓' : '') + '</div>' +
+          '<div class="imp-cr">' + window.AAUP_LANG.hours(c.creditHours, rtl) + '</div>' +
+          (locked ? '<div class="imp-lock-note">' + window.AAUP_ICONS.preview('lock', 11) + (rtl ? ' يحتاج: ' : ' Requires: ') + reqNames.join(rtl ? '، ' : ', ') + '</div>' : '') +
           (communityBadge ? '<div class="course-meta-badges" style="position:static;margin-top:6px;">' + communityBadge + '</div>' : '') +
           '</div>';
       });
@@ -2755,7 +2758,7 @@
       // app's own Fix analyzer flags exactly this for <a target="_blank">, so
       // the same standard applies here.
       window.open(window.APP_SUBMIT_URL, '_blank', 'noopener');
-      if(window.__showToast){ window.__showToast('\ud83d\udce8 Downloaded \u2014 attach it in the form that opened'); }
+      if(window.__showToast){ window.__showToast(isAr() ? '\ud83d\udce8 انحمّل الملف \u2014 أرفقه بالنموذج اللي انفتح' : '\ud83d\udce8 Downloaded \u2014 attach it in the form that opened'); }
       return;
     }
     var overlay = document.getElementById('devModalOverlay');
@@ -2779,8 +2782,19 @@
       issueUrl = 'https://github.com/' + window.APP_GITHUB_REPO + '/issues/new?title=' +
         encodeURIComponent(title) + '&body=' + encodeURIComponent(lines.join('\n'));
     }
-    body.innerHTML =
-      '<h2 style="margin-top:0;">' + window.AAUP_ICONS.preview('mail', 20) + ' Thank you for contributing!</h2>' +
+    var rtl = isAr();
+    body.innerHTML = rtl
+      ? '<div dir="rtl"><h2 style="margin-top:0;">' + window.AAUP_ICONS.preview('mail', 20) + ' شكرًا على مساهمتك!</h2>' +
+        '<p style="font-size:13px;">ملف خطتك انحمّل هلّق.' +
+        (issueUrl
+          ? ' افتح طلب إضافة تحت (' + (canPrefillIssue ? 'الخطة معبّاية فيه' : 'الخطة أكبر من إنه تتعبّى فيه \u2014 أرفق الملف اللي انحمّل') + ')، أو ابعث الملف لمسؤول التطبيق بأي طريقة بتوصله فيها.'
+          : ' ابعث هالملف لمسؤول التطبيق (بأي طريقة بتوصله فيها \u2014 مجموعة الطلبة، إيميل التواصل، إلخ) وبتنضاف الخطة لكل الطلبة بتحديث قادم.') +
+        '</p>' +
+        '<p class="form-note">خطط زي خطتك هي اللي بتغطي التخصصات اللي لسا مش موجودة \u2014 حدا عاش الخطة بيكتبها مرة، وما حدا بعده بيضيع.</p>' +
+        '<div class="form-actions">' +
+        (issueUrl ? '<button type="button" class="home-btn btn-pri" id="submitOpenIssue">افتح طلب الإضافة</button>' : '') +
+        '<button type="button" class="home-btn" id="submitClose">إغلاق</button></div></div>'
+      : '<h2 style="margin-top:0;">' + window.AAUP_ICONS.preview('mail', 20) + ' Thank you for contributing!</h2>' +
       '<p style="font-size:13px;">Your plan\u2019s file was just downloaded.' +
       (issueUrl
         ? ' Open a submission issue below (the plan JSON is ' + (canPrefillIssue ? 'already filled in' : 'too big to prefill \u2014 attach the downloaded file there') + '), or send the <b>.json</b> file to the app maintainer any other way you reached this app.'
@@ -2809,16 +2823,18 @@
     a.click();
     a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    if(window.__showToast){ window.__showToast('Exported — the file is in your downloads'); }
+    if(window.__showToast){ window.__showToast(isAr() ? 'انحفظ — الملف بالتنزيلات' : 'Exported — the file is in your downloads'); }
   }
 
   function confirmDelete(id){
     var plans = loadImportedPlans();
     var p = plans[id];
     if(!p) return;
-    var en = nameParts(p.majorName.en);
+    var en = nameParts(isAr() && p.majorName.ar && nameParts(p.majorName.ar).big ? p.majorName.ar : p.majorName.en);
     var name = en.big || id;
-    var msg = 'Delete "' + name + '"? This removes the plan itself and everyone\u2019s progress in it. This can\u2019t be undone.';
+    var msg = isAr()
+      ? 'تحذف «' + name + '»؟ هيك بتنحذف الخطة نفسها وكل التقدّم فيها، وما في رجعة.'
+      : 'Delete "' + name + '"? This removes the plan itself and everyone\u2019s progress in it. This can\u2019t be undone.';
     if(window.__showConfirmDialog){
       window.__showConfirmDialog(msg, function(){ deletePlan(id); });
     } else if(window.confirm(msg)){
@@ -2836,7 +2852,7 @@
       delete overrides[id];
       window.AAUP_STORAGE.setJSON('aaup_semesterOverrides', overrides);
     }
-    if(window.__showToast){ window.__showToast('Plan deleted.'); }
+    if(window.__showToast){ window.__showToast(isAr() ? 'انحذفت الخطة.' : 'Plan deleted.'); }
     close();
   }
 
@@ -2858,16 +2874,17 @@
   }
 
   function planLabel(prefix){
-    var BUILT_IN = { robotics: 'AI & Robotics', cybersecurity: 'AI & Cybersecurity', medical: 'AI & Medical Sciences', cs: 'Computer Science' };
-    if(BUILT_IN[prefix]) return BUILT_IN[prefix];
     var plans = loadImportedPlans();
     var p = plans[prefix];
+    var BUILT_IN = { robotics: ['AI & Robotics', 'الذكاء الاصطناعي والروبوتات'], cybersecurity: ['AI & Cybersecurity', 'الذكاء الاصطناعي والأمن السيبراني'],
+      medical: ['AI & Medical Sciences', 'الذكاء الاصطناعي والعلوم الطبية'], cs: ['Computer Science', 'علم الحاسوب'] };
+    if(BUILT_IN[prefix] && !p) return BUILT_IN[prefix][isAr() ? 1 : 0];
     if(p){
       // Append the "small" subtitle when present so two plans that share a
       // big name (e.g. this app's built-in "Computer Science" and a feed
       // plan called "Computer Science — Minor: ...") don't render as
       // identical, indistinguishable entries in this dropdown.
-      var parts = nameParts(p.majorName.en);
+      var parts = nameParts(isAr() && p.majorName.ar && nameParts(p.majorName.ar).big ? p.majorName.ar : p.majorName.en);
       var big = parts.big || prefix;
       return parts.small ? (big + ' — ' + parts.small) : big;
     }
@@ -2902,33 +2919,46 @@
   // reason to know it. Each shelf wears its bucket's colour (BUCKET_CLASS,
   // the plan legend's own palette) so the two screens match.
   var LIB_BUCKET_LABEL = {
-    univReq: 'University requirements', univElec: 'University electives', colgReq: 'College requirements',
-    specReq: 'Major requirements', specElec: 'Major electives', freeElec: 'Free electives',
-    supportCourses: 'Support courses', _none: 'Not categorised'
+    univReq: ['University requirements', 'متطلبات الجامعة'], univElec: ['University electives', 'اختياريات الجامعة'],
+    colgReq: ['College requirements', 'متطلبات الكلية'], specReq: ['Major requirements', 'متطلبات التخصص'],
+    specElec: ['Major electives', 'اختياريات التخصص'], freeElec: ['Free electives', 'اختياريات حرة'],
+    supportCourses: ['Support courses', 'مساقات مساندة'], _none: ['Not categorised', 'غير مصنّف']
   };
   var LIB_ELECTIVE = { univElec: true, specElec: true, freeElec: true };
 
-  // The library is English-only for now, so it keeps left-to-right reading
-  // even while the rest of the app is mirrored for Arabic.
+  // A dual for two, plural genitive to ten, singular accusative above
+  // (js/08-celebrations.js counts courses the same way).
+  function arCount(n){
+    if(n === 1) return 'مساق واحد';
+    if(n === 2) return 'مساقين';
+    if(n <= 10) return n + ' مساقات';
+    return n + ' مساقًا';
+  }
+
+  // In the app's language, laid out in its direction, like every other screen.
   function openLibrary(currentPlanId){
     var overlay = document.getElementById('devModalOverlay');
     var body = document.getElementById('devModalBody');
     if(!overlay || !body) return;
+    var rtl = isAr();
+    var L = function(en, a){ return rtl ? a : en; };
+    var dirAttr = ' dir="' + (rtl ? 'rtl' : 'ltr') + '"';
+    var nameOf = function(c){ return rtl && c.ar ? c.ar : c.name; };
     var courses = allKnownCourses();
     var prefixes = {};
     courses.forEach(function(c){ prefixes[c.prefix] = true; });
     var prefixList = Object.keys(prefixes).sort(function(a, b){ return planLabel(a).localeCompare(planLabel(b)); });
 
     function showPicker(){
-      body.innerHTML = '<div dir="ltr">' +
-        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('book', 20) + 'Course Library</h2>' +
-        '<p class="form-note" style="margin-top:-6px;">Choose a study plan to browse its courses.</p>' +
-        (currentPlanId ? '<p class="form-note" style="margin-top:-2px;">Currently in <b>' + window.__escapeHtml(planLabel(currentPlanId)) + '</b>.</p>' : '') +
-        '<div class="form-field"><label for="libPlanSelect">Study plan</label><select id="libPlanSelect">' +
-        '<option value="">— choose a plan —</option>' +
+      body.innerHTML = '<div' + dirAttr + '>' +
+        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('book', 20) + L('Course Library', 'مكتبة المساقات') + '</h2>' +
+        '<p class="form-note" style="margin-top:-6px;">' + L('Choose a study plan to browse its courses.', 'اختر خطة دراسية لتتصفّح مساقاتها.') + '</p>' +
+        (currentPlanId ? '<p class="form-note" style="margin-top:-2px;">' + L('Currently in ', 'أنت الآن في ') + '<b>' + window.__escapeHtml(planLabel(currentPlanId)) + '</b>' + L('.', '') + '</p>' : '') +
+        '<div class="form-field"><label for="libPlanSelect">' + L('Study plan', 'الخطة الدراسية') + '</label><select id="libPlanSelect">' +
+        '<option value="">' + L('— choose a plan —', '— اختر خطة —') + '</option>' +
         prefixList.map(function(pref){ return '<option value="' + pref + '">' + planLabel(pref) + '</option>'; }).join('') +
         '</select></div>' +
-        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div></div>';
+        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">' + L('Close', 'إغلاق') + '</button></div></div>';
       overlay.classList.add('open');
       document.getElementById('libClose').addEventListener('click', function(){ overlay.classList.remove('open'); });
       document.getElementById('libPlanSelect').addEventListener('change', function(e){
@@ -2987,7 +3017,7 @@
             var unit = Number(Object.keys(sizes).sort(function(a, b){ return sizes[b] - sizes[a]; })[0]) || 3;
             pick = Math.max(1, Math.round(need / unit));
           }
-          return { key: k, label: LIB_BUCKET_LABEL[k], items: items, hours: hours, need: need, done: Math.min(done, need || done), pick: pick };
+          return { key: k, label: LIB_BUCKET_LABEL[k][rtl ? 1 : 0], items: items, hours: hours, need: need, done: Math.min(done, need || done), pick: pick };
         });
       }
 
@@ -3001,10 +3031,10 @@
         // course window, the transcript and the calendar, where it's copied.
         var num = '';
         return '<div class="lib-row">' +
-          '<span class="lib-row-name">' + window.__escapeHtml(c.name) +
-            ' <span class="lib-row-meta">' + num + c.cr + 'H</span></span>' +
+          '<span class="lib-row-name">' + window.__escapeHtml(nameOf(c)) +
+            ' <span class="lib-row-meta">' + num + (rtl ? c.cr + ' س' : c.cr + 'H') + '</span></span>' +
           (currentIsSame ? '' : '<button type="button" class="home-btn lib-add-btn" data-slug="' + window.__escapeHtml(c.slug) + '">' +
-            window.AAUP_ICONS.preview('plus', 13) + 'Add</button>') +
+            window.AAUP_ICONS.preview('plus', 13) + L('Add', 'أضف') + '</button>') +
           '</div>';
       }
 
@@ -3013,9 +3043,10 @@
         // Match the course code as well as the name — the code is what a
         // student has in front of them on a registration screen.
         var filtered = list.filter(function(c){
-          return !f || c.name.toLowerCase().indexOf(f) !== -1 || String(c.slug).toLowerCase().indexOf(f) !== -1;
+          return !f || c.name.toLowerCase().indexOf(f) !== -1 || (c.ar || '').indexOf(f) !== -1 ||
+            String(c.slug).toLowerCase().indexOf(f) !== -1 || String(c.num || '').indexOf(f) !== -1;
         });
-        if(filtered.length === 0){ return '<p class="ex-note">No matching courses.</p>'; }
+        if(filtered.length === 0){ return '<p class="ex-note">' + L('No matching courses.', 'ما في مساقات مطابقة.') + '</p>'; }
         var shelves = shelvesFor(filtered);
         // One shelf and nothing to compare it against is not a shelf — that
         // is the flat list this replaced, with a redundant header on top.
@@ -3032,14 +3063,17 @@
           var cls = BUCKET_CLASS[sh.key] || 'misc';
           var total = sh.need || sh.hours;
           var pct = total ? Math.round(sh.done / total * 100) : 0;
-          var sub = sh.pick ? 'pick ' + sh.pick : sh.items.length + (sh.items.length === 1 ? ' course' : ' courses');
+          var n = sh.items.length;
+          var sub = rtl
+            ? (sh.pick ? 'اختر ' + arCount(sh.pick) : arCount(n))
+            : (sh.pick ? 'pick ' + sh.pick : n + (n === 1 ? ' course' : ' courses'));
           return '<div class="lib-shelf' + (openAll ? ' lib-shelf-open' : '') + '" style="--lib-c:var(--' + cls + ')">' +
             '<button type="button" class="lib-shelf-head" data-lib-shelf="' + id + '"' +
               ' aria-expanded="' + (openAll ? 'true' : 'false') + '" aria-controls="' + id + '">' +
               '<span class="lib-shelf-dot" aria-hidden="true"></span>' +
               '<span class="lib-shelf-main"><span class="lib-shelf-label">' + sh.label + '</span>' +
                 '<span class="lib-shelf-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></span></span>' +
-              '<span class="lib-shelf-count"><span><b>' + sh.done + '</b> of ' + total + ' hours</span><span>' + sub + '</span></span>' +
+              '<span class="lib-shelf-count"><span><b>' + sh.done + '</b>' + L(' of ' + total + ' hours', ' من ' + total + ' ساعة') + '</span><span>' + sub + '</span></span>' +
               '<span class="lib-shelf-chev" aria-hidden="true">' + window.AAUP_ICONS.preview('chevronRight', 14) + '</span>' +
             '</button>' +
             '<div class="lib-shelf-body" id="' + id + '">' + sh.items.map(rowHtml).join('') + '</div>' +
@@ -3050,14 +3084,15 @@
       // "Change plan" at the top of a screen for looking courses up read as
       // "switch the major I'm on". What it did was browse another major's
       // courses, so it says that, as a small switch beside the name.
-      body.innerHTML = '<div dir="ltr">' +
+      body.innerHTML = '<div' + dirAttr + '>' +
         '<div class="lib-head"><span class="lib-head-ic">' + window.AAUP_ICONS.preview('book', 20) + '</span>' +
-          '<h2 class="lib-title">Browse Courses</h2></div>' +
-        '<div class="lib-showing"><span>Showing <b>' + window.__escapeHtml(planTitle(browsePrefix)) + '</b></span>' +
-          '<button type="button" class="lib-other" id="libBack">Other major' + window.AAUP_ICONS.preview('chevron', 13) + '</button></div>' +
-        '<div class="form-field"><input type="text" id="libSearch" aria-label="Search courses" placeholder="Search by name or course code…"></div>' +
+          '<h2 class="lib-title">' + L('Browse Courses', 'تصفّح المساقات') + '</h2></div>' +
+        '<div class="lib-showing"><span>' + L('Showing ', 'معروض: ') + '<b>' + window.__escapeHtml(planTitle(browsePrefix)) + '</b></span>' +
+          '<button type="button" class="lib-other" id="libBack">' + L('Other major', 'تخصص ثاني') + window.AAUP_ICONS.preview('chevron', 13) + '</button></div>' +
+        '<div class="form-field"><input type="text" id="libSearch" aria-label="' + L('Search courses', 'ابحث في المساقات') + '" placeholder="' +
+          L('Search by name or course code…', 'ابحث بالاسم أو رقم المساق…') + '"></div>' +
         '<div id="libList" class="lib-list"></div>' +
-        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">Close</button></div></div>';
+        '<div class="form-actions"><button type="button" class="home-btn" id="libClose">' + L('Close', 'إغلاق') + '</button></div></div>';
       document.getElementById('libList').innerHTML = renderList('');
       overlay.classList.add('open');
 
@@ -3100,20 +3135,24 @@
       var alreadyExists = (target.courses || []).some(function(c){ return c.id === course.slug; });
 
       var yearOptions = target.structure.years.map(function(y, i){
-        return '<option value="' + y.id + '|s1">Year ' + (i + 1) + ' — First Semester</option>' +
-          '<option value="' + y.id + '|s2">Year ' + (i + 1) + ' — Second Semester</option>' +
-          (y.hasSummer ? '<option value="' + y.id + '|s3">Year ' + (i + 1) + ' — Summer</option>' : '');
+        var yr = L('Year ' + (i + 1), 'السنة ' + (i + 1));
+        return '<option value="' + y.id + '|s1">' + yr + L(' — First Semester', ' — الفصل الأول') + '</option>' +
+          '<option value="' + y.id + '|s2">' + yr + L(' — Second Semester', ' — الفصل الثاني') + '</option>' +
+          (y.hasSummer ? '<option value="' + y.id + '|s3">' + yr + L(' — Summer', ' — الفصل الصيفي') + '</option>' : '');
       }).join('');
+      var back = L('← Back', '→ رجوع');
 
-      body.innerHTML = '<div dir="ltr">' +
-        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('plus', 20) + 'Add "' + course.name + '"</h2>' +
+      body.innerHTML = '<div' + dirAttr + '>' +
+        '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('plus', 20) + L('Add "', 'أضف «') + window.__escapeHtml(nameOf(course)) + L('"', '»') + '</h2>' +
         (alreadyExists
-          ? '<p class="dev-error-msg">This plan already has a course with the same ID (' + course.slug + '). Adding it again isn\u2019t possible from here — check the plan first.</p>' +
-            '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">← Back</button></div>'
-          : '<div class="form-field"><label for="libTargetSem">Add to which semester?</label><select id="libTargetSem">' + yearOptions + '</select></div>' +
-            '<p class="form-note">Same name, ID, category, and credit hours as the original — prerequisites aren\u2019t copied, since they depend on what already exists in this plan.</p>' +
-            '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">← Back</button>' +
-            '<button type="button" class="home-btn btn-pri" id="libTargetConfirm">Add to Plan</button></div>') + '</div>';
+          ? '<p class="dev-error-msg">' + L('This plan already has a course with the same ID (' + course.slug + '). Adding it again isn\u2019t possible from here — check the plan first.',
+              'هالخطة فيها مساق بنفس الرقم (' + course.slug + '). ما بنقدر نضيفه مرة ثانية من هون — راجع الخطة أول.') + '</p>' +
+            '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">' + back + '</button></div>'
+          : '<div class="form-field"><label for="libTargetSem">' + L('Add to which semester?', 'لأي فصل بدك تضيفه؟') + '</label><select id="libTargetSem">' + yearOptions + '</select></div>' +
+            '<p class="form-note">' + L('Same name, ID, category, and credit hours as the original — prerequisites aren\u2019t copied, since they depend on what already exists in this plan.',
+              'نفس الاسم والرقم والتصنيف والساعات زي الأصلي — المتطلبات السابقة ما بتنتسخ، لأنها بتعتمد على اللي موجود بهالخطة.') + '</p>' +
+            '<div class="form-actions"><button type="button" class="home-btn" id="libTargetBack">' + back + '</button>' +
+            '<button type="button" class="home-btn btn-pri" id="libTargetConfirm">' + L('Add to Plan', 'أضف للخطة') + '</button></div>') + '</div>';
       overlay.classList.add('open');
 
       document.getElementById('libTargetBack').addEventListener('click', function(){ showBrowse(course.prefix); });
@@ -3135,7 +3174,7 @@
           saveImportedPlans(plansNow);
           runAutoLink(currentPlanId, course.slug);
           overlay.classList.remove('open');
-          if(window.__showToast){ window.__showToast('Added "' + course.name + '" to this plan'); }
+          if(window.__showToast){ window.__showToast(L('Added "' + course.name + '" to this plan', 'انضاف «' + nameOf(course) + '» للخطة')); }
           render(currentPlanId);
         });
       }

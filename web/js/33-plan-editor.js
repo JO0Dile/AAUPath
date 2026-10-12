@@ -180,11 +180,11 @@
       if(window.__redraw && window.__redraw[prefix]){ window.__redraw[prefix](); }
     }
     if(!isUndo && fromContainerId && fromContainerId !== targetContainerId && window.__showActionToast){
-      window.__showActionToast('Moved — saved.', 'Undo', function(){
+      window.__showActionToast(window.__L('Moved — saved.', 'انتقل — انحفظ.'), window.__L('Undo', 'تراجع'), function(){
         applyMove(prefix, slug, fromContainerId, true);
       });
     } else if(window.__showToast){
-      window.__showToast(isUndo ? 'Move undone.' : 'Moved — saved automatically.');
+      window.__showToast(isUndo ? window.__L('Move undone.', 'رجع لمكانه.') : window.__L('Moved — saved automatically.', 'انتقل — انحفظ تلقائيًا.'));
     }
     return true;
   }
@@ -426,35 +426,41 @@
     var icons = (window.AAUP_IMPORTED && window.AAUP_IMPORTED.ICONS) || ['🎓','🤖','🔒','⚕️','💻','📊','🔬','🎨','📚','⚙️'];
     var selectedIcon = icons[0];
 
+    // In the app's language only. Both names are still asked for, since the
+    // plan shows in both languages, but only one is needed: the other is
+    // filled from it.
+    var rtl = !!(window.AAUP_LANG && window.AAUP_LANG.isAr());
+    var L = function(en, ar){ return rtl ? ar : en; };
     body.innerHTML =
-      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('plus', 20) + 'New Study Plan · خطة دراسية جديدة</h2>' +
-      '<div class="form-field"><label>Icon · الأيقونة</label><div class="icon-picker-grid" id="npIconGrid">' +
+      '<h2 class="mh" style="margin-top:0;">' + window.AAUP_ICONS.preview('plus', 20) + L('New Study Plan', 'خطة دراسية جديدة') + '</h2>' +
+      '<div class="form-field"><label>' + L('Icon', 'الأيقونة') + '</label><div class="icon-picker-grid" id="npIconGrid">' +
       icons.map(function(ic, i){ return '<div class="icon-picker-option' + (i === 0 ? ' selected' : '') + '" data-icon="' + ic + '">' + ic + '</div>'; }).join('') +
       '</div></div>' +
       '<div class="form-field-row">' +
-        '<div class="form-field"><label for="npNameEnBig">Major name — English · اسم التخصص بالإنجليزية</label><input type="text" id="npNameEnBig" maxlength="60" placeholder="e.g. Data Science"></div>' +
-        '<div class="form-field"><label for="npUniversity">University · الجامعة</label><select id="npUniversity">' +
+        '<div class="form-field"><label for="npNameEnBig">' + L('Major name — English', 'اسم التخصص بالإنجليزية') + '</label><input type="text" id="npNameEnBig" maxlength="60" dir="ltr" placeholder="' + L('e.g. Data Science', 'اختياري') + '"></div>' +
+        '<div class="form-field"><label for="npUniversity">' + L('University', 'الجامعة') + '</label><select id="npUniversity">' +
           Object.keys(window.APP_UNIVERSITIES || {}).map(function(uid){
             var u = window.APP_UNIVERSITIES[uid];
-            return '<option value="' + uid + '">' + u.icon + ' ' + u.name.en + '</option>';
+            return '<option value="' + uid + '">' + u.icon + ' ' + (rtl && u.name.ar ? u.name.ar : u.name.en) + '</option>';
           }).join('') +
         '</select></div>' +
-        '<div class="form-field"><label for="npNameEnSmall">English subtitle · عنوان فرعي إنجليزي</label><input type="text" id="npNameEnSmall" maxlength="40" placeholder="optional · اختياري"></div>' +
+        '<div class="form-field"><label for="npNameEnSmall">' + L('English subtitle', 'عنوان فرعي بالإنجليزية') + '</label><input type="text" id="npNameEnSmall" maxlength="40" dir="ltr" placeholder="' + L('optional', 'اختياري') + '"></div>' +
       '</div>' +
       '<div class="form-field-row">' +
-        '<div class="form-field"><label for="npNameArBig">Major name — Arabic · اسم التخصص بالعربية</label><input type="text" id="npNameArBig" maxlength="60" placeholder="مثال: علم البيانات"></div>' +
-        '<div class="form-field"><label for="npNameArSmall">Arabic subtitle · عنوان فرعي عربي</label><input type="text" id="npNameArSmall" maxlength="40" placeholder="اختياري"></div>' +
+        '<div class="form-field"><label for="npNameArBig">' + L('Major name — Arabic', 'اسم التخصص بالعربية') + '</label><input type="text" id="npNameArBig" maxlength="60" dir="rtl" placeholder="' + L('optional', 'مثال: علم البيانات') + '"></div>' +
+        '<div class="form-field"><label for="npNameArSmall">' + L('Arabic subtitle', 'عنوان فرعي بالعربية') + '</label><input type="text" id="npNameArSmall" maxlength="40" dir="rtl" placeholder="' + L('optional', 'اختياري') + '"></div>' +
       '</div>' +
       '<div class="form-field-row">' +
-        '<div class="form-field"><label for="npCollegeEn">College / Faculty (English) · الكلية بالإنجليزية</label><input type="text" id="npCollegeEn" maxlength="80" placeholder="e.g. Faculty of Fine Arts"></div>' +
-        '<div class="form-field"><label for="npCollegeAr">College / Faculty (Arabic) · الكلية بالعربية</label><input type="text" id="npCollegeAr" maxlength="80" placeholder="مثال: كلية الفنون الجميلة"></div>' +
+        '<div class="form-field"><label for="npCollegeEn">' + L('College / Faculty (English)', 'الكلية بالإنجليزية') + '</label><input type="text" id="npCollegeEn" maxlength="80" dir="ltr" placeholder="' + L('e.g. Faculty of Fine Arts', 'اختياري') + '"></div>' +
+        '<div class="form-field"><label for="npCollegeAr">' + L('College / Faculty (Arabic)', 'الكلية بالعربية') + '</label><input type="text" id="npCollegeAr" maxlength="80" dir="rtl" placeholder="' + L('optional', 'مثال: كلية الفنون الجميلة') + '"></div>' +
       '</div>' +
-      '<div class="form-field"><label for="npBioEn">Bio (English) · نبذة بالإنجليزية</label><textarea id="npBioEn" class="notes-textarea" rows="2" maxlength="220" placeholder="A short description shown on the home page card"></textarea></div>' +
-      '<div class="form-field"><label for="npBioAr">Bio (Arabic) · نبذة بالعربية</label><textarea id="npBioAr" class="notes-textarea" rows="2" maxlength="220"></textarea></div>' +
-      '<div class="form-actions"><button type="button" class="home-btn" id="npCancel">Cancel · إلغاء</button>' +
-      '<button type="button" class="home-btn btn-pri" id="npCreate">Create · إنشاء</button></div>' +
+      '<div class="form-field"><label for="npBioEn">' + L('Bio (English)', 'نبذة بالإنجليزية') + '</label><textarea id="npBioEn" class="notes-textarea" rows="2" maxlength="220" dir="ltr" placeholder="' + L('A short description shown on the home page card', 'اختياري') + '"></textarea></div>' +
+      '<div class="form-field"><label for="npBioAr">' + L('Bio (Arabic)', 'نبذة بالعربية') + '</label><textarea id="npBioAr" class="notes-textarea" rows="2" maxlength="220" dir="rtl" placeholder="' + L('optional', 'وصف قصير بيظهر على بطاقة التخصص') + '"></textarea></div>' +
+      '<div class="form-actions"><button type="button" class="home-btn" id="npCancel">' + L('Cancel', 'إلغاء') + '</button>' +
+      '<button type="button" class="home-btn btn-pri" id="npCreate">' + L('Create', 'إنشاء') + '</button></div>' +
       '<div id="npMsg"></div>' +
-      '<p class="form-note">This creates the plan with one empty Year 1 — add courses and more years from inside it once created. · يُنشئ الخطة بسنة أولى فارغة — أضف المساقات والسنوات من داخلها بعد الإنشاء.</p>';
+      '<p class="form-note">' + L('This creates the plan with one empty Year 1 — add courses and more years from inside it once created.',
+        'يُنشئ الخطة بسنة أولى فارغة — أضف المساقات والسنوات من داخلها بعد الإنشاء.') + '</p>';
     overlay.classList.add('open');
 
     var sel = prefill || null;
@@ -490,10 +496,13 @@
       var bioEn = window.__cleanText(document.getElementById('npBioEn').value.trim());
       var bioAr = window.__cleanText(document.getElementById('npBioAr').value.trim());
       var msg = document.getElementById('npMsg');
-      if(!enBig || !arBig){
-        msg.innerHTML = '<p class="dev-error-msg">Please fill in at least the big English and Arabic name. · يرجى إدخال الاسم الكبير بالإنجليزية والعربية على الأقل.</p>';
+      if(!enBig && !arBig){
+        msg.innerHTML = '<p class="dev-error-msg">' + L('Write the major’s name.', 'اكتب اسم التخصص.') + '</p>';
         return;
       }
+      // One name is enough; the other language shows the same one.
+      if(!enBig){ enBig = arBig; enSmall = enSmall || arSmall; }
+      if(!arBig){ arBig = enBig; arSmall = arSmall || enSmall; }
       var id = slugify(enBig);
       var plans = loadImportedPlans();
       plans[id] = {
@@ -543,7 +552,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'emb-links';
-    btn.textContent = 'Prerequisite lines';
+    btn.textContent = window.__L('Prerequisite lines', 'خطوط المتطلبات');
     btn.addEventListener('click', function(){
       if(window.AAUP_LINKS){ window.AAUP_LINKS.open(prefix); }
     });

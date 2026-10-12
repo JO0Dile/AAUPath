@@ -306,7 +306,7 @@
           ' aria-expanded="false" aria-controls="gsp-' + esc(r.pid) + '">' +
           '<span class="gs-head-main">' +
             '<span class="gs-head-name">' + name + '</span>' +
-            '<span class="gs-code">' + r.cr + 'H' + (r.excluded ? ' · ' + t.excluded : '') + '</span>' +
+            '<span class="gs-code">' + window.__hrs(r.cr) + (r.excluded ? ' · ' + t.excluded : '') + '</span>' +
           '</span>' +
           '<span class="gs-head-right">' +
             // What you changed on this visit, so a run of edits can be
@@ -328,7 +328,7 @@
       var has = r.grade != null && r.grade !== '';
       return '<tr class="' + (r.excluded ? 'gs-row-excluded' : '') + '">' +
         '<td class="gs-tbl-name">' + name + (r.excluded ? ' <span class="gs-code">· ' + t.excluded + '</span>' : '') + '</td>' +
-        '<td class="gs-tbl-h">' + r.cr + 'H</td>' +
+        '<td class="gs-tbl-h">' + window.__hrs(r.cr) + '</td>' +
         '<td class="gs-tbl-g"><input type="text" class="gs-tbl-in' + (has && window.AAUP_GPA.isFailGrade && window.AAUP_GPA.isFailGrade(r.grade) ? ' is-fail' : '') +
           '" data-gs-in="' + esc(r.pid) + '" value="' + (has ? esc(window.AAUP_GPA.gradeShort(r.grade)) : '') + '" maxlength="3" autocomplete="off" spellcheck="false" dir="ltr"' +
           ' aria-label="' + esc(t.gradeFor(String(name).replace(/<[^>]*>/g, ''))) + '" placeholder="—"></td>' +
