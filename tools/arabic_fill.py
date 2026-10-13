@@ -78,6 +78,26 @@ def fill_course_names(plans, hand):
     return a, b, missing
 
 
+# ------------------------------------------------------- renamed by the university
+def apply_renames(plans, renames):
+    """A course the university renamed without changing it: same number, same
+    hours, new title (Computer Skills became Digital Skills by an order to the
+    universities). The pages and documents the plans are imported from can
+    keep the old title for years, so the new one is applied here, on every
+    build, from data/aaup/course-renames.json. Returns how many rows changed."""
+    n = 0
+    for plan in plans:
+        for c in plan.get('courses') or []:
+            to = renames.get((c.get('name') or '').strip())
+            if not to:
+                continue
+            c['name'] = to['name']
+            if to.get('ar'):
+                c['ar'] = to['ar']
+            n += 1
+    return n
+
+
 # ------------------------------------------------- courses named in Arabic only
 ARABIC = re.compile('[\u0600-\u06ff]')
 
@@ -256,9 +276,11 @@ def apply(plans, report=print):
     """Fill every Arabic gap in `plans`, in place. Called by build-catalogue.py."""
     course_map = _read('course-names-ar.json')
     english = _read('course-names-en.json')
+    renames = _read('course-renames.json').get('renames', {})
     majors = _read('major-names-ar.json')
     bios = _read('plan-bios-ar.json')
 
+    renamed = apply_renames(plans, renames)
     no_english = fill_english_names(plans, english)
     a, b, missing_courses = fill_course_names(plans, course_map)
     mfilled, mmissing = fill_major_names(
@@ -266,6 +288,8 @@ def apply(plans, report=print):
     bfilled, bproblems = fill_bios(
         plans, bios.get('leads', {}), bios.get('notes', {}), bios.get('buckets', {}))
 
+    if renamed:
+        report(f'  renamed      : {renamed} course row(s) from data/aaup/course-renames.json')
     report(f'  arabic       : {a} course names from the catalogue, '
            f'{b} from data/aaup/course-names-ar.json')
     report(f'                 {mfilled} programme names, {bfilled} descriptions')

@@ -118,124 +118,207 @@
   }
 
   // ---------------------------------------------------------------------
-  // What changed, in words a student can act on
+  // Official updates reach every student, and every student keeps their own
   // ---------------------------------------------------------------------
-  // Only structural facts are listed. "Something changed" is not a decision
-  // anyone can make, and a raw JSON diff is not either.
-  // What an update must not take from a student: a course they added, or one
-  // they ticked, graded or gave a status (Leadership taken as a university
-  // elective, say), and where they placed an elective the plan leaves open.
+  // An update used to be all or nothing: a plan the student had never
+  // touched was replaced, and one they had edited waited behind a "keep
+  // mine or take theirs" question. Saying no to it kept the student's moves
+  // and also kept the wrong prerequisite the update was there to fix.
+  //
+  // Now there is no question. Every official plan carries a small copy of
+  // the version it came from (`base`). Comparing three copies (that one, the
+  // student's, and the new official one) says who changed what:
+  //   - something the university changed (a prerequisite, the hours, a
+  //     name, a course added or taken out) is applied, for everyone, even on
+  //     a course the student edited;
+  //   - something only the student changed (where a course sits, a course
+  //     they added or deleted, an arrow they drew or removed) is kept.
+  // Where the university and the student both moved the same course, the
+  // student's place wins: an update never moves a course someone put
+  // somewhere themselves.
+  //
+  // One kind of change is the student's to decide: the university moving a
+  // course to a different term. A prerequisite or an elective is not a
+  // choice (the student has to take it), but the order they take courses in
+  // can be, so on the plan a student is actually following those moves wait
+  // for "Keep my plan" or "Take the new plan" (pendingMoves, below). Every
+  // other plan on the phone just takes them.
+
+  // What an update must not take from a student even when the university
+  // drops the course: one they added, a retake, or one they ticked, graded
+  // or gave a status (Leadership taken as a university elective, say).
   function keptByStudent(planId, c){
-    if(c.own) return true;
+    if(c.own || c.isRetake) return true;
     var pid = planId + '-c-' + c.id;
     var prog = window.__getProgress ? window.__getProgress() : {};
     var st = window.AAUP_GPA && window.AAUP_GPA.loadStatuses ? window.AAUP_GPA.loadStatuses() : {};
     var gr = window.AAUP_GPA && window.AAUP_GPA.loadGrades ? window.AAUP_GPA.loadGrades() : {};
     return !!(prog[pid] || st[pid] || gr[pid]);
   }
-  function mergeKept(planId, existing, incoming){
-    var byId = {}, kept = false;
-    (incoming.courses || []).forEach(function(c){ byId[c.id] = c; });
-    (existing.courses || []).forEach(function(c){
-      var n = byId[c.id];
-      if(n){
-        if(!n.yearId && c.yearId){ n.yearId = c.yearId; n.semester = c.semester; kept = true; }
+
+  // The fields of a course the university decides. Placement is handled
+  // apart, because there the student's choice wins.
+  var FIELDS = ['name', 'ar', 'creditHours', 'category', 'courseNumber', 'requirement', 'termSuggested'];
+  function pairKey(p){ return p[0] + '>' + p[1]; }
+  function blank(v){ return v == null || v === '' || v === false; }
+
+  // The base only has to answer "did the university change this?", so a
+  // long value is kept as a short fingerprint, not the text. Every plan on
+  // the phone carries one, and the full copy doubled what the app keeps in
+  // the browser.
+  function fp(str){
+    var h = 0x811c9dc5;
+    for(var i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(36);
+  }
+  function tok(f, v){
+    if(blank(v)) return '';
+    if(f === 'name' || f === 'ar' || f === 'courseNumber') return fp(String(v));
+    return f === 'termSuggested' ? '1' : String(v);
+  }
+  function place(c){ return (c.yearId || '') + '/' + (c.semester || ''); }
+
+  // The official version, kept small: per course its place and a token per
+  // field ("y2/s1|<name>|<ar>|3|core|<number>|univReq|"), the prerequisite
+  // pairs as fingerprints, and the years.
+  function makeBase(plan){
+    var c = {};
+    (plan.courses || []).forEach(function(x){
+      c[x.id] = [place(x)].concat(FIELDS.map(function(f){ return tok(f, x[f]); })).join('|');
+    });
+    return {
+      v: plan.feedVersion,
+      c: c,
+      p: (plan.prerequisites || []).map(function(q){ return fp(pairKey(q)); }),
+      y: ((plan.structure && plan.structure.years) || []).map(function(y){ return [y.id, y.hasSummer ? 1 : 0]; })
+    };
+  }
+
+  // base: the official version the student's copy came from, or null for a
+  // copy saved before bases existed. With no base, nothing says what the
+  // student changed, so: the university's fields win; on a plan the student
+  // edited, a course sitting somewhere other than the new official place
+  // stays where it is (on one they never edited, the difference is the
+  // university's); and a course missing from the copy comes back (it may
+  // be one the university just added).
+  // ask: this is a plan the student follows, so a course the university
+  // moved waits for their answer instead of moving.
+  function mergeOfficial(planId, base, current, incoming, ask){
+    var B = base ? base.c : null;
+    var cur = {}, inc = {};
+    (current.courses || []).forEach(function(c){ cur[c.id] = c; });
+    (incoming.courses || []).forEach(function(c){ inc[c.id] = c; });
+    var out = [], moves = [];
+    // Moves from an earlier update the student has not answered yet. Until
+    // they do, the course is still the university's to move, not theirs.
+    var waiting = {};
+    (current.pendingMoves || []).forEach(function(mv){ if(mv && mv.id) waiting[mv.id] = mv; });
+
+    (incoming.courses || []).forEach(function(n){
+      var c = cur[n.id], b = B && typeof B[n.id] === 'string' ? B[n.id].split('|') : null;
+      if(!c){
+        // In the version they had and gone from their copy: they deleted it.
+        if(b) return;
+        out.push(n);
         return;
       }
-      if(keptByStudent(planId, c)){ incoming.courses.push(c); byId[c.id] = c; kept = true; }
+      var m = JSON.parse(JSON.stringify(c));
+      FIELDS.forEach(function(f, i){
+        // The university changed it (or there is no base to say otherwise).
+        if(!b || b[i + 1] !== tok(f, n[f])){
+          if(n[f] == null || n[f] === '' || n[f] === false) delete m[f]; else m[f] = n[f];
+        }
+      });
+      // An Arabic name the student wrote stays when the university has none.
+      if(!b && c.ar && c.ar !== c.name && blank(n.ar)) m.ar = c.ar;
+      var undecided = waiting[n.id] && waiting[n.id].from === place(c);
+      var theirs = !!c.placedByStudent || (undecided ? false : (b
+        ? place(c) !== b[0]
+        : (!!current.wasEdited && place(c) !== place(n))));
+      if(!theirs && place(c) !== place(n)){
+        if(ask) moves.push({ id: n.id, from: place(c), to: place(n) });
+        else { if(n.yearId) m.yearId = n.yearId; else delete m.yearId; m.semester = n.semester || ''; }
+      }
+      out.push(m);
     });
-    // Their prerequisites come along when both ends are still in the plan.
-    var have = {};
-    (incoming.prerequisites || []).forEach(function(p){ have[p[0] + '>' + p[1]] = true; });
-    (existing.prerequisites || []).forEach(function(p){
-      if(byId[p[0]] && byId[p[1]] && !have[p[0] + '>' + p[1]] && (byId[p[0]].own || byId[p[1]].own)){ incoming.prerequisites.push(p); kept = true; }
+    // Theirs, kept: courses the university does not list (any more).
+    (current.courses || []).forEach(function(c){
+      if(inc[c.id]) return;
+      var inBase = !!(B && B[c.id]);
+      if(c.own || c.isRetake || keptByStudent(planId, c)) out.push(c);
+      else if(B && !inBase) out.push(c);          // added by the student before "own" existed
     });
-    return kept;
+
+    var ids = {};
+    out.forEach(function(c){ ids[c.id] = true; });
+    var BP = null;
+    if(base){ BP = {}; (base.p || []).forEach(function(k){ BP[k] = true; }); }
+    var inBP = function(k){ return !!(BP && BP[fp(k)]); };
+    var CP = {}, IP = {};
+    (current.prerequisites || []).forEach(function(p){ CP[pairKey(p)] = p; });
+    (incoming.prerequisites || []).forEach(function(p){ IP[pairKey(p)] = p; });
+    var pairs = [], seen = {};
+    function add(p){ var k = pairKey(p); if(!seen[k] && ids[p[0]] && ids[p[1]]){ seen[k] = true; pairs.push([p[0], p[1]]); } }
+    Object.keys(IP).forEach(function(k){
+      // Every official pair, except one the student removed and the
+      // university did not touch since.
+      if(inBP(k) && !CP[k]) return;
+      add(IP[k]);
+    });
+    Object.keys(CP).forEach(function(k){
+      if(IP[k]) return;
+      if(BP){ if(!inBP(k)) add(CP[k]); return; }   // drawn by the student; else dropped by the university
+      var a = cur[CP[k][0]] || {}, z = cur[CP[k][1]] || {};
+      if(a.own || z.own || a.isRetake || z.isRetake) add(CP[k]);
+    });
+
+    // Years: the official ones, plus a year or summer the student added, or
+    // one the university dropped that still holds a course of theirs.
+    var years = ((incoming.structure && incoming.structure.years) || []).map(function(y){ return { id: y.id, hasSummer: !!y.hasSummer }; });
+    var byYear = {}, inBaseYear = {}, used = {};
+    years.forEach(function(y){ byYear[y.id] = y; });
+    if(base) (base.y || []).forEach(function(y){ inBaseYear[y[0]] = { summer: !!y[1] }; });
+    out.forEach(function(c){ if(c.yearId){ used[c.yearId] = true; if(c.semester === 's3') used[c.yearId + '/s3'] = true; } });
+    ((current.structure && current.structure.years) || []).forEach(function(y){
+      var was = inBaseYear[y.id];
+      if(byYear[y.id]){
+        if(y.hasSummer && !byYear[y.id].hasSummer && (!base || !was || !was.summer || used[y.id + '/s3'])) byYear[y.id].hasSummer = true;
+        return;
+      }
+      if(!base || !was || used[y.id]){ var ny = { id: y.id, hasSummer: !!y.hasSummer }; years.push(ny); byYear[y.id] = ny; }
+    });
+
+    var merged = {};
+    Object.keys(current).forEach(function(k){ merged[k] = current[k]; });
+    Object.keys(incoming).forEach(function(k){ merged[k] = incoming[k]; });
+    merged.courses = out;
+    merged.prerequisites = pairs;
+    merged.structure = { years: years };
+    merged.wasEdited = !!current.wasEdited;
+    delete merged.declinedVersion;
+    if(moves.length) merged.pendingMoves = moves; else delete merged.pendingMoves;
+    merged.base = makeBase(incoming);
+    return merged;
   }
-  function diffPlans(oldP, newP){
-    var out = [];
-    var planId = oldP.id || newP.id;
-    var byId = function(list){
-      var m = {};
-      (list || []).forEach(function(c){ m[c.id] = c; });
-      return m;
-    };
-    var a = byId(oldP.courses), b = byId(newP.courses);
-    var label = function(c){ return (c.courseNumber ? c.courseNumber + ' · ' : '') + ((ar() && c.ar) || c.name || c.id); };
 
-    Object.keys(b).forEach(function(id){ if(!a[id]) out.push({ kind: 'add', text: L('Adds ', 'يضيف ') + label(b[id])}); });
-    Object.keys(a).forEach(function(id){ if(!b[id] && !keptByStudent(planId, a[id])) out.push({ kind: 'remove', text: L('Removes ', 'يحذف ') + label(a[id])}); });
-
-    Object.keys(b).forEach(function(id){
-      if(!a[id]) return;
-      var o = a[id], n = b[id];
-      if(o.creditHours !== n.creditHours){
-        out.push({ kind: 'change', text: label(n) + L(': credit hours ', ': الساعات ') + o.creditHours + ' → ' + n.creditHours });
-      }
-      // An elective the plan leaves open, placed by the student: theirs, kept.
-      if(n.yearId && (o.yearId !== n.yearId || o.semester !== n.semester)){
-        out.push({ kind: 'move', text: label(n) + L(': moved to Year ', ': انتقل للسنة ') + String(n.yearId).replace(/^y/, '') + ' · ' + semLabel(n.semester) });
-      }
-      if(o.name !== n.name){
-        out.push({ kind: 'rename', text: ar() ? 'تغيّر الاسم «' + (o.ar || o.name) + '» ← «' + (n.ar || n.name) + '»' : 'Renamed “' + o.name + '” → “' + n.name + '”' });
-      }
-    });
-
-    var key = function(p){ return p[0] + '>' + p[1]; };
-    var oldPr = {}, newPr = {};
-    (oldP.prerequisites || []).forEach(function(p){ oldPr[key(p)] = p; });
-    (newP.prerequisites || []).forEach(function(p){ newPr[key(p)] = p; });
-    Object.keys(newPr).forEach(function(k){
-      if(!oldPr[k]) out.push({ kind: 'prereq', text: L('New prerequisite: ', 'متطلب سابق جديد: ') + nameIn(b, newPr[k][0]) + L(' before ', ' قبل ') + nameIn(b, newPr[k][1]) });
-    });
-    Object.keys(oldPr).forEach(function(k){
-      if(!newPr[k]) out.push({ kind: 'prereq', text: L('Dropped prerequisite: ', 'انشال متطلب سابق: ') + nameIn(a, oldPr[k][0]) + L(' before ', ' قبل ') + nameIn(a, oldPr[k][1]) });
-    });
-
-    var oy = (oldP.structure && oldP.structure.years || []).length;
-    var ny = (newP.structure && newP.structure.years || []).length;
-    if(oy !== ny) out.push({ kind: 'structure', text: L('Plan length changes from ' + oy + ' to ' + ny + ' years', 'مدة الخطة بتتغيّر من ' + oy + ' إلى ' + ny + ' سنوات') });
-    return out;
-  }
-
-  function semLabel(s){ return s === 's1' ? L('Semester 1', 'الفصل الأول') : s === 's2' ? L('Semester 2', 'الفصل الثاني') : L('Summer', 'الصيفي'); }
-  function nameIn(map, id){ return map[id] ? ((ar() && map[id].ar) || map[id].name || id) : id; }
-
-  // Icons, logos and blurbs are published presentation, not the student's
-  // work — nothing in the app lets them edit these — so they are refreshed
-  // even on a customized plan, with no prompt. This is what keeps a rebranded
-  // icon from being held hostage by an unrelated pending decision about
-  // courses.
-  var COSMETIC = ['icon', 'iconKey', 'imageUrl', 'bio', 'college', 'majorName', 'sortOrder', 'feedVersion', 'tracks', 'replaced'];
-  function applyCosmetic(existing, sanitized){
-    var changed = false;
-    COSMETIC.forEach(function(f){
-      if(f === 'feedVersion') return;
-      if(JSON.stringify(existing[f]) !== JSON.stringify(sanitized[f])){
-        existing[f] = sanitized[f];
-        changed = true;
-      }
-    });
-    // A course's Arabic name is presentation too. Hundreds of courses had
-    // none, and a customized plan never takes a new course list without a
-    // yes, so it would have kept showing them in English for good. Filled in
-    // only where the student has not written one of their own: none at all,
-    // or the English name standing in for it.
-    var incoming = {};
-    (sanitized.courses || []).forEach(function(c){ if(c && c.id) incoming[c.id] = c; });
-    (existing.courses || []).forEach(function(c){
-      var n = c && incoming[c.id];
-      if(!n || !n.ar || n.ar === c.ar) return;
-      if(!c.ar || c.ar === c.name){ c.ar = n.ar; changed = true; }
-    });
-    return changed;
+  // The plan a student follows: the one they picked, or one they have
+  // ticked, graded or edited. The other plans on the phone are the
+  // catalogue, and nobody needs asking about those.
+  function inUse(planId, plan){
+    var sel = window.AAUP_DASHBOARD && window.AAUP_DASHBOARD.getSelected ? window.AAUP_DASHBOARD.getSelected() : null;
+    if(sel === planId || (plan && plan.wasEdited)) return true;
+    var pre = planId + '-c-';
+    var maps = [window.__getProgress ? window.__getProgress() : {},
+      window.AAUP_GPA && window.AAUP_GPA.loadGrades ? window.AAUP_GPA.loadGrades() : {},
+      window.AAUP_GPA && window.AAUP_GPA.loadStatuses ? window.AAUP_GPA.loadStatuses() : {}];
+    return maps.some(function(m){ return Object.keys(m || {}).some(function(k){ return k.indexOf(pre) === 0 && m[k]; }); });
   }
 
   function applyFeed(feed){
-    var result = { added: 0, updated: 0, pending: 0, cosmetic: 0 };
+    var result = { added: 0, updated: 0 };
     if(!feed || !Array.isArray(feed.plans) || !window.AAUP_IMPORTED) return result;
     var local = window.AAUP_IMPORTED.loadImportedPlans();
-    var awaiting = [];
+    var touched = false;
     // Plans this user removed in the Developer Panel stay removed for them.
     var removed = (window.AAUP_STORAGE && window.AAUP_STORAGE.getJSON('aaup_removedPlans', [])) || [];
 
@@ -246,6 +329,7 @@
       if(!existing && removed.indexOf(sanitized.id) !== -1) return;
 
       if(!existing){
+        sanitized.base = makeBase(sanitized);
         local[sanitized.id] = sanitized;
         result.added++;
         return;
@@ -257,30 +341,24 @@
       }
       // Any different version is a new one. The version is a hash of the
       // plan's content (tools/build-catalogue.py), not a counter, so "only a
-      // bigger number" threw away about half of all real updates.
-      if((existing.feedVersion || 0) === sanitized.feedVersion) return;
-
-      if(!existing.wasEdited){
-        local[sanitized.id] = sanitized;
-        result.updated++;
+      // bigger number" threw away about half of all real updates. A version
+      // a student turned down under the old "keep mine" question is applied
+      // now too: those were the fixes.
+      if((existing.feedVersion || 0) === sanitized.feedVersion && !existing.declinedVersion){
+        // Same version: whatever the student has came from exactly this, so
+        // this is its base. Copies saved before bases existed get theirs here.
+        if(!existing.base || existing.base.v !== sanitized.feedVersion){
+          existing.base = makeBase(sanitized);
+          touched = true;
+        }
         return;
       }
-
-      // Customized. Presentation refreshes now; structure waits for a yes.
-      if(applyCosmetic(existing, sanitized)) result.cosmetic++;
-      var changes = diffPlans(existing, sanitized);
-      if(changes.length){
-        awaiting.push({ id: sanitized.id, incoming: sanitized, changes: changes });
-        result.pending++;
-      } else {
-        // Nothing structural actually differs, so there is nothing to ask
-        // about — take the new version number so this stops re-triggering.
-        existing.feedVersion = sanitized.feedVersion;
-        result.updated++;
-      }
+      local[sanitized.id] = mergeOfficial(sanitized.id, existing.base && existing.base.c ? existing.base : null, existing, sanitized,
+        inUse(sanitized.id, existing));
+      result.updated++;
     });
 
-    if(result.added || result.updated || result.cosmetic || result.pending){
+    if(result.added || result.updated || touched){
       window.AAUP_IMPORTED.saveImportedPlans(local);
     }
     // A passed old course now counts as its replacement (js/02-id-renames.js).
@@ -291,133 +369,115 @@
       if(fresh) location.reload();
       else if(window.__showActionToast) window.__showActionToast(L('A course in your plan was replaced; your progress moved to the new one.', 'انبدل مساق بخطتك؛ تقدّمك انتقل للمساق الجديد.'), L('Reload', 'حدّث'), function(){ location.reload(); });
     }
-    if(awaiting.length) queueConsent(awaiting);
+    if(Object.keys(local).some(function(k){ return local[k] && local[k].pendingMoves && local[k].pendingMoves.length; })){
+      setTimeout(askAboutMoves, 1200);
+    }
     return result;
   }
 
   // ---------------------------------------------------------------------
-  // The consent dialog
+  // "Keep my plan" — only for courses the university moved to another term
   // ---------------------------------------------------------------------
-  // One plan at a time. Two plans' worth of changes in one dialog is a choice
-  // nobody reads, and these are irreversible in the direction that matters:
-  // "Apply" replaces work the student did by hand.
-  var consentQueue = [];
-  var consentOpen = false;
-
-  function queueConsent(items){
-    items.forEach(function(it){
-      if(!consentQueue.some(function(q){ return q.id === it.id; })) consentQueue.push(it);
-    });
-    showNextConsent();
+  function termLabel(pl){
+    var m = /^y(\d+)\/(s[123])$/.exec(pl || '');
+    if(!m) return L('Electives (no set term)', 'الاختيارية (بدون فصل محدد)');
+    var sem = { s1: L('Semester 1', 'الفصل الأول'), s2: L('Semester 2', 'الفصل الثاني'), s3: L('Summer', 'الصيفي') }[m[2]];
+    return L('Year ', 'السنة ') + m[1] + ' \u00b7 ' + sem;
   }
-
-  function showNextConsent(){
-    if(consentOpen || !consentQueue.length) return;
-    // Never interrupt a tour, the assistant mid-answer, or another dialog.
-    if(document.querySelector('.modal-overlay.open, .dialog-overlay.open')) {
-      setTimeout(showNextConsent, 4000);
+  var asking = false;
+  function askAboutMoves(){
+    if(asking || !window.AAUP_IMPORTED) return;
+    var plans = window.AAUP_IMPORTED.loadImportedPlans();
+    var id = Object.keys(plans).filter(function(k){ return plans[k] && plans[k].pendingMoves && plans[k].pendingMoves.length; })[0];
+    if(!id) return;
+    // Not over another window, and not over the first screen a student sees.
+    var first = document.getElementById('onboardingWizardOverlay');
+    if(document.querySelector('.modal-overlay.open, .dialog-overlay.open') || (first && first.classList.contains('open'))){
+      setTimeout(askAboutMoves, 4000);
       return;
     }
-    consentOpen = true;
-    var item = consentQueue[0];
-    var plans = window.AAUP_IMPORTED.loadImportedPlans();
-    var plan = plans[item.id];
-    var name = plan && plan.majorName ? ((ar() && plan.majorName.ar && plan.majorName.ar.big) || (plan.majorName.en && plan.majorName.en.big) || item.id) : item.id;
+    asking = true;
+    var plan = plans[id];
+    var mn = plan.majorName || {};
+    var name = (ar() && mn.ar && mn.ar.big) || (mn.en && mn.en.big) || id;
+    var byId = {};
+    (plan.courses || []).forEach(function(c){ byId[c.id] = c; });
 
     var el = document.createElement('div');
-    el.className = 'sync-consent-overlay open';
+    el.className = 'sync-moves-overlay open';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('dir', ar() ? 'rtl' : 'ltr');
-
     var box = document.createElement('div');
-    box.className = 'sync-consent';
-
+    box.className = 'sync-moves';
     var h = document.createElement('h3');
-    h.textContent = L('The official ' + name + ' plan was updated', 'انحدّثت الخطة الرسمية لتخصص ' + name);
-    box.appendChild(h);
-
-    var p = document.createElement('p');
-    p.className = 'sync-consent-lead';
-    p.textContent = L('You have made your own changes to this plan, so nothing has been altered. ' +
-      'Here is what the official version changed:',
-      'عدّلت على هالخطة بنفسك، فما تغيّر فيها إشي. هاد اللي تغيّر بالنسخة الرسمية:');
-    box.appendChild(p);
-
+    h.textContent = L('The official ' + name + ' plan moved some courses', 'الخطة الرسمية لتخصص ' + name + ' نقلت مساقات لفصول ثانية');
+    var lead = document.createElement('p');
+    lead.className = 'sync-moves-lead';
+    lead.textContent = L('The rest of the update is already in your plan. These courses are now in a different term:',
+      'باقي التحديث صار بخطتك. هالمساقات صارت بفصل ثاني:');
     var ul = document.createElement('ul');
-    ul.className = 'sync-consent-list';
-    item.changes.slice(0, 40).forEach(function(c){
+    ul.className = 'sync-moves-list';
+    plan.pendingMoves.forEach(function(mv){
+      var c = byId[mv.id];
+      if(!c) return;
       var li = document.createElement('li');
-      li.className = 'sync-change sync-change-' + c.kind;
-      li.textContent = c.text;
+      var b = document.createElement('b');
+      b.textContent = (ar() && c.ar) || c.name || c.id;
+      li.appendChild(b);
+      li.appendChild(document.createTextNode(' ' + termLabel(mv.from) + (ar() ? ' \u2190 ' : ' \u2192 ') + termLabel(mv.to)));
       ul.appendChild(li);
     });
-    box.appendChild(ul);
-    if(item.changes.length > 40){
-      var more = document.createElement('p');
-      more.className = 'sync-consent-more';
-      more.textContent = L('…and ' + (item.changes.length - 40) + ' more.', '…وكمان ' + (item.changes.length - 40) + '.');
-      box.appendChild(more);
-    }
-
-    var warn = document.createElement('p');
-    warn.className = 'sync-consent-warn';
-    warn.textContent = L('Applying takes the official version of this plan. Courses you added or already took, ' +
-      'where you placed your electives, and your ticks, grades and notes are all kept.',
-      'التطبيق بياخذ النسخة الرسمية من الخطة. المساقات اللي أضفتها أو أخذتها، ومكان اختيارياتك، وعلاماتك وملاحظاتك كلها بتضل.');
-    box.appendChild(warn);
-
-    var actions = document.createElement('div');
-    actions.className = 'sync-consent-actions';
-
-    var apply = document.createElement('button');
-    apply.type = 'button';
-    apply.className = 'home-btn sync-consent-apply';
-    apply.textContent = L('Apply changes to my plan', 'طبّق التغييرات على خطتي');
-    apply.addEventListener('click', function(){ resolveConsent(item, true, el); });
-
+    var note = document.createElement('p');
+    note.className = 'sync-moves-note';
+    note.textContent = L('Courses you moved yourself stay where you put them either way.', 'المساقات اللي نقلتها بنفسك بتضل مكانها بكل الأحوال.');
+    var row = document.createElement('div');
+    row.className = 'sync-moves-actions';
     var keep = document.createElement('button');
     keep.type = 'button';
     keep.className = 'home-btn';
-    keep.textContent = L('Keep my current version', 'خلّيني على نسختي');
-    keep.addEventListener('click', function(){ resolveConsent(item, false, el); });
-
-    actions.appendChild(apply);
-    actions.appendChild(keep);
-    box.appendChild(actions);
+    keep.textContent = L('Keep my plan', 'خلّيني على خطتي');
+    var take = document.createElement('button');
+    take.type = 'button';
+    take.className = 'home-btn btn-pri';
+    take.textContent = L('Take the new plan', 'خذ الخطة الجديدة');
+    keep.addEventListener('click', function(){ answerMoves(id, false, el); });
+    take.addEventListener('click', function(){ answerMoves(id, true, el); });
+    row.appendChild(keep);
+    row.appendChild(take);
+    [h, lead, ul, note, row].forEach(function(x){ box.appendChild(x); });
     el.appendChild(box);
     document.body.appendChild(el);
-    apply.focus();
+    take.focus();
   }
-
-  function resolveConsent(item, accept, el){
+  function answerMoves(id, take, el){
     var plans = window.AAUP_IMPORTED.loadImportedPlans();
-    var existing = plans[item.id];
-    if(existing){
-      if(accept){
-        // Progress lives in its own storage keyed by course id, so replacing
-        // the plan definition does not touch it — a course that survives the
-        // update keeps its tick, its grade and its notes.
-        var incoming = item.incoming;
-        // Still theirs if an added course or a placement was kept.
-        incoming.wasEdited = mergeKept(item.id, existing, incoming);
-        plans[item.id] = incoming;
-      } else {
-        // Record that this version was declined, so the same dialog does not
-        // reappear on every single page load for a decision already made.
-        existing.feedVersion = item.incoming.feedVersion;
-        existing.declinedVersion = item.incoming.feedVersion;
+    var plan = plans[id];
+    if(plan){
+      if(take){
+        var byId = {};
+        (plan.courses || []).forEach(function(c){ byId[c.id] = c; });
+        (plan.pendingMoves || []).forEach(function(mv){
+          var c = byId[mv.id];
+          // Only if it is still where it was when the question was asked.
+          if(!c || place(c) !== mv.from) return;
+          var to = String(mv.to || '').split('/');
+          if(to[0]) c.yearId = to[0]; else delete c.yearId;
+          c.semester = to[1] || '';
+        });
       }
+      // Kept: the base already names the new terms, so these courses now
+      // count as placed by the student and no later update asks again.
+      delete plan.pendingMoves;
       window.AAUP_IMPORTED.saveImportedPlans(plans);
     }
     if(el && el.parentNode) el.parentNode.removeChild(el);
-    consentQueue = consentQueue.filter(function(q){ return q.id !== item.id; });
-    consentOpen = false;
-    if(window.__showToast){
-      window.__showToast(accept ? L('Updated to the official plan.', 'صارت خطتك على النسخة الرسمية.') : L('Kept your version.', 'ضلّت نسختك زي ما هي.'));
-    }
-    if(accept) window.AAUP_IMPORTED.plansChanged();
-    showNextConsent();
+    asking = false;
+    if(window.__showToast) window.__showToast(take ? L('Your plan now follows the new terms.', 'خطتك صارت على الفصول الجديدة.') : L('Kept your plan as it was.', 'ضلّت خطتك زي ما هي.'));
+    // Redrawn only if it is the plan on screen.
+    var page = document.getElementById('page-' + id);
+    if(take && page && page.offsetParent !== null && window.AAUP_IMPORTED.refresh) window.AAUP_IMPORTED.refresh(id);
+    setTimeout(askAboutMoves, 600);
   }
 
   function lastSyncLabel(){
@@ -449,14 +509,11 @@
     var run = (presetFeed ? Promise.resolve(presetFeed) : fetchFeed()).then(function(feed){
       if(!feed){
         if(manual && window.__showToast){ window.__showToast(L('Could not reach the plans feed — check your connection.', 'ما قدرنا نوصل للخطط — تأكد من الإنترنت.')); }
-        return { added: 0, updated: 0, pending: 0, cosmetic: 0 };
+        return { added: 0, updated: 0 };
       }
       var result = applyFeed(feed);
       try{ localStorage.setItem('aaup_lastSync', String(Date.now())); }catch(e){}
-      // A pending item gets its own dialog, so it is not also announced in a
-      // toast that would scroll away behind it.
-      //
-      // Nor is anything announced over the first screen a student ever sees.
+      // Nothing is announced over the first screen a student ever sees.
       // On a brand-new device every plan in the feed is "new", so the landing
       // page came up with "🔄 78 new." floating over it — an update to an app
       // they had not opened yet. A manual check still always reports back,
@@ -464,14 +521,12 @@
       var firstRun = document.getElementById('onboardingWizardOverlay');
       firstRun = !!(firstRun && firstRun.classList.contains('open'));
       if(!manual && firstRun){ return result; }
-      if(manual || result.added || result.updated || result.cosmetic){
+      if(manual || result.added || result.updated){
         var bits = [];
         if(result.added) bits.push(L(result.added + ' new', result.added + ' جديدة'));
         if(result.updated) bits.push(L(result.updated + ' updated', result.updated + ' انحدّثت'));
-        if(result.cosmetic) bits.push(L(result.cosmetic + ' refreshed', result.cosmetic + ' تجدّدت'));
         if(!bits.length) bits.push(L('already up to date', 'كل إشي محدّث'));
-        var msg = bits.join(L(', ', '، ')) +
-          (result.pending ? ' · ' + L(result.pending + ' need' + (result.pending === 1 ? 's' : '') + ' your decision', result.pending + ' بتستنى قرارك') : '') + '.';
+        var msg = bits.join(L(', ', '، ')) + '.';
         if(window.__showToast){ window.__showToast(msg); }
       }
       return result;
@@ -495,11 +550,12 @@
     officialPlan: officialPlan,
     checkForUpdates: checkForUpdates,
     lastSyncLabel: lastSyncLabel,
-    // Exposed so the consent path can be driven with a crafted feed. Reaching
-    // it through the network would mean publishing a change and waiting for a
+    // Exposed so the merge can be driven with a crafted feed. Reaching it
+    // through the network would mean publishing a change and waiting for a
     // deploy, which is not a thing a test can do — and this is the one branch
     // in the app that can destroy a student's own work if it is wrong.
-    __applyFeedForTest: applyFeed
+    __applyFeedForTest: applyFeed,
+    askAboutMoves: askAboutMoves
   };
 
   // No startup check is scheduled here. 01-catalogue.js already downloads the

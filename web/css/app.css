@@ -6242,44 +6242,6 @@ h2.mh, h3.mh{display:flex; align-items:center; gap:8px;}
 }
 
 /* ==========================================================================
-   SYNC CONSENT (js/30-sync.js) — shown when an official plan changed and the
-   student has edits of their own on it. Deliberately blocking: it is the one
-   moment the app would otherwise overwrite someone's work.
-   ========================================================================== */
-.sync-consent-overlay{
-  position:fixed; inset:0; z-index:9700; display:none;
-  align-items:center; justify-content:center; padding:18px;
-  background:rgba(4,10,22,.72); backdrop-filter:blur(2px);
-}
-.sync-consent-overlay.open{display:flex;}
-.sync-consent{
-  width:min(520px,100%); max-height:82vh; overflow:auto;
-  background:var(--panel); border:1px solid var(--accent); border-radius:14px; padding:18px;
-}
-.sync-consent h3{margin:0 0 8px; font-size:15px; line-height:1.35;}
-.sync-consent-lead{font-size:13.5px; color:var(--text-dim); line-height:1.65; margin:0 0 12px;}
-.sync-consent-list{list-style:none; margin:0 0 10px; padding:0;}
-.sync-change{
-  font-size:11.5px; line-height:1.55; padding:6px 10px; margin-bottom:4px;
-  border-radius:8px; border-inline-start:3px solid var(--line);
-  background:rgba(255,255,255,.035); color:var(--text);
-}
-/* Colour carries the same meaning it does everywhere else in the app, so the
-   list is skimmable without a legend. */
-.sync-change-add{border-inline-start-color:var(--unlock);}
-.sync-change-remove{border-inline-start-color:var(--prereq);}
-.sync-change-prereq{border-inline-start-color:var(--accent);}
-.sync-change-move,.sync-change-change,.sync-change-rename,.sync-change-structure{border-inline-start-color:#ffc15e;}
-.sync-consent-more{font-size:11.5px; color:var(--text-dim); margin:0 0 10px;}
-.sync-consent-warn{
-  font-size:11.5px; line-height:1.6; color:var(--text-dim);
-  background:rgba(255,193,94,.09); border-radius:9px; padding:9px 11px; margin:0 0 14px;
-}
-.sync-consent-actions{display:flex; gap:8px; flex-wrap:wrap;}
-.sync-consent-actions .home-btn{flex:1 1 190px;}
-.sync-consent-apply{border-color:var(--unlock); color:var(--text);}
-
-/* ==========================================================================
    DIALOG HEIGHT — every .modal-card is capped to the viewport and scrolls
    inside itself.
    Nothing here limited a dialog's height, so a long one (the Developer Panel
@@ -9918,3 +9880,31 @@ button.pc-item:focus-visible{outline:2px solid var(--accent); outline-offset:2px
 .pc-dr > span:nth-child(odd){color:var(--text-dim);}
 .pc-was{color:var(--prereq);}
 .pc-now{color:var(--unlock);}
+
+/* ==========================================================================
+   KEEP MY PLAN (js/30-sync.js) — the one question an official update asks:
+   the university moved courses to another term in the plan the student
+   follows. Everything else in an update is applied without asking.
+   ========================================================================== */
+.sync-moves-overlay{
+  position:fixed; inset:0; z-index:9700; display:none;
+  align-items:center; justify-content:center; padding:18px;
+  background:rgba(4,10,22,.72); backdrop-filter:blur(2px);
+}
+.sync-moves-overlay.open{display:flex;}
+.sync-moves{
+  width:min(520px,100%); max-height:82vh; overflow:auto;
+  background:var(--panel); border:1px solid var(--accent); border-radius:14px; padding:18px;
+}
+.sync-moves h3{margin:0 0 8px; font-size:15px; line-height:1.35;}
+.sync-moves-lead{font-size:13.5px; color:var(--text-dim); line-height:1.65; margin:0 0 12px;}
+.sync-moves-list{list-style:none; margin:0 0 10px; padding:0;}
+.sync-moves-list li{
+  font-size:12.5px; line-height:1.55; padding:7px 10px; margin-bottom:4px;
+  border-radius:8px; border-inline-start:3px solid var(--accent);
+  background:rgba(255,255,255,.035); color:var(--text-dim);
+}
+.sync-moves-list b{color:var(--text); font-weight:700;}
+.sync-moves-note{font-size:11.5px; color:var(--text-dim); margin:0 0 14px;}
+.sync-moves-actions{display:flex; gap:8px; flex-wrap:wrap;}
+.sync-moves-actions .home-btn{flex:1 1 190px;}

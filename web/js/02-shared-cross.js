@@ -136,6 +136,9 @@ window.__sanitizeImportedPlan = function(p){
       // Added by the student: an official update keeps it (js/30-sync.js).
       if(c.own){ out.own = true; }
       if(c.keepInSemester){ out.keepInSemester = true; }
+      // A department elective the student put in a semester. Dropped here, it
+      // went back to the elective pool on the next start.
+      if(c.placedByStudent){ out.placedByStudent = true; }
       return out;
     }).filter(function(c){ return !!c; });
   }
